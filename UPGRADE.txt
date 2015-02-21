@@ -2,10 +2,10 @@
 UPGRADING
 ---------
 
-For upgrading from a previous version of Couch to version 1.4:
+For upgrading from a previous version of Couch to version 1.4.5:
 
-1.  Unzip 'couchcms-1.4.zip' file to your local system.
-    Within the 'couchcms-1.4' folder thus extracted will be found a folder named 'couch'.
+1.  Unzip 'couchcms-1.4.5RC2.zip' file to your local system.
+    Within the 'couchcms-1.4.5RC2' folder thus extracted will be found a folder named 'couch'.
     From within this 'couch' folder' -
     a.  Delete 'snippets' and 'uploads' folders.
     b.  Delete 'config.example.php' file.

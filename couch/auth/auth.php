@@ -145,8 +145,14 @@
             $pwd = strlen( trim($pwd) ) ? $pwd : $_POST['k_user_pwd'];
             $remember = strlen( trim($remember) ) ? $remember : $_POST['k_user_remember'][0];
 
-            $username = $FUNCS->cleanXSS( trim($username) );
-            $pwd = $FUNCS->cleanXSS( trim($pwd) );
+            $username = trim( $username );
+            $pwd = trim( $pwd );
+            if( strlen($username)>1024 || strlen($pwd)>255 ){ // hack attempt?
+                return $FUNCS->raise_error( $FUNCS->t('invalid_credentials') );
+            }
+
+            $username = $FUNCS->cleanXSS( $username );
+            $pwd = $FUNCS->cleanXSS( $pwd );
             $remember = ( trim($remember)==='1' ) ? 1 : 0;
 
             if( empty($username) ){

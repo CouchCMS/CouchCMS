@@ -149,12 +149,17 @@
 
             extract( $FUNCS->get_named_vars(
                 array(
-                    'name'=>''
+                    'name'=>'',
+                    'default'=>'',
                 ),
                 $params)
             );
+            $has_default = ( strlen($default) ) ? 1 : 0;
 
-            return $KSESSION->get_var( $name );
+            $val = $KSESSION->get_var( $name );
+            if( $has_default && !strlen($val) ){ $val = $default; }
+
+            return $val;
         }
 
         function delete_session_handler( $params, $node ){
@@ -193,13 +198,18 @@
 
             extract( $FUNCS->get_named_vars(
                 array(
-                    'name'=>''
+                    'name'=>'',
+                    'default'=>'',
                 ),
                 $params)
             );
             $name = trim( $name );
+            $has_default = ( strlen($default) ) ? 1 : 0;
 
-            return $KSESSION->get_flash( $name );
+            $val = $KSESSION->get_flash( $name );
+            if( $has_default && !strlen($val) ){ $val = $default; }
+
+            return $val;
         }
 
     } // end class

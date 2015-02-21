@@ -47,7 +47,7 @@
             // handle params
             $arr_known_params = array( '_invalidate_cache'=>'0', '_auto_title'=>'0' );
             if( $node->name=='db_persist' ){
-                $arr_known_params = array_merge( $arr_known_params, array('_masterpage'=>'', '_mode'=>'', '_page_id'=>'', '_separator'=>'|') );
+                $arr_known_params = array_merge( $arr_known_params, array('_masterpage'=>'', '_mode'=>'', '_page_id'=>'', '_separator'=>'|', '_set_errors_in_context'=>'0') );
             }
             extract( $FUNCS->get_named_vars(
                         $arr_known_params,
@@ -55,13 +55,14 @@
                   );
             $_invalidate_cache = ( $_invalidate_cache==1 ) ? 1 : 0;
             $_auto_title = ( $_auto_title==1 ) ? 1 : 0;
+            $_set_errors_in_context = ( $_set_errors_in_context==1 ) ? 1 : 0;
 
             // get down to business
             if( $node->name=='db_persist_form' ){
                 // can only be used used within a data-bound form.. page object wlll be provided by the form
                 $pg = &$CTX->get_object( 'bound_page', 'form' );
                 if( is_null($pg) ){
-                    die("ERROR: Tag \"".$node->name."\" of type 'bound' needs to be within a Data-bound form");
+                    die("ERROR: Tag \"".$node->name."\" needs to be within a Data-bound form");
                 }
                 $_mode = ( $pg->id==-1 ) ? 'create' : 'edit';
             }
@@ -168,7 +169,7 @@
                 for( $x=0; $x<count($pg->fields); $x++ ){
                     $f = &$pg->fields[$x];
                     if( $f->err_msg ){
-                        if( $node->name=='db_persist_form' ){
+                        if( $node->name=='db_persist_form' || ($node->name=='db_persist' && $_set_errors_in_context) ){
                             $CTX->set( 'k_error_'.$f->name, $f->err_msg );
                         }
                         $str_err .= $sep . '<b>' . (($f->label) ? $f->label : $f->name) . ':</b> ' . $f->err_msg;
@@ -205,6 +206,16 @@
         // Creates new page or Updates existing one
         function db_persist( $params, $node ){
             // delegate to 'db_persist_form' tag
+            return KDataBoundForm::db_persist_form( $params, $node );
+        }
+
+        // Same as db_persist above but has no context of its own
+        function db_persist_ex( $params, $node ){
+
+            if( count($node->children) ) {die("ERROR: Tag \"".$node->name."\" is a self closing tag");}
+
+            // delegate to 'db_persist_form' tag
+            $node->name='db_persist';
             return KDataBoundForm::db_persist_form( $params, $node );
         }
 
@@ -255,6 +266,45 @@
             if( $invalidate_cache ){
                 $FUNCS->invalidate_cache();
             }
+        }
+
+        // Deletes page bound to the form
+        function db_delete_form( $params, $node ){
+            global $FUNCS, $DB, $CTX;
+            if( count($node->children) ) {die("ERROR: Tag \"".$node->name."\" is a self closing tag");}
+
+            // handle params
+            extract( $FUNCS->get_named_vars(
+                        array(
+                              'invalidate_cache'=>'0'
+                              ),
+                        $params)
+                   );
+
+            // get the page object bound to the form
+            $pg = &$CTX->get_object( 'bound_page', 'form' );
+            if( is_null($pg) ){
+                die( "ERROR: Tag \"".$node->name."\" needs to be within a Data-bound form" );
+            }
+
+            if( $pg->id==-1 ){
+                die( "ERROR: Tag \"".$node->name."\" - mode of Data-bound form needs to be 'edit'" );
+            }
+
+            if( !$pg->tpl_is_clonable ){
+                die( "ERROR: Tag \"".$node->name."\" - cannot delete non-clonable template" );
+            }
+
+            // delete..
+            $pg->delete();
+
+            // if we are here, delete was successful (script would have died otherwise)
+            $pg->destroy();
+            unset( $pg );
+            if( $invalidate_cache ){
+                $FUNCS->invalidate_cache();
+            }
+
         }
 
         // Begins transaction
@@ -505,7 +555,9 @@
 
     $FUNCS->register_tag( 'db_persist_form', array('KDataBoundForm', 'db_persist_form') );
     $FUNCS->register_tag( 'db_persist', array('KDataBoundForm', 'db_persist'), 1 );
+    $FUNCS->register_tag( 'db_persist_ex', array('KDataBoundForm', 'db_persist_ex') );
     $FUNCS->register_tag( 'db_delete', array('KDataBoundForm', 'db_delete') );
+    $FUNCS->register_tag( 'db_delete_form', array('KDataBoundForm', 'db_delete_form') );
     $FUNCS->register_tag( 'db_begin_trans', array('KDataBoundForm', 'db_begin_trans') );
     $FUNCS->register_tag( 'db_commit_trans', array('KDataBoundForm', 'db_commit_trans') );
     $FUNCS->register_tag( 'db_rollback_trans', array('KDataBoundForm', 'db_rollback_trans') );

@@ -857,7 +857,7 @@
             }
             $url .=  '://';
             $url .= $_SERVER['HTTP_HOST'];
-            if( $_SERVER['SERVER_PORT']!='80' ){
+            if( $_SERVER['SERVER_PORT']!='80' && $_SERVER['SERVER_PORT']!='443' ){
                 $port = ':' . $_SERVER['SERVER_PORT'];
             }
             if( strpos($_SERVER['HTTP_HOST'], ':')===false ) $url .= $port;
@@ -1285,10 +1285,10 @@
         }
 
         function generate_rewrite_rules(){
-            global $DB;
+            global $DB, $FUNCS;
 
             //$rs = $DB->select( K_TBL_TEMPLATES, array('name'), 'clonable=1 AND executable=1' );
-            $rs = $DB->select( K_TBL_TEMPLATES, array('name'), '1=1' );
+            $rs = $DB->select( K_TBL_TEMPLATES, array('name', 'custom_params'), '1=1' );
             if( count($rs) ){
                 foreach( $rs as $key=>$val ){
                     $is_index = 0;
@@ -1302,9 +1302,8 @@
                 array_multisort( $depth, SORT_DESC, SORT_NUMERIC, $pretty_tpl_names, SORT_DESC, SORT_STRING, $rs );
 
                 // Loop once again through the templates, generating rewrite rules for each.
-                $header = '<!doctype html><html>';
-                $header .= '<head><meta charset="utf-8"/></head>';
-                $header .= '<body style="padding:30px;margin:0;background-color:#fff;color:#111;font:12px/16px Menlo,Monaco,Consolas,\'Courier New\',monospace;">';
+                $header = '<!doctype html>';
+                $header .= '<html style="background-color:#fff;"><body style="line-height:16px;padding:15px;margin:0;font-family:Menlo,Monaco,Consolas,\'Courier New\',monospace;font-size:12px;">';
                 $for_index = '';
                 $body = '';
                 $sep = '<br>';
@@ -1325,23 +1324,39 @@
 
                     $name = ( $val['is_index'] ) ? $val['pretty_name'] : $val['name'];
 
-                    // Page
-                    //RewriteRule ^news/test/.*?([^\.\/]*)\.html$ news/test.php?pname=$1 [L,QSA]
-                    $body .= 'RewriteRule ^'. $val['pretty_name'].'.*?([^\.\/]*)\.html$ '.$name.'?pname=$1 [L,QSA]' . $sep;
+                    // is routable? (i.e. has custom routes)
+                    $has_custom_routes = 0;
+                    $custom_params = array();
+                    if( strlen($val['custom_params']) ){
+                        $custom_params = $FUNCS->unserialize($val['custom_params']);
+                        if( is_array($custom_params) && $custom_params['routable'] ){
+                            $has_custom_routes = 1;
+                        }
+                    }
 
-                    // Archives
-                    //RewriteRule ^news/([1-2]\d{3})/(?:(0[1-9]|1[0-2])/(?:(0[1-9]|1[0-9]|2[0-9]|3[0-1])/)?)?$  [L,QSA]
-                    $body .= 'RewriteRule ^'.$val['pretty_name'].'([1-2]\d{3})/(?:(0[1-9]|1[0-2])/(?:(0[1-9]|1[0-9]|2[0-9]|3[0-1])/)?)?$ '.$name.'?d=$1$2$3 [L,QSA]' . $sep;
+                    if( !$has_custom_routes ){
+                        // Page
+                        //RewriteRule ^news/test/.*?([^\.\/]*)\.html$ news/test.php?pname=$1 [L,QSA]
+                        $body .= 'RewriteRule ^'. $val['pretty_name'].'.*?([^\.\/]*)\.html$ '.$name.'?pname=$1 [L,QSA]' . $sep;
 
-                    // Folder
-                    //RewriteRule ^news/test/[^\.]*?([^/\.]*)/$ news/test.php?fname=$1 [L,QSA]
-                    $body .= 'RewriteRule ^'.$val['pretty_name'].'[^\.]*?([^/\.]*)/$ '.$name.'?fname=$1 [L,QSA]' . $sep;
+                        // Archives
+                        //RewriteRule ^news/([1-2]\d{3})/(?:(0[1-9]|1[0-2])/(?:(0[1-9]|1[0-9]|2[0-9]|3[0-1])/)?)?$  [L,QSA]
+                        $body .= 'RewriteRule ^'.$val['pretty_name'].'([1-2]\d{3})/(?:(0[1-9]|1[0-2])/(?:(0[1-9]|1[0-9]|2[0-9]|3[0-1])/)?)?$ '.$name.'?d=$1$2$3 [L,QSA]' . $sep;
 
-                    // Folder redirect if not trailing slash
-                    //RewriteRule ^news/test/[^\.]*?([^/\.]*)$ "$0/" [R=301,L,QSA]
-                    //RewriteRule ^\w[^\.]*?([^/\.]*)$ "$0/" [R=301,L,QSA]
-                    $n = (strlen($val['pretty_name'])) ? $val['pretty_name'] : '\w';
-                    $body .= 'RewriteRule ^'.$n.'[^\.]*?([^/\.]*)$ "$0/" [R=301,L,QSA]' . $sep;
+                        // Folder
+                        //RewriteRule ^news/test/[^\.]*?([^/\.]*)/$ news/test.php?fname=$1 [L,QSA]
+                        $body .= 'RewriteRule ^'.$val['pretty_name'].'[^\.]*?([^/\.]*)/$ '.$name.'?fname=$1 [L,QSA]' . $sep;
+
+                        // Folder redirect if not trailing slash
+                        //RewriteRule ^news/test/[^\.]*?([^/\.]*)$ "$0/" [R=301,L,QSA]
+                        //RewriteRule ^\w[^\.]*?([^/\.]*)$ "$0/" [R=301,L,QSA]
+                        $n = (strlen($val['pretty_name'])) ? $val['pretty_name'] : '\w';
+                        $body .= 'RewriteRule ^'.$n.'[^\.]*?([^/\.]*)$ "$0/" [R=301,L,QSA]' . $sep;
+                    }
+                    else{
+                        //RewriteRule ^news/test/(+*?)$ news/test.php?q=$1 [L,QSA]
+                        $body .= 'RewriteRule ^'. $val['pretty_name'].'(.+?)$ '.$name.'?q=$1 [L,QSA]' . $sep;
+                    }
                 }
 
                 // Send back the consolidated rules
@@ -2234,7 +2249,7 @@ OUT;
                                         $pagination .= "<a href=\"" . $targetpage . $pagestring . $counter . "\">$counter</a>";
                                     }
                                 }
-                                $pagination .= "...";
+                                $pagination .= "<span class=\"elipses\">...</span>";
                                 $pagination .= "<a href=\"" . $targetpage . $pagestring . $lpm1 . "\">$lpm1</a>";
                                 $pagination .= "<a href=\"" . $targetpage . $pagestring . $lastpage . "\">$lastpage</a>";
                         }
@@ -2266,6 +2281,105 @@ OUT;
                     $pagination .= "<span class=\"page_disabled next\">".$next_text."</span>";
                 }
                 $pagination .= "</div>\n";
+            }
+            return $pagination;
+        }
+
+        function getPaginationArray( $page = 1, $totalitems, $limit = 15, $adjacents = 1, $targetpage = "/", $pagestring = "?page=", $prev_text, $next_text, $simple ){
+            //defaults
+            if( !$adjacents ) $adjacents = 1;
+            if( !$limit ) $limit = 15;
+            if( !$page ) $page = 1;
+            if( !$targetpage ) $targetpage = "/";
+
+            //other vars
+            $prev = $page - 1; //previous page is page - 1
+            $next = $page + 1; //next page is page + 1
+            $lastpage = ceil($totalitems / $limit); //lastpage is = total items / items per page, rounded up.
+            $lpm1 = $lastpage - 1; //last page minus 1
+
+            $pagination = array();
+            if( $lastpage > 1 ){
+
+                //previous button
+                if( $page > 1 ){
+                    $pagination[] = array( 'crumb_type'=>'prev', 'link'=>$targetpage . $pagestring . $prev, 'text'=>$prev_text, 'disabled'=>'0', 'current'=>'0' );
+                }
+                else{
+                    $pagination[] = array( 'crumb_type'=>'prev', 'link'=>'', 'text'=>$prev_text, 'disabled'=>'1', 'current'=>'0' );
+                }
+
+                //pages
+                if( !$simple ){
+                    if( $lastpage < 7 + ($adjacents * 2) ){ //not enough pages to bother breaking it up
+                        for( $counter = 1; $counter <= $lastpage; $counter++ ){
+                            if( $counter == $page ){
+                                $pagination[] = array( 'crumb_type'=>'page', 'link'=>$targetpage . $pagestring . $counter, 'text'=>$counter, 'disabled'=>'0', 'current'=>'1' );
+                            }
+                            else{
+                                $pagination[] = array( 'crumb_type'=>'page', 'link'=>$targetpage . $pagestring . $counter, 'text'=>$counter, 'disabled'=>'0', 'current'=>'0' );
+                            }
+                        }
+                    }
+                    elseif( $lastpage >= 7 + ($adjacents * 2) ){ //enough pages to hide some
+                        //close to beginning; only hide later pages
+                        if($page < 1 + ($adjacents * 3)){
+                            for( $counter = 1; $counter < 4 + ($adjacents * 2); $counter++ ){
+                                if( $counter == $page ){
+                                    $pagination[] = array( 'crumb_type'=>'page', 'link'=>$targetpage . $pagestring . $counter, 'text'=>$counter, 'disabled'=>'0', 'current'=>'1' );
+                                }
+                                else{
+                                    $pagination[] = array( 'crumb_type'=>'page', 'link'=>$targetpage . $pagestring . $counter, 'text'=>$counter, 'disabled'=>'0', 'current'=>'0' );
+                                }
+                            }
+                            $pagination[] = array( 'crumb_type'=>'ellipses', 'link'=>'', 'text'=>'...', 'disabled'=>'0', 'current'=>'0' );
+                            $pagination[] = array( 'crumb_type'=>'page', 'link'=>$targetpage . $pagestring . $lpm1, 'text'=>$lpm1, 'disabled'=>'0', 'current'=>'0' );
+                            $pagination[] = array( 'crumb_type'=>'page', 'link'=>$targetpage . $pagestring . $lastpage, 'text'=>$lastpage, 'disabled'=>'0', 'current'=>'0' );
+                        }
+                        //in middle; hide some front and some back
+                        elseif( $lastpage - ($adjacents * 2) > $page && $page > ($adjacents * 2) ){
+                                $pagination[] = array( 'crumb_type'=>'page', 'link'=>$targetpage . $pagestring . '1', 'text'=>'1', 'disabled'=>'0', 'current'=>'0' );
+                                $pagination[] = array( 'crumb_type'=>'page', 'link'=>$targetpage . $pagestring . '2', 'text'=>'2', 'disabled'=>'0', 'current'=>'0' );
+                                $pagination[] = array( 'crumb_type'=>'ellipses', 'link'=>'', 'text'=>'...', 'disabled'=>'0', 'current'=>'0' );
+                                for( $counter = $page - $adjacents; $counter <= $page + $adjacents; $counter++ ){
+                                    if( $counter == $page ){
+                                        $pagination[] = array( 'crumb_type'=>'page', 'link'=>$targetpage . $pagestring . $counter, 'text'=>$counter, 'disabled'=>'0', 'current'=>'1' );
+                                    }
+                                    else{
+                                        $pagination[] = array( 'crumb_type'=>'page', 'link'=>$targetpage . $pagestring . $counter, 'text'=>$counter, 'disabled'=>'0', 'current'=>'0' );
+                                    }
+                                }
+                                $pagination[] = array( 'crumb_type'=>'ellipses', 'link'=>'', 'text'=>'...', 'disabled'=>'0', 'current'=>'0' );
+                                $pagination[] = array( 'crumb_type'=>'page', 'link'=>$targetpage . $pagestring . $lpm1, 'text'=>$lpm1, 'disabled'=>'0', 'current'=>'0' );
+                                $pagination[] = array( 'crumb_type'=>'page', 'link'=>$targetpage . $pagestring . $lastpage, 'text'=>$lastpage, 'disabled'=>'0', 'current'=>'0' );
+                        }
+                        //close to end; only hide early pages
+                        else{
+                                $pagination[] = array( 'crumb_type'=>'page', 'link'=>$targetpage . $pagestring . '1', 'text'=>'1', 'disabled'=>'0', 'current'=>'0' );
+                                $pagination[] = array( 'crumb_type'=>'page', 'link'=>$targetpage . $pagestring . '2', 'text'=>'2', 'disabled'=>'0', 'current'=>'0' );
+                                $pagination[] = array( 'crumb_type'=>'ellipses', 'link'=>'', 'text'=>'...', 'disabled'=>'0', 'current'=>'0' );
+                                for( $counter = $lastpage - (1 + ($adjacents * 3)); $counter <= $lastpage; $counter++ ){
+                                    if( $counter == $page ){
+                                        $pagination[] = array( 'crumb_type'=>'page', 'link'=>$targetpage . $pagestring . $counter, 'text'=>$counter, 'disabled'=>'0', 'current'=>'1' );
+                                    }
+                                    else{
+                                        $pagination[] = array( 'crumb_type'=>'page', 'link'=>$targetpage . $pagestring . $counter, 'text'=>$counter, 'disabled'=>'0', 'current'=>'0' );
+                                    }
+                                }
+                        }
+                    }
+                }
+                else{
+                    $counter = $lastpage + 1;
+                }
+
+                //next button
+                if( $page < $counter - 1 ){
+                    $pagination[] = array( 'crumb_type'=>'next', 'link'=>$targetpage . $pagestring . $next, 'text'=>$next_text, 'disabled'=>'0', 'current'=>'0' );
+                }
+                else{
+                    $pagination[] = array( 'crumb_type'=>'next', 'link'=>'', 'text'=>$next_text, 'disabled'=>'1', 'current'=>'0' );
+                }
             }
             return $pagination;
         }

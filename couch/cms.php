@@ -42,6 +42,8 @@
 
     require_once( K_COUCH_DIR.'header.php' );
 
+    define( 'K_IGNORE_CANONICAL_URL', '1' );
+    define( 'K_IGNORE_CONTEXT', '2' );
 
     $script = str_replace('\\', '/', realpath($_SERVER['SCRIPT_FILENAME']));
     $script = substr( $script, strlen(K_SITE_DIR) );
@@ -237,6 +239,9 @@
                 $html = ob_get_contents();
                 ob_end_clean();
 
+                // HOOK: pre_process_page
+                $FUNCS->dispatch_event( 'pre_process_page', array(&$html, &$PAGE, &$ignore_canonical_url) );
+
                 $parser = new KParser( $html );
                 $html = $parser->get_HTML();
                 //echo $parser->get_info();
@@ -285,10 +290,6 @@
                         }
                     }
                 }
-            }
-
-            if( !is_null($PAGE->abort) ){ // if set by 'abort' tag in script, output the HTML specified it.
-                $html = $PAGE->abort;
             }
 
             $content_type = ( $PAGE->content_type ) ? $PAGE->content_type : 'text/html';

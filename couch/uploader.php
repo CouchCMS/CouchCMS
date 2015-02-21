@@ -80,7 +80,7 @@
 	$fileName = isset($_REQUEST["name"]) ? $_REQUEST["name"] : '';
 
 	// Clean the fileName for security reasons
-	$fileName = preg_replace('/[^\w\._]+/', '_', $fileName);
+	$fileName = preg_replace('/[^\w\._-]+/', '_', $fileName);
 
 	// Make sure the fileName is unique but only if chunking is disabled
 	if ($chunks < 2 && file_exists($targetDir . DIRECTORY_SEPARATOR . $fileName)) {

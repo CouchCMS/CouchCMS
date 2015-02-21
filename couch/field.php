@@ -1112,20 +1112,17 @@
         function _render( $input_name, $input_id, $extra='' ){
             global $FUNCS, $CTX;
 
-            if( $this->page->tpl_nested_pages ): ?>
-                <div id="list-folders" style="margin-top:10px; ">
-                    <?php
-                        $tree = $FUNCS->get_nested_pages( $this->page->tpl_id, $this->page->tpl_name, $this->page->tpl_access_level, 'weightx', 'asc' );
-                        $CTX->push( '__ROOT__' );
-                        $dropdown_html = '';
-                        $hilited = $this->get_data();
-                        $tree->visit( array('KNestedPage', '_k_visitor_pages'), $dropdown_html, $hilited, 0/*$depth*/, 0/*$extended_info*/, array($this->page->page_name)/*$exclude*/ );
-                        $CTX->pop();
-                        $html = '<select id="'.$input_id.'" name="'.$input_name.'"><option value="-1" >--'.$FUNCS->t('none').'--</option>' .$dropdown_html . '</select>';
-                    ?>
-                </div>
-            <?php endif;
-
+            if( $this->page->tpl_nested_pages ){
+                $html = '<div id="list-folders" style="margin-top:10px; ">';
+                $tree = $FUNCS->get_nested_pages( $this->page->tpl_id, $this->page->tpl_name, $this->page->tpl_access_level, 'weightx', 'asc' );
+                $CTX->push( '__ROOT__' );
+                $dropdown_html = '';
+                $hilited = $this->get_data();
+                $tree->visit( array('KNestedPage', '_k_visitor_pages'), $dropdown_html, $hilited, 0/*$depth*/, 0/*$extended_info*/, array($this->page->page_name)/*$exclude*/ );
+                $CTX->pop();
+                $html .= '<select id="'.$input_id.'" name="'.$input_name.'"><option value="-1" >--'.$FUNCS->t('none').'--</option>' .$dropdown_html . '</select>';
+                $html .= '</div>';
+            }
             return $html;
         }
 

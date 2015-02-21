@@ -50,8 +50,8 @@
 
     if( !defined('K_COUCH_DIR') ) die(); // cannot be loaded directly
 
-    define( 'K_COUCH_VERSION', '1.4.5RC1' ); // Changes with every release
-    define( 'K_COUCH_BUILD', '20140929' ); // YYYYMMDD - do -
+    define( 'K_COUCH_VERSION', '1.4.5RC2' ); // Changes with every release
+    define( 'K_COUCH_BUILD', '20141202' ); // YYYYMMDD - do -
 
     if( file_exists(K_COUCH_DIR.'config.php') ){
         require_once( K_COUCH_DIR.'config.php' );
@@ -200,7 +200,7 @@
             $url .=  's';
         }
         $url .=  '://';
-        if( $_SERVER['SERVER_PORT']!='80' ){
+        if( $_SERVER['SERVER_PORT']!='80' && $_SERVER['SERVER_PORT']!='443' ){
             $port = ':' . $_SERVER['SERVER_PORT'];
         }
 

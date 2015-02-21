@@ -9,7 +9,12 @@
         require_once( K_COUCH_DIR.'header.php' );
 
         if( !session_id() ) @session_start();
-        if( $AUTH->user->access_level >= K_ACCESS_LEVEL_ADMIN ){
+
+        // HOOK: kcfinder_alter_access
+        $__kcfinder_allow_access = 0;
+        $FUNCS->dispatch_event( 'kcfinder_alter_access', array(&$__kcfinder_allow_access) );
+
+        if( $AUTH->user->access_level >= K_ACCESS_LEVEL_ADMIN || $__kcfinder_allow_access ){
 
             // check nonce
             $FUNCS->validate_nonce( 'kc_finder' );

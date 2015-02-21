@@ -141,16 +141,21 @@
 
             extract( $FUNCS->get_named_vars(
                         array( 'var'=>'',
-                               'local_only'=>''
+                               'local_only'=>'',
+                               'default'=>'',
                               ),
                         $params)
                    );
 
             $var = trim($var);
             $scope = ( $local_only==1 ) ? 1 : 0;
+            $has_default = ( strlen($default) ) ? 1 : 0;
 
             if( $var ){
-                return $CTX->get( $var, $scope );
+                $val = $CTX->get( $var, $scope );
+                if( $has_default && !strlen($val) ){ $val = $default; }
+
+                return $val;
             }
         }
 
@@ -629,6 +634,7 @@
 
             extract( $FUNCS->get_named_vars(
                         array( 'name'=>'',
+                               'id'=>'',
                                'masterpage'=>''
                               ),
                         $params)
@@ -638,8 +644,16 @@
             $masterpage = trim( $masterpage );
             if( $masterpage=='' ){ $masterpage = $PAGE->tpl_name; }
             $name = trim( $name );
+            $id = trim( $id );
+            if( strlen($id) && !$FUNCS->is_non_zero_natural($id) ) $id='';
 
-            $sql = "t.id = p.template_id and t.name='" . $DB->sanitize( $masterpage ) . "' and page_name='" . $DB->sanitize( $name ). "'";
+
+            if( $name ){
+                $sql = "t.id = p.template_id and t.name='" . $DB->sanitize( $masterpage ) . "' and page_name='" . $DB->sanitize( $name ). "'";
+            }
+            else{ //id
+                $sql = "t.id = p.template_id and t.name='" . $DB->sanitize( $masterpage ) . "' and p.id='" . $DB->sanitize( $id ). "'";
+            }
             $rs = $DB->select( K_TBL_TEMPLATES . ' t, ' . K_TBL_PAGES . ' p ', array('p.id'), $sql );
             if( count($rs) ){
                 return 1;
@@ -656,6 +670,7 @@
 
             extract( $FUNCS->get_named_vars(
                         array( 'name'=>'',
+                               'id'=>'',
                                'masterpage'=>''
                               ),
                         $params)
@@ -665,8 +680,15 @@
             $masterpage = trim( $masterpage );
             if( $masterpage=='' ){ $masterpage = $PAGE->tpl_name; }
             $name = trim( $name );
+            $id = trim( $id );
+            if( strlen($id) && !$FUNCS->is_non_zero_natural($id) ) $id='';
 
-            $sql = "t.id = f.template_id and t.name='" . $DB->sanitize( $masterpage ) . "' and f.name='" . $DB->sanitize( $name ). "'";
+            if( $name ){
+                $sql = "t.id = f.template_id and t.name='" . $DB->sanitize( $masterpage ) . "' and f.name='" . $DB->sanitize( $name ). "'";
+            }
+            else{
+                $sql = "t.id = f.template_id and t.name='" . $DB->sanitize( $masterpage ) . "' and f.id='" . $DB->sanitize( $id ). "'";
+            }
             $rs = $DB->select( K_TBL_TEMPLATES . ' t, ' . K_TBL_FOLDERS . ' f ', array('f.id'), $sql );
             if( count($rs) ){
                 return 1;
@@ -1546,6 +1568,9 @@
                 foreach( $node->children as $child ){
                     $child->get_HTML();
                 }
+
+                // HOOK: template_tag_end
+                $FUNCS->dispatch_event( 'template_tag_end', array($params, $node) );
             }
         }
 
@@ -1614,6 +1639,7 @@
                                'masterpage'=>'',
                                'id'=>'',
                                'page_name'=>'',
+                               'page_title'=>'',
                                'is_master'=>'0',
                                'limit'=>'',
                                'offset'=>'0',
@@ -1645,6 +1671,8 @@
 
                                'show_unpublished'=>'0', /* only for admins */
                                'aggregate_by'=>'',    /* the relation field to aggregate for count */
+
+                               'base_link'=>'', /* replaces the default $PAGE->link used for paginator crumb links */
                               ),
                         $params);
 
@@ -1656,6 +1684,7 @@
             // sanitize params
             $masterpage = trim( $masterpage );
             $page_name = trim( $page_name );
+            $page_title = trim( $page_title );
             $limit = $FUNCS->is_non_zero_natural( $limit ) ? intval( $limit ) : 1000; //Practically unlimited.
             $offset = $FUNCS->is_natural( $offset ) ? intval( $offset ) : 0;
             $startcount = $FUNCS->is_int( $startcount ) ? intval( $startcount ) : 1;
@@ -1671,6 +1700,7 @@
             $return_sql = ( $return_sql==1 || $return_sql==2 ) ? intval( $return_sql ) : 0;
             $show_unpublished = ( $show_unpublished==1 ) ? 1 : 0;
             $aggregate_by = trim( $aggregate_by );
+            $base_link = trim( $base_link );
 
             $qs_param = trim( $qs_param );
             if( $qs_param=='' ){
@@ -1746,6 +1776,11 @@
                 // name?
                 if( $page_name ){
                     $sql .= $FUNCS->gen_sql( $page_name, 'p.page_name');
+                }
+
+                // title?
+                if( $page_title ){
+                    $sql .= $FUNCS->gen_sql( $page_title, 'p.page_title');
                 }
 
                 // folder?
@@ -2462,12 +2497,18 @@
             $total_pages = ceil( $total_rows/$limit );
 
             $count = count($rs);
-            $page_link = K_SITE_URL . $PAGE->link;
+            $page_link = ( strlen($base_link) ) ?  $base_link : K_SITE_URL . $PAGE->link;
+
             // append querystring params, if any
             $sep = '';
+            // HOOK: skip_qs_params_in_paginator
+            $skip_qs = array();
+            $FUNCS->dispatch_event( 'skip_qs_params_in_paginator', array(&$skip_qs) );
             foreach( $_GET as $qk=>$qv ){
                 if( $qk=='p' || $qk=='f' || $qk=='d' || $qk=='fname'|| $qk=='pname' || $qk=='_nr_' ) continue;
                 if( $qk==$qs_param ) continue; //'pg' or 'comments_pg'
+                if( in_array($qk, $skip_qs) ) continue;
+
                 if( is_array($qv) ){ //checkboxes
                     foreach( $qv as $qvv ){
                         $qs .= $sep . $qk . '[]=' . urlencode($qvv);
@@ -4943,7 +4984,6 @@ MAP;
 
         function paginator( $params, $node ){
             global $CTX, $FUNCS, $PAGE;
-            if( count($node->children) ) {die("ERROR: Tag \"".$node->name."\" is a self closing tag");}
 
             if( !$CTX->get('k_paginator_required') ) return;
 
@@ -4976,7 +5016,28 @@ MAP;
             $limit = $CTX->get( 'k_paginate_limit' );
             $targetpage = $page_link;
             $pagestring = $sep . $qs_param . "=";
-            return $FUNCS->getPaginationString( $page, $totalitems, $limit, $adjacents, $targetpage, $pagestring, $prev_text, $next_text, $simple );
+
+            if( !count($node->children) ){
+                return $FUNCS->getPaginationString( $page, $totalitems, $limit, $adjacents, $targetpage, $pagestring, $prev_text, $next_text, $simple );
+            }
+            else{
+                $arr_items = $FUNCS->getPaginationArray( $page, $totalitems, $limit, $adjacents, $targetpage, $pagestring, $prev_text, $next_text, $simple );
+
+                foreach( $arr_items as $item ){
+                    $vars = array();
+                    $vars['k_crumb_type'] = $item['crumb_type']; // one of these 4: 'next', 'prev', 'ellipses' or 'page'
+                    $vars['k_crumb_link'] = $item['link'];
+                    $vars['k_crumb_text'] = $item['text'];
+                    $vars['k_crumb_disabled'] = $item['disabled']; // pertinent for only 'next' and 'prev'
+                    $vars['k_crumb_current'] = $item['current']; // pertinent for only 'page'
+                    $CTX->set_all( $vars );
+
+                    foreach( $node->children as $child ){
+                        $html .= $child->get_HTML();
+                    }
+                }
+                return $html;
+            }
         }
 
         function process_comment( $params, $node ){
@@ -5043,7 +5104,8 @@ MAP;
                         array(
                               'var'=>'',
                               'method'=>'', /* get/post/cookie */
-                              'strip_tags'=>'1'
+                              'strip_tags'=>'1',
+                              'default'=>'',
                               ),
                         $params)
                    );
@@ -5052,14 +5114,13 @@ MAP;
             $method = strtolower( trim($method) );
             if( !in_array($method, array('get', 'post', 'cookie')) ){ $method=''; }
             $strip_tags = ( $strip_tags==0 ) ? 0 : 1;
+            $has_default = ( strlen($default) ) ? 1 : 0;
 
             switch( $method ){
                 case 'get':
                     $method = $_GET;
-                    if( isset($_GET[$var]) ){
-                        return $_GET[$var];
-                    }
-                    return;
+                    $no_xss_check = 1;
+                    break;
                 case 'post':
                     $method = $_POST;
                     break;
@@ -5071,10 +5132,15 @@ MAP;
             }
 
             if( isset($method[$var]) ){
-                $val = $FUNCS->cleanXSS( $method[$var] );
-                return ( $strip_tags ) ? strip_tags($val) : $val;
+                $val = $method[$var];
+                if( !$no_xss_check ){
+                    $val = $FUNCS->cleanXSS( $val );
+                    if( $strip_tags ){ $val = strip_tags($val); }
+                }
             }
+            if( $has_default && !strlen($val) ){ $val = $default; }
 
+            return $val;
         }
 
         function html_encode( $params, $node ){
@@ -5152,36 +5218,47 @@ MAP;
 
         // Sets its enclosed contents as the output of the current page.
         // If has nested 'abort' tags, the output of the deepest one will be used.
-        // If multiple 'abort' tags on the same page, the first tag's output will be used.
-        function abort( $params, $node ){
-            global $FUNCS, $PAGE;
-
-            $html = '';
-            if( is_null($PAGE->abort) ){
-                foreach( $node->children as $child ){
-                    $html .= $child->get_HTML();
-                }
-                if( is_null($PAGE->abort) ) $PAGE->abort = $html; // a child 'abort' tag could have set this
-            }
-            return;
-
-        }
-
-        // Sets its enclosed contents as the output of the current page.
-        // If has nested 'abend' tags, the output of the deepest one will be used.
-        // If multiple 'abend' tags on the same page, the first tag's output will be used.
+        // If multiple 'abort' tags on the same page, the first encountered tag's output will be used.
         // Content is never cached.
-        function abend( $params, $node ){
+        //
+        // Output for 404 is explicit 'msg' param or '404.php' file in root or 'Page not found' string.
+        function abort( $params, $node ){
             global $FUNCS, $PAGE, $DB;
+
+            extract( $FUNCS->get_named_vars(
+                    array(
+                          'msg'=>'',
+                          'is_404'=>'0',
+                        ),
+                    $params)
+                );
+            $is_404 = ( $is_404==1 ) ? 1 : 0;
 
             ob_end_clean(); // discard all previous content..
 
             $html = '';
-            foreach( $node->children as $child ){
-                $html .= $child->get_HTML();
+            if( count($node->children) ){
+                foreach( $node->children as $child ){
+                    $html .= $child->get_HTML();
+                }
+            }
+            else{ // self-closing
+                $html = $msg;
             }
 
             $DB->commit( 1 ); // force commit, we are finished.
+
+            if( $is_404 ){
+                header('HTTP/1.1 404 Not Found');
+                header('Status: 404 Not Found');
+                if( !strlen(trim($html)) ){
+                    $html='';
+                    if( file_exists(K_SITE_DIR . '404.php') ){
+                        $html = $FUNCS->file_get_contents( K_SITE_URL . '404.php' );
+                    }
+                    if( !$html ) $html = 'Page not found';
+                }
+            }
             $content_type = ( $PAGE->content_type ) ? $PAGE->content_type : 'text/html';
             $content_type_header = 'Content-Type: '.$content_type.';';
             $content_type_header .= ' charset='.K_CHARSET;
@@ -5580,15 +5657,20 @@ MAP;
 
             extract( $FUNCS->get_named_vars(
                         array(
-                               'name'=>''
+                               'name'=>'',
+                               'default'=>'',
                               ),
                         $params)
                    );
             $name = trim( $name );
+            $has_default = ( strlen($default) ) ? 1 : 0;
 
             if( isset($_COOKIE[$name]{0}) ){
-                return $FUNCS->cleanXSS( $_COOKIE[$name] );
+                $val = $FUNCS->cleanXSS( $_COOKIE[$name] );
             }
+            if( $has_default && !strlen($val) ){ $val = $default; }
+
+            return $val;
         }
 
         function delete_cookie( $params, $node, $create=0 ){

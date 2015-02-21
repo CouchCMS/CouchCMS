@@ -140,15 +140,36 @@
         }
 
         function delete_custom_user_fields( &$user ){
+            global $FUNCS;
+
             $pg = $this->_get_associated_page( $user );
             if( !$pg || $pg->id==-1 ) return;
 
+            $FUNCS->remove_event_listener( 'page_deleted', array($KUSER, 'delete_user_account') );
             $pg->delete();
+            $FUNCS->add_event_listener( 'page_deleted', array($KUSER, 'delete_user_account') );
 
             // if we are here, delete was successful (script would have died otherwise)
             $pg->destroy();
             unset( $pg );
 
+        }
+
+        function delete_user_account( &$pg ){
+            global $FUNCS;
+
+            if( $pg->tpl_name!=$this->users_tpl ){ return; }
+
+            $user_id = trim( $pg->_fields['extended_user_id']->get_data() );
+            if( $FUNCS->is_non_zero_natural($user_id) && $user_id != -1 ){
+                $user = new KUser( $user_id, 1 );
+                if( $user->access_level <= K_ACCESS_LEVEL_AUTHENTICATED ){
+
+                    $FUNCS->remove_event_listener( 'user_deleted', array($KUSER, 'delete_custom_user_fields') );
+                    $user->delete();
+                    $FUNCS->add_event_listener( 'user_deleted', array($KUSER, 'delete_custom_user_fields') );
+                }
+            }
         }
 
         function set_custom_fields_in_context(){
@@ -763,6 +784,7 @@
     $FUNCS->add_event_listener( 'page_presave', array($KUSER, 'sanitize_title') );
     $FUNCS->add_event_listener( 'page_validate', array($KUSER, 'sync_user_to_page') );
     $FUNCS->add_event_listener( 'edit_page_prerender', array($KUSER, 'hide_fields') );
+    $FUNCS->add_event_listener( 'page_deleted', array($KUSER, 'delete_user_account') );
 
     $FUNCS->add_event_listener( 'alter_final_page_output', array($KUSER, 'add_test_login_cookie') );
     $FUNCS->add_event_listener( 'get_login_link', array($KUSER, 'alter_login_link') );

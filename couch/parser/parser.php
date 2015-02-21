@@ -61,9 +61,9 @@
         var $ctx = array();
         // 'listfolders' and 'dropdownfolders' internally use 'folders' hence need a context
         // 'do_shortcodes' stores self object in $CTX hence needs a scope.
-        var $support_scope = array('__ROOT__', 'test', 'repeat', 'hide', 'each', 'pages', 'folder', 'folders', 'listfolders', 'dropdownfolders', 'parentfolders', 'breadcrumbs', 'archives', 'form', 'paypal_processor', 'search', 'comments', 'query', 'link', 'calendar', 'weeks', 'days', 'entries', 'templates', 'capture', 'do_shortcodes', 'nested_pages', 'nested_crumbs', 'menu', 'exif');
+        var $support_scope = array('__ROOT__', 'test', 'repeat', 'hide', 'each', 'pages', 'folder', 'folders', 'listfolders', 'dropdownfolders', 'parentfolders', 'breadcrumbs', 'archives', 'form', 'paypal_processor', 'search', 'comments', 'query', 'link', 'calendar', 'weeks', 'days', 'entries', 'templates', 'capture', 'do_shortcodes', 'nested_pages', 'nested_crumbs', 'menu', 'exif', 'paginator');
         // All tags that 'loop' (i.e. call 'foreach( $node->children as $child )' multiple times.
-        var $support_zebra = array('__ROOT__',  'while', 'repeat', 'each', 'pages', 'folders', 'listfolders', 'dropdownfolders', 'parentfolders', 'archives', 'search', 'comments', 'query', 'weeks', 'days', 'entries', 'templates', 'nested_pages', 'nested_crumbs', 'menu');
+        var $support_zebra = array('__ROOT__',  'while', 'repeat', 'each', 'pages', 'folders', 'listfolders', 'dropdownfolders', 'parentfolders', 'archives', 'search', 'comments', 'query', 'weeks', 'days', 'entries', 'templates', 'nested_pages', 'nested_crumbs', 'menu', 'paginator');
 
         function KContext(){
 
@@ -316,30 +316,30 @@
                             $params = $FUNCS->resolve_parameters( $this->attributes );
                         }
 
-                        // HOOK: alter_tag_execute
-                        $skip = $FUNCS->dispatch_event( 'alter_tag_execute', array($this->name, &$params, &$this, &$html) );
+                        // HOOK: alter_tag_<tag_name>_execute
+                        $skip = $FUNCS->dispatch_event( 'alter_tag_'.$this->name.'_execute', array($this->name, &$params, &$this, &$html) );
 
                         if( !$skip ){
                             $html = call_user_func( array($TAGS, $func), $params, $this );
                         }
 
-                        // HOOK: tag_executed
-                        $FUNCS->dispatch_event( 'tag_executed', array($this->name, &$params, &$this, &$html) );
+                        // HOOK: tag_<tag_name>_executed
+                        $FUNCS->dispatch_event( 'tag_'.$this->name.'_executed', array($this->name, &$params, &$this, &$html) );
                     }
                     else{
                         $tagname = $this->name;
                         if( array_key_exists( $tagname, $FUNCS->tags) ){
                             $params = $FUNCS->resolve_parameters( $this->attributes );
 
-                            // HOOK: alter_tag_execute
-                            $skip = $FUNCS->dispatch_event( 'alter_tag_execute', array($this->name, &$params, &$this, &$html) );
+                            // HOOK: alter_tag_<tag_name>_execute
+                            $skip = $FUNCS->dispatch_event( 'alter_tag_'.$this->name.'_execute', array($this->name, &$params, &$this, &$html) );
 
                             if( !$skip ){
                                 $html = call_user_func( $FUNCS->tags[$tagname]['handler'], $params, $this );
                             }
 
-                            // HOOK: tag_executed
-                            $FUNCS->dispatch_event( 'tag_executed', array($this->name, &$params, &$this, &$html) );
+                            // HOOK: tag_<tag_name>_executed
+                            $FUNCS->dispatch_event( 'tag_'.$this->name.'_executed', array($this->name, &$params, &$this, &$html) );
                         }
                         else{
                             // after search in installed modules..

@@ -295,7 +295,21 @@
             $input_name = 'f_'.$this->name.'_chk';
             $arr_posted = array();
             if( $post_val ){
+                // check if '+' or '-' specified
+                $post_val = trim( $post_val );
+                $op = $post_val{0};
+                if( $op=='+' || $op=='-' ){
+                    $post_val = substr( $post_val, 1 );
+                }
+
                 $arr_posted = array_map( "trim", explode( ',', $post_val ) );
+
+                if( $op=='+' ){
+                    $arr_posted = array_merge( $this->items_selected, array_diff($arr_posted, $this->items_selected) );
+                }
+                elseif( $op=='-' ){
+                    $arr_posted = array_diff( $this->items_selected, $arr_posted );
+                }
             }
             else{
                 if( isset($_POST[$input_name]) ){

@@ -36,10 +36,7 @@
     */
 
     if ( !defined('K_COUCH_DIR') ) die(); // cannot be loaded directly
-    if ( defined('K_ADMIN') ){
-        require_once( K_COUCH_DIR.'includes/timthumb.php' );
-    }
-
+    require_once( K_COUCH_DIR.'includes/timthumb.php' );
     require_once( K_COUCH_DIR.'field.php' );
     require_once( K_COUCH_DIR.'folder.php' );
 
@@ -108,7 +105,6 @@
 
         var $CKEditor = null; // used by KField while rendering itself
         var $content_type; //can be optionally set by script via 'content_type' tag
-        var $abort = null; // can be set by script vis 'abort' tag
 
         var $accessed_via_browser = 0; // will be set to 1 for only the template accessed via URL in browser
         var $_template_locked = 0;
