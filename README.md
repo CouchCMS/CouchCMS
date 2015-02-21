@@ -1,6 +1,4 @@
-[<img src="http://www.couchcms.com/img/logo.png">](http://google.com.au/)
-
-# [CouchCMS](http://www.couchcms.com/)
+# [<img src="http://www.couchcms.com/img/logo.png">](http://www.couchcms.com/)
 ###A simple open-source CMS for designers.
 
 #####No knowledge of PHP required at all.
