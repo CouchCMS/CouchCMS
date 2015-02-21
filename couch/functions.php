@@ -54,9 +54,11 @@
 
         var $_t = array(); // translated strings
         var $shortcodes = array();
-        var $views = array();
+        var $admin_list_views = array();
+        var $admin_page_views = array();
         var $tags = array();
         var $udfs = array();
+        var $udform_fields = array();
         var $scripts = array();
         var $styles = array();
         var $repeatable = array();
@@ -786,7 +788,7 @@
             $val = $this->unhtmlentities( $val, K_CHARSET ); //html_entity_decode( $val, ENT_NOQUOTES );
             $val = trim( strip_tags($val) );
 
-            $val = htmlspecialchars( $val, ENT_QUOTES ); //to match the xss cleaned $_GET search terms
+            $val = htmlspecialchars( $val, ENT_QUOTES, K_CHARSET ); //to match the xss cleaned $_GET search terms
             $val = preg_replace( "/[\r\n\t]+/", " ", $val );
             $val = preg_replace( "/[ ]+/", " ", $val );
             return $val;
@@ -794,7 +796,7 @@
 
         // Differs from 'htmlspecialchars' in that it does not encode '&' of already encoded entities like &nbsp;
         function escape_HTML( $str ){
-            $str = preg_replace( "/&amp;(#[0-9]+|[a-z]+);/i", "&$1;", htmlspecialchars($str, ENT_QUOTES) );
+            $str = preg_replace( "/&amp;(#[0-9]+|[a-z]+);/i", "&$1;", htmlspecialchars($str, ENT_QUOTES, K_CHARSET) );
 
             return $str;
         }
@@ -1103,16 +1105,16 @@
             $pattern = '/([0-9]{4})(?:-([0-9]{1,2}))?(?:-([0-9]{1,2}))?(?:\s+([0-9]{1,2}))?(?:\:([0-9]{1,2}))?(?:\:([0-9]{1,2}))?/';
             preg_match( $pattern, $str, $matches );
             $year = ($matches[1]) ? $matches[1] : '1970';
-            if( $year < '1970' ) $year = '1970';
+            if( $year=='0000' ) $year = '1970';
             $month = ($matches[2]) ? $matches[2] : '01';
             $day = ($matches[3]) ? $matches[3] : '01';
             $hour = ($matches[4]) ? $matches[4] : '00';
             $min = ($matches[5]) ? $matches[5] : '00';
             $sec = ($matches[6]) ? $matches[6] : '00';
 
-            return @date('Y-m-d H:i:s', @mktime($hour, $min, $sec, $month, $day, $year) );
-            //$iso_format = "%04d-%02d-%02d %02d:%02d:%02d";
-            //return sprintf( $iso_format, $year, $month, $day, $hour, $min, $sec );
+            //return @date('Y-m-d H:i:s', @mktime($hour, $min, $sec, $month, $day, $year) ); // mktime can only handle a range of 1970 to 2038
+            $iso_format = "%04d-%02d-%02d %02d:%02d:%02d";
+            return sprintf( $iso_format, $year, $month, $day, $hour, $min, $sec );
 
         }
 
@@ -1275,7 +1277,7 @@
                 }
 
                 // Send back the consolidated rules
-                $header .= 'Options +Indexes +FollowSymlinks -MultiViews' . $sep;
+                $header .= 'Options +FollowSymlinks -MultiViews' . $sep;
                 $header .= '&lt;IfModule mod_rewrite.c&gt;' . $sep;
                 $header .= 'RewriteEngine On' . $sep;
                 $header .= $sep;
@@ -1428,14 +1430,24 @@
             return $key;
         }
 
-        function create_nonce( $action, $username='' ){
+        function create_nonce( $action, $username='', $last_period=0 ){
             global $AUTH;
 
             // Three things go into creating a nonce-
             // Current user, the action this nonce is created for and a time period
             // for which the nonce remains valid
-            $valid_for = ceil( (time() + (K_GMT_OFFSET * 60 * 60))/(3600 * 24) ); //max 24 hrs local time
-            if( empty($username) ) $username = $AUTH->user->name;
+            $valid_for = ceil( (time() + (K_GMT_OFFSET * 60 * 60))/(3600 * 12) ); // valid for 12 to 24 hrs server local time
+            if( $last_period ) $valid_for--;
+
+            if( empty($username) ){
+                if( $AUTH->user->id != -1 ){ // User logged-in
+                    $username = $AUTH->user->name;
+                }
+                else{ // when no user logged-in, use session_id as unique id
+                    if( !session_id() ) @session_start();
+                    $username = session_id();
+                }
+            }
             $data = $username . ':' .$action . ':' . $valid_for;
             $key = $this->hash_hmac( $data, $this->_get_nonce_secret_key() );
             $hash = $this->hash_hmac( $data, $key );
@@ -1449,11 +1461,16 @@
 
             $nonce_orig = $this->create_nonce( $action );
             if( $nonce != $nonce_orig ){
-                echo 'Security tokens do not tally for executing this action. Please try again.';
-                if( $AUTH->user->access_level >= K_ACCESS_LEVEL_ADMIN ){
-                    echo '<br /><a href="'.K_ADMIN_URL . K_ADMIN_PAGE.'">Admin Panel</a>';
+                // try moving back one period
+                $nonce_orig = $this->create_nonce( $action, '', 1 );
+                if( $nonce != $nonce_orig ){
+                    ob_end_clean();
+                    echo 'Security tokens do not tally for executing this action. Please try again.';
+                    if( $AUTH->user->access_level >= K_ACCESS_LEVEL_ADMIN ){
+                        echo '<br /><a href="'.K_ADMIN_URL . K_ADMIN_PAGE.'">Admin Panel</a>';
+                    }
+                    die;
                 }
-                die;
             }
         }
 
@@ -1461,7 +1478,14 @@
             global $AUTH;
             if( empty($nonce) ){ $nonce = $_REQUEST['nonce']; }
             $nonce_orig = $this->create_nonce( $action );
-            return ( $nonce == $nonce_orig );
+            if( $nonce != $nonce_orig ){
+                // try moving back one period
+                $nonce_orig = $this->create_nonce( $action, '', 1 );
+                if( $nonce != $nonce_orig ){
+                    return false;
+                }
+            }
+            return true;
         }
 
         function _get_nonce_secret_key(){
@@ -1791,6 +1815,14 @@
             }
         }
 
+        function validate_url( $field ){
+            // Pattern from http://mathiasbynens.be/demo/url-regex
+            $pattern = "/^(?:(?:https?|ftp):\/\/)(?:\S+(?::\S*)?@)?(?:(?!10(?:\.\d{1,3}){3})(?!127(?:\.\d{1,3}){3})(?!169\.254(?:\.\d{1,3}){2})(?!192\.168(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z\x{00a1}-\x{ffff}0-9]+-?)*[a-z\x{00a1}-\x{ffff}0-9]+)(?:\.(?:[a-z\x{00a1}-\x{ffff}0-9]+-?)*[a-z\x{00a1}-\x{ffff}0-9]+)*(?:\.(?:[a-z\x{00a1}-\x{ffff}]{2,})))(?::\d{2,5})?(?:\/[^\s]*)?$/iuS";
+            if( !preg_match($pattern, trim($field->get_data())) ){
+                return KFuncs::raise_error( "Invalid URL" );
+            }
+        }
+
         function validate_regex( $field, $args ){
             if( !preg_match(trim($args), trim($field->get_data())) ){
                 return KFuncs::raise_error( "Does not match pattern" );
@@ -1801,8 +1833,10 @@
         function validate_unique_page( $field ){
             global $DB;
 
+            $page_id = ( $field->page_id ) ? $field->page_id : $field->page->id;
+
             // Also make sure that another page by this name does not exist
-            $rs = $DB->select( K_TBL_PAGES, array('id'), "NOT id='". $DB->sanitize( $field->page_id )."' AND page_name='" . $DB->sanitize( $field->get_data() ). "' AND template_id='" . $DB->sanitize( $field->template_id ). "'" );
+            $rs = $DB->select( K_TBL_PAGES, array('id'), "NOT id='". $DB->sanitize( $page_id )."' AND page_name='" . $DB->sanitize( $field->get_data() ). "' AND template_id='" . $DB->sanitize( $field->template_id ). "'" );
             if( count($rs) ){
                 return KFuncs::raise_error( "Page already exists by this name" );
             }
@@ -1993,7 +2027,9 @@ OUT;
             $str = "\r\n=======================" . $ts . "=======================\r\n" . $msg . "\r\n";
 
             $fp = @fopen( $file,'a' );
+            flock( $fp, LOCK_EX );
             @fwrite( $fp, $str );
+            flock( $fp, LOCK_UN );
             @fclose( $fp );
         }
 
@@ -2264,7 +2300,7 @@ OUT;
 
                     // comment
                     if( isset($_POST['k_comment']) ){
-                        $allowed_tags = '<a><br><strong><b><em><i><blockquote><pre><code><ul><ol><li><del>';
+                        $allowed_tags = '<a><br><strong><b><em><i><u><blockquote><pre><code><ul><ol><li><del>';
                         $data = strip_tags( $_POST['k_comment'], $allowed_tags );
                         $data = trim( $this->cleanXSS($data, 1) );
                     }
@@ -2436,11 +2472,19 @@ OUT;
             }
         }
 
-        // for now only for internal use (listing non-nested pages)
-        function register_view( $masterpage, $filename ){
+        // for now only for internal use (listing non-nested pages in admin-panel)
+        function register_admin_listview( $masterpage, $filename ){
             $masterpage = trim( $masterpage );
             if( strlen($masterpage) ){
-                $this->views[$masterpage] = trim( $filename );
+                $this->admin_list_views[$masterpage] = trim( $filename );
+            }
+        }
+
+        // for now only for internal use (showing single page for editing in admin-panel)
+        function register_admin_pageview( $masterpage, $filename, $show_advanced_settings=1 ){
+            $masterpage = trim( $masterpage );
+            if( strlen($masterpage) ){
+                $this->admin_page_views[$masterpage] = array( trim($filename), $show_advanced_settings );
             }
         }
 
@@ -2505,6 +2549,35 @@ OUT;
             $this->udfs[$fieldtype] = array( 'handler'=>$handler_class, 'searchable'=>$searchable, 'repeatable'=>$repeatable );
         }
 
+        function register_udform_field( $fieldtype, $handler_class  ){
+            if( !is_string( $handler_class ) || !($handler_class=trim($handler_class)) ){
+                ob_end_clean();
+                die("ERROR function register_udform_field(): Please provide the name of a valid class");
+            }
+            $fieldtype = strtolower(trim($fieldtype));
+            if( !$fieldtype ){
+                ob_end_clean();
+                die("ERROR function register_udform_field(): Please provide a field type");
+            }
+
+            if( !$this->is_subclass($handler_class, 'KUserDefinedFormField') ){
+                ob_end_clean();
+                die("ERROR function register_udform_field(): ".$fieldtype." - handler not a subclass of KUserDefinedFormField");
+            }
+
+            if( $this->is_core_formfield_type($fieldtype) ){
+                ob_end_clean();
+                die("ERROR function register_udform_field(): Field \"".$fieldtype."\" is a core field");
+            }
+
+            if( array_key_exists( $fieldtype, $this->udform_fields) ){
+                ob_end_clean();
+                die("ERROR function register_udform_field(): Field \"".$fieldtype."\" already registered");
+            }
+
+            $this->udform_fields[$fieldtype] = array( 'handler'=>$handler_class );
+        }
+
         // Store the passed script to output it in admin. (called from udfs)
         function load_js( $src='' ){
             $src = trim( $src );
@@ -2525,6 +2598,11 @@ OUT;
         function is_core_type( $fieldtype ){
             $known_types = array( 'text', 'password', 'textarea', 'richtext', 'image', 'thumbnail', 'file',
                                  'radio', 'checkbox', 'dropdown', 'hidden', 'message', 'group');
+            return in_array( $fieldtype, $known_types );
+        }
+
+        function is_core_formfield_type( $fieldtype ){
+            $known_types = array( 'text', 'password', 'textarea', 'radio', 'checkbox', 'dropdown', 'hidden', 'submit', 'captcha', 'bound' );
             return in_array( $fieldtype, $known_types );
         }
 
@@ -2887,7 +2965,7 @@ OUT;
                 <script type="text/javascript" src="<?php echo K_ADMIN_URL . 'includes/mootools-core-1.4.5.js'; ?>"></script>
                 <script type="text/javascript" src="<?php echo K_ADMIN_URL . 'includes/mootools-more-1.4.0.1.js'; ?>"></script>
                 <script type="text/javascript" src="<?php echo K_ADMIN_URL . 'includes/slimbox/slimbox.js'; ?>"></script>
-                <script type="text/javascript" src="<?php echo K_ADMIN_URL . 'includes/smoothbox/smoothbox.js'; ?>"></script>
+                <script type="text/javascript" src="<?php echo K_ADMIN_URL . 'includes/smoothbox/smoothbox.js?v=1.3.5'; ?>"></script>
                 <?php
                 foreach( $this->scripts as $k=>$v ){
                     echo '<script type="text/javascript" src="'.$v.'"></script>'."\n";

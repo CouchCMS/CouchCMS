@@ -22,7 +22,7 @@
  * This is the File Manager Connector for PHP.
  */
 
-if ( !defined('K_ADMIN') ) die(); // cannot be loaded directly
+if ( !defined('K_COUCH_DIR') ) die(); // cannot be loaded directly
 
 function CombinePaths( $sBasePath, $sFolder )
 {
@@ -285,7 +285,7 @@ function SanitizeFileName( $sNewFileName )
 	$ext = '';
 	$pos = strrpos( $sNewFileName, '.' );
 	if( $pos!==false ){
-		$ext = substr( $sNewFileName, $pos+1 );
+		$ext = trim( substr($sNewFileName, $pos+1) );
 		if( $ext ){
 			$ext = '.' . $ext;
 			$sNewFileName = substr( $sNewFileName, 0, $pos );

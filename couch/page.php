@@ -108,6 +108,7 @@
         var $abort = null; // can be set by script vis 'abort' tag
 
         var $accessed_via_browser = 0; // will be set to 1 for only the template accessed via URL in browser
+        var $_template_locked = 0;
 
         function KWebpage( $template_id=null, $page_id=null, $page_name=null, $html=null, $skip_custom_fields=null ){
             global $FUNCS;
@@ -735,6 +736,10 @@
         function get_template_name(){
             global $FUNCS;
 
+            // Added this for those (extremely rare) cases where the template name cannot be calculated by the logic that follows.
+            // For this to work, place define( 'K_TEMPLATE_NAME', 'actual_template_name.php' ); before require_once( 'couch/cms.php' );
+            if ( defined('K_TEMPLATE_NAME') ) return K_TEMPLATE_NAME;
+
             // Our assumption here is that 'couch' folder resides directly in the website
             // folder it is handling.
 
@@ -760,15 +765,16 @@
 
             $DB->begin();
 
-            // serialize access.. lock template
-            $DB->update( K_TBL_TEMPLATES, array('description'=>$DB->sanitize( $this->tpl_desc )), "id='" . $DB->sanitize( $this->tpl_id ) . "'" );
-
             // Pre-save..
             // Adjust system fields.
+
             // If name empty, we create it from title field if set
-            //$title = $FUNCS->escape_HTML( trim($this->fields[0]->get_data()) );
             $title = trim( $this->fields[0]->get_data() );
             $name = trim( $this->fields[1]->get_data() );
+            if( $this->tpl_nested_pages || $this->fields[1]->modified || ($name=='' && $title!='') ){
+                $this->_lock_template(); // serialize access.. lock template
+            }
+
             if( $name=='' && $title!='' ){
                 $name = $FUNCS->get_clean_url( $title );
                 // verify the name does not already exist
@@ -788,11 +794,22 @@
                 $this->fields[1]->store_posted_changes( $name );
             }
             $this->fields[0]->data = $title;
+
             // Folder ID
             $folder_id = intval( $this->fields[2]->get_data() );
             if( !$folder_id ){
                 $this->fields[2]->store_posted_changes( '-1' );
             }
+
+            // Publish date
+            $publish_date = trim( $this->fields[3]->get_data() );
+            if( $publish_date != '0000-00-00 00:00:00' ){
+                $publish_date2 = $FUNCS->make_date( $publish_date );
+                if( $publish_date != $publish_date2 ){
+                    $this->fields[3]->store_posted_changes( $publish_date2 );
+                }
+            }
+
             // Access level
             $access_level = intval( $this->fields[4]->get_data() );
             if( $access_level<0 ) $access_level=0;
@@ -841,14 +858,6 @@
 
             if( $this->id == -1 ){
                 // New page. Create a record for it first.
-                /*$rs = $DB->insert( K_TBL_PAGES, array('template_id'=>$this->tpl_id,
-                                              'page_title'=>$title,
-                                              'page_name'=>$name,
-                                              'creation_date'=>$FUNCS->get_current_desktop_time(),
-                                              'is_master'=>'0'
-                                              )
-                         );
-                if( $rs!=1 ) die( "Failed to insert record for new page in K_TBL_PAGES" );*/
                 $last_id = $this->create( $title, $name );
                 if( $FUNCS->is_error($last_id) ) die( "Failed to insert record for new page in K_TBL_PAGES" );
 
@@ -870,6 +879,7 @@
             unset( $f );
             for( $x=0; $x<count($this->fields); $x++ ){
                 $f = &$this->fields[$x];
+                if( defined('K_PHP_4') && $last_id ) $f->page->id = $this->id; // PHP4 loses reference of new parent page ??
                 if( $f->modified ){
                     if( $f->system ){
                         $name = substr( $f->name, 2 ); // remove the 'k_' prefix from system fields
@@ -931,8 +941,8 @@
 
                                             $res = k_resize_image( $src, $dest, $w, $h, $crop, $enforce_max, $quality );
                                             if( $FUNCS->is_error($res) ){
-                                                $f->err_msg = $res->err_msg;
-                                                $errors++;
+                                                //$f->err_msg = $res->err_msg;
+                                                //$errors++;
                                                 // TODO: Non critical error. Will continue but have to report.
                                             }
                                             else{
@@ -959,8 +969,8 @@
 
                                         $thumbnail = k_resize_image( $src, $dest, $w, $h, $crop, $enforce_max, $quality );
                                         if( $FUNCS->is_error($thumbnail) ){
-                                            $tb->err_msg = $thumbnail->err_msg;
-                                            $errors++;
+                                            //$tb->err_msg = $thumbnail->err_msg;
+                                            //$errors++;
                                             // TODO: Non critical error. Will continue but have to report.
                                         }
                                         else{
@@ -1112,6 +1122,7 @@
                                                   'page_title'=>$title,
                                                   'page_name'=>$name,
                                                   'creation_date'=>$cur_time,
+                                                  'creation_IP'=>trim( $FUNCS->cleanXSS(strip_tags($_SERVER['REMOTE_ADDR'])) ),
                                                   /* default page of gallery remains unpublished (always cloned) */
                                                   'publish_date'=>( $this->tpl_gallery && $is_master ) ? '0000-00-00 00:00:00' : $cur_time,
                                                   'is_master'=>$is_master
@@ -1343,6 +1354,10 @@
                 $rs = $DB->delete( K_TBL_COMMENTS, "page_id='" . $DB->sanitize( $this->id ). "'" );
                 if( $rs==-1 ) die( "ERROR: Unable to delete page data from K_TBL_COMMENTS" );
 
+                // remove relations (reverse)
+                $rs = $DB->delete( K_TBL_RELATIONS, "cid='" . $DB->sanitize( $this->id ). "'" );
+                if( $rs==-1 ) die( "ERROR: Unable to delete page data from K_TBL_RELATIONS" );
+
                 $DB->commit();
 
                 // delete images of gallery pages
@@ -1466,6 +1481,17 @@
             return $link;
         }
 
+        function _lock_template(){
+            global $DB;
+
+            if( !$this->_template_locked ){
+                // Hack of a semaphore. To serialize access.. lock template
+                $DB->update( K_TBL_TEMPLATES, array('description'=>$DB->sanitize( $this->tpl_desc )), "id='" . $DB->sanitize( $this->tpl_id ) . "'" );
+                $this->_template_locked = 1;
+            }
+
+        }
+
         // Is called while displaying a page (home, folder, archive or single page)
         // and also from within 'pages' tag to fetch info for single pages.
         // When called from within 'pages' tag, all pages will be 'k_is_page'.
@@ -1491,6 +1517,7 @@
             $vars['k_template_is_hidden'] = $this->tpl_is_hidden;
             $vars['k_template_order'] = $this->tpl_order;
             $vars['k_template_nested_pages'] = $this->tpl_nested_pages;
+            $vars['k_template_gallery'] = $this->tpl_gallery;
             if( K_PRETTY_URLS ){
                 $vars['k_template_link'] = K_SITE_URL . $FUNCS->get_pretty_template_link( $this->tpl_name );
                 $vars['k_prettyurls'] = 1;
@@ -1615,7 +1642,7 @@
                     // and all custom fields
                     foreach( $this->fields as $f ){
                         if( $f->deleted ) continue;
-                        $vars[$f->name] = $f->get_data();
+                        $vars[$f->name] = $f->get_data( 1 );
                     }
                     $vars['k_publish_date'] = ''; // 'k_page_date' will be used
                     $vars['k_page_folder_id'] = ''; // 'k_page_folderid' will be used instead.
@@ -1627,6 +1654,7 @@
                     $vars['k_page_id'] = $this->id;
                     $vars['k_page_date'] = $this->publish_date;
                     $vars['k_page_modification_date'] = $this->modification_date;
+                    $vars['k_page_draft_of'] = $this->parent_id;
 
                     // add the pages's folder info
                     if( $this->folder ){
@@ -1693,7 +1721,7 @@
                 foreach( $this->fields as $f ){
                     // System fields have no meaning for such pages
                     if( $f->system || $f->deleted ) continue;
-                    $vars[$f->name] = $f->get_data();
+                    $vars[$f->name] = $f->get_data( 1 );
                 }
 
 
@@ -1713,6 +1741,7 @@
                 $vars['k_access_level'] = $this->access_level;
                 $vars['k_page_date'] = $this->publish_date;
                 $vars['k_page_modification_date'] = $this->modification_date;
+                $vars['k_page_draft_of'] = $this->parent_id;
             }
 
             // for all

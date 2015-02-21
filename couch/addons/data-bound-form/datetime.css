@@ -1,0 +1,28 @@
+.dt_element{
+    margin: 4px 5px 0 0;
+    float: left;
+}
+
+.dt_label{
+    margin: 0;
+    padding-top: 3px;
+    clear: both;
+    font-size: 11px;
+    line-height: 16px;
+    color: #777777;
+    display: block;
+}
+
+.dt_sep{
+    color: #777777;
+}
+
+.dt_break{
+    margin: 0;
+    clear: both;
+    display:block;
+}
+
+.dt_container{
+    margin: 0;
+}

@@ -50,8 +50,8 @@
 
     if( !defined('K_COUCH_DIR') ) die(); // cannot be loaded directly
 
-    define( 'K_COUCH_VERSION', '1.3.5' ); // Changes with every release
-    define( 'K_COUCH_BUILD', '20130616' ); // YYYYMMDD - do -
+    define( 'K_COUCH_VERSION', '1.4' ); // Changes with every release
+    define( 'K_COUCH_BUILD', '20140117' ); // YYYYMMDD - do -
 
     if( file_exists(K_COUCH_DIR.'config.php') ){
         require_once( K_COUCH_DIR.'config.php' );
@@ -198,6 +198,7 @@
     //unset($_SERVER['DOCUMENT_ROOT']); //testing
     if ( !defined('K_SITE_URL') ){
         $url = 'http';
+        $port = '';
         if( isset($_SERVER['HTTPS']) && $_SERVER['HTTPS']=='on' ){
             $url .=  's';
         }
@@ -455,6 +456,37 @@
                 $_sql = "CREATE INDEX `".K_TBL_RELATIONS."_Index03` ON `".K_TBL_RELATIONS."` (`cid`);";
                 $DB->_query( $_sql );
             }
+            // upgrade to 1.4RC1
+            if( version_compare("1.4RC1", $_ver, ">") ){
+                $_sql = "ALTER TABLE `".K_TBL_PAGES."` ADD `creation_IP` varchar(45);";
+                $DB->_query( $_sql );
+
+                $_sql = "CREATE INDEX `".K_TBL_PAGES."_Index20` ON `".K_TBL_PAGES."` (`creation_IP`, `creation_date`);";
+                $DB->_query( $_sql );
+
+                $_sql = "CREATE TABLE `".K_TBL_ATTACHMENTS."` (
+                    `attach_id`       bigint(11) UNSIGNED AUTO_INCREMENT NOT NULL,
+                    `file_real_name`  varchar(255) NOT NULL,
+                    `file_disk_name`  varchar(255) NOT NULL,
+                    `file_extension`  varchar(255) NOT NULL,
+                    `file_size`       int(20) UNSIGNED NOT NULL DEFAULT '0',
+                    `file_time`       int(10) UNSIGNED NOT NULL DEFAULT '0',
+                    `is_orphan`       tinyint(1) UNSIGNED DEFAULT '1',
+                    `hit_count`       int(10) UNSIGNED DEFAULT '0',
+                    PRIMARY KEY (`attach_id`)
+                    ) ENGINE = InnoDB CHARACTER SET `utf8` COLLATE `utf8_general_ci`;";
+                $DB->_query( $_sql );
+
+                $_sql = "CREATE INDEX `".K_TBL_ATTACHMENTS."_Index01` ON `".K_TBL_ATTACHMENTS."` (`is_orphan`);";
+                $DB->_query( $_sql );
+
+                $_sql = "CREATE INDEX `".K_TBL_ATTACHMENTS."_Index02` ON `".K_TBL_ATTACHMENTS."` (`file_time`);";
+                $DB->_query( $_sql );
+
+                $_sql = "CREATE INDEX `".K_TBL_ATTACHMENTS."_Index03` ON `".K_TBL_ATTACHMENTS."` (`is_orphan`, `file_time`);";
+                $DB->_query( $_sql );
+            }
+
             // Finally update version number
             $_rs = $DB->update( K_TBL_SETTINGS, array('k_value'=>K_COUCH_VERSION), "k_key='k_couch_version'" );
             if( $_rs==-1 ) die( "ERROR: Unable to update version number" );
@@ -504,8 +536,6 @@
     define( 'K_MASQUERADE_ON', (K_PRETTY_URLS && extension_loaded('curl')) );
 
     // full boot of core
-    require_once( K_COUCH_DIR.'parser/parser.php' );
-    require_once( K_COUCH_DIR.'parser/HTMLParser.php' );
     require_once( K_COUCH_DIR.'page.php' );
     require_once( K_COUCH_DIR.'tags.php' );
 

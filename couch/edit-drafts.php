@@ -66,7 +66,7 @@
                     die( 'ERROR in deletion: ' . $PAGE->err_msg );
                 }
 
-                $PAGE->delete();
+                $PAGE->delete( 1 );
 
                 $qs = '?o=drafts';
                 if( $tpl_id  ) $qs .= '&tpl=' . $tpl_id;
@@ -102,7 +102,7 @@
 
                         // execute action
                         if( $_POST['bulk-action']=='delete' ){
-                            $PAGE->delete();
+                            $PAGE->delete( 1 );
                         }
                         elseif( $_POST['bulk-action']=='apply' ){
                             $DB->begin();

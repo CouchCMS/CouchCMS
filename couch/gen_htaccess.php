@@ -43,7 +43,7 @@
 
     define( 'K_ADMIN', 1 );
 
-
+    //$DB = new KDB();
     $AUTH = new KAuth( K_ACCESS_LEVEL_ADMIN, 0 );
 
 

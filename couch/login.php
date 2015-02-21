@@ -44,7 +44,7 @@
 
     $AUTH = new KAuth();
     $default_dest = ( $AUTH->user->access_level < K_ACCESS_LEVEL_ADMIN ) ? K_SITE_URL : K_ADMIN_URL . K_ADMIN_PAGE;
-
+    //$default_dest = K_SITE_URL; // if no redirect specified, send to site's home-page. Don't reveal admin panel's location.
 
     // check if logout requested
     if( isset($_GET['act']{0}) && $_GET['act'] == 'logout' ){

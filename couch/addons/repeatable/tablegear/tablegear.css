@@ -20,7 +20,7 @@
 .rr td.highlite { background-color: #FBE3E4 !important; border-color:#FBC2C4;}
 .rr .editable span.shim{ display: none; }
 .rr .editable textarea{ overflow: auto; height: 130px; }
-.tableholder p.addRow{ float:left;}
+.tableholder p.addRow{ float:left; display:block !important; }
 .tableholder p.addRow a { cursor:pointer; height: 24px; display:block; padding-left: 20px; background:transparent url(add.png) no-repeat scroll 0;}
 .tableholder ul.k_element_deleted_nav { float:left; margin-top: -10px;}
 .tableholder div.k_cell_deleted{

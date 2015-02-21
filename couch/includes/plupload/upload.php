@@ -1,11 +1,16 @@
 <?php
-	if ( !defined('K_ADMIN') ) die(); // cannot be loaded directly
+	if ( !defined('K_COUCH_DIR') ) die(); // cannot be loaded directly
 
 	$tpl = ( isset($_GET['tpl']) && $FUNCS->is_non_zero_natural($_GET['tpl']) ) ? (int)$_GET['tpl'] : null;
 	if( is_null($tpl) ) die( 'No template specified' );
-	$fid = ( isset($_GET['fid']) && $FUNCS->is_non_zero_natural( $_GET['fid'] ) ) ? (int)$_GET['fid'] : -1;
+	$fid = ( isset($_GET['fid']) && $FUNCS->is_non_zero_natural($_GET['fid']) ) ? (int)$_GET['fid'] : -1;
+    $cid = ( isset($_GET['cid']) && $FUNCS->is_non_zero_natural($_GET['cid']) ) ? (int)$_GET['cid'] : null;
+    $rid = ( isset($_GET['rid']) && $FUNCS->is_non_zero_natural($_GET['rid']) ) ? (int)$_GET['rid'] : null;
 	$fn = ( isset($_GET['fn']) ) ? $_GET['fn'] : '/';
 	$nonce = $FUNCS->create_nonce( 'bulk_upload_'.$tpl.'_'.$fid.'_'.$fn );
+
+    $upload_link = K_ADMIN_URL . 'uploader.php?tpl='.$tpl.'&fid='.$fid.'&fn='.$fn.'&nonce='. $nonce;
+    if( $cid && $rid ) $upload_link .= '&cid='.$cid.'&rid='.$rid;
 
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -100,7 +105,7 @@
       $("#gallery_uploader").pluploadQueue({
          // General settings
          runtimes : 'html5,silverlight,flash,html4',
-         url : '<?php echo K_ADMIN_URL . ''; ?>uploader.php?tpl=<?php echo $tpl; ?>&fid=<?php echo $fid; ?>&fn=<?php echo $fn; ?>&nonce=<?php echo $nonce; ?>',
+         url : '<?php echo $upload_link; ?>',
          max_file_size : '2mb',
 	 file_data_name : 'NewFile',
          chunk_size : '1mb',

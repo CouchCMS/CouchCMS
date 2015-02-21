@@ -23,7 +23,7 @@
  * connector.
  */
 
-if ( !defined('K_ADMIN') ) die(); // cannot be loaded directly
+if ( !defined('K_COUCH_DIR') ) die(); // cannot be loaded directly
 
 function SetXmlHeaders()
 {

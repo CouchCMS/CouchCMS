@@ -72,8 +72,15 @@
 
     class COUCH{
 
-        function invoke( $ignore_context=0 ){ // if $ignore_contextis set, all canonical GET variables are ignored. Page always remains in home-view.
+        function invoke( $ignore_level=0 ){
             global $DB, $FUNCS, $PAGE, $AUTH, $CTX, $k_cache_file;
+
+            if( $ignore_level > 0 ){
+                $ignore_canonical_url = 1; // if set, the url used to access page is not checked to be canonical.
+                if( $ignore_level > 1 ){
+                    $ignore_context = 1; // if set, all canonical GET variables are ignored. Page always remains in home-view.
+                }
+            }
 
             // $page_id, $folder_id and $archive_date are mutually exclusive.
             // If more than one are provided, $page_id will be preferred over the
@@ -247,7 +254,7 @@
                     }
                     $redirect_url = $canonical_url . "#comment-" . $comment_id;
                 }
-                elseif( K_PRETTY_URLS && $_SERVER['REQUEST_METHOD']!='POST' && !$PAGE->parent_id /*&& $PAGE->tpl_is_clonable*/ && $CTX->script!='404.php' && !$ignore_context ){
+                elseif( K_PRETTY_URLS && $_SERVER['REQUEST_METHOD']!='POST' && !$PAGE->parent_id /*&& $PAGE->tpl_is_clonable*/ && $CTX->script!='404.php' && !$ignore_canonical_url ){
                     $url = $FUNCS->get_url();
                     if( $url ){
                         if( $_GET['_nr_'] ){ //page link being masqueraded. Normalize before comparision.

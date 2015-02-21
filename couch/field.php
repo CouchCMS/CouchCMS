@@ -36,6 +36,7 @@
     */
 
     if ( !defined('K_COUCH_DIR') ) die(); // cannot be loaded directly
+    if( !defined('K_USE_KC_FINDER') ) define( 'K_USE_KC_FINDER', 0 );
 
     class KField{
         var $id;
@@ -88,6 +89,12 @@
         var $err_msg = '';
         var $modified = false;
         var $udf = 0;
+        var $cached = null;
+        var $refresh_form = 0;
+        var $err_msg_refresh = '';
+        var $requires_multipart = 0;
+        var $trust_mode = 1;
+        var $no_js = 0;
 
         var $available_validators = array(
             'min_len' => 'KFuncs::validate_min_len',
@@ -102,6 +109,7 @@
             'non_negative_decimal' => 'KFuncs::validate_non_negative_numeric',
             'non_zero_decimal' => 'KFuncs::validate_non_zero_numeric',
             'email' => 'KFuncs::validate_email',
+            'url' => 'KFuncs::validate_url',
             'matches_field' => 'KFuncs::validate_matches',
             'regex' => 'KFuncs::validate_regex',
             /* used only internally */
@@ -202,6 +210,78 @@
         function store_posted_changes( $post_val ){
             global $FUNCS, $Config;
             if( $this->deleted ) return; // no need to store
+            if( in_array($this->k_type, array('thumbnail', 'hidden', 'message', 'group')) ) return;
+
+            if( $this->k_type== 'checkbox' && is_array($post_val) ){
+                $separator = ( $this->k_separator ) ? $this->k_separator : '|';
+                $sep = '';
+                $str_val = '';
+                foreach( $post_val as $v ){
+                    $str_val .= $sep . $v;
+                    $sep = $separator;
+                }
+                $post_val = $str_val;
+            }
+
+            // v1.4 - added sanity check for checkbox, radio and dropdown types
+            // to allow only submitted values that are a subset of the available options
+            if( $this->k_type=='dropdown' || $this->k_type=='radio' || $this->k_type=='checkbox' ){
+                $post_val = trim( $post_val );
+                if( $post_val!='' ){
+                    $separator = ( $this->k_separator ) ? $this->k_separator : '|';
+                    $val_separator = ( $this->val_separator ) ? $this->val_separator : '=';
+
+                    // get the selected options
+                    $selected = html_entity_decode( $post_val, ENT_QUOTES );
+                    if( $this->k_type=='checkbox' ){
+                        $selected = ( $selected != '' ) ? array_map( "trim", preg_split( "/(?<!\\\)\\".$separator."/", $selected ) ) : array();
+                        for( $x=0; $x<count($selected); $x++ ){
+                            $selected[$x] = str_replace( '\\'.$separator, $separator, $selected[$x] );
+                            $selected[$x] = str_replace( '\\'.$val_separator, $val_separator, $selected[$x] );
+                        }
+                    }
+
+                    // get the valid options
+                    $valid_values = array();
+                    $arr_values = array_map( "trim", preg_split( "/(?<!\\\)\\".$separator."/", $this->opt_values ) );
+                    foreach( $arr_values as $val ){
+                        if( $val!='' ){
+                            $val = str_replace( '\\'.$separator, $separator, $val );
+                            $arr_values_args = array_map( "trim", preg_split( "/(?<!\\\)\\".$val_separator."/", $val ) );
+                            if( isset($arr_values_args[1]) ){
+                                $opt_val = str_replace( '\\'.$val_separator, $val_separator, $arr_values_args[1] );
+                            }
+                            else{
+                                $opt_val = str_replace( '\\'.$val_separator, $val_separator, $arr_values_args[0] );
+                            }
+                            $valid_values[] = $opt_val;
+                        }
+                    }
+
+                    // remove selected options that are not valid
+                    if( !count($valid_values) ){
+                        $post_val = '';
+                    }
+                    else{
+                        if( $this->k_type=='dropdown' || $this->k_type=='radio' ){
+                            if( !in_array($selected, $valid_values) ){
+                                $post_val = '';
+                            }
+                        }
+                        else{
+                            $sep = '';
+                            $str_val = '';
+                            foreach( $selected as $v ){
+                                if( in_array($v, $valid_values) ){
+                                    $str_val .= $sep . str_replace( $separator, '\\'.$separator, $v );
+                                    $sep = $separator;
+                                }
+                            }
+                            $post_val = $str_val;
+                        }
+                    }
+                }
+            }
 
             // strip off domain info from uploads
             if( $this->k_type=='image' || $this->k_type=='file' ){
@@ -220,7 +300,19 @@
                 $orig_data = $this->get_data();
             }
 
-            $this->data = ($this->k_type=='textarea' && $this->no_xss_check) ? $post_val : $FUNCS->cleanXSS( $post_val );
+            if( $this->trust_mode==0 && in_array($this->k_type, array('text', 'textarea', 'richtext')) ){
+                // if value submitted from front-end form, input is untrusted and so only a limited subset of HTML tags will be allowed
+                if( $this->k_type=='richtext' ){
+                    $allowed_tags = '<a><br><strong><b><em><i><u><blockquote><pre><code><ul><ol><li><del><strike><div><p><h1><h2><h3><h4><h5><h6>';
+                    $this->data = trim( $FUNCS->cleanXSS(strip_tags($post_val, $allowed_tags), 2) );
+                }
+                else{
+                    $this->data = trim( $FUNCS->cleanXSS(strip_tags($post_val)) );
+                }
+            }
+            else{
+                $this->data = ($this->k_type=='textarea' && $this->no_xss_check) ? $post_val : $FUNCS->cleanXSS( $post_val );
+            }
             $this->modified = ( strcmp( $orig_data, $this->data )==0 )? false : true; // values unchanged
         }
 
@@ -295,37 +387,49 @@
             }
 
             // check if a required field
-            $data = trim( $this->get_data() );
-            if( $this->required ){
-                switch( $this->k_type ){
-                    case 'text':
-                    case 'password':
-                    case 'textarea':
-                    case 'richtext':
-                    case 'image':
-                    case 'file':
-                    case 'radio':
-                    case 'checkbox':
-                        if( $data=='' ){
-                            $check_failed = true;
-                        }
-                        break;
-                    case 'thumbnail':
-                    case 'hidden':
-                    case 'message':
-                    case 'group':
-                        break; // no validation required
-                    case 'dropdown':
-                        if( $data=='-' || $data=='_' ){
-                            $check_failed = true;
-                        }
+            if( $FUNCS->is_core_type($this->k_type) ){
+                $data = trim( $this->get_data() );
+                if( $this->required ){
+                    switch( $this->k_type ){
+                        case 'text':
+                        case 'password':
+                        case 'textarea':
+                        case 'richtext':
+                        case 'image':
+                        case 'file':
+                        case 'radio':
+                        case 'checkbox':
+                            if( $data=='' ){
+                                $check_failed = true;
+                            }
+                            break;
+                        case 'thumbnail':
+                        case 'hidden':
+                        case 'message':
+                        case 'group':
+                            break; // no validation required
+                        case 'dropdown':
+                            if( $data=='-' || $data=='_' ){
+                                $check_failed = true;
+                            }
+
+                    }
 
                 }
-
+                else{
+                    // if not a required field and no data submitted, no further checks needed.
+                    if( !strlen($data) ) return true;
+                }
             }
-            else{
-                // if not a required field and no data submitted, no further checks needed.
-                if( !strlen($data) ) return true;
+            else{ // UDFs
+                if( $this->is_empty() ){
+                    if( $this->required ){
+                        $check_failed = true;
+                    }
+                    else{
+                        return true;
+                    }
+                }
             }
 
             if( $check_failed ){
@@ -412,6 +516,14 @@
             return true;
         }
 
+        // UDFs should override this method if using parent KField's validate method which calls this.
+        // If field is a required one, being empty will return 'required field' validation error.
+        // If field is non-required, being empty will not process any other validation rules attached to it.
+        function is_empty(){
+            // Default will always return false thus causing 'required' parameter not to take effect;
+            return false;
+        }
+
         function render(){
             global $FUNCS, $AUTH, $PAGE;
 
@@ -440,7 +552,7 @@
             }
 
             if( $this->k_type=='hidden' ){
-                return '<input type="hidden" id="' . $input_id . '" name="'. $input_id .'" value="'. $this->get_data() .'" />&nbsp;&nbsp;'.$notice1;
+                return '<input type="hidden" id="' . $input_id . '" name="'. $input_id .'" value="'. htmlspecialchars( $this->get_data(), ENT_QUOTES, K_CHARSET ) .'" />&nbsp;&nbsp;'.$notice1;
             }
 
             $notice0 = '';
@@ -502,7 +614,7 @@
                 $html .= '</div>';
 
                 $html .= '<div style="display:none;" id="k_element_deleted_'.$this->id.'">';
-                $html .= '<pre>' . htmlspecialchars( $this->_html, ENT_QUOTES ) . '</pre>';
+                $html .= '<pre>' . htmlspecialchars( $this->_html, ENT_QUOTES, K_CHARSET ) . '</pre>';
                 $html .= '</div>';
             }
             $html .= '</div>';
@@ -518,10 +630,10 @@
             $val_separator = ( $this->val_separator ) ? $this->val_separator : '=';
             $rtl = ( $this->rtl ) ? 'dir="RTL"' : ''; //only for text, password, textarea & richtext
 
-            if( $this->k_type=='textarea' || ($this->k_type=='richtext' && $this->deleted) ){
+            if( $this->k_type=='textarea' || ($this->k_type=='richtext' && $this->deleted) || ($this->k_type=='richtext' && $this->no_js) ){
                 $style = ( $this->height ) ? 'height:'.$this->height.'px; ' : '';
                 $style .= ( $this->width ) ? 'width:'.$this->width.'px; ' : 'width:99%; ';
-                $html .= '<textarea id="' . $input_id . '" name="'. $input_name .'" '.$rtl.' rows="12" cols="79" '. $notice0 .' style="'.$style.'" '.$extra.'>'.$FUNCS->escape_HTML( $value ).'</textarea>';
+                $html .= '<textarea id="' . $input_id . '" name="'. $input_name .'" '.$rtl.' rows="12" cols="79" '. $notice0 .' style="'.$style.'" '.$extra.'>'.htmlspecialchars( $value, ENT_QUOTES, K_CHARSET ).'</textarea>';
             }
             else if( $this->k_type=='richtext' ){
                 if( !$this->page->CKEditor ){
@@ -529,17 +641,27 @@
                     $this->page->CKEditor->returnOutput = true;
                     $this->page->CKEditor->basePath = K_ADMIN_URL . 'includes/ckeditor/';
 
-                    $this->page->CKEditor->config['filebrowserBrowseUrl'] = K_ADMIN_URL . 'includes/fileuploader/browser/browser.html';
-                    $this->page->CKEditor->config['filebrowserImageBrowseUrl'] = K_ADMIN_URL . 'includes/fileuploader/browser/browser.html?Type=Image';
-                    $this->page->CKEditor->config['filebrowserFlashBrowseUrl'] = K_ADMIN_URL . 'includes/fileuploader/browser/browser.html?Type=Flash';
-                    $this->page->CKEditor->config['filebrowserWindowWidth'] = '600';
+                    if( $this->trust_mode ){
+                        if( K_USE_KC_FINDER ){
+                            $this->page->CKEditor->config['filebrowserBrowseUrl'] = K_ADMIN_URL . 'includes/kcfinder/browse.php?cms=couch&type=file';
+                            $this->page->CKEditor->config['filebrowserImageBrowseUrl'] = K_ADMIN_URL . 'includes/kcfinder/browse.php?cms=couch&type=image';
+                            $this->page->CKEditor->config['filebrowserFlashBrowseUrl'] = K_ADMIN_URL . 'includes/kcfinder/browse.php?cms=couch&type=flash';
+                            $this->page->CKEditor->config['filebrowserWindowWidth'] = '670';
+                        }
+                        else{
+                            $this->page->CKEditor->config['filebrowserBrowseUrl'] = K_ADMIN_URL . 'includes/fileuploader/browser/browser.html';
+                            $this->page->CKEditor->config['filebrowserImageBrowseUrl'] = K_ADMIN_URL . 'includes/fileuploader/browser/browser.html?Type=Image';
+                            $this->page->CKEditor->config['filebrowserFlashBrowseUrl'] = K_ADMIN_URL . 'includes/fileuploader/browser/browser.html?Type=Flash';
+                            $this->page->CKEditor->config['filebrowserWindowWidth'] = '600';
+                        }
+                    }
                     $this->page->CKEditor->config['width'] = '99%'; //'720px';
                     $this->page->CKEditor->config['height'] = 240;
 
                 }
                 $this->page->CKEditor->textareaAttributes = array("style" => "visibility:hidden", "id" => $input_id, "cols" => 80, "rows" => 15);
 
-                //$config['baseHref'] = K_SITE_URL;
+//$config['baseHref'] = K_SITE_URL;
                 // RTL
                 if( $rtl ) $config['contentsLangDirection'] = 'rtl';
 
@@ -664,9 +786,14 @@
                 }
                 if( $this->input_width ){ $style_rr = ' style="width:'.$this->input_width.'px"'; } // Set by repeatable tag
                 $html .= '<input type="text" size="65" value="'.$value.'" name="'.$input_name.'" id="'.$input_id.'" class="k_image_text" '.$notice0.$style_rr.'/>';
-                //$html .= '<input type="button" name="'.$input_name.'_button" value="Browse Server" class="k_image_button" onclick="k_browse_server( \''.K_ADMIN_URL.'includes/fileuploader/browser/browser.html?Type=Image&KField='.$input_id.'\' );" />';
-                $link = K_ADMIN_URL.'includes/fileuploader/browser/browser.html?Type=Image&KField='.$input_id.'&TB_iframe=true&height=480&width=600&modal=true';
-                $html .= '<a class="button smoothbox" href="'. $link .'" onclick="this.blur();"><span>'.$FUNCS->t('browse_server').'</span></a>';
+                if( K_USE_KC_FINDER ){
+                    $link = K_ADMIN_URL.'includes/kcfinder/browse.php?cms=couch&type=image&TB_iframe=true&height=480&width=640&modal=true';
+                    $html .= '<a class="button smoothbox" data-kc-finder="'.$input_id.'" href="'. $link .'"><span>'.$FUNCS->t('browse_server').'</span></a>';
+                }
+                else{
+                    $link = K_ADMIN_URL.'includes/fileuploader/browser/browser.html?Type=Image&KField='.$input_id.'&TB_iframe=true&height=480&width=600&modal=true';
+                    $html .= '<a class="button smoothbox" href="'. $link .'" onclick="this.blur();"><span>'.$FUNCS->t('browse_server').'</span></a>';
+                }
                 $visibility = $value ? 'visible' : 'hidden';
                 if( !$this->show_preview ){
                     $html .= '<a class="button" id="'.$input_id.'_preview" href="'.$img_preview_icon.'" rel="lightbox" style="visibility:'.$visibility.'"><span>'.$FUNCS->t('view_image').'</span></a>';
@@ -711,14 +838,18 @@
             else if( $this->k_type=='file' ){
                 if( $this->input_width ){ $style_rr = ' style="width:'.$this->input_width.'px"'; } // Set by repeatable tag
                 $html .= '<input type="text" size="65" value="'.$value.'" name="'.$input_name.'" id="'.$input_id.'" class="k_file_text" '.$notice0.$style_rr.'/>';
-                //$html .= '<input type="button" name="'.$input_name.'_button" value="Browse Server" class="k_file_button" onclick="k_browse_server( \''.K_ADMIN_URL.'includes/fileuploader/browser/browser.html?Type=File&KField='.$input_id.'\' );" />';
-                $link = K_ADMIN_URL.'includes/fileuploader/browser/browser.html?Type=File&KField='.$input_id.'&TB_iframe=true&height=480&width=600&modal=true';
-                $html .= '<a class="button smoothbox" href="'. $link .'" onclick="this.blur();"><span>'.$FUNCS->t('browse_server').'</span></a>';
-
+                if( K_USE_KC_FINDER ){
+                    $link = K_ADMIN_URL.'includes/kcfinder/browse.php?cms=couch&type=file&TB_iframe=true&height=480&width=640&modal=true';
+                    $html .= '<a class="button smoothbox" data-kc-finder="'.$input_id.'" href="'. $link .'"><span>'.$FUNCS->t('browse_server').'</span></a>';
+                }
+                else{
+                    $link = K_ADMIN_URL.'includes/fileuploader/browser/browser.html?Type=File&KField='.$input_id.'&TB_iframe=true&height=480&width=600&modal=true';
+                    $html .= '<a class="button smoothbox" href="'. $link .'" onclick="this.blur();"><span>'.$FUNCS->t('browse_server').'</span></a>';
+                }
             }
             else if( $this->k_type=='text' || $this->k_type=='password' ){
                 $style .= ( $this->width ) ? 'width:'.$this->width.'px; ' : 'width:99%; ';
-                $html .= '<input type="'.$this->k_type.'" id="' . $input_id . '" name="'. $input_name .'" '.$rtl.' value="'. $value .'" '.$extra.' size="105" ';
+                $html .= '<input type="'.$this->k_type.'" id="' . $input_id . '" name="'. $input_name .'" '.$rtl.' value="'. htmlspecialchars( $value, ENT_QUOTES, K_CHARSET ) .'" '.$extra.' size="105" ';
                 if( $this->maxlength ) $html .= 'maxlength="'.$this->maxlength.'" ';
                 $html .= 'style="'.$style.'" '. $notice0 .' />';
             }
@@ -750,7 +881,7 @@
                     if( $this->deleted ) $html .= ' disabled="1"';
                     $html .= ' id="'.$input_id.'" '.$extra.'>';
                 }
-                if( $this->opt_values ){
+                if( strlen($this->opt_values) ){
                     $arr_values = array_map( "trim", preg_split( "/(?<!\\\)\\".$separator."/", $this->opt_values ) );
                     $count = 0;
                     foreach( $arr_values as $val ){
@@ -810,6 +941,7 @@
             foreach( $fields as $k=>$v ){
                $this->$k = $v;
             }
+            $this->page = new stdClass();
             $this->siblings = &$siblings;
         }
 
@@ -822,6 +954,18 @@
 
         function store_posted_changes( $post_val ){
             global $FUNCS;
+            if( $this->k_type=='hidden' ) return;
+
+            if( $this->k_type== 'checkbox' && is_array($post_val) ){
+                $separator = ( $this->k_separator ) ? $this->k_separator : '|';
+                $sep = '';
+                $str_val = '';
+                foreach( $post_val as $v ){
+                    $str_val .= $sep . $v;
+                    $sep = $separator;
+                }
+                $post_val = $str_val;
+            }
 
             $orig_data = $this->get_data();
             $this->data = ($this->k_type=='textarea' && $this->no_xss_check) ? $post_val : $FUNCS->cleanXSS( $post_val, 0, $this->allowed_html_tags );
@@ -833,10 +977,10 @@
 
             $value = $this->get_data();
             if( $this->k_type=='text' || $this->k_type=='password' || $this->k_type=='submit' || $this->k_type=='hidden' ){
-                $html = '<input type="'.$this->k_type.'" name="'.$input_name.'"  id="'.$input_id.'" value="'.$value.'" '.$extra.'/>';
+                $html = '<input type="'.$this->k_type.'" name="'.$input_name.'"  id="'.$input_id.'" value="'.htmlspecialchars( $value, ENT_QUOTES, K_CHARSET ).'" '.$extra.'/>';
             }
             elseif(  $this->k_type=='textarea' ){
-                $html = '<textarea  name="'.$input_name.'"  id="'.$input_id.'" '.$extra.'>'.htmlspecialchars( $value ).'</textarea>';
+                $html = '<textarea  name="'.$input_name.'"  id="'.$input_id.'" '.$extra.'>'.htmlspecialchars( $value, ENT_QUOTES, K_CHARSET ).'</textarea>';
             }
             elseif( $this->k_type=='radio' || $this->k_type=='checkbox' || $this->k_type=='dropdown' ){
                 $html = parent::_render( $input_name, $input_id, $extra );
@@ -859,21 +1003,12 @@
                     }
                 }
             }
-            else{
-                // not supporting any other types except those already handled above for non-admin pages
-                if ( defined('K_ADMIN') ){
-                    if( $this->cache ){
-                        $html = $this->cache;
-                    }
-                    else{
-                        $html = parent::_render( $input_name, $input_id, $extra );
-                        if( $this->k_type=='richtext' ){
-                            // cache output of ckeditor because it cannot be executed more than once..
-                            $this->cache = $html;
-                        }
-                    }
-                }
-            }
+
+            return $this->wrap_fieldset( $html );
+        }
+
+        function wrap_fieldset( $html ){
+            global $CTX;
 
             $wrap = $CTX->get( 'k_wrapper' );
             if( $wrap ){
@@ -926,18 +1061,18 @@
             }
         }
 
-    } // end class KFieldUser
+    } // end class KFieldForm
 
     // Custom fields used in pages write panel
     class KPageFolderIDField extends KField{
         function render(){
-            global $PAGE, $FUNCS, $CTX;
+            global $FUNCS, $CTX;
 
             $input_id = 'f_'.$this->name;
             $input_name = $input_id;
             $label = ($this->label) ? $this->label : $this->name;
             $visibility = 'none';
-            if( !$PAGE->is_master && count($PAGE->folders->children) && !$PAGE->tpl_nested_pages && !$PAGE->parent_id ){
+            if( !$this->page->is_master && count($this->page->folders->children) && !$this->page->tpl_nested_pages && !$this->page->parent_id ){
                 $visibility = 'block';
             }
             $html .= '<div id="'.$this->name.'" class="k_element" style="display:'.$visibility.'">';
@@ -949,12 +1084,12 @@
         }
 
         function _render( $input_name, $input_id, $extra='' ){
-            global $PAGE, $FUNCS, $CTX;
+            global $FUNCS, $CTX;
 
             $CTX->push( '__ROOT__' );
             $dropdown_html = '';
             $hilited = $this->get_data();
-            $PAGE->folders->visit( '_k_visitor', $dropdown_html, $hilited, 0/*$depth*/, 0/*$extended_info*/, array()/*$exclude*/ );
+            $this->page->folders->visit( array('KFolder', '_k_visitor'), $dropdown_html, $hilited, 0/*$depth*/, 0/*$extended_info*/, array()/*$exclude*/ );
             $CTX->pop();
             return '<select id="'.$input_id.'" name="'.$input_name.'"><option value="-1" >--'.$FUNCS->t('select_folder').'--</option>' .$dropdown_html . '</select>';
         }
@@ -963,16 +1098,16 @@
 
     class KNestedPagesField extends KField{
         function _render( $input_name, $input_id, $extra='' ){
-            global $PAGE, $FUNCS, $CTX;
+            global $FUNCS, $CTX;
 
-            if( $PAGE->tpl_nested_pages ): ?>
+            if( $this->page->tpl_nested_pages ): ?>
                 <div id="list-folders" style="margin-top:10px; ">
                     <?php
-                        $tree = $FUNCS->get_nested_pages( $PAGE->tpl_id, $PAGE->tpl_name, $PAGE->tpl_access_level, 'weightx', 'asc' );
+                        $tree = $FUNCS->get_nested_pages( $this->page->tpl_id, $this->page->tpl_name, $this->page->tpl_access_level, 'weightx', 'asc' );
                         $CTX->push( '__ROOT__' );
                         $dropdown_html = '';
                         $hilited = $this->get_data();
-                        $tree->visit( '_k_visitor_pages', $dropdown_html, $hilited, 0/*$depth*/, 0/*$extended_info*/, array($PAGE->page_name)/*$exclude*/ );
+                        $tree->visit( array('KNestedPage', '_k_visitor_pages'), $dropdown_html, $hilited, 0/*$depth*/, 0/*$extended_info*/, array($this->page->page_name)/*$exclude*/ );
                         $CTX->pop();
                         $html = '<select id="'.$input_id.'" name="'.$input_name.'"><option value="-1" >--'.$FUNCS->t('none').'--</option>' .$dropdown_html . '</select>';
                     ?>
@@ -1021,12 +1156,12 @@
         }
 
         function render(){
-            global $PAGE, $FUNCS, $AUTH;
+            global $FUNCS, $AUTH;
 
             $page_id = ( isset($_GET['p']) && $FUNCS->is_non_zero_natural($_GET['p']) ) ? (int)$_GET['p'] : null;
             $label = '&nbsp;';
             $desc = '';
-            $visibility = ($PAGE->fields[10]->get_data()) ? 'block' : 'none'; //is_pointer
+            $visibility = ($this->page->fields[10]->get_data()) ? 'block' : 'none'; //is_pointer
             $html .= '<div id="wrapper_k_pointer_link" style="display:'.$visibility.';">';
             $html .= '<div class="group-wrapper_ex">';
             $html .= '<div class="group-toggler_ex">';
@@ -1036,30 +1171,30 @@
             $html .= parent::render();
 
             // Append 'masquerades' rado buttons too
-            $visibility = (strtolower($PAGE->tpl_name)=='index.php') ? 'block' : 'none'; //No masquerading option for templates other than index.php (will always only redirect).
+            $visibility = (strtolower($this->page->tpl_name)=='index.php') ? 'block' : 'none'; //No masquerading option for templates other than index.php (will always only redirect).
             $html .= '<div style="display:'.$visibility.';">';
-            $checked = (!$PAGE->fields[14]->get_data())?'checked="checked"':'';
+            $checked = (!$this->page->fields[14]->get_data())?'checked="checked"':'';
             $html .= '<input type="radio" '. $checked .' value="0" id="f_masquerades_0" name="f_masquerades" />';
             $html .= '<label for="f_masquerades_0">'. $FUNCS->t('redirects') .'</label>&nbsp;';
-            $checked = ($PAGE->fields[14]->get_data())?'checked="checked"':'';
+            $checked = ($this->page->fields[14]->get_data())?'checked="checked"':'';
             $html .= '<input type="radio" '. $checked .' value="1" id="f_masquerades_1" name="f_masquerades" />';
             $html .= '<label for="f_masquerades_1">'. $FUNCS->t('masquerades') .'</label>&nbsp;';
             $html .= '</div>';
 
             // ..and the 'strict check'
-            $checked = (!$PAGE->fields[15]->get_data())?'checked="checked"':'';
+            $checked = (!$this->page->fields[15]->get_data())?'checked="checked"':'';
             $html .= '<div style="margin-top: 3px; margin-bottom: 8px;"><label><input type="checkbox" name="f_strict_matching" '. $checked .' value="1"/>'. $FUNCS->t('strict_matching') .'</label></div>';
 
             $html .= '</div></div>';
             ob_start();
             ?>
             <p>
-                <?php if( $PAGE->effective_level <= $AUTH->user->access_level ){ ?>
+                <?php if( $this->page->effective_level <= $AUTH->user->access_level ){ ?>
                 <a class="button" id="btn_submit2" href="#" onclick="this.style.cursor='wait'; $('frm_edit_page').submit(); return false;"><span><?php echo $FUNCS->t('save'); ?></span></a>
                 <?php } ?>
                 <?php
                 if( $_GET['act'] == 'edit' ){
-                    $link = K_SITE_URL . $PAGE->tpl_name;
+                    $link = K_SITE_URL . $this->page->tpl_name;
                     if( !is_null($page_id) ) $link .= '?p=' . $page_id;
                     echo '<a class="button" href="'. $link .'" target="_blank" onclick="this.blur();"><span>';
                     if( $draft_of ) echo( $FUNCS->t('preview') ); else echo( $FUNCS->t('view') );
@@ -1068,13 +1203,12 @@
                 ?>
             </p>
             <?php
-	    $html .= ob_get_contents() . '</div>';
-	    ob_end_clean();
+            $html .= ob_get_contents() . '</div>';
+            ob_end_clean();
 
             return $html;
         }
     }
-
 
     // All UDFs (User Defined Fields) should extend this class.
     //
@@ -1085,7 +1219,7 @@
     // $f->_render uses $f->data to output the field onto the write panel (making changes to the way the data is displayed, if required)
     // store_posted_changes() gets the returned data from the admin panel and stores it back to $f->data (reversing the display logic of $f->_render, if required)
     // get_data() is now solely used to output the data from $f->data onto the front-end (via $CTX) (it can also make the same display changes as $f->_render, or maybe someother changes)
-    // in fact, $f->_render could possibly call get_data() if their display logics match.
+    //  in fact, $f->_render could possibly call get_data() if their display logics match.
     // get_data_to_save() returns back the $f->data to be saved into the database. It can modify the data to be stored if format differes.
     //
     // So now, $f->data at all times contains the same data as is stored in the database.
@@ -1131,7 +1265,7 @@
         }
 
         // Load from database
-        function store_data_from_saved( $data ){ // just duplicating the default login of KField.
+        function store_data_from_saved( $data ){ // just duplicating the default logic of KField.
             $this->data = $data;
         }
 
@@ -1152,9 +1286,14 @@
             $this->modified = ( strcmp( $orig_data, $this->data )==0 )? false : true; // values unchanged
         }
 
-        // Output to front-end via $CTX
-        // also called on validate.
-        function get_data(){
+        // Output to front-end.
+        // Not always via $CTX as, for example, output of cms:editable tag used outside cms:template.
+        // _render function can also use this function if the rendered field on back-end uses the same data.
+        // To make a distinction, when the returned value is set into $CTX by the calling routine,
+        // (as when called from cms:pages, cms:form on success, cms:show_repeatable), the '$for_ctx' will be 1.
+        // This could be useful if the UDF wishes to set additional variables into $CTX (i.e. in addition to the one named after itself) .
+        // The value of the variable set in $CTX named after the field, however, should always be returned to be set by the caller.
+        function get_data( $for_ctx=0 ){
 
             if( !$this->data ){
                 // make sure it is not numeric 0
@@ -1201,7 +1340,7 @@
         }
 
         // Called either from a page being deleted
-        // or when this field's definition gets removed froma template (in which case the $page_id param would be '-1' )
+        // or when this field's definition gets removed from a template (in which case the $page_id param would be '-1' )
         // IMP: when $page_id is -1, this routine is called from ajax.php which creates the field object using dummy params for $PAGE an d $siblings -
         // so cannot use these here.
         function _delete( $page_id ){
@@ -1220,7 +1359,42 @@
         }
     }
 
-    // Our first custom field
+    // All User Defined Form Fields (cms:input) should extend this class.
+    class KUserDefinedFormField extends KFieldForm{
+        // called statically from 'cms:input' tag to handle the parameters passed to it
+        // Should parse out the parameters specific to this field and also sanitize the values.
+        // The $node parameter can be used to set the 'value' parameter by looping through child nodes (as in textarea)
+        function handle_params( $params, $node ){
+            /*
+            global $FUNCS;
+            $attr = $FUNCS->get_named_vars(
+                        array( 'foo'=>'hello',
+                               'baz'=>'0',
+                              ),
+                        $params);
+            $attr['foo'] = strtolower( trim($attr['foo']) );
+            $attr['baz'] = ( $attr['baz']==1 ) ? 1 : 0;
+            return $attr;
+            */
+            return array();
+        }
+
+        // Handle Posted data
+        function store_posted_changes( $post_val ){
+            global $FUNCS;
+
+            $orig_data = $this->data;
+            $this->data = $FUNCS->cleanXSS( $post_val );
+            $this->modified = ( strcmp( $orig_data, $this->data )==0 )? false : true; // values unchanged
+        }
+
+        // Render input field
+        function _render( $input_name, $input_id, $extra='' ){
+            $html = 'Extend _render() to create your own markup for this form field';
+            return $this->wrap_fieldset( $html );
+        }
+    }
+
     class KExif extends KUserDefinedField{
         function store_posted_changes( $post_val ){
             return; // calculated and stored by save routine directly to database
@@ -1230,7 +1404,6 @@
         function get_data(){
             global $CTX;
 
-            // This method is also called from validate() just to check if required field is not empty but then ctx is empty.
             if( count($CTX->ctx) ){
                 // Data not a simple string hence
                 // we'll store it into '_obj_' of CTX directly

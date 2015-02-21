@@ -47,7 +47,7 @@
             if( $type==K_NODE_TYPE_CODE && !$is_end_tag && strlen($str_attr) ){
 
                 // NOTE: the following sanatization will munge dangerous words in attributes. However quotes and lt, gt tags still remain.
-                // The shortcode handler routine should use 'htmlspecialchars($str, ENT_QUOTES)' if using the attributes in tricky places.
+                // The shortcode handler routine should use 'htmlspecialchars($str, ENT_QUOTES, K_CHARSET)' if using the attributes in tricky places.
                 $this->attributes = $this->parse_attr( $this->sanitize( $this->normalize_entities($str_attr) ) );
             }
             $this->text = $text;

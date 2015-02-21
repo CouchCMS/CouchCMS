@@ -40,7 +40,6 @@
     class Relation extends KUserDefinedField{
 
         var $items_selected = array();
-        var $items_posted = array();
         var $items_deleted = array();
         var $items_inserted = array();
 
@@ -55,7 +54,8 @@
                     'folder'=>'',
                     'include_subfolders'=>'1',
                     'orderby'=>'', /* publish_date, page_title, page_name */
-                    'order'=>'' /* desc, asc */
+                    'order_dir'=>'', /* desc, asc */
+                    'no_gui'=>'0', /* for setting values only programmatically */
                   ),
                 $params
             );
@@ -67,7 +67,9 @@
             if( $attr['reverse_has']!='one' && $attr['reverse_has']!='many' ) $attr['reverse_has'] = 'many';
             $attr['folder'] = trim( $attr['folder'] );
             $attr['orderby'] = strtolower( trim($attr['orderby']) );
-            $attr['order_dir'] = strtolower( trim($attr['order']) ); // 'order' is a 'core parameter' and will be stripped off
+            $attr['order_dir'] = strtolower( trim($attr['order_dir']) ); // 'order' is a 'core parameter' and will be stripped off
+            $attr['no_gui'] = ( $attr['no_gui']==1 ) ? 1 : 0;
+
             return $attr;
         }
 
@@ -89,18 +91,86 @@
             while( $row=mysql_fetch_row($result) ){
                 $this->items_selected[] = $row[0];
             }
-       }
+        }
 
         // Show in admin panel
         function _render( $input_name, $input_id, $extra1='', $extra2='', $dynamic_insertion=0  ){
-            global $FUNCS, $CTX, $DB;
+            global $FUNCS;
+
+            if( $this->no_gui ){
+                $rows = $this->items_selected;
+                if( $this->has=='one' && count($rows)>1 ){
+                    array_splice( $rows, 1 );
+                }
+                foreach( $rows as $row_id ){
+                    $html .= '<input type="hidden" name="'.$input_name.'_chk[]" value="'.$row_id.'" />';
+                }
+
+                return $html;
+            }
 
             define( 'RELATION_URL', K_ADMIN_URL . 'addons/relation/' );
             $FUNCS->load_css( RELATION_URL . 'relation.css' );
 
+            $rows = $this->_get_rows();
+            if( $FUNCS->is_error($rows) ) return $rows->err_msg;
+
+            if( $this->has=='one' ){
+                $selected = ( count($this->items_selected) ) ? $this->items_selected[0] : ''; // can have only one item selected
+                $html .= '<select name="'.$input_name.'_chk" id="'.$input_id.'" >';
+                $html .= '<option value="-">-- Select --</option>'; //TODO get label as parameter
+
+                while( list($key, $value) = each($rows) ){
+                    $html .= '<option value="'.$key.'"';
+                    if( $selected && $key==$selected ) $html .= '  selected="selected"';
+                    $html .= '>'.$value.'</option>';
+                }
+                $html .= '</select>';
+            }
+            else{
+                $html = '<ul class="checklist cl1">';
+                $x=0;
+                while( list($key, $value) = each($rows) ){
+                    $class = ( ($x+1)%2 ) ? ' class="alt"' : '';
+                    $selected = ( in_array($key, $this->items_selected) ) ? ' checked="checked"' : '';
+                    $html .= '<li'.$class.'><label for="'.$input_name.'_chk_'.$x.'"><input id="'.$input_name.'_chk_'.$x.'" name="'.$input_name.'_chk[]" type="checkbox" value="'.$key.'"'.$selected.' /> '.$value.'</li>';
+                    $x++;
+                }
+                $html .= '</ul>';
+            }
+
+            return $html;
+        }
+
+        // Called from both _render and store_posted_changes
+        function _get_rows( $arr_posted=null ){
+            global $FUNCS, $DB;
+
             $rs = $DB->select( K_TBL_TEMPLATES, array('id'), "name='" . $DB->sanitize( $this->masterpage ). "'" );
-            if( !count($rs) ) return 'Error: masterpage: "'.$this->masterpage.'" not found.';
+            if( !count($rs) ) return $FUNCS->raise_error( 'Error: masterpage: "'.$this->masterpage.'" not found.' );
             $tpl_id = $rs[0]['id'];
+
+            $rows = array();
+            $str_posted_ids = '';
+            if( is_array($arr_posted) ){
+                // called from store_posted_changes
+                $select_fields = 'id';
+
+                $arr_posted_sanitized = array();
+                foreach( $arr_posted as $id ){
+                    if( $FUNCS->is_non_zero_natural($id) ) $arr_posted_sanitized[]=(int)$id;
+                }
+                $str_posted_ids = trim( implode(',', $arr_posted_sanitized) );
+
+                if( !strlen($str_posted_ids) ){
+                    // No valid rows posted. Return.
+                    return $rows;
+                }
+            }
+            else{
+                // called from _render
+                $select_fields = 'id, page_title';
+            }
 
             // folder?
             $folder = trim( $this->folder );
@@ -145,13 +215,13 @@
                 }
 
                 if( count($arr_folders) ){
-                    $fsql = "AND ";
-                    if( $neg ) $fsql .= "NOT";
-                    $fsql .= "(";
+                    $fsql = "AND page_folder_id ";
+                    if( $neg ) $fsql .= "NOT ";
+                    $fsql .= "IN (";
                     $sep = "";
                     foreach( $arr_folders as $k=>$v ){
-                        $fsql .= $sep . "page_folder_id='" . $DB->sanitize( $v )."'";
-                        $sep = " OR ";
+                        $fsql .= $sep . "'" . $DB->sanitize( $v )."'";
+                        $sep = ", ";
                     }
                     $fsql .= ") ";
                 }
@@ -166,39 +236,35 @@
                 // show only pages that are not already selected by others of the same relation field
                 $pid = $this->page->id;
                 $fid = $this->id;
-                $sql = "SELECT p.id, p.page_title, p.publish_date"."\r\n";
-                $sql .= "FROM ".K_TBL_PAGES." p"."\r\n";
-                $sql .= "left outer join ".K_TBL_RELATIONS." rel on rel.cid = p.id"."\r\n";
-                $sql .= "WHERE p.template_id='".$tpl_id."'"."\r\n";
-                $sql .= "AND (rel.fid is null or rel.fid <> '".$fid."')"."\r\n";
-                $sql .= $fsql;
-                $sql .= "AND NOT publish_date = '0000-00-00 00:00:00'"."\r\n";
 
-                $sql .= "UNION"."\r\n";
-
-                // or those already associated with the page being edited
-                $sql .= "SELECT p.id, p.page_title, p.publish_date"."\r\n";
-                $sql .= "FROM ".K_TBL_PAGES." p"."\r\n";
-                $sql .= "inner join ".K_TBL_RELATIONS." rel on rel.cid = p.id"."\r\n";
-                $sql .= "WHERE p.template_id='".$tpl_id."'"."\r\n";
-                $sql .= "AND rel.pid = '".$pid."' AND rel.fid = '".$fid."'"."\r\n";
+                $sql = "SELECT " . $select_fields . "\r\n";
+                $sql .= "FROM ".K_TBL_PAGES."\r\n";
+                $sql .= "WHERE template_id='".$tpl_id."'"."\r\n";
+                $sql .= "AND id NOT IN"."\r\n";
+                $sql .= "(SELECT rel.cid FROM ".K_TBL_RELATIONS." rel WHERE rel.fid = '".$fid."' AND rel.pid <> '".$pid."')"."\r\n";
                 $sql .= $fsql;
                 $sql .= "AND NOT publish_date = '0000-00-00 00:00:00'"."\r\n";
             }
             else{
                 // show all pages for selection
-                $sql = "SELECT id, page_title"."\r\n";
+                $sql = "SELECT " . $select_fields . "\r\n";
                 $sql .= "FROM ".K_TBL_PAGES."\r\n";
                 $sql .= "WHERE template_id='".$tpl_id."'"."\r\n";
                 $sql .= $fsql;
                 $sql .= "AND NOT publish_date = '0000-00-00 00:00:00'"."\r\n";
             }
-            // order & orderby
-            $orderby = trim( $this->orderby );
-            if( $orderby!='publish_date' && $orderby!='page_title' && $orderby!='page_name' ) $orderby = 'publish_date';
-            $order = trim( $this->order_dir );
-            if( $order!='desc' && $order!='asc' ) $order = 'desc';
-            $sql .= "ORDER BY ".$orderby." ".$order."\r\n";
+
+            if( is_array($arr_posted) ){
+                $sql .= "AND id IN (".$str_posted_ids.")"."\r\n";
+            }
+            else{
+                // order & orderby
+                $orderby = trim( $this->orderby );
+                if( $orderby!='publish_date' && $orderby!='page_title' && $orderby!='page_name' ) $orderby = 'publish_date';
+                $order = trim( $this->order_dir );
+                if( $order!='desc' && $order!='asc' ) $order = 'desc';
+                $sql .= "ORDER BY ".$orderby." ".$order."\r\n";
+            }
 
             $result = @mysql_query( $sql, $DB->conn );
             if( !$result ){
@@ -206,61 +272,63 @@
                 die( "Could not successfully run query: " . mysql_error( $DB->conn ) );
             }
 
-            if( $this->has=='one' ){
-                $selected = ( count($this->items_selected) ) ? $this->items_selected[0] : ''; // can have only one item selected
-                $html .= '<select name="'.$input_name.'_chk" id="'.$input_id.'" >';
-                $html .= '<option value="-">-- Select --</option>'; //TODO get label as parameter
+            if( is_array($arr_posted) ){
                 while( $row=mysql_fetch_row($result) ){
-                    $html .= '<option value="'.$row[0].'"';
-                    if( $selected && $row[0]== $selected ) $html .= '  selected="selected"';
-                    $html .= '>'.$row[1].'</option>';
+                    $rows[] = $row[0];
                 }
-                $html .= '</select>';
             }
             else{
-                $html = '<ul class="checklist cl1">';
-                $x=0;
                 while( $row=mysql_fetch_row($result) ){
-                    $class = ( ($x+1)%2 ) ? ' class="alt"' : '';
-                    $selected = ( in_array($row[0], $this->items_selected) ) ? ' checked="checked"' : '';
-                    $html .= '<li'.$class.'><label for="'.$input_name.'_chk_'.$x.'"><input id="'.$input_name.'_chk_'.$x.'" name="'.$input_name.'_chk[]" type="checkbox" value="'.$row[0].'"'.$selected.' /> '.$row[1].'</li>';
-                    $x++;
+                    $rows[$row[0]] = $row[1];
                 }
-                $html .= '</ul>';
             }
+            mysql_free_result( $result );
 
-                return $html;
-            }
+            return $rows;
+        }
 
         // Handle posted data
         function store_posted_changes( $post_val ){
+            global $FUNCS;
             if( $this->deleted ) return; // no need to store
 
             $input_name = 'f_'.$this->name.'_chk';
             $arr_posted = array();
-            if( isset($_POST[$input_name]) ){
-                if( !is_array($_POST[$input_name]) ){ // has='one'
-                    if( $_POST[$input_name]!='-' ) $arr_posted[] = $_POST[$input_name];
-                }
-                else{
-                    $arr_posted = $_POST[$input_name];
+            if( $post_val ){
+                $arr_posted = array_map( "trim", explode( ',', $post_val ) );
+            }
+            else{
+                if( isset($_POST[$input_name]) ){
+                    if( !is_array($_POST[$input_name]) ){ // has='one'
+                        if( $_POST[$input_name]!='-' ) $arr_posted[] = $_POST[$input_name];
+                    }
+                    else{
+                        $arr_posted = $_POST[$input_name];
+                    }
                 }
             }
 
-            $this->items_posted = $arr_posted;
+            $arr_posted_sanitized = $this->_get_rows( $arr_posted ); // accept only valid values
+            if( $FUNCS->is_error($arr_posted_sanitized) ) return;
+
+            $arr_posted = $arr_posted_sanitized;
+            if( $this->has=='one' && count($arr_posted)>1 ){
+                array_splice( $arr_posted, 1 );
+            }
+
             $this->items_deleted = array_diff( $this->items_selected, $arr_posted );
             $this->items_inserted = array_diff( $arr_posted, $this->items_selected );
             if( count($this->items_deleted) || count($this->items_inserted) ){
                 $this->modified = true;
             }
-            $this->items_selected = $this->items_posted;
+            $this->items_selected = $arr_posted;
         }
 
         // before save
         function validate(){ // for now only checking for 'required'
             global $FUNCS;
 
-            if( $this->required && !count($this->items_posted) ){
+            if( $this->required && !count($this->items_selected) ){
                 $this->err_msg = $FUNCS->t('required_msg');
                 return false;
             }
@@ -292,7 +360,7 @@
                         'cid'=>$cid,
                         'weight'=>$weight
                         )
-                                    );
+                    );
                     if( $rs!=1 ) die( "ERROR: Failed to insert record in K_TBL_RELATIONS" );
                 }
             }
@@ -338,25 +406,6 @@
 
         function _clone( $cloned_page_id, $cloned_page_title ){
             global $DB;
-            /*
-            // This works but somehow I feel it's better to get directly from the database
-            if( count($this->items_posted) ){
-                $pid = $cloned_page_id;
-                $fid = $this->id;
-
-                foreach( $this->items_posted as $cid ){
-                    $weight = 0; //TODO
-                    $rs = $DB->insert( K_TBL_RELATIONS, array(
-                        'pid'=>$pid,
-                        'fid'=>$fid,
-                        'cid'=>$cid,
-                        'weight'=>$weight
-                        )
-                                    );
-                    if( $rs!=1 ) die( "ERROR: Failed to insert record in K_TBL_RELATIONS" );
-                }
-            }
-            */
 
             $pid = $this->page->id;
             $fid = $this->id;
@@ -529,7 +578,86 @@
         }
     }
 
-    // Register AFTER defining class to please ioncube loader
+    // Register
     $FUNCS->register_udf( 'relation', 'Relation' );
     $FUNCS->register_tag( 'related_pages', array('Relation', 'related_pages_handler'), 1, 1 ); // The helper tag that shows the related pages
     $FUNCS->register_tag( 'reverse_related_pages', array('Relation', 'reverse_related_pages_handler'), 1, 1 ); // -do in reverse-
+
+
+    // UDF for outputting a link that lists reverse related pages in admin-panel
+    class ReverseRelation extends KUserDefinedField{
+
+        function handle_params( $params ){
+            global $FUNCS, $AUTH;
+            if( $AUTH->user->access_level < K_ACCESS_LEVEL_SUPER_ADMIN ) return;
+
+            $attr = $FUNCS->get_named_vars(
+                array(
+                    'masterpage'=>'',
+                    'field'=>'',
+                    'anchor_text'=>'',
+                  ),
+                $params
+            );
+            $attr['masterpage'] = trim( $attr['masterpage'] );
+            if( !strlen($attr['masterpage']) ) die("ERROR: Editable 'reverse_relation' type requires a 'masterpage' parameter.");
+            $attr['anchor_text'] = trim($attr['anchor_text']);
+            if( !strlen($attr['anchor_text']) ) $attr['anchor_text']='View related pages';
+
+            return $attr;
+        }
+
+        // Show in admin panel
+        function _render( $input_name, $input_id, $extra1='', $extra2='', $dynamic_insertion=0  ){
+            global $FUNCS, $DB;
+
+            // get template_id of reverse related masterpage
+            $rs = $DB->select( K_TBL_TEMPLATES, array('id'), "name='" . $DB->sanitize( $this->masterpage ). "'" );
+            if( count($rs) ){
+                $template_id = $rs[0]['id'];
+            }
+            else{
+                return "ERROR: Related template '" . $FUNCS->cleanXSS($this->masterpage) . "' not found";
+            }
+
+            // get relation_field_id using template_id
+            if( $this->field ){
+                $rs = $DB->select( K_TBL_FIELDS, array('*'), "template_id='" . $DB->sanitize( $template_id ). "' AND k_type='relation' AND name='" . $DB->sanitize( $this->field ) . "'" );
+            }
+            else{ // if field not specified, get the first 'relation' field defined
+                $rs = $DB->select( K_TBL_FIELDS, array('*'), "template_id='" . $DB->sanitize( $template_id ). "' AND k_type='relation' LIMIT 1" );
+            }
+            if( count($rs) ){
+                $field_id = $rs[0]['id'];
+            }
+            else{
+                if( $this->field ){
+                    return "ERROR: relation field '".$FUNCS->cleanXSS($this->field)."' not defined in related template '".$FUNCS->cleanXSS($this->masterpage) ."'";
+                }
+                else{
+                    return "ERROR: no relation field defined in related template '".$FUNCS->cleanXSS($this->masterpage) . "'";
+                }
+            }
+
+            // Find the count of reverse related pages
+            $count = 0;
+            $cid = $this->page->id;
+            if( $cid != -1 ){
+                $rel_tables = K_TBL_PAGES . ' p inner join ' . K_TBL_RELATIONS . ' rel on rel.pid = p.id' . "\r\n";
+                $rel_sql = "p.parent_id=0 AND rel.cid='" . $DB->sanitize( $cid ). "' AND rel.fid='" . $DB->sanitize( $field_id ). "'";
+                $rs = $DB->select( $rel_tables, array('count(p.id) as cnt'), $rel_sql );
+                $count = $rs[0]['cnt'];
+
+                // Return link that will show the related pages
+                $link = K_ADMIN_URL . K_ADMIN_PAGE . '?act=list&tpl=' . $template_id . '&cid=' . $cid . '&rid=' . $field_id;
+                $html = '<a href="'.$link.'">' . $this->anchor_text . ' ('.$count.')</a>';
+            }
+            else{
+                $html = $this->anchor_text . ' ('.$count.')';
+            }
+
+            return $html;
+        }
+    }
+
+    $FUNCS->register_udf( 'reverse_relation', 'ReverseRelation' );

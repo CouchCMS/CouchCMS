@@ -36,7 +36,7 @@
     */
 
     ob_start();
-    define( 'K_ADMIN', 1 );
+    // define( 'K_ADMIN', 1 );  // Can now be invoked from frond-end forms too
 
     if ( !defined('K_COUCH_DIR') ) define( 'K_COUCH_DIR', str_replace( '\\', '/', dirname(realpath(__FILE__) ).'/') );
 

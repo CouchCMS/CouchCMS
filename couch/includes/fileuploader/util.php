@@ -22,7 +22,7 @@
  * Utility functions for the File Manager Connector for PHP.
  */
 
-if ( !defined('K_ADMIN') ) die(); // cannot be loaded directly
+if ( !defined('K_COUCH_DIR') ) die(); // cannot be loaded directly
 
 function RemoveFromStart( $sourceString, $charToRemove )
 {

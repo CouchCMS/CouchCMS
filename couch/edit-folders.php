@@ -80,6 +80,7 @@
                 $folder->populate_fields();
 
                 // handle POSTed values
+                $errors = '';
                 if( isset($_POST['op']) && $_POST['op']=='save' ){
 
                     $_POST['f_k_pid'] = intval( $_POST['f_k_folders'] );
@@ -128,7 +129,7 @@
                             $CTX->push( '__ROOT__' );
                             $dropdown_html = '';
                             $hilited = $folder->fields[$x]->get_data();
-                            $PAGE->folders->visit( '_k_visitor', $dropdown_html, $hilited, 0/*$depth*/, 0/*$extended_info*/, array($folder->name)/*$exclude*/ );
+                            $PAGE->folders->visit( array('KFolder', '_k_visitor'), $dropdown_html, $hilited, 0/*$depth*/, 0/*$extended_info*/, array($folder->name)/*$exclude*/ );
                             $CTX->pop();
                             echo '<select id="f_k_folders" name="f_k_folders"><option value="-1" >--'.$FUNCS->t('none').'--</option>' .$dropdown_html . '</select>';
                             ?>

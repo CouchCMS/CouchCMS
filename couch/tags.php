@@ -134,7 +134,7 @@
             }
         }
 
-        // Gets a variable's value given its name.
+        // Gets a variable's value given its name as a string.
         function get( $params, $node ){
             global $CTX, $FUNCS;
             if( count($node->children) ) {die("ERROR: Tag \"".$node->name."\" is a self closing tag");}
@@ -151,6 +151,36 @@
 
             if( $var ){
                 return $CTX->get( $var, $scope );
+            }
+        }
+
+        // Sets a variable's value given its name as a string.
+        function put( $params, $node ){
+            global $CTX, $FUNCS;
+            if( count($node->children) ) {die("ERROR: Tag \"".$node->name."\" is a self closing tag");}
+
+            extract( $FUNCS->get_named_vars(
+                        array( 'var'=>'',
+                               'value'=>'',
+                               'scope'=>''
+                              ),
+                        $params)
+                   );
+
+            $varname = trim( $var );
+            $scope = strtolower( $scope );
+
+            if( $varname ){
+                if( $scope != '' && ($scope!='parent' && $scope!='global' &&  $scope!='local') ){
+                    die("ERROR: Tag \"".$node->name."\" has unknown scope " . $scope);
+                }
+
+                if( substr($varname, 0, 2)!='k_' ){
+                    $CTX->set( $varname, $value, $scope );
+                }
+                else{
+                    die("ERROR: \"".$varname."\" cannot be set because it begins with 'k_' (considered system variable)");
+                }
             }
         }
 
@@ -742,7 +772,7 @@
             return;
         }
 
-        // returns the admin panel link of page in context.
+        // returns the admin panel edit link of page in context.
         function admin_link( $params, $node ){
             global $FUNCS, $CTX, $AUTH, $PAGE;
             if( count($node->children) ) {die("ERROR: Tag \"".$node->name."\" is a self closing tag");}
@@ -760,6 +790,22 @@
             }
             else{ /* List view */
                 $link = K_ADMIN_URL . K_ADMIN_PAGE . '?act=list&tpl=' . $PAGE->tpl_id;
+            }
+
+            return $link;
+        }
+
+        // returns the admin panel delete link of page in context.
+        function admin_delete_link( $params, $node ){
+            global $FUNCS, $CTX, $AUTH, $PAGE;
+            if( count($node->children) ) {die("ERROR: Tag \"".$node->name."\" is a self closing tag");}
+
+            // If current user is not an administrator, return.
+            if( $AUTH->user->access_level < K_ACCESS_LEVEL_ADMIN ) return;
+
+            if( $CTX->get('k_is_page') ){/* Cloned page */
+                $nonce = $FUNCS->create_nonce( 'delete_page_'.$CTX->get('k_page_id') );
+                $link = K_ADMIN_URL . K_ADMIN_PAGE . '?act=delete&tpl='. $CTX->get('k_template_id') .'&p='. $CTX->get('k_page_id') .'&nonce='.$nonce;
             }
 
             return $link;
@@ -1010,7 +1056,11 @@
                     if( !is_array($attr_udf) ) $attr_udf=array();
 
                     // remove core parameters if any set as custom params
-                    $core_params = array_merge( array('id'=>'', 'deleted'=>'', 'template_id'=>'', 'custom_params'=>'', 'k_desc'=>'', 'k_type'=>'', 'k_order'=>'', 'k_group'=>'', 'k_separator'=>'', 'page'=>'', 'siblings'=>'', 'processed'=>'', 'system'=>'', 'err_msg'=>'', 'modified'=>'', 'udf'=>'', 'available_validators'=>'', 'available_buttons'=>'' ), $core_params );
+                    $core_params = array_merge( array('id'=>'', 'deleted'=>'', 'template_id'=>'', 'custom_params'=>'', 'k_desc'=>'', 'k_type'=>'',
+                                                      'k_order'=>'', 'k_group'=>'', 'k_separator'=>'', 'page'=>'', 'siblings'=>'', 'processed'=>'',
+                                                      'system'=>'', 'err_msg'=>'', 'modified'=>'', 'udf'=>'',
+                                                      'cached'=>'', 'refresh_form'=>'', 'err_msg_refresh'=>'', 'requires_multipart'=>'', 'trust_mode'=>'', 'no_js'=>'',
+                                                      'available_validators'=>'', 'available_buttons'=>'' ), $core_params );
                     foreach( $attr_udf as $k=>$v ){
                         if( array_key_exists($k, $core_params) ){
                             unset( $attr_udf[$k] );
@@ -1391,12 +1441,10 @@
                         }
                     }
                 }
+                foreach( $node->children as $child ){
+                    $child->get_HTML();
+                }
             }
-
-            foreach( $node->children as $child ){
-                $child->get_HTML();
-            }
-
         }
 
         function templates( $params, $node ){
@@ -1437,6 +1485,9 @@
                     $CTX->set( 'k_template_is_executable', $rec['executable'] );
                     $CTX->set( 'k_template_is_hidden', $rec['hidden'] );
                     $CTX->set( 'k_template_order', $rec['k_order'] );
+                    $CTX->set( 'k_template_has_dynamic_folders', $rec['dynamic_folders'] );
+                    $CTX->set( 'k_template_has_nested_pages', $rec['nested_pages'] );
+                    $CTX->set( 'k_template_is_gallery', $rec['gallery'] );
                     if( K_PRETTY_URLS ){
                         $CTX->set( 'k_template_link', K_SITE_URL . $FUNCS->get_pretty_template_link( $rec['name'] ) );
                     }
@@ -1486,7 +1537,11 @@
                                'count_only'=>'0',
                                'ids_only'=>'0',
 
-                               'sql'=>'' /* query tag */
+                               'sql'=>'', /* query tag */
+                               'fetch_pages'=>'0', /* do */
+                               'return_sql'=>'0',
+
+                               'show_unpublished'=>'0', /* only for admins */
                               ),
                         $params);
             extract( $attr );
@@ -1504,7 +1559,10 @@
             $skip_custom_fields = ( $skip_custom_fields==1 ) ? 1 : 0;
             $count_only = ( $count_only==1 ) ? 1 : 0;
             $ids_only = ( $ids_only==1 ) ? 1 : 0;
-            $raw_sql = trim( $sql ); $sql = '';
+            $raw_sql = trim( $sql );
+            $fetch_pages = ( $fetch_pages==1 ) ? 1 : 0;
+            $return_sql = ( $return_sql==1 || $return_sql==2 ) ? intval( $return_sql ) : 0;
+            $show_unpublished = ( $show_unpublished==1 ) ? 1 : 0;
 
             $qs_param = trim( $qs_param );
             if( $qs_param=='' ){
@@ -1518,6 +1576,9 @@
             $show_future_entries = ( $show_future_entries==1 ) ? 1 : 0;
             $hide_future_entries = !$show_future_entries;
 
+            $sql = '';
+            $order_sql = '';
+            $limit_sql = '';
             if( $mode==0 || $mode==3 || $mode==4 ){ // 3 if called from calender tag, 4 if called from related_pages/reverse_related_pages tag
                 $query_table = K_TBL_PAGES;
                 $default_orderby = 'publish_date';
@@ -1645,7 +1706,9 @@
                 if( $stop_before ){
                     $sql .= " AND publish_date < '".$DB->sanitize( $stop_before )."'";
                 }
-                $sql .= " AND NOT publish_date = '0000-00-00 00:00:00'";
+                if( $AUTH->user->access_level < K_ACCESS_LEVEL_ADMIN || !$show_unpublished ){
+                    $sql .= " AND NOT publish_date = '0000-00-00 00:00:00'";
+                }
 
                 // orderby
                 $arr_custom_orderby = array(); // any custom field used as 'order_by' clause
@@ -1791,17 +1854,17 @@
                 }
 
                 // orderby
-                $sep = " ORDER BY ";
+                $sep = '';
                 for( $i=0; $i<count($arr_orderby); $i++ ){
                     $orderby = $arr_orderby[$i];
                     if( $orderby == 'random' ){
                         $orderby = 'RAND()';
                         $PAGE->no_cache=1;
                     }
-                    $sql .= $sep . $DB->sanitize( $orderby );
+                    $order_sql .= $sep . $DB->sanitize( $orderby );
 
                     $order = $arr_order[$i];
-                    $sql .= " " . $DB->sanitize( $order );
+                    $order_sql .= " " . $DB->sanitize( $order );
 
                     $sep = ", ";
                 }
@@ -1841,6 +1904,8 @@
                 $sql .= " AND cp.access_level<='".$AUTH->user->access_level."'";
                 $sql .= " AND ct.executable=1";
 
+                $order_sql = 'score DESC';
+
             }
             elseif( $mode==2 ){ // called from 'Comments' tag
                 $query_table = K_TBL_COMMENTS . " cc";
@@ -1869,7 +1934,7 @@
                 // Order?
                 $order = strtolower( trim($order) );
                 if( $order!='desc' && $order!='asc' ) $order = 'desc';
-                $sql .= " ORDER BY cc.date " . $order;
+                $order_sql = "cc.date " . $order;
 
                 // if being invoked on a page which has been loaded via comment_id,
                 // need to calculate the page (of paginated comments) where this comment will appear
@@ -1898,47 +1963,27 @@
             } // end mode==2 (comments)
 
             // limit
-            $limit_sql = sprintf( " LIMIT %d, %d", (($pgn_pno - 1) * $limit)+$offset, $limit );
+            $limit_sql = sprintf( "%d, %d", (($pgn_pno - 1) * $limit)+$offset, $limit );
 
 
             // We have the sql query here..
-            // first query for pagination
             if( $mode==5 ){ // raw query .. called from 'query' tag
+                $raw_sql = rtrim( $raw_sql, ' ;' );
+
+                $pattern = '/^(\s*\(?\s*)(select\s)/i';
+                $replacement = '${1}${2}SQL_CALC_FOUND_ROWS ';
+
                 // is SELECT?
-                if( !preg_match("/select\s/is", $raw_sql) ){
+                if( !preg_match($pattern, $raw_sql) ){
                     ob_end_clean();
                     die( "ERROR: Tag \"query\" can process only SELECT statements" );
                 }
+                $raw_sql = preg_replace( $pattern, $replacement, $raw_sql );
 
-
-                $pattern = '/select(.*?)\sfrom\s/is';
-                $replacement = 'select count(*) as cnt from ';
-                $rs = $DB->raw_select( preg_replace( $pattern, $replacement, $raw_sql ) );
-                if( preg_match("/\sgroup(\s+?)by\s/is", $raw_sql) ){ // GROUP BY? messes up the count..
-                    $total_rows = count( $rs );
-                }
-                else{
-                    $total_rows = $rs[0]['cnt'];
-                }
-            }
-            else{
-                $rs = $DB->select( $query_table, array('count('.$count_query_field.') as cnt'), $sql );
-                $total_rows = $rs[0]['cnt'];
-            }
-
-            // Return if only count asked for
-            if( $count_only ) return $total_rows;
-
-            $total_rows -= $offset;
-            $total_pages = ceil( $total_rows/$limit );
-
-
-            // actual query
-            if( $mode==5 ){ // raw query
-                $raw_sql = rtrim( $raw_sql, ' ;' );
-
-                // ORDER BY clause can contain calculated fields and hence can mess up the preceding count query.
-                // For such cases the 'orderby' param can be used to provide the raw ORDER BY statement
+                // retained for backward compatibility where
+                // ORDER BY clause containing calculated fields could mess up the count(*) query.
+                // For such cases the 'orderby' param was used to provide the raw ORDER BY statement.
+                // Now, the raw query itself can contain any orderby clause.
                 $orderby = trim( $orderby );
                 if( $orderby ){
                     if( !preg_match("/^order\s/is", $orderby) ){
@@ -1948,15 +1993,64 @@
                 }
 
                 $raw_sql = rtrim( $raw_sql, ' ;' );
-                $raw_sql .= $limit_sql;
+                $raw_sql .= ' LIMIT ' . $limit_sql;
                 $rs = $DB->raw_select( $raw_sql );
+
+                // get count for pagination
+                $rs2 = $DB->raw_select( 'SELECT FOUND_ROWS() as cnt;' );
+                $total_rows = $rs2[0]['cnt'];
+
+                // return if only count asked for
+                if( $count_only ) return $total_rows;
+
+                if( $fetch_pages && count($rs) ){
+                    // do some sanity checks to make sure the query can fetch pages like cms:pages does
+                    if( !(array_key_exists('id', $rs[0]) && array_key_exists('template_id', $rs[0])) ){
+                        ob_end_clean();
+                        die( "ERROR: 'fetch_pages' param of tag \"query\" requires 'id' and 'template_id' fields in the SQL statement" );
+                    }
+                }
+
             }
             else{
-                if( $mode==1 ){
-                    $sql .= " ORDER BY score DESC";
+                // first query for pagination
+                $rs = $DB->select( $query_table, array('count('.$count_query_field.') as cnt'), $sql );
+                $total_rows = $rs[0]['cnt'];
+
+                // Return if only count asked for
+                if( $count_only ) return $total_rows;
+
+                // actual query
+                if( $return_sql ){
+                    $sep = $fields = $html = '';
+                    foreach( $query_fields as $field ){
+                        $fields .= $sep . $field;
+                        $sep = ', ';
+                    }
+
+                    if( $return_sql==2 ){
+                        // return query parts
+                        $CTX->set( 'k_sql_select', $fields ); // fields
+                        $CTX->set( 'k_sql_from', $query_table ); // tables
+                        $CTX->set( 'k_sql_where', $sql ); // where
+                        $CTX->set( 'k_sql_order', $order_sql ); // where
+                        $CTX->set( 'k_sql_limit', $limit_sql ); // where
+                        foreach( $node->children as $child ){
+                            $html .= $child->get_HTML();
+                        }
+                    }
+                    else{
+                        // return complete query
+                        $html = 'SELECT ' . $fields . ' FROM ' . $query_table . ' WHERE ' . $sql . ' ORDER BY ' . $order_sql . ' LIMIT ' . $limit_sql ;
+                    }
+
+                    return $html;
                 }
-                $sql .= $limit_sql;
-                $rs = $DB->select( $query_table, $query_fields, $sql );
+                else{
+                    $sql .= ' ORDER BY ' . $order_sql;
+                    $sql .= ' LIMIT ' . $limit_sql;
+                    $rs = $DB->select( $query_table, $query_fields, $sql );
+                }
             }
 
             // If only ids asked for, return with them
@@ -1974,6 +2068,9 @@
             if( $mode==3 ){
                 return $rs;
             }
+
+            $total_rows -= $offset;
+            $total_pages = ceil( $total_rows/$limit );
 
             $count = count($rs);
             $page_link = K_SITE_URL . $PAGE->link;
@@ -2033,38 +2130,41 @@
                         $parent_link = ( K_PRETTY_URLS ) ? $FUNCS->get_pretty_template_link( $rec['tpl_name'] ) : $rec['tpl_name'];
                         $CTX->set( 'k_comment_link', K_SITE_URL . $parent_link . "?comment=" . $rec['id'] );
                     }
-                    elseif( $mode==5 ){ // raw query
-                        $rec_vars = array();
-                        foreach( $rec as $rec_k=>$rec_v ){
-                            $rec_vars[$rec_k] = $rec_v;
+                    else{ // pages, search, query
+                        if( $mode==5  ){ // raw query
+                            $rec_vars = array();
+                            foreach( $rec as $rec_k=>$rec_v ){
+                                $rec_vars[$rec_k] = $rec_v;
+                            }
+                            $CTX->set_all( $rec_vars );
                         }
-                        $CTX->set_all( $rec_vars );
-                    }
-                    else{ //Pages & Search
-                        $pg = new KWebpage( $rec['template_id'], $rec['id'], 0, 0, $skip_custom_fields );
-                        if( $pg->error ){
-                            ob_end_clean();
-                            die( 'ERROR: ' . $pg->err_msg );
+
+                        if( $mode!=5 || ($mode==5 && $fetch_pages) ){ //Pages & Search
+                            $pg = new KWebpage( $rec['template_id'], $rec['id'], 0, 0, $skip_custom_fields );
+                            if( $pg->error ){
+                                ob_end_clean();
+                                die( 'ERROR: ' . $pg->err_msg );
+                            }
+                            $pg->set_context();
+                            $pg->destroy(); // release the memory held by fields
                         }
-                        $pg->set_context();
-                        $pg->destroy(); // release the memory held by fields
+
+                        if( $mode==1 ){ // Search
+                            if( $pg->tpl_is_clonable ){
+                                $hilited = $FUNCS->hilite_search_terms( $keywords, $rec['title'], 1 );
+                            }
+                            else{
+                                $hilited = $pg->tpl_title ? $pg->tpl_title : $pg->tpl_name;
+                            }
+                            $CTX->set( 'k_search_title', $hilited );
+                            $CTX->set( 'k_search_content', $rec['content'] ); //entire content searched
+
+                            $hilited = $FUNCS->hilite_search_terms( $keywords, $rec['content'] );
+                            $CTX->set( 'k_search_excerpt', $hilited ); //hilighted excerpt of searched content
+                        }
                     }
 
-                    if( $mode==1 ){
-                        // search mode
-                        if( $pg->tpl_is_clonable ){
-                            $hilited = $FUNCS->hilite_search_terms( $keywords, $rec['title'], 1 );
-                        }
-                        else{
-                            $hilited = $pg->tpl_title ? $pg->tpl_title : $pg->tpl_name;
-                        }
-                        $CTX->set( 'k_search_title', $hilited );
-                        $CTX->set( 'k_search_content', $rec['content'] ); //entire content searched
-
-                        $hilited = $FUNCS->hilite_search_terms( $keywords, $rec['content'] );
-                        $CTX->set( 'k_search_excerpt', $hilited ); //hilighted excerpt of searched content
-                    }
-
+                    // Pagination related variables
                     $first_record_on_page = ($limit * ($pgn_pno - 1)) + $startcount;
                     $total_records_on_page = ( $count<$limit ) ? $count : $limit;
                     $CTX->set( 'k_count', $x + $startcount );
@@ -2452,7 +2552,10 @@ FORM;
                                'exclude'=>'',
                                'show_count'=>'0',
                                'extended_info'=>'0',
-                               'prompt'=>'' /* for dropdown */
+                               'prompt'=>'', /* for dropdown */
+                               'id'=>'', /* do */
+                               'name'=>'', /* do */
+                               'selected_id'=>'', /* do */
                               ),
                         $params);
             extract( $attr );
@@ -2472,6 +2575,11 @@ FORM;
             if( $list ) $extended_info = 1;
             $prompt = trim( $prompt );
             if( !$prompt ) $prompt = '--Select Folder--';
+            $id = trim( $id );
+            if( !$id ) $id = 'f_k_folders';
+            $name = trim( $name );
+            if( !$name ) $name = $id;
+            $selected_id = trim( $selected_id );
 
             // see if masterpage exists
             if( $masterpage=='' ){
@@ -2521,6 +2629,7 @@ FORM;
                 $visitor = ( !$list ) ? '_folders_visitor' : (($list==1) ? '_folders_visitor_list' : '_folders_visitor_dropdown');
                 $CTX->set( 'k_show_folder_count', $show_count );
                 $CTX->set( 'k_show_extended_info', $extended_info );
+                if( $selected_id && $list ) $node=$selected_id;
                 $folders->visit( array($this, $visitor), $html, $node, $depth, $extended_info, $exclude );
                 $CTX->set( 'k_show_extended_info', $extended_info );
                 $CTX->set( 'k_show_folder_count', 0 );
@@ -2547,7 +2656,12 @@ FORM;
                         $html .= '</li>';
                     }
                     elseif( $list==2 ){
-                        $f_selected = ((!$PAGE->is_master)&&($PAGE->page_folder_id==$f->id)) ? ' SELECTED=1 ' : '';
+                        if( $selected_id ){
+                            $f_selected = ( $selected_id==$f->id ) ? ' SELECTED=1 ' : '';
+                        }
+                        else{
+                            $f_selected = ((!$PAGE->is_master)&&($PAGE->page_folder_id==$f->id)) ? ' SELECTED=1 ' : '';
+                        }
                         $html .= '<option class="folder-'.$f->name.'" value="'. $f->id .'" '.$f_selected.'>';
                         $html .= $f->title;
                         if( $show_count ) $html .= ' (' . $f->count . ')';
@@ -2559,7 +2673,7 @@ FORM;
                 }
             }
             if( $list==2 ){
-                $html = '<select id="f_k_folders" name="f_k_folders"><option value="-1" >'.$prompt.'</option>' .$html . '</select>';
+                $html = '<select id="'.$id.'" name="'.$name.'"><option value="-1" >'.$prompt.'</option>' .$html . '</select>';
             }
 
             return $html;
@@ -2598,6 +2712,9 @@ FORM;
             }
             elseif( $CTX->get('k_element_start', 1) ){
                 $class = 'folder-item folder-item-'.$folder->name;
+                if( is_numeric($node) && $node==$folder->id ){ // explicit folder id provided
+                    $class .= ' selected';
+                }
                 $html .= '<li class="'.$class.'">';
             }
             elseif( $CTX->get('k_folder', 1) ){
@@ -3414,8 +3531,9 @@ FORM;
             return $html;
         }
 
+        ///////////Contact Form Tags////////////////////////////////////////////
         function form( $params, $node ){
-            global $CTX, $FUNCS, $PAGE;
+            global $CTX, $FUNCS, $PAGE, $DB;
 
             $html = '<form ';
 
@@ -3425,6 +3543,7 @@ FORM;
             $separator = '|'; //separator for error messages upon submission
             $anchor = '1';
             $charset = K_CHARSET; //accept-charset
+            $add_security_token = '';
             for( $x=0; $x<count($params); $x++ ){
                 $attr = strtolower(trim($params[$x]['lhs']));
                 if( $attr=='name' ){
@@ -3450,6 +3569,14 @@ FORM;
                 }
                 elseif( $attr=='charset' ){
                     $charset = trim($params[$x]['rhs']);
+                    continue;
+                }
+                elseif( $attr=='masterpage' || $attr=='page_id' || $attr=='mode' ){ // Data-bound form's parameters
+                    $$attr = trim($params[$x]['rhs']);
+                    continue;
+                }
+                elseif( $attr=='add_security_token' ){
+                    $add_security_token = trim($params[$x]['rhs']);
                     continue;
                 }
 
@@ -3479,6 +3606,57 @@ FORM;
             $html .= '>';
             $html = '<a name="'.$name.'"></a>' . $html; //anchor for return
 
+            // check if the form is data-bound
+            if( $masterpage ){
+                $rs = $DB->select( K_TBL_TEMPLATES, array('id', 'clonable'), "name='" . $DB->sanitize( $masterpage ). "'" );
+                if( !count($rs) ){
+                    die( "ERROR: Tag \"".$node->name."\" - masterpage does not exist" );
+                }
+
+                $mode = strtolower( $mode );
+                if( !($mode=='edit' || $mode=='create') ){
+                    die( "ERROR: Tag \"".$node->name."\" - unknown value for 'mode' parameter (only 'edit' and 'create' supported)" );
+                }
+                if( $mode=='edit' ){
+                    $page_id = ( isset($page_id) && $FUNCS->is_non_zero_natural($page_id) ) ? (int)$page_id : null;
+                    if( $rs[0]['clonable'] && !$page_id ){
+                        die( "ERROR: Tag \"".$node->name."\" - page_id required" );
+                    }
+                }
+                else{
+                    if( !$rs[0]['clonable'] ){
+                        die( "ERROR: Tag \"".$node->name."\" - cannot create page of non-clonable template" );
+                    }
+                    $page_id = -1;
+                }
+
+                // get the page being bound to and set it in context for the fields to use
+                $tpl_id = $rs[0]['id'];
+                $pg = new KWebpage( $tpl_id, $page_id );
+                if( $pg->error ){
+                    die( "ERROR: Tag \"".$node->name."\" - " . $pg->err_msg );
+                }
+                $count = count( $pg->fields );
+                for( $x=0; $x<$count; $x++ ){
+                    $f = &$pg->fields[$x];
+                    $f->resolve_dynamic_params();
+                    unset( $f );
+                }
+                $CTX->set_object( 'bound_page', $pg );
+
+                // Add CSRF token? (default is yes)
+                $add_security_token = ($add_security_token==='0') ? 0 : 1;
+                if( $add_security_token ){
+                    if( $mode=='edit' ){
+                        $obj_id = ( $page_id ) ? $page_id : $tpl_id;
+                        $nonce = 'edit_page_' . $obj_id;
+                    }
+                    else{
+                        $nonce = 'create_page_' . $tpl_id;
+                    }
+                }
+            }
+
             // call the children (this will create the fields)
             foreach( $node->children as $child ){
                 $sub_html .= $child->get_HTML();
@@ -3492,57 +3670,88 @@ FORM;
                 $submitted = isset($_GET['k_hid_'.$name]);
             }
             if( $submitted ){
-                $CTX->set( 'k_submitted', 1 ); //defunct now?
+                $CTX->set( 'k_submitted', 1 );
 
                 if( isset($PAGE->forms[$name]) ){
+
+                    // check security token?
+                    if( $add_security_token ){
+                        $submitted_nonce = ( $method=='post' ) ? $_POST['k_nonce'] : $_GET['k_nonce'];
+                        $FUNCS->validate_nonce( $nonce, $submitted_nonce );
+                    }
+
                     $form = &$PAGE->forms[$name];
                     $errors = array();
+
+                    // loop through fields to see if any has requested a refresh of form
+                    $refresh_form = 0; $refresh_errors = array();
                     foreach( $form as $k=>$v ){
                         $f = &$form[$k];
-                        if( !$f->validate() ){
-                            $CTX->set( 'k_error_'.$f->name, $f->err_msg );
-                            $errors[] = '<b>' . (($f->label) ? $f->label : $f->name) . ':</b> ' .$f->err_msg;
+                        if( $f->refresh_form ) $refresh_form = 1;
+                        if( $f->err_msg_refresh ){
+                            $CTX->set( 'k_error_'.$f->name, $f->err_msg_refresh );
+                            $refresh_errors[] = '<b>' . (($f->label) ? $f->label : $f->name) . ':</b> ' .$f->err_msg_refresh;
                         }
                         unset( $f );
                     }
 
-                    $sep = '';
-                    if( count($errors) ){
-                        $str_err = '';
-                        foreach( $errors as $e ){
-                            $str_err .= $sep . $e;
-                            $sep = $separator;
-                        }
-                        $CTX->set( 'k_error', $str_err );
-                    }
-                    else{
-                        $str_success = '';
+                    if( !$refresh_form ){ // process submission as usual
                         foreach( $form as $k=>$v ){
                             $f = &$form[$k];
-                            if( $f->k_type=='submit' || $f->name=='k_hid_'.$name ) continue;
-
-                            $data = $f->get_data();
-                            if( $f->k_type=='checkbox' ){
-                                if( $data ){
-                                    $chk_separator = ( $f->k_separator ) ? $f->k_separator : '|';
-                                    //$data = str_replace( $chk_separator, ', ', $data );
-                                    $data = preg_replace( "/(?<!\\\)\\".$chk_separator."/", ', ', $data );
-                                    $data = str_replace( '\\'.$chk_separator, $chk_separator, $data ); //unescape
-                                }
+                            if( !$f->validate() ){
+                                $CTX->set( 'k_error_'.$f->name, $f->err_msg );
+                                $errors[] = '<b>' . (($f->label) ? $f->label : $f->name) . ':</b> ' .$f->err_msg;
                             }
-                            $CTX->set( 'frm_'.$f->name, $data );
-                            $str_success .= $sep . (($f->label) ? $f->label : $f->name) . ': ' .$data ."\n";
-                            //$sep = $separator;
-
-                            // code above - for checkbox types and k_success, instead of the '|', we use ',' and '\n' respectively
-                            // for the contained values.
-
                             unset( $f );
                         }
-                        if( strlen(trim($str_success))==0 ) $str_success = '1'; // To handle cases where the form consists of only a submit button
-                        $CTX->set( 'k_success', $str_success );
-                    }
 
+                        $sep = '';
+                        if( count($errors) ){
+                            $str_err = '';
+                            foreach( $errors as $e ){
+                                $str_err .= $sep . $e;
+                                $sep = $separator;
+                            }
+                            $CTX->set( 'k_error', $str_err );
+                        }
+                        else{
+                            $str_success = '';
+                            foreach( $form as $k=>$v ){
+                                $f = &$form[$k];
+                                if( $f->k_type=='submit' || $f->name=='k_hid_'.$name ) continue;
+
+                                $data = $f->get_data( 1 );
+                                if( $f->k_type=='checkbox' ){
+                                    if( $data ){
+                                        $chk_separator = ( $f->k_separator ) ? $f->k_separator : '|';
+                                        //$data = str_replace( $chk_separator, ', ', $data );
+                                        $data = preg_replace( "/(?<!\\\)\\".$chk_separator."/", ', ', $data );
+                                        $data = str_replace( '\\'.$chk_separator, $chk_separator, $data ); //unescape
+                                    }
+                                }
+                                $CTX->set( 'frm_'.$f->name, $data );
+                                $str_success .= $sep . (($f->label) ? $f->label : $f->name) . ': ' .$data ."\n";
+                                //$sep = $separator;
+
+                                // code above - for checkbox types and k_success, instead of the '|', we use ',' and '\n' respectively
+                                // for the contained values.
+
+                                unset( $f );
+                            }
+                            if( strlen(trim($str_success))==0 ) $str_success = '1'; // To handle cases where the form consists of only a submit button
+                            $CTX->set( 'k_success', $str_success );
+                        }
+                    }
+                    else{
+                        if( count($refresh_errors) ){
+                            $str_err = $sep = '';
+                            foreach( $refresh_errors as $e ){
+                                $str_err .= $sep . $e;
+                                $sep = $separator;
+                            }
+                            $CTX->set( 'k_error', $str_err );
+                        }
+                    }
                 }
 
                 // call the child nodes again to react to 'k_error' or 'k_success'
@@ -3557,7 +3766,12 @@ FORM;
             // decoupled this hidden field from the submit button to accomodate 'button' html tag and other ways of submission
             $html .=  '<input type="hidden" name="k_hid_'.$name.'"  id="k_hid_'.$name.'" value="'.$name.'" />';
 
-            // if method is 'get', make it uncachable
+            // add csrf token if any
+            if( $nonce ){
+                $html .=  '<input type="hidden" name="k_nonce"  id="k_nonce" value="'.$FUNCS->create_nonce( $nonce ).'" />';
+            }
+
+            // if method is 'get', make it uncacheable
             if( $method=='get' ){
                 $html .= '<input type="hidden" name="nc" value="1" />';
             }
@@ -3569,34 +3783,65 @@ FORM;
         function input( $params, $node ){
             global $CTX, $FUNCS, $PAGE;
 
-            $custom_attr = array( 'name', 'label', 'type', 'desc', 'id', 'value', 'required',
+            extract( $FUNCS->get_named_vars(
+                       array(
+                             'type'=>''
+                            ),
+                       $params) );
+            $type = strtolower( trim($type) );
+            if( !$type ){ die("ERROR: Tag \"".$node->name."\" needs a 'type' attribute"); }
+
+            $is_udf = 0;
+            if( !$FUNCS->is_core_formfield_type($type) ){
+                // is it a user-defined-field type?
+                if( array_key_exists($type, $FUNCS->udform_fields) ){
+                    $is_udf = 1;
+                    $udf_classname = $FUNCS->udform_fields[$type]['handler'];
+                    $attr_udf = call_user_func( array($udf_classname, 'handle_params'), $params, $node );
+                    if( !is_array($attr_udf) ) $attr_udf=array();
+                    if( array_key_exists('type', $attr_udf) ){ unset( $attr_udf['type'] ); } //type cannot be overridden
+                }
+                else{
+                    die("ERROR: Tag \"".$node->name."\" has unknown type \"".$type."\"");
+                }
+            }
+
+            $core_attr = array( 'name', 'label', 'type', 'desc', 'id', 'value', 'required',
                                  'validator', 'validator_msg', 'checked',
                                  'separator', 'val_separator', 'opt_values', 'opt_selected',
                                  'html_before', 'html_after',
                                  'width', 'height', 'style',
                                  'format', 'reload_text',
-                                 'allowed_html_tags'
+                                 'allowed_html_tags',
+                                 'trust_mode', 'no_js',
                                  );
             $extra = '';
             $name = '';
             $id = '';
-            $type = '';
             for( $x=0; $x<count($params); $x++ ){
                 $attr = strtolower(trim($params[$x]['lhs']));
-                $val = trim( $params[$x]['rhs'] );
-                $$attr = $val;
+                if( in_array($attr, $core_attr) ){
+                    $val = trim( $params[$x]['rhs'] );
+                    $$attr = $val;
+                    continue;
+                }
 
-                if( in_array($attr, $custom_attr) ) continue;
+                if( $is_udf && array_key_exists($attr, $attr_udf) ) continue;
                 $extra .= ' '.$params[$x]['lhs'] . '="' . $params[$x]['rhs'] . '"';
+            }
+            if( $is_udf ){
+                foreach( $attr_udf as $k=>$v ){
+                    if( in_array($k, $core_attr) ){
+                        $$k = $v; // value set by udf overrides
+                    }
+                }
             }
             if( !$name ){ die("ERROR: Tag \"".$node->name."\" needs a 'name' attribute"); }
             if( !$FUNCS->is_title_clean($name) ){
                 die( "ERROR: Tag \"".$node->name."\" 'name' contains invalid characters. (Only lowercase[a-z], numerals[0-9] hyphen and underscore permitted" );
             }
-            if( !$type ){ die("ERROR: Tag \"".$node->name."\" needs a 'type' attribute"); }
             if( !$id ){ $id = $name; }
 
-            //if( $type!= 'textarea' ){ $height=''; }
             if( $type== 'captcha' ){
                 if( !$width ) $width=140;
                 if( !$format ) $format='t-i-r'; //textbox, image, reload
@@ -3614,84 +3859,103 @@ FORM;
             }
             else{
                 // create the field in form
-                $type = strtolower( trim($type) );
-                if( $type == 'textarea' || $type == 'richtext' ){
-                    $value = '';
-                    foreach( $node->children as $child ){
-                        $value .= $child->get_HTML();
+                $f = null;
+
+                // Data bound field?
+                if( $type=='bound' ){
+                    // first check if form is data bound to any page..
+                    // if so and a matching field found, use that
+                    $pg = &$CTX->get_object( 'bound_page', 'form' );
+                    if( is_null($pg) ){
+                        die("ERROR: Tag \"".$node->name."\" of type 'bound' needs to be within a Data-bound form");
                     }
-                }
 
-                $field_info = array(
-                    'id' => -1,
-                    'name' => $name,
-                    'label' => $label,
-                    'k_desc' => $desc,
-                    'k_type' => strtolower( $type ),
-                    'hidden' => '0',
-                    'data' => '',
-                    'required' => $required,
-                    'validator' => $validator,
-                    'validator_msg' => $validator_msg,
-                    'k_separator' => $separator,
-                    'val_separator' => $val_separator,
-                    'opt_values' => $opt_values,
-                    'opt_selected' => $opt_selected,
-                    'html_before' => $html_before,
-                    'html_after' => $html_after,
-                    'system' => '0'
-                );
+                    $count = count( $pg->fields );
+                    for( $x=0; $x<$count; $x++ ){
+                        $f = &$pg->fields[$x];
+                        if( $f->name==$name ){
+                            $create_field = 0;
 
-                $PAGE->forms[$form][$name] = new KFieldForm( $field_info, $PAGE->forms[$form] );
-                $f = &$PAGE->forms[$form][$name];
+                            // turn off trusted_mode unless specified otherwise
+                            $f->trust_mode = ( $trust_mode==1 ) ? 1 : 0;
+                            // no JavaScript if inline editing
+                            $f->no_js = ( $no_js==1 ) ? 1 : 0;
 
-                // allowed tags
-                $f->allowed_html_tags = $allowed_html_tags;
-
-                if( $f->k_type== 'checkbox' ){
-                    $separator = ( $f->k_separator ) ? $f->k_separator : '|';
-                    $sep = '';
-                    $str_val = $value;
-                    if( $form_method=='post' ){
-                        if( isset($_POST[$f->name]) ){
-                            $str_val = '';
-                            foreach( $_POST[$f->name] as $v ){
-                                $str_val .= $sep . $v;
-                                $sep = $separator;
-                            }
+                            $PAGE->forms[$form][$name] = &$f;
+                            break;
                         }
+                        unset( $f );
                     }
-                    else{
-                        if( isset($_GET[$f->name]) ){
-                            $str_val = '';
-                            foreach( $_GET[$f->name] as $v ){
-                                $str_val .= $sep . $v;
-                                $sep = $separator;
-                            }
-                        }
+
+                    if( !$f ){
+                        die("ERROR: Tag \"".$node->name."\" - No matching field of name '".$FUNCS->cleanXSS($name, 0, 'none')."' found in database for data-binding");
                     }
-                    $f->store_posted_changes( $str_val );
+
                 }
                 else{
-                    if( $form_method=='post' ){
-                        $f->store_posted_changes( isset($_POST[$name]) ? $_POST[$name] : $value );
+                    if( $type == 'textarea' /*|| $type == 'richtext'*/ ){
+                        $value = '';
+                        foreach( $node->children as $child ){
+                            $value .= $child->get_HTML();
+                        }
+                    }
+
+                    $field_info = array(
+                        'id' => -1,
+                        'name' => $name,
+                        'label' => $label,
+                        'k_desc' => $desc,
+                        'k_type' => strtolower( $type ),
+                        'hidden' => '0',
+                        'data' => $value,
+                        'required' => $required,
+                        'validator' => $validator,
+                        'validator_msg' => $validator_msg,
+                        'k_separator' => $separator,
+                        'val_separator' => $val_separator,
+                        'opt_values' => $opt_values,
+                        'opt_selected' => $opt_selected,
+                        'html_before' => $html_before,
+                        'html_after' => $html_after,
+                        'system' => '0',
+                        'allowed_html_tags' => $allowed_html_tags
+                    );
+
+                    if( $is_udf ){
+                        $field_info = array_merge( $field_info, $attr_udf );
+                        $PAGE->forms[$form][$name] = new $udf_classname( $field_info, $PAGE->forms[$form] );
                     }
                     else{
-                        $f->store_posted_changes( isset($_GET[$name]) ? $_GET[$name] : $value );
+                        $PAGE->forms[$form][$name] = new KFieldForm( $field_info, $PAGE->forms[$form] );
+                    }
+                    $f = &$PAGE->forms[$form][$name];
+
+                    if( $f->k_type== 'captcha' ){
+                        $f->captcha_num = intval( $PAGE->captcha_num++ );
+                        $f->captcha_format = strtolower( trim($format) );
+                        $f->captcha_reload_text = $reload_text ? $reload_text : 'Reload Image';
                     }
                 }
 
-                if( $f->k_type== 'captcha' ){
-                    $f->captcha_num = intval( $PAGE->captcha_num++ );
-                    $f->captcha_format = strtolower( trim($format) );
-                    $f->captcha_reload_text = $reload_text ? $reload_text : 'Reload Image';
+                // form submitted?
+                $submitted = ( $form_method=='post' ) ? isset($_POST['k_hid_'.$form]) : isset($_GET['k_hid_'.$form]);
+                if( $submitted ){
+                    $var_name = $name;
+                    if( $type=='bound' ){
+                        $var_name = 'f_'.$var_name; // hack for admin-panel's unfortunate naming of fields
+                    }
+                    ( $form_method=='post' ) ? $f->store_posted_changes($_POST[$var_name]) : $f->store_posted_changes($_GET[$var_name]);
                 }
             }
 
             // render
-            $html = $f->_render( $name, $id, $extra );
-
-            return $html;
+            if( is_null($f->cached) || $f->err_msg ){
+                if( $type=='bound' ){
+                    $name = $id = 'f_'.$name; // hack for admin-panel's unfortunate naming of fields
+                }
+                $f->cached = $f->_render( $name, $id, $extra );
+            }
+            return $f->cached;
 
         }
 
@@ -3733,6 +3997,9 @@ FORM;
                               'to'=>'',
                               'cc'=>'',
                               'bcc'=>'',
+                              'reply_to'=>'',
+                              'return_path'=>'',
+                              'charset'=>'',
                               'subject'=>'',
                               'debug'=>'0',
                               'logfile'=>''
@@ -3744,6 +4011,10 @@ FORM;
             $to = trim( $to );
             $cc = trim( $cc );
             $bcc = trim( $bcc );
+            $reply_to = trim( $reply_to );
+            $return_path = trim( $return_path );
+            $charset = trim( $charset );
+            if( $charset=='' ) $charset=K_CHARSET;
             $debug = ( $debug==1 ) ? 1 : 0;
             $logfile = trim( $logfile );
 
@@ -3754,13 +4025,19 @@ FORM;
             $headers = array();
             if( $cc ) $headers['Cc']=$cc;
             if( $bcc ) $headers['Bcc']=$bcc;
+            if( $reply_to ) $headers['Reply-To']=$reply_to;
+            if( $return_path ) $headers['Return-Path']=$return_path;
+            $headers['MIME-Version']='1.0';
+            $headers['Content-Type']='text/plain; charset='.$charset;
+
             $msg = $FUNCS->unhtmlentities( $html, K_CHARSET ); // resurrecting (decoding) the entities. Shouldn't be required in HTML mails.
             $msg = strip_tags($msg);
             $rs = $FUNCS->send_mail( $from, $to, $subject, $msg, $headers );
             if( $debug ){
                 $log = "From: $from\r\nTo: $to\r\n";
-                if( $cc ) $log .= "Cc: $cc\r\n";
-                if( $bcc ) $log .= "Bcc: $bcc\r\n";
+                foreach( $headers as $k=>$v ){
+                    $log .= $k .': '.$v."\r\n";
+                }
                 $log .= "Subject: $subject\r\nMessage: $msg\r\n\r\n";
                 ( $rs ) ? $log .= "Delivery Success" : $log .= "Delivery Failed";
                 $FUNCS->log( $log, $logfile );
@@ -3891,6 +4168,7 @@ MAP;
             return $html;
         }
 
+        //////Will try and move the following to 'plugins', once the architecture is in place
         function paypal_button( $params, $node ){
             global $CTX, $FUNCS, $PAGE;
             if( count($node->children) ) {die("ERROR: Tag \"".$node->name."\" is a self closing tag");}
@@ -4002,25 +4280,31 @@ MAP;
                 $value = urlencode( stripslashes($value) );
                 $req .= "&$key=$value";
             }
-            $header .= "POST /cgi-bin/webscr HTTP/1.0\r\n";
+            $header .= "POST /cgi-bin/webscr HTTP/1.1\r\n";
             $header .= "Content-Type: application/x-www-form-urlencoded\r\n";
-            $header .= "Content-Length: " . strlen($req) . "\r\n\r\n";
             if( K_PAYPAL_USE_SANDBOX ){
-                $fp = fsockopen( 'www.sandbox.paypal.com', 80, $errno, $errstr, 30 );
+                $host = 'www.sandbox.paypal.com';
             }
             else{
-                $fp = fsockopen( 'www.paypal.com', 80, $errno, $errstr, 30 );
+                $host = 'www.paypal.com';
             }
+            $header .= "Host: " . $host . "\r\n";
+            $header .= "Connection: close\r\n";
+            $header .= "Content-Length: " . strlen($req) . "\r\n\r\n";
+            if( $debug ) $FUNCS->log( $header, $logfile );
 
+            $fp = fsockopen( 'ssl://'.$host, 443, $errno, $errstr, 30 );
             if( !$fp ){
                 if( $debug ) $FUNCS->log( "Error connecting to paypal: " . $errstr, $logfile );
             }
             else{
                 if( $debug ) $FUNCS->log( 'Connected', $logfile );
                 fputs( $fp, $header . $req );
+                $res_headers = "Response headers: \r\n";
                 while( !feof($fp) ){
                     $res = fgets( $fp, 1024 );
-                    if( strcmp($res, "VERIFIED")==0 ){
+                    if( $debug ) $res_headers .= $res;
+                    if( strcmp(trim($res), "VERIFIED")==0 ){
                         if( $debug ) $FUNCS->log( 'VERIFIED', $logfile );
                         if( $_POST['payment_status'] == 'Completed' ){
 
@@ -4064,12 +4348,13 @@ MAP;
                         }
 
                     }
-                    else if( strcmp($res, "INVALID")==0 ){
+                    else if( strcmp(trim($res), "INVALID")==0 ){
                         //Some error on our part while sendng back POST variables for verification.
                         if( $debug ) $FUNCS->log( 'Paypal says IPN is INVALID', $logfile );
                     }
                 }
                 fclose( $fp );
+                if( $debug ) $FUNCS->log( $res_headers, $logfile );
             }
 
             // Clear buffer and end script execution
@@ -4089,7 +4374,8 @@ MAP;
                               'access_level'=>'0',
                               'prompt_login'=>'0',
                               'redirect'=>'0',
-                              'force_download'=>'0'
+                              'force_download'=>'0',
+                              'thumbnail'=>'0' /* added for attachments */
                               ),
                         $params)
                    );
@@ -4101,16 +4387,24 @@ MAP;
             if( !$FUNCS->is_natural($prompt_login) ) $prompt_login=0;
             if( !$FUNCS->is_natural($redirect) ) $redirect=0;
             if( !$FUNCS->is_natural($force_download) ) $force_download=0;
+            if( !$FUNCS->is_natural($thumbnail) ) $thumbnail=0;
 
             $action = 0;
             if( $redirect ) $action = 1;
             if( $force_download ) $action = 2;
             if( $expiry ){ $expiry = time() + $expiry; }
 
-            // Encrypt the link and base64 encode it
-            $key = $FUNCS->generate_key( 32 );
-            $link = $FUNCS->encrypt( $link, $key );
-            $link = base64_encode( $link );
+            if( $FUNCS->is_non_zero_natural($link) ){
+                // Attachment id for securefile
+                $key = ( $thumbnail ) ? '1' : '0';
+                if( $action==1 ) $action=0; // no redirects for attachments
+            }
+            else{
+                // Encrypt the link and base64 encode it
+                $key = $FUNCS->generate_key( 32 );
+                $link = $FUNCS->encrypt( $link, $key );
+                $link = base64_encode( $link );
+            }
 
             // Concatenate all params and produce a hash
             $data = $link . '|' . $key . '|' . $expiry . '|' . $access_level . '|' . $prompt_login . '|' . $action;
@@ -4363,7 +4657,7 @@ MAP;
             foreach( $node->children as $child ){
                 $html .= $child->get_HTML();
             }
-            return htmlspecialchars( $html, ENT_QUOTES );
+            return htmlspecialchars( $html, ENT_QUOTES, K_CHARSET );
         }
 
         function not_empty( $params, $node ){
@@ -4430,6 +4724,31 @@ MAP;
                 if( is_null($PAGE->abort) ) $PAGE->abort = $html; // a child 'abort' tag could have set this
             }
             return;
+
+        }
+
+        // Sets its enclosed contents as the output of the current page.
+        // If has nested 'abend' tags, the output of the deepest one will be used.
+        // If multiple 'abend' tags on the same page, the first tag's output will be used.
+        // Content is never cached.
+        function abend( $params, $node ){
+            global $FUNCS, $PAGE, $DB;
+
+            ob_end_clean(); // discard all previous content..
+
+            $html = '';
+            foreach( $node->children as $child ){
+                $html .= $child->get_HTML();
+            }
+
+            $DB->commit( 1 ); // force commit, we are finished.
+            $content_type = ( $PAGE->content_type ) ? $PAGE->content_type : 'text/html';
+            $content_type_header = 'Content-Type: '.$content_type.';';
+            $content_type_header .= ' charset='.K_CHARSET;
+            header( $content_type_header );
+            echo $html;
+
+            die;
 
         }
 
@@ -4755,291 +5074,32 @@ MAP;
             return $html;
         }
 
-        function fields( $params, $node ){
-            global $FUNCS, $PAGE, $DB, $CTX;
-
-            extract( $FUNCS->get_named_vars(
-                        array(
-                               'masterpage'=>'',
-                               'page'=>'',
-                               'names'=>'', /*name(s) of fields to fetch. Can have negation*/
-                               'skip_system'=>'1'
-                              ),
-                        $params)
-                   );
-
-            // sanitize params
-            $masterpage = trim( $masterpage );
-            if( !$masterpage ){
-                die( "ERROR: Tag \"".$node->name."\": 'masterpage' attribute missing" );
-            }
-            $page = trim( $page );
-            $names = trim( $names );
-            $skip_system = ( $skip_system==0 ) ? 0 : 1;
-
-            $rs = $DB->select( K_TBL_TEMPLATES, array('id', 'clonable'), "name='" . $DB->sanitize( $masterpage ). "'" );
-            if( !count($rs) ) return;
-
-            $pg = new KWebpage( $rs[0]['id'], 0, $page );
-            if( !$pg->error ){
-                if( $names ){
-                    // Negation?
-                    $neg = 0;
-                    $pos = strpos( strtoupper($names), 'NOT ' );
-                    if( $pos!==false && $pos==0 ){
-                        $neg = 1;
-                        $names = trim( substr($names, strpos($names, ' ')) );
-                    }
-                    $arr_names = array_map( "trim", explode( ',', $names ) );
-                }
-
-                $count = count( $pg->fields );
-                for( $x=0; $x<$count; $x++ ){
-                    $f = &$pg->fields[$x];
-                    if( $skip_system && $f->system ){
-                        unset( $f );
-                        continue;
-                    }
-
-                    $f->resolve_dynamic_params();
-
-                    if( $arr_names ){
-                        if( $neg ){
-                            if( in_array($f->name, $arr_names) ){
-                                unset( $f );
-                                continue;
-                            }
-                        }
-                        else{
-                            if( !in_array($f->name, $arr_names) ){
-                                unset( $f );
-                                continue;
-                            }
-                        }
-                    }
-
-                    $CTX->set( 'id', $f->id );
-                    $CTX->set( 'template_id', $f->template_id );
-                    $CTX->set( 'name', $f->name );
-                    $CTX->set( 'label', $f->label );
-                    $CTX->set( 'desc', $f->k_desc );   //
-                    $CTX->set( 'type', $f->k_type );   //
-                    $CTX->set( 'hidden', $f->hidden);
-                    $CTX->set( 'search_type', $f->search_type );
-                    $CTX->set( 'order', $f->k_order );    //
-                    if( !$pg->tpl_is_clonable || ($pg->tpl_is_clonable && $page) ){
-                        $CTX->set( 'data', $f->get_data() );
-                    }
-                    else{
-                        $CTX->set( 'data', $f->default_data );
-                    }
-                    $CTX->set( 'default_data', $f->default_data );
-                    $CTX->set( 'required', $f->required );
-                    $CTX->set( 'validator', $f->validator );
-                    $CTX->set( 'validator_msg', $f->validator_msg );
-                    $CTX->set( 'separator', $f->k_separator ); //
-                    $CTX->set( 'val_separator', $f->val_separator );
-                    $CTX->set( 'opt_values', $f->opt_values );
-                    $CTX->set( 'opt_selected', $f->opt_selected );
-                    $CTX->set( 'toolbar', $f->toolbar );
-                    $CTX->set( 'custom_toolbar', $f->custom_toolbar );
-                    $CTX->set( 'css', $f->css );
-                    $CTX->set( 'custom_styles', $f->custom_styles );
-                    $CTX->set( 'maxlength', $f->maxlength );
-                    $CTX->set( 'height', $f->height );
-                    $CTX->set( 'width', $f->width );
-                    $CTX->set( 'group', $f->k_group ); //
-                    $CTX->set( 'assoc_field', $f->assoc_field );
-                    $CTX->set( 'crop', $f->crop );
-                    $CTX->set( 'enforce_max', $f->enforce_max );
-                    $CTX->set( 'quality', $f->quality );
-                    $CTX->set( 'show_preview', $f->show_preview );
-                    $CTX->set( 'preview_width', $f->preview_width );
-                    $CTX->set( 'preview_height', $f->preview_height );
-                    $CTX->set( 'no_xss_check', $f->no_xss_check );
-                    $CTX->set( 'rtl', $f->rtl );
-                    $CTX->set( 'body_id', $f->body_id );
-                    $CTX->set( 'body_class', $f->body_class );
-                    $CTX->set( '_html', $f->_html );
-                    $CTX->set( 'dynamic', $f->dynamic );
-                    $CTX->set( 'system', $f->system );
-                    $CTX->set( 'udf', $f->udf );
-                    // udf params
-                    if( strlen($f->custom_params) ){
-                        $arr_params = $FUNCS->unserialize($f->custom_params);
-                        if( is_array($arr_params) && count($arr_params) ){
-                            foreach( $arr_params as $k=>$v ){
-                                $CTX->set( $k, $v );
-                            }
-                        }
-                    }
-                    unset( $f );
-
-                    // call the children
-                    foreach( $node->children as $child ){
-                        $html .= $child->get_HTML();
-                    }
-                }
-            }
-            return $html;
-        }
-
-        // For 'create', 'page' parameter is not needed but you need to provide the mandatory 'k_page_name' as parameter.
-        // If k_page_name is not given but k_page_title is given, the name is auto-generated using the title.
-        // In all there are 6 system fields -
-        //      k_page_title
-        //      k_page_name *
-        //      k_page_folder_id
-        //      k_publish_date
-        //      k_access_level
-        //      k_comments_open
-        //
-        //  If any custom-field is a required field it needs to be provide too for successful saving.
-        function create( $params, $node ){
-
-            // delegate to 'update' tag
-            return $this->update( $params, $node, 1 );
-        }
-
-        function update( $params, $node, $create=0 ){
-            global $FUNCS, $PAGE, $DB, $CTX;
+        function size_format( $params, $node ){
+            global $FUNCS;
             if( count($node->children) ) {die("ERROR: Tag \"".$node->name."\" is a self closing tag");}
 
             extract( $FUNCS->get_named_vars(
                         array(
-                               'masterpage'=>'',
-                               'page'=>'', /*ignored for 'create'*/
-                               'dynamic'=>'0', /*takes values from $_POST/$_GET*/
-                               'k_publish'=>'0', /* relevant only for 'create' */
-                               'k_invalidate_cache'=>'0'
+                              'bytes'=>''
                               ),
                         $params)
                    );
+            $bytes = abs( intval($bytes) );
 
-            // sanitize params
-            $masterpage = trim( $masterpage );
-            if( !$masterpage ){
-                die( "ERROR: Tag \"".$node->name."\": 'masterpage' attribute missing" );
+            if( $bytes <= 1024 ){
+                $html = $bytes.' Bytes';
             }
-            $page = trim( $page );
-            $dynamic = ( $dynamic==1 ) ? 1 : 0;
-            $k_publish = ( $k_publish==1 ) ? 1 : 0;
-            $k_invalidate_cache = ( $k_invalidate_cache==1 ) ? 1 : 0;
-
-            $form_method = $CTX->get('k_cur_form_method'); //sync method with the containing form
-            $form_separator = $CTX->get('k_cur_form_separator');
-
-
-            $rs = $DB->select( K_TBL_TEMPLATES, array('id', 'clonable'), "name='" . $DB->sanitize( $masterpage ). "'" );
-            if( !count($rs) ){
-                $CTX->set( 'k_success', '' );
-                $CTX->set( 'k_error', 'masterpage not found' ); //overwrite form's return values
-                return;
+            elseif( $bytes <= (1024*1024) ){
+                $html = sprintf( '%d KB',(int)($bytes/1024) );
             }
-            if( !$rs[0]['clonable'] && $create ){
-                $CTX->set( 'k_success', '' );
-                $CTX->set( 'k_error', 'cannot create page of non-clonable template' );
-                return;
-            }
-            if( $rs[0]['clonable'] && !$create && !$page ){
-                $CTX->set( 'k_success', '' );
-                $CTX->set( 'k_error', 'page name not provided' );
-                return; // Need to provide the page name for clonable templates
-            }
-
-            if( $create ){
-                $pg = new KWebpage( $rs[0]['id'], -1 );
+            elseif( $bytes <= (1024*1024*1024) ){
+                $html = sprintf( '%.2f MB',($bytes/(1024*1024)) );
             }
             else{
-                $pg = new KWebpage( $rs[0]['id'], 0, $page );
-            }
-            if( $pg->error ){
-                $CTX->set( 'k_success', '' );
-                $CTX->set( 'k_error', $pg->err_msg );
-                return;
+                $html = sprintf( '%.2f Gb',($bytes/(1024*1024*1024)) );
             }
 
-            if( !$dynamic ){
-                // gather values provided as attributes
-                $fields = array();
-                foreach( $params as $param ){
-                    $pname =  strtolower( trim($param['lhs']) );
-                    if( $pname=='masterpage' || $pname=='page' ) continue;
-                    $fields[$pname]=$param['rhs'];
-                }
-            }
-            else{
-                $fields= ( $form_method=='post' ) ? $_POST : $_GET;
-            }
-
-            // stuff values into the page
-            for( $x=0; $x<count($pg->fields); $x++ ){
-                $f = &$pg->fields[$x];
-                if( $f->k_type == 'thumbnail' || $f->k_type == 'hidden' ||
-                   $f->k_type == 'message' || $f->k_type == 'group' ){
-                    continue;
-                }
-
-                if( isset($fields[$f->name]) ){
-                    if( $f->k_type== 'checkbox' ){
-                        $separator = ( $f->k_separator ) ? $f->k_separator : '|';
-                        $sep = '';
-                        $str_val = '';
-                        if( !$dynamic ){
-                            $fields[$f->name] = explode(',', $fields[$f->name]);
-                        }
-                        foreach( $fields[$f->name] as $v ){
-                            $str_val .= $sep . trim( $v );
-                            $sep = $separator;
-                        }
-                        $f->store_posted_changes( $str_val );
-                    }
-                    else{
-                        $f->store_posted_changes( $fields[$f->name] );
-                    }
-                }
-                unset( $f );
-            }
-
-            if( $create ){
-                $f = &$pg->fields[3]; // k_publish_date
-                if( !$f->get_data() ){
-                    if( $k_publish ){
-                        $f->store_posted_changes( $FUNCS->get_current_desktop_time() );
-                    }
-                    else{
-                        $f->store_posted_changes( '0000-00-00 00:00:00' );
-                    }
-                }
-                unset( $f );
-            }
-
-            // finally save..
-            $errors = $pg->save();
-
-            if( $errors ){
-                $sep = '';
-                if( count($errors) ){
-                    $str_err = '';
-                    for( $x=0; $x<count($pg->fields); $x++ ){
-                        $f = &$pg->fields[$x];
-                        if( $f->err_msg ){
-                            $str_err .= $sep . '<b>' . $f->name . ':</b> ' . $f->err_msg;
-                            $sep = $form_separator;
-                        }
-                    }
-                    $CTX->set( 'k_success', '' );
-                    $CTX->set( 'k_error', $str_err );
-                }
-            }
-            else{
-                if( $k_invalidate_cache ){
-                    $FUNCS->invalidate_cache();
-                }
-
-                // return success
-                $CTX->set( 'k_success', '1' );
-            }
+            return $html;
         }
 
         // Sets a 'http_only' cookie with the given name, value and positive expiration time.

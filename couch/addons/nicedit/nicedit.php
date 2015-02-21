@@ -76,6 +76,7 @@
                 'forecolor'=>'forecolor',
                 'bgcolor'=>'bgcolor',
                 'image'=>'image',
+                'source'=>'xhtml',
             );
             $arr_buttons = array_map( "trim", explode( ',', $attr['buttons'] ) );
             $arr_tmp = array();
@@ -93,10 +94,32 @@
                 $attr['buttons'] = "[".$buttons."]";
             }
             else{
-                $attr['buttons']="['bold','italic','underline','ol','ul','link','unlink','image']"; // default set of buttons
+                $attr['buttons']="['bold','italic','underline','ol','ul','link','unlink','image','removeformat','xhtml']"; // default set of buttons
             }
 
             return $attr;
+        }
+
+        // Posted data
+        function store_posted_changes( $post_val ){
+            global $FUNCS;
+            if( $this->deleted ) return; // no need to store
+
+            $orig_data = $this->data;
+            if( $this->trust_mode==0 ){
+                // if value submitted from front-end form, input is untrusted and so only a limited subset of HTML tags will be allowed
+                $allowed_tags = '<a><br><strong><b><em><i><u><blockquote><pre><code><ul><ol><li><del>';
+                $this->data = trim( $FUNCS->cleanXSS(strip_tags($post_val, $allowed_tags), 1) );
+            }
+            else{
+                $this->data = $FUNCS->cleanXSS( $post_val );
+            }
+            $this->modified = ( strcmp( $orig_data, $this->data )==0 )? false : true; // values unchanged
+        }
+
+        function is_empty(){
+            $data = trim( $this->get_data() );
+            return ( strlen($data) ) ? false : true;
         }
 
         function _render( $input_name, $input_id, $extra1='', $extra2='', $dynamic_insertion=0  ){
@@ -113,10 +136,10 @@
             */
 
             define( 'NICEDIT_URL', K_ADMIN_URL . 'addons/nicedit/' );
-            $FUNCS->load_js( NICEDIT_URL . 'nicEdit.js' );
+            $FUNCS->load_js( NICEDIT_URL . 'nicEdit.js?v=2' );
             $style = ( $this->height ) ? 'height:'.$this->height.'px; ' : '';
             $style .= ( $this->width ) ? 'width:'.$this->width.'px; ' : 'width:99%; ';
-            $html .= '<textarea id="' . $input_id . '" name="'. $input_name .'" '.$rtl.' rows="12" cols="79" '. $notice0 .' style="'.$style.'" '.$extra.'>'.$FUNCS->escape_HTML( $this->get_data() ).'</textarea>';
+            $html .= '<textarea id="' . $input_id . '" name="'. $input_name .'" '.$rtl.' rows="12" cols="79" style="'.$style.'" '.$extra.'>'. htmlspecialchars( $this->get_data(), ENT_QUOTES, K_CHARSET ) .'</textarea>';
 
             if( $this->maxheight && $this->height && ($this->maxheight < $this->height) ){
                 $this->maxheight = $this->height;
@@ -127,23 +150,26 @@
                 ?>
                 <script type="text/javascript">
                 <!--
-                window.addEvent('domready',
-                    function(){
-                    var ed = new nicEditor({iconsPath : '<?php echo NICEDIT_URL; ?>nicEditorIcons.gif', buttonList : <?php echo $this->buttons; ?><?php if($this->maxheight){echo(', maxHeight : '.$this->maxheight);}?>}).panelInstance('<?php echo $input_id ?>');
+                try{
+                    window.addEvent('domready',
+                        function(){
+                        var ed = new nicEditor({iconsPath : '<?php echo NICEDIT_URL; ?>nicEditorIcons.gif?v=2', buttonList : <?php echo $this->buttons; ?><?php if($this->maxheight){echo(', maxHeight : '.$this->maxheight);}?>}).panelInstance('<?php echo $input_id ?>');
 
-                    $('btn_submit').addEvent("my_submit", function(event){
-                       var el = nicEditors.findEditor('<?php echo $input_id ?>');
-                       if (el) el.saveContent();
-                    });
-
-                    var parentRow = $('<?php echo $input_id ?>').getParent('tr');
-                    if(parentRow){
-                        parentRow.addEvent('row_delete', function(event){
-                        ed.removeInstance('<?php echo $input_id ?>');
+                        $('btn_submit').addEvent("my_submit", function(event){
+                           var el = nicEditors.findEditor('<?php echo $input_id ?>');
+                           if (el) el.saveContent();
                         });
-                    }
-                    }
-                );
+
+                        var parentRow = $('<?php echo $input_id ?>').getParent('tr');
+                        if(parentRow){
+                            parentRow.addEvent('row_delete', function(event){
+                            ed.removeInstance('<?php echo $input_id ?>');
+                            });
+                        }
+                        }
+                    );
+                }
+                catch(e){}
                 -->
                 </script>
                 <?php
@@ -158,7 +184,7 @@
                 <img src="<?php echo NICEDIT_URL; ?>blank.gif" alt="" id="<?php echo $input_id ?>_dummyimg" onload="
                     el=$('<?php echo $input_id ?>_dummyimg');
                     if(!el.get('idx')){
-                    var ed = new nicEditor({iconsPath : '<?php echo NICEDIT_URL; ?>nicEditorIcons.gif', buttonList : <?php echo $this->buttons; ?><?php if($this->maxheight){echo(', maxHeight : '.$this->maxheight);}?>}).panelInstance('<?php echo $input_id ?>');
+                    var ed = new nicEditor({iconsPath : '<?php echo NICEDIT_URL; ?>nicEditorIcons.gif?v=2', buttonList : <?php echo $this->buttons; ?><?php if($this->maxheight){echo(', maxHeight : '.$this->maxheight);}?>}).panelInstance('<?php echo $input_id ?>');
 
                     $('btn_submit').addEvent('my_submit', function(event){
                        var el = nicEditors.findEditor('<?php echo $input_id ?>');
@@ -181,5 +207,5 @@
         }
     }
 
-    // Register AFTER defining class to please ioncube loader
+    // Register
     $FUNCS->register_udf( 'nicedit', 'Nicedit', 1/*repeatable*/ );

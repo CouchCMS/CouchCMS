@@ -41,6 +41,8 @@
     if( isset($_GET['act']{0}) ){
         $tpl_id = ( isset($_GET['tpl']) && $FUNCS->is_non_zero_natural($_GET['tpl']) ) ? (int)$_GET['tpl'] : null;
         $page_id = ( isset($_GET['p']) && $FUNCS->is_non_zero_natural($_GET['p']) ) ? (int)$_GET['p'] : null;
+        $cid = ( isset($_GET['cid']) && $FUNCS->is_non_zero_natural($_GET['cid']) ) ? (int)$_GET['cid'] : null;
+        $rid = ( isset($_GET['rid']) && $FUNCS->is_non_zero_natural($_GET['rid']) ) ? (int)$_GET['rid'] : null;
 
         if( $tpl_id && (($_GET['act'] == 'edit') || ($_GET['act'] == 'create')) ){
 
@@ -68,473 +70,495 @@
                 }
             }
 
-            // If non-clonable and physical template missing
-            if( !$PAGE->tpl_is_clonable && !file_exists(K_SITE_DIR . $PAGE->tpl_name) ){
-                $html = '<div class="error" style="margin-bottom:10px;">';
-                $html .= '<strong>'. $FUNCS->t('template_missing') .'</strong>';
-                if( $AUTH->user->access_level >= K_ACCESS_LEVEL_SUPER_ADMIN ){
-                    // make sure no drafts exist before prompting for template removal
-                    $rs = $DB->select( K_TBL_PAGES, array('id'), "template_id='" . $DB->sanitize( $PAGE->tpl_id ). "' AND is_master<>'1'" );
-                    if( count($rs) ){
-                        $html .= ' <i>('. $FUNCS->t('remove_uncloned_template_completely') .')</i>';
-                        $html .= '</div>';
+            // first check if any custom edit screen registered for this template
+            if( array_key_exists( $PAGE->tpl_name, $FUNCS->admin_page_views ) ){
+                $snippet = $FUNCS->admin_page_views[$PAGE->tpl_name][0];
+                $show_advanced_settings = $FUNCS->admin_page_views[$PAGE->tpl_name][1];
+
+                if( defined('K_SNIPPETS_DIR') ){ // always defined relative to the site
+                    $base_snippets_dir = K_SITE_DIR . K_SNIPPETS_DIR . '/';
+                }
+                else{
+                    $base_snippets_dir = K_COUCH_DIR . 'snippets/';
+                }
+
+                $filepath = $base_snippets_dir . ltrim( trim($snippet), '/\\' );
+                $html = @file_get_contents( $filepath );
+                if( $html!==FALSE ){
+                    $parser = new KParser( $html );
+                    //$html = $parser->get_HTML();
+                    $html = $parser->get_cached_HTML( $filepath );
+                }
+                else{
+                    $html = 'ERROR: Unable to get contents from custom page_view <b>' . $filepath . '</b>';
+                }
+            }
+            else{ // continue with default logic
+
+                $show_advanced_settings =  1;
+
+                // If non-clonable and physical template missing
+                if( !$PAGE->tpl_is_clonable && !file_exists(K_SITE_DIR . $PAGE->tpl_name) ){
+                    $html = '<div class="error" style="margin-bottom:10px;">';
+                    $html .= '<strong>'. $FUNCS->t('template_missing') .'</strong>';
+                    if( $AUTH->user->access_level >= K_ACCESS_LEVEL_SUPER_ADMIN ){
+                        // make sure no drafts exist before prompting for template removal
+                        $rs = $DB->select( K_TBL_PAGES, array('id'), "template_id='" . $DB->sanitize( $PAGE->tpl_id ). "' AND is_master<>'1'" );
+                        if( count($rs) ){
+                            $html .= ' <i>('. $FUNCS->t('remove_uncloned_template_completely') .')</i>';
+                            $html .= '</div>';
+                        }
+                        else{
+                            $html .= '</div><a class="button" href="javascript:k_delete_template('.$PAGE->tpl_id.', \''.$FUNCS->create_nonce( 'delete_tpl_'.$PAGE->tpl_id ).'\')" title="'.$FUNCS->t('remove_template').'"><span>'.$FUNCS->t('remove_template').'</span></a>';
+                        }
                     }
                     else{
-                        $html .= '</div><a class="button" href="javascript:k_delete_template('.$PAGE->tpl_id.', \''.$FUNCS->create_nonce( 'delete_tpl_'.$PAGE->tpl_id ).'\')" title="'.$FUNCS->t('remove_template').'"><span>'.$FUNCS->t('remove_template').'</span></a>';
+                        $html .= '</div>';
                     }
-                }
-                else{
-                    $html .= '</div>';
-                }
-                $_p = array();
-                $_p['module'] = 'pages';
-                $_p['tpl_name'] = $PAGE->tpl_name;
-                $_p['title'] = $PAGE->tpl_title ? $PAGE->tpl_title : $PAGE->tpl_name;
-                $_p['content'] = $html;
-                ob_start();
-                ?>
-                <script type="text/javascript">
-                    //<![CDATA[
-                    function k_delete_template( tpl, nonce ){
-                        var qs = 'ajax.php?act=delete-tpl&tpl='+tpl+'&nonce='+encodeURIComponent( nonce );
-                        var requestHTMLData = new Request (
-                            {
-                                url: qs,
-                                onComplete: function(response){
-                                    if( response=='OK' ){
-                                        document.location.href = "<?php echo K_ADMIN_URL . K_ADMIN_PAGE; ?>";
-                                    }
-                                    else{
-                                        alert(response);
+                    $_p = array();
+                    $_p['module'] = 'pages';
+                    $_p['tpl_name'] = $PAGE->tpl_name;
+                    $_p['title'] = $PAGE->tpl_title ? $PAGE->tpl_title : $PAGE->tpl_name;
+                    $_p['content'] = $html;
+                    ob_start();
+                    ?>
+                    <script type="text/javascript">
+                        //<![CDATA[
+                        function k_delete_template( tpl, nonce ){
+                            var qs = 'ajax.php?act=delete-tpl&tpl='+tpl+'&nonce='+encodeURIComponent( nonce );
+                            var requestHTMLData = new Request (
+                                {
+                                    url: qs,
+                                    onComplete: function(response){
+                                        if( response=='OK' ){
+                                            document.location.href = "<?php echo K_ADMIN_URL . K_ADMIN_PAGE; ?>";
+                                        }
+                                        else{
+                                            alert(response);
+                                        }
                                     }
                                 }
-                            }
-                        ).send();
-                    }
-                    //]]>
-                </script>
-                <?php
-                $_p['content'] .= ob_get_contents();
-                ob_end_clean();
-                $FUNCS->render_admin_page_ex( $_p );
-                return;
-            }
-
-            for( $x=0; $x<count($PAGE->fields); $x++ ){
-                $f = &$PAGE->fields[$x];
-                $f->resolve_dynamic_params();
-                unset( $f );
-            }
-
-            // If creating new page and not in save mode and a folder_id is provided..
-            if( $_GET['act'] == 'create' && $_POST['op']!='save' ){
-                $f_id = ( isset($_GET['fid']) && $FUNCS->is_non_zero_natural($_GET['fid']) ) ? (int)$_GET['fid'] : null;
-
-                // first test if the indicated folder does exist..
-                if( $f_id && $PAGE->folders->find_by_id( $f_id ) ){
-                    // if it does, set it in the folders select dropdown
-                    $PAGE->fields[2]->data = $f_id;
-                }
-            }
-
-            if( isset($_POST['op']) && $_POST['op']=='save' ){
-
-                // map proxy fields to their cardinal system counterparts
-                if(  $_POST['f_publish_status'] ){
-                    $_POST['f_k_publish_date'] = $FUNCS->sanitize_posted_date();
-                }
-                else{
-                    $_POST['f_k_publish_date'] = '0000-00-00 00:00:00';
-                }
-                if( isset($_POST['f_k_levels_list']) ){
-                    $_POST['f_k_access_level'] = intval( $_POST['f_k_levels_list']);
-                }
-                $_POST['f_k_comments_open'] = ( isset($_POST['f_allow_comments']) ) ? '1' : '0';
-                if( $PAGE->tpl_nested_pages ){
-                    $_POST['f_k_show_in_menu'] = ( isset($_POST['f_show_in_menu']) ) ? '1' : '0';
-                    if( isset($_POST['f_menu_text']) ) $_POST['f_k_menu_text'] = $_POST['f_menu_text'];
-                    $_POST['f_k_is_pointer'] = ( isset($_POST['f_is_pointer']) ) ? '1' : '0';
-                    $_POST['f_k_open_external'] = ( isset($_POST['f_open_external']) ) ? '1' : '0';
-                    $_POST['f_k_masquerades'] = (  $_POST['f_masquerades'] ) ? '1' : '0';
-                    $_POST['f_k_strict_matching'] = ( isset($_POST['f_strict_matching']) ) ? '0' : '1';
+                            ).send();
+                        }
+                        //]]>
+                    </script>
+                    <?php
+                    $_p['content'] .= ob_get_contents();
+                    ob_end_clean();
+                    $FUNCS->render_admin_page_ex( $_p );
+                    return;
                 }
 
-                // move posted data into fields
+                $requires_multipart = 0;
                 for( $x=0; $x<count($PAGE->fields); $x++ ){
                     $f = &$PAGE->fields[$x];
-                    if( $f->k_type == 'thumbnail' || $f->k_type == 'hidden' ||
-                       $f->k_type == 'message' || $f->k_type == 'group' ){
-                        continue;
-                    }
-                    if( $f->k_type== 'checkbox' ){
-                        $separator = ( $f->k_separator ) ? $f->k_separator : '|';
-                        $sep = '';
-                        $str_val = '';
-                        if( isset($_POST['f_'.$f->name]) ){
-                            foreach( $_POST['f_'.$f->name] as $v ){
-                                $str_val .= $sep . $v;
-                                $sep = $separator;
-                            }
-                        }
-                        $f->store_posted_changes( $str_val );
-                        continue;
-                    }
-
-                    $f->store_posted_changes( $_POST['f_'.$f->name] );
+                    $f->resolve_dynamic_params();
+                    // check if any field requires 'multipart/form-data'
+                    if( $f->requires_multipart ) $requires_multipart = 1;
                     unset( $f );
                 }
 
-                $errors = $PAGE->save();
+                // If creating new page and not in save mode and a folder_id or related_page is provided..
+                if( $_GET['act'] == 'create' && $_POST['op']!='save' ){
+                    $f_id = ( isset($_GET['fid']) && $FUNCS->is_non_zero_natural($_GET['fid']) ) ? (int)$_GET['fid'] : null;
 
-                if( !$errors ){
+                    // first test if the indicated folder does exist..
+                    if( $f_id && $PAGE->folders->find_by_id( $f_id ) ){
+                        // if it does, set it in the folders select dropdown
+                        $PAGE->fields[2]->data = $f_id;
+                    }
 
-                    if( $draft_of ){
-                        if( $_POST['f_k_update_original'] ){
-
-                            $DB->begin();
-                            $res = $PAGE->update_parent();
-                            if( $FUNCS->is_error($res) ){
-                                ob_end_clean();
-                                die( $res->err_msg );
+                    // any preset related-page?
+                    if( $cid && $rid ){
+                        for( $x=0; $x<count($PAGE->fields); $x++ ){
+                            $f = &$PAGE->fields[$x];
+                            if( (!$f->system) && $f->id==$rid && $f->k_type=='relation'){
+                                $f->items_selected[] = $cid;
+                                unset( $f );
+                                break;
                             }
+                            unset( $f );
+                        }
+                    }
+                }
 
-                            // the draft can be deleted now
-                            $PAGE->delete( 1 );
-                            $DB->commit( 1 );
+                $errors = '';
+                if( isset($_POST['op']) && $_POST['op']=='save' ){
 
-                            $FUNCS->invalidate_cache();
+                    // map proxy fields to their cardinal system counterparts
+                    if(  $_POST['f_publish_status'] ){
+                        $_POST['f_k_publish_date'] = $FUNCS->sanitize_posted_date();
+                    }
+                    else{
+                        $_POST['f_k_publish_date'] = '0000-00-00 00:00:00';
+                    }
+                    if( isset($_POST['f_k_levels_list']) ){
+                        $_POST['f_k_access_level'] = intval( $_POST['f_k_levels_list']);
+                    }
+                    $_POST['f_k_comments_open'] = ( isset($_POST['f_allow_comments']) ) ? '1' : '0';
+                    if( $PAGE->tpl_nested_pages ){
+                        $_POST['f_k_show_in_menu'] = ( isset($_POST['f_show_in_menu']) ) ? '1' : '0';
+                        if( isset($_POST['f_menu_text']) ) $_POST['f_k_menu_text'] = $_POST['f_menu_text'];
+                        $_POST['f_k_is_pointer'] = ( isset($_POST['f_is_pointer']) ) ? '1' : '0';
+                        $_POST['f_k_open_external'] = ( isset($_POST['f_open_external']) ) ? '1' : '0';
+                        $_POST['f_k_masquerades'] = (  $_POST['f_masquerades'] ) ? '1' : '0';
+                        $_POST['f_k_strict_matching'] = ( isset($_POST['f_strict_matching']) ) ? '0' : '1';
+                    }
 
-                            // redirect to the original
-                            $nonce = $FUNCS->create_nonce( 'edit_page_'.$draft_of );
-                            $extra = '?act=edit&tpl='.$tpl_id.'&p='.$draft_of .'&nonce='.$nonce;
-                            header("Location: ".K_ADMIN_URL . K_ADMIN_PAGE."$extra");
-                            exit;
+                    // move posted data into fields
+                    $refresh_form = $refresh_errors = 0;
+                    for( $x=0; $x<count($PAGE->fields); $x++ ){
+                        $f = &$PAGE->fields[$x];
+                        $f->store_posted_changes( $_POST['f_'.$f->name] );
+                        if( $f->refresh_form ) $refresh_form = 1;
+                        if( $f->err_msg_refresh ) $refresh_errors++;
+                        unset( $f );
+                    }
 
+                    if( !$refresh_form ){
+                        $errors = $PAGE->save();
+
+                        if( !$errors ){
+
+                            if( $draft_of ){
+                                if( $_POST['f_k_update_original'] ){
+
+                                    $DB->begin();
+                                    $res = $PAGE->update_parent();
+                                    if( $FUNCS->is_error($res) ){
+                                        ob_end_clean();
+                                        die( $res->err_msg );
+                                    }
+
+                                    // the draft can be deleted now
+                                    $PAGE->delete( 1 );
+                                    $DB->commit( 1 );
+
+                                    $FUNCS->invalidate_cache();
+
+                                    // redirect to the original
+                                    $nonce = $FUNCS->create_nonce( 'edit_page_'.$draft_of );
+                                    $extra = '?act=edit&tpl='.$tpl_id.'&p='.$draft_of .'&nonce='.$nonce;
+                                    header("Location: ".K_ADMIN_URL . K_ADMIN_PAGE."$extra");
+                                    exit;
+
+                                }
+                            }
+                            else{
+
+                                $FUNCS->invalidate_cache();
+
+                                // If draft needs to be created ..
+                                if( $_POST['f_k_create_draft'] ){
+                                    $draft_id = $PAGE->create_draft();
+                                    if( $FUNCS->is_error($draft_id) ){
+                                        ob_end_clean();
+                                        die( $draft_id->err_msg );
+                                    }
+
+                                    // redirect to the draft
+                                    $nonce = $FUNCS->create_nonce( 'edit_page_'.$draft_id );
+                                    $extra = '?act=edit&tpl='.$tpl_id.'&p='.$draft_id .'&nonce='.$nonce;
+                                    header("Location: ".K_ADMIN_URL . K_ADMIN_PAGE."$extra");
+                                    exit;
+                                }
+
+                                $nonce = $FUNCS->create_nonce( 'edit_page_'.$PAGE->id );
+                                $extra = '?act=edit&tpl='.$tpl_id.'&p='.$PAGE->id;
+                                if( $cid && $rid ) $extra .= '&cid='.$cid.'&rid='.$rid;
+                                $extra .= '&nonce='.$nonce;
+                                header("Location: ".K_ADMIN_URL . K_ADMIN_PAGE."$extra");
+                                exit;
+                            }
                         }
                     }
                     else{
-
-                        $FUNCS->invalidate_cache();
-
-                        // If draft needs to be created ..
-                        if( $_POST['f_k_create_draft'] ){
-                            $draft_id = $PAGE->create_draft();
-                            if( $FUNCS->is_error($draft_id) ){
-                                ob_end_clean();
-                                die( $draft_id->err_msg );
-                            }
-
-                            // redirect to the draft
-                            $nonce = $FUNCS->create_nonce( 'edit_page_'.$draft_id );
-                            $extra = '?act=edit&tpl='.$tpl_id.'&p='.$draft_id .'&nonce='.$nonce;
-                            header("Location: ".K_ADMIN_URL . K_ADMIN_PAGE."$extra");
-                            exit;
-                        }
-
-
-                        //if( $_GET['act'] == 'create' ){
-                            $nonce = $FUNCS->create_nonce( 'edit_page_'.$PAGE->id );
-                            $extra = '?act=edit&tpl='.$tpl_id.'&p='.$PAGE->id .'&nonce='.$nonce;
-                            header("Location: ".K_ADMIN_URL . K_ADMIN_PAGE."$extra"); //TODO: IIS requires refresh
-                            exit;
-                        //}
+                        $errors = $refresh_errors;
                     }
+                    // if not form refresh
+                } // if save
+
+                // start building content for output
+                ob_start();
+                $err_div = '<div class="error" style="margin-bottom:10px; color:red; display:';
+                if( $errors ){
+                    $err_div .= "block\">";
+                    $err_title = ($errors>1)?'ERRORS':'ERROR';
+                    $err_div .= $errors. ' ' .$err_title.':<br>';
                 }
-            } // if save
-
-            // start building content for output
-            ob_start();
-            $err_div = '<div class="error" style="margin-bottom:10px; color:red; display:';
-            if( $errors ){
-                $err_div .= "block\">";
-                $err_title = ($errors>1)?'ERRORS':'ERROR';
-                $err_div .= $errors. ' ' .$err_title.':<br>';
-            }
-            else{
-                $err_div .= "none\">&nbsp;";
-            }
-            $err_div .= '</div>';
-            echo $err_div;
-            ?>
-                <form name="frm_edit_page" id="frm_edit_page" action="" method="post" accept-charset="<?php echo K_CHARSET; ?>">
-                    <div id="admin-sidebar" >
-                    <?php if( !$draft_of ){ ?>
-                        <?php if( $_GET['act'] == 'edit' ){
-                            $visibility = ( $PAGE->tpl_nested_pages && $PAGE->fields[10]->get_data() ) ? 'hidden' : 'visible'; // hide draft button if nestable page is a 'pointer page'
-                        ?>
-                        <div id="create-draft" style="margin-top:0px; visibility:<?php echo $visibility; ?>;">
-                            <a class="button" id="btn_draft" href="#" title="<?php echo $FUNCS->t('create_draft_msg'); ?>" onclick="this.style.cursor='wait'; $('f_k_create_draft').set( 'value', '1' ); $('frm_edit_page').submit(); return false;"><span><?php echo $FUNCS->t('create_draft'); ?></span></a>
-                            <input type="hidden" id="f_k_create_draft" name="f_k_create_draft" value="0" />
-                            <div style="clear:both"></div>
-                        </div>
-                        <?php } ?>
-
-                        <div id="access-levels" style="margin-top:<?php if($_GET['act'] == 'edit') echo '10'; else echo '0'; ?>px">
-                            <label><b><?php echo $FUNCS->t('access_level'); ?>:</b></label><br>
-                            <?php
-                                $inherited = 0;
-                                $level = $PAGE->get_access_level( $inherited ); //template level and folder level override page level
-                                if( $PAGE->access_level > $AUTH->user->access_level ){
-                                    $inherited = 1;
-                                    echo $FUNCS->access_levels_dropdown( $level, 10, 0, $inherited);
-                                }
-                                else{
-                                    if( !$inherited ){
-                                        $level = $PAGE->fields[4]->get_data();
-                                    }
-                                    echo $FUNCS->access_levels_dropdown( $level /*selected*/, $AUTH->user->access_level/*max*/, 0/*min*/, $inherited/*disabled*/);
-                                }
-                                $PAGE->effective_level = $level;
+                else{
+                    $err_div .= "none\">&nbsp;";
+                }
+                $err_div .= '</div>';
+                echo $err_div;
+                ?>
+                    <form name="frm_edit_page" id="frm_edit_page" action="" method="post" accept-charset="<?php echo K_CHARSET; ?>"<?php if($requires_multipart){echo ' enctype="multipart/form-data" ';}?>>
+                        <div id="admin-sidebar" >
+                        <?php if( !$draft_of ){ ?>
+                            <?php if( $_GET['act'] == 'edit' ){
+                                $visibility = ( $PAGE->tpl_nested_pages && $PAGE->fields[10]->get_data() ) ? 'hidden' : 'visible'; // hide draft button if nestable page is a 'pointer page'
                             ?>
-                        </div>
+                            <div id="create-draft" style="margin-top:0px; visibility:<?php echo $visibility; ?>;">
+                                <a class="button" id="btn_draft" href="#" title="<?php echo $FUNCS->t('create_draft_msg'); ?>" onclick="this.style.cursor='wait'; $('f_k_create_draft').set( 'value', '1' ); $('frm_edit_page').submit(); return false;"><span><?php echo $FUNCS->t('create_draft'); ?></span></a>
+                                <input type="hidden" id="f_k_create_draft" name="f_k_create_draft" value="0" />
+                                <div style="clear:both"></div>
+                            </div>
+                            <?php } ?>
 
-                        <?php
-                            $visibility = ( $PAGE->tpl_is_commentable ) ? 'block' : 'none';
-                            $checked = ( $PAGE->fields[5]->get_data() ) ? 'checked="checked"' : '';
-                         ?>
-                        <div id="comments-open" style="margin-top:10px; display:<?php echo $visibility; ?>">
-                            <label><b><?php echo $FUNCS->t('comments'); ?>:</b></label><br>
-                            <label>
-                                <input type="checkbox" value="1" <?php echo $checked; ?> name="f_allow_comments"/><?php echo $FUNCS->t('allow_comments'); ?>
-                            </label>
-
-                        </div>
-
-                        <?php if( $PAGE->tpl_nested_pages ): ?>
-                            <div id="publish-date" style="margin-top:10px">
-                                <?php $publish_date = $PAGE->fields[3]->get_data(); ?>
-                                <label><b><?php echo $FUNCS->t('status'); ?>:</b></label><br>
-                                <input type="radio" <?php if( $publish_date != '0000-00-00 00:00:00' ){?>checked="checked"<?php } ?> value="1" id="f_publish_status_1" name="f_publish_status" />
-                                <label for="f_publish_status_1"><?php echo $FUNCS->t('active'); ?></label>&nbsp;
-                                <input type="radio" <?php if( $publish_date == '0000-00-00 00:00:00' ){?>checked="checked"<?php } ?> value="0" id="f_publish_status_0" name="f_publish_status" />
-                                <label for="f_publish_status_0"><?php echo $FUNCS->t('inactive'); ?></label><br>
-                                <div id="date-dropdown" style="display:none">
+                            <div id="access-levels" style="margin-top:<?php if($_GET['act'] == 'edit') echo '10'; else echo '0'; ?>px">
+                                <label><b><?php echo $FUNCS->t('access_level'); ?>:</b></label><br>
                                 <?php
-                                    echo $FUNCS->date_dropdowns( $PAGE->fields[3]->get_data() );
-                                ?>
-                                </div>
-                            </div>
-                            <div id="menu" style="margin-top:10px;">
-                                <label><b><?php echo $FUNCS->t('menu'); ?>:</b></label><br>
-                                <label>
-                                    <?php $checked = ( $PAGE->fields[8]->get_data() ) ? 'checked="checked"' : ''; ?>
-                                    <input type="checkbox" value="1" <?php echo $checked; ?> name="f_show_in_menu" /><?php echo $FUNCS->t('show_in_menu'); ?>
-                                </label>
-                            </div>
-                            <div id="menu-text" style="margin-top:10px;">
-                                <label><b><?php echo $FUNCS->t('menu_text'); ?>:</b></label><br>
-                                <input type="text" style="width: 185px;" class="k_text" maxlength="255" value="<?php echo $PAGE->fields[9]->get_data(); ?>" name="f_menu_text" id="f_menu_text"/>
-                                <span class="k_desc"><i>(<?php echo $FUNCS->t('leave_empty'); ?>)</i></span>
-                            </div>
-                            <div id="is_pointer" style="margin-top:10px;">
-                                <label><b><?php echo $FUNCS->t('menu_link'); ?>:</b></label><br>
-                                <label>
-                                    <?php $checked = ( $PAGE->fields[11]->get_data() ) ? 'checked="checked"' : ''; ?>
-                                    <input type="checkbox" value="1" <?php echo $checked; ?> name="f_open_external" /><?php echo $FUNCS->t('separate_window'); ?>
-                                </label><br />
-                                <label>
-                                    <?php $checked = ( $PAGE->fields[10]->get_data() ) ? 'checked="checked"' : ''; ?>
-                                    <input type="checkbox" value="1" <?php echo $checked; ?> name="f_is_pointer" onClick="if(this.checked){$('admin-wrapper-custom_fields').setStyle('visibility', 'hidden');<?php if( $_GET['act'] != 'create' ){ echo"\$('create-draft').setStyle('visibility', 'hidden');"; } ?>$('wrapper_k_pointer_link').setStyle('display', 'block'); }
-                                    else{$('admin-wrapper-custom_fields').setStyle('visibility', 'visible');<?php if( $_GET['act'] != 'create' ){ echo"\$('create-draft').setStyle('visibility', 'visible');"; } ?>$('wrapper_k_pointer_link').setStyle('display', 'none');}" /><?php echo $FUNCS->t('points_to_another_page'); ?>
-                                </label>
-                            </div>
-                        <?php else: ?>
-                            <div id="publish-date" style="margin-top:10px">
-                                <?php $publish_date = $PAGE->fields[3]->get_data(); ?>
-                                <label><b><?php echo $FUNCS->t('status'); ?>:</b></label><br>
-                                <input type="radio" <?php if( $publish_date == '0000-00-00 00:00:00' ){?>checked="checked"<?php } ?> value="0" id="f_publish_status_0" name="f_publish_status" onClick="$('date-dropdown').setStyle('visibility', 'hidden')"/>
-                                <label for="f_publish_status_0"><?php echo $FUNCS->t('unpublished'); ?></label><br>
-                                <input type="radio" <?php if( $publish_date != '0000-00-00 00:00:00' ){?>checked="checked"<?php } ?> value="1" id="f_publish_status_1" name="f_publish_status" onClick="$('date-dropdown').setStyle('visibility', 'visible')"/>
-                                <label for="f_publish_status_1"><?php echo $FUNCS->t('published'); ?></label><br>
-                                <div id="date-dropdown" style="visibility:<?php if( $publish_date == '0000-00-00 00:00:00' ){ echo 'hidden'; } else{ echo 'visible'; }?>; margin-top:4px;">
-                                <?php
-                                    echo $FUNCS->date_dropdowns( $PAGE->fields[3]->get_data() );
-                                ?>
-                                </div>
-                            </div>
-                        <?php endif; ?>
-                    <?php }else{ /* draft */ ?>
-                        <div id="update-original" style="margin-top:0px">
-                            <a class="button" id="btn_update_original" href="#" title="<?php echo $FUNCS->t('update_original_msg'); ?>" onclick="this.style.cursor='wait'; $('f_k_update_original').set( 'value', '1' ); $('frm_edit_page').submit(); return false;"><span><?php if($parent_of_draft){ echo $FUNCS->t('update_original'); }else{ echo $FUNCS->t('recreate_original'); } ?></span></a>
-                            <input type="hidden" id="f_k_update_original" name="f_k_update_original" value="0" />
-                            <div style="clear:both"></div>
-                        </div>
-                    <?php } ?>
-                    </div>
-
-                    <div id="admin-content">
-                        <?php if( $draft_of ){ ?>
-                        <div class="notice" style="margin-bottom:10px;">
-                            <strong><?php echo( $FUNCS->t('draft_caps').': ' ); ?></strong>
-                            <?php
-                            // Template link
-                            $tpl_name = $PAGE->tpl_title ? $PAGE->tpl_title : $PAGE->tpl_name;
-                            if( $PAGE->tpl_is_clonable ){
-                                $tpl_link = K_ADMIN_URL . K_ADMIN_PAGE . '?act=list&tpl=' . $PAGE->tpl_id;
-                            }
-                            else{
-                                $tpl_link = K_ADMIN_URL . K_ADMIN_PAGE . '?act=edit&tpl=' . $PAGE->tpl_id .'&nonce='.$FUNCS->create_nonce( 'edit_page_'.$PAGE->tpl_id );
-                            }
-                            echo '<a href="'.$tpl_link.'">'.$tpl_name.'</a>';
-
-                            // Page link
-                            if( $PAGE->tpl_is_clonable ){
-                                if( $parent_of_draft ){
-                                    $nonce = $FUNCS->create_nonce( 'edit_page_'.$draft_of );
-                                    $abbr_title = $parent_of_draft_title;
-                                    $abbr_title = (strlen($abbr_title)>90) ? substr($abbr_title, 0, 90) . '...' : $abbr_title;
-                                    echo '<a href="'.K_ADMIN_URL . K_ADMIN_PAGE.'?act=edit&tpl='. $PAGE->tpl_id .'&p='. $draft_of .'&nonce='.$nonce.'" title="'.$parent_of_draft_title.'"> / '. $abbr_title .'</a>';
-                                }
-                                else{
-                                    echo( ' / <font color="red">'.$FUNCS->t('original_deleted').'</font>' );
-                                }
-                            }
-                            ?>
-                        </div>
-                        <?php } ?>
-
-                        <?php
-                        $has_custom_fields = 0;
-                        if( $draft_of ) $PAGE->fields[1]->hidden = 1;
-                        if( $PAGE->tpl_nested_pages ) {
-                            $custom_fields_visibility = ($PAGE->fields[10]->get_data()) ? 'hidden' : 'visible'; // hide custom fields if this nested page is pointer_page
-                        }
-                        for( $x=0; $x<count($PAGE->fields); $x++ ){
-                            if( !$PAGE->fields[$x]->system ){
-                                if( $PAGE->tpl_nested_pages && !$has_custom_fields) {
-                                    //$custom_fields_visibility = ($PAGE->fields[10]->get_data()) ? 'hidden' : 'visible'; // hide custom fields if this nested page is pointer_page
-                                    echo '<div id="admin-wrapper-custom_fields" style="visibility:'.$custom_fields_visibility.';" >';
-                                }
-                                $has_custom_fields = 1;
-                            }
-                            echo $PAGE->fields[$x]->render();
-
-                        }
-                        if( $PAGE->group_div_open ){
-                            echo '</div></div>';
-                        }
-
-                        if( !$has_custom_fields ){
-                            if( $PAGE->tpl_nested_pages ){
-                                echo '<div id="admin-wrapper-custom_fields" style="visibility:'.$custom_fields_visibility.';" >';
-                            }
-                            echo '<h4>'.$FUNCS->t('no_regions_defined').'</h4>';
-                        }
-                        ?>
-                        <p>
-                        <input type="hidden" name="op" value="save" />
-                        <?php /* ?><input class="button" type="submit" value="<?php echo ("Save" ); ?>" /><?php */ ?>
-                        <?php if( $level <= $AUTH->user->access_level ){ ?>
-                        <a class="button" id="btn_submit" href="#" onclick="this.style.cursor='wait'; this.fireEvent('my_submit'); $('frm_edit_page').submit(); return false;"><span><?php echo $FUNCS->t('save'); ?></span></a>
-                        <?php } ?>
-                        <?php
-                        if( $_GET['act'] == 'edit' ){
-                            $link = K_SITE_URL . $PAGE->tpl_name;
-                            if( !is_null($page_id) ) $link .= '?p=' . $page_id;
-                            echo '<a class="button" href="'. $link .'" target="_blank" onclick="this.blur();"><span>';
-                            if( $draft_of ) echo( $FUNCS->t('preview') ); else echo( $FUNCS->t('view') );
-                            echo '</span></a>';
-                        }
-                        ?>
-                        </p>
-                        <?php
-                            if( $PAGE->tpl_nested_pages ) echo '</div>';
-                        ?>
-                    </div>
-                </form>
-
-                <script type="text/javascript">
-                    //<![CDATA[
-                    window.addEvent('domready',
-                        function(){
-                            new Fx.Accordion(
-                                $('container'), 'div.group-toggler', 'div.group-slider',
-                                {
-                                    onActive: function(toggler, element) {},
-                                    onBackground: function(toggler, element) {},
-                                    duration: 300,
-                                    opacity: false,
-                                    alwaysHide: false
-                                }
-                            );
-                        }
-                    );
-
-                    window.addEvent('domready', function(){
-                        var mySlide = new Fx.Slide('admin-sidebar').hide();
-                        $('admin-sidebar').setStyle('display', 'block');
-                        $('toggle').addEvent('click', function(e){
-                            e = new Event(e);
-                            mySlide.toggle().chain(function(){
-                                if (mySlide.open ){
-                                    $('toggle').removeClass('collapsed').addClass('expanded');
-                                }
-                                else{
-                                    $('toggle').removeClass('expanded').addClass('collapsed');
-                                }
-                            });
-                            e.stop();
-                        });
-                    });
-
-                    window.addEvent('domready', function(){
-                        var del = $$('.k_element_deleted');
-                        for( var x=0; x<del.length; x++ ){
-                            del[x].setStyle('height', del[x].offsetParent.offsetHeight);
-                        }
-                    });
-
-                    function k_browse_result( id, fileurl ){
-                        $(id).set( 'value', fileurl );
-                        try{
-                            $(id + "_preview").set( {href: fileurl, style:{visibility:'visible'}} );
-                            $(id + "_img_preview").set( 'src', fileurl );
-                        }
-                        catch( e ){}
-
-                        TB_remove();
-                    }
-
-                    function k_crop_image( tpl_id, page_id, field_id, nonce ){
-                        var el_notice = 'k_notice_f_' + field_id;
-                        var el_preview = 'f_'+field_id+'_preview';
-                        var crop_pos = $('f_k_crop_pos_' + field_id).value;
-                        var qs = 'ajax.php?act=crop&tpl='+tpl_id+'&p='+page_id+'&tb='+encodeURIComponent( field_id )+'&nonce='+ encodeURIComponent( nonce )+'&cp='+encodeURIComponent(crop_pos);
-                        var requestHTMLData = new Request (
-                            {
-                                url: qs,
-                                onComplete: function(response){
-                                    if( response=='OK' ){
-                                        var href = $(el_preview).get('href');
-                                        if( href.indexOf('?') != -1 ){
-                                            href = href.substr(0, href.indexOf('?'));
-                                        }
-                                        href = href + '?rand=' + Math.random();
-                                        $(el_preview).set('href', href);
-                                        try{
-                                            $('f_'+field_id+'_tb_preview').set('src', href);
-                                        }
-                                        catch( e ){}
-
-                                        alert('<?php echo $FUNCS->t('thumb_recreated'); ?>');
+                                    $inherited = 0;
+                                    $level = $PAGE->get_access_level( $inherited ); //template level and folder level override page level
+                                    if( $PAGE->access_level > $AUTH->user->access_level ){
+                                        $inherited = 1;
+                                        echo $FUNCS->access_levels_dropdown( $level, 10, 0, $inherited);
                                     }
                                     else{
-                                        alert(response);
+                                        if( !$inherited ){
+                                            $level = $PAGE->fields[4]->get_data();
+                                        }
+                                        echo $FUNCS->access_levels_dropdown( $level /*selected*/, $AUTH->user->access_level/*max*/, 0/*min*/, $inherited/*disabled*/);
                                     }
-                                }
+                                    $PAGE->effective_level = $level;
+                                ?>
+                            </div>
+
+                            <?php
+                                $visibility = ( $PAGE->tpl_is_commentable ) ? 'block' : 'none';
+                                $checked = ( $PAGE->fields[5]->get_data() ) ? 'checked="checked"' : '';
+                             ?>
+                            <div id="comments-open" style="margin-top:10px; display:<?php echo $visibility; ?>">
+                                <label><b><?php echo $FUNCS->t('comments'); ?>:</b></label><br>
+                                <label>
+                                    <input type="checkbox" value="1" <?php echo $checked; ?> name="f_allow_comments"/><?php echo $FUNCS->t('allow_comments'); ?>
+                                </label>
+
+                            </div>
+
+                            <?php if( $PAGE->tpl_nested_pages ): ?>
+                                <div id="publish-date" style="margin-top:10px">
+                                    <?php $publish_date = $PAGE->fields[3]->get_data(); ?>
+                                    <label><b><?php echo $FUNCS->t('status'); ?>:</b></label><br>
+                                    <input type="radio" <?php if( $publish_date != '0000-00-00 00:00:00' ){?>checked="checked"<?php } ?> value="1" id="f_publish_status_1" name="f_publish_status" />
+                                    <label for="f_publish_status_1"><?php echo $FUNCS->t('active'); ?></label>&nbsp;
+                                    <input type="radio" <?php if( $publish_date == '0000-00-00 00:00:00' ){?>checked="checked"<?php } ?> value="0" id="f_publish_status_0" name="f_publish_status" />
+                                    <label for="f_publish_status_0"><?php echo $FUNCS->t('inactive'); ?></label><br>
+                                    <div id="date-dropdown" style="display:none">
+                                    <?php
+                                        echo $FUNCS->date_dropdowns( $PAGE->fields[3]->get_data() );
+                                    ?>
+                                    </div>
+                                </div>
+                                <div id="menu" style="margin-top:10px;">
+                                    <label><b><?php echo $FUNCS->t('menu'); ?>:</b></label><br>
+                                    <label>
+                                        <?php $checked = ( $PAGE->fields[8]->get_data() ) ? 'checked="checked"' : ''; ?>
+                                        <input type="checkbox" value="1" <?php echo $checked; ?> name="f_show_in_menu" /><?php echo $FUNCS->t('show_in_menu'); ?>
+                                    </label>
+                                </div>
+                                <div id="menu-text" style="margin-top:10px;">
+                                    <label><b><?php echo $FUNCS->t('menu_text'); ?>:</b></label><br>
+                                    <input type="text" style="width: 185px;" class="k_text" maxlength="255" value="<?php echo $PAGE->fields[9]->get_data(); ?>" name="f_menu_text" id="f_menu_text"/>
+                                    <span class="k_desc"><i>(<?php echo $FUNCS->t('leave_empty'); ?>)</i></span>
+                                </div>
+                                <div id="is_pointer" style="margin-top:10px;">
+                                    <label><b><?php echo $FUNCS->t('menu_link'); ?>:</b></label><br>
+                                    <label>
+                                        <?php $checked = ( $PAGE->fields[11]->get_data() ) ? 'checked="checked"' : ''; ?>
+                                        <input type="checkbox" value="1" <?php echo $checked; ?> name="f_open_external" /><?php echo $FUNCS->t('separate_window'); ?>
+                                    </label><br />
+                                    <label>
+                                        <?php $checked = ( $PAGE->fields[10]->get_data() ) ? 'checked="checked"' : ''; ?>
+                                        <input type="checkbox" value="1" <?php echo $checked; ?> name="f_is_pointer" onClick="if(this.checked){$('admin-wrapper-custom_fields').setStyle('visibility', 'hidden');<?php if( $_GET['act'] != 'create' ){ echo"\$('create-draft').setStyle('visibility', 'hidden');"; } ?>$('wrapper_k_pointer_link').setStyle('display', 'block'); }
+                                        else{$('admin-wrapper-custom_fields').setStyle('visibility', 'visible');<?php if( $_GET['act'] != 'create' ){ echo"\$('create-draft').setStyle('visibility', 'visible');"; } ?>$('wrapper_k_pointer_link').setStyle('display', 'none');}" /><?php echo $FUNCS->t('points_to_another_page'); ?>
+                                    </label>
+                                </div>
+                            <?php else: ?>
+                                <div id="publish-date" style="margin-top:10px">
+                                    <?php $publish_date = $PAGE->fields[3]->get_data(); ?>
+                                    <label><b><?php echo $FUNCS->t('status'); ?>:</b></label><br>
+                                    <input type="radio" <?php if( $publish_date == '0000-00-00 00:00:00' ){?>checked="checked"<?php } ?> value="0" id="f_publish_status_0" name="f_publish_status" onClick="$('date-dropdown').setStyle('visibility', 'hidden')"/>
+                                    <label for="f_publish_status_0"><?php echo $FUNCS->t('unpublished'); ?></label><br>
+                                    <input type="radio" <?php if( $publish_date != '0000-00-00 00:00:00' ){?>checked="checked"<?php } ?> value="1" id="f_publish_status_1" name="f_publish_status" onClick="$('date-dropdown').setStyle('visibility', 'visible')"/>
+                                    <label for="f_publish_status_1"><?php echo $FUNCS->t('published'); ?></label><br>
+                                    <div id="date-dropdown" style="visibility:<?php if( $publish_date == '0000-00-00 00:00:00' ){ echo 'hidden'; } else{ echo 'visible'; }?>; margin-top:4px;">
+                                    <?php
+                                        echo $FUNCS->date_dropdowns( $PAGE->fields[3]->get_data() );
+                                    ?>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
+                        <?php }else{ /* draft */ ?>
+                            <div id="update-original" style="margin-top:0px">
+                                <a class="button" id="btn_update_original" href="#" title="<?php echo $FUNCS->t('update_original_msg'); ?>" onclick="this.style.cursor='wait'; $('f_k_update_original').set( 'value', '1' ); $('frm_edit_page').submit(); return false;"><span><?php if($parent_of_draft){ echo $FUNCS->t('update_original'); }else{ echo $FUNCS->t('recreate_original'); } ?></span></a>
+                                <input type="hidden" id="f_k_update_original" name="f_k_update_original" value="0" />
+                                <div style="clear:both"></div>
+                            </div>
+                        <?php } ?>
+                        </div>
+
+                        <div id="admin-content">
+                            <?php
+                            if( $cid && $rid ){
+                                echo _get_rel_banner( $cid, $rid );
                             }
-                        ).send();
-                    }
+                            ?>
 
-                    function k_delete_field( fid, fname, nonce ){
-                        if( confirm('<?php echo $FUNCS->t('confirm_delete_field'); ?>') ){
-                            var qs = 'ajax.php?act=delete-field&fid='+fid+'&nonce='+encodeURIComponent( nonce );
+                            <?php if( $draft_of ){ ?>
+                            <div class="notice" style="margin-bottom:10px;">
+                                <strong><?php echo( $FUNCS->t('draft_caps').': ' ); ?></strong>
+                                <?php
+                                // Template link
+                                $tpl_name = $PAGE->tpl_title ? $PAGE->tpl_title : $PAGE->tpl_name;
+                                if( $PAGE->tpl_is_clonable ){
+                                    $tpl_link = K_ADMIN_URL . K_ADMIN_PAGE . '?act=list&tpl=' . $PAGE->tpl_id;
+                                }
+                                else{
+                                    $tpl_link = K_ADMIN_URL . K_ADMIN_PAGE . '?act=edit&tpl=' . $PAGE->tpl_id .'&nonce='.$FUNCS->create_nonce( 'edit_page_'.$PAGE->tpl_id );
+                                }
+                                echo '<a href="'.$tpl_link.'">'.$tpl_name.'</a>';
+
+                                // Page link
+                                if( $PAGE->tpl_is_clonable ){
+                                    if( $parent_of_draft ){
+                                        $nonce = $FUNCS->create_nonce( 'edit_page_'.$draft_of );
+                                        $abbr_title = $parent_of_draft_title;
+                                        $abbr_title = (strlen($abbr_title)>90) ? substr($abbr_title, 0, 90) . '...' : $abbr_title;
+                                        echo '<a href="'.K_ADMIN_URL . K_ADMIN_PAGE.'?act=edit&tpl='. $PAGE->tpl_id .'&p='. $draft_of .'&nonce='.$nonce.'" title="'.$parent_of_draft_title.'"> / '. $abbr_title .'</a>';
+                                    }
+                                    else{
+                                        echo( ' / <font color="red">'.$FUNCS->t('original_deleted').'</font>' );
+                                    }
+                                }
+                                ?>
+                            </div>
+                            <?php } ?>
+
+                            <?php
+                            $has_custom_fields = 0;
+                            if( $draft_of ) $PAGE->fields[1]->hidden = 1;
+                            if( $PAGE->tpl_nested_pages ) {
+                                $custom_fields_visibility = ($PAGE->fields[10]->get_data()) ? 'hidden' : 'visible'; // hide custom fields if this nested page is pointer_page
+                            }
+                            for( $x=0; $x<count($PAGE->fields); $x++ ){
+                                if( !$PAGE->fields[$x]->system ){
+                                    if( $PAGE->tpl_nested_pages && !$has_custom_fields) {
+                                        //$custom_fields_visibility = ($PAGE->fields[10]->get_data()) ? 'hidden' : 'visible'; // hide custom fields if this nested page is pointer_page
+                                        echo '<div id="admin-wrapper-custom_fields" style="visibility:'.$custom_fields_visibility.';" >';
+                                    }
+                                    $has_custom_fields = 1;
+                                }
+                                echo $PAGE->fields[$x]->render();
+
+                            }
+                            if( $PAGE->group_div_open ){
+                                echo '</div></div>';
+                            }
+
+                            if( !$has_custom_fields ){
+                                if( $PAGE->tpl_nested_pages ){
+                                    echo '<div id="admin-wrapper-custom_fields" style="visibility:'.$custom_fields_visibility.';" >';
+                                }
+                                echo '<h4>'.$FUNCS->t('no_regions_defined').'</h4>';
+                            }
+                            ?>
+                            <p>
+                            <input type="hidden" name="op" value="save" />
+                            <?php /* ?><input class="button" type="submit" value="<?php echo ("Save" ); ?>" /><?php */ ?>
+                            <?php if( $level <= $AUTH->user->access_level ){ ?>
+                            <a class="button" id="btn_submit" href="#" onclick="this.style.cursor='wait'; this.fireEvent('my_submit'); $('frm_edit_page').submit(); return false;"><span><?php echo $FUNCS->t('save'); ?></span></a>
+                            <?php } ?>
+                            <?php
+                            if( $_GET['act'] == 'edit' ){
+                                $link = K_SITE_URL . $PAGE->tpl_name;
+                                if( !is_null($page_id) ) $link .= '?p=' . $page_id;
+                                echo '<a class="button" href="'. $link .'" target="_blank" onclick="this.blur();"><span>';
+                                if( $draft_of ) echo( $FUNCS->t('preview') ); else echo( $FUNCS->t('view') );
+                                echo '</span></a>';
+                            }
+                            ?>
+                            </p>
+                            <?php
+                                if( $PAGE->tpl_nested_pages ) echo '</div>';
+                            ?>
+                        </div>
+                    </form>
+
+                    <script type="text/javascript">
+                        //<![CDATA[
+                        window.addEvent('domready',
+                            function(){
+                                new Fx.Accordion(
+                                    $('container'), 'div.group-toggler', 'div.group-slider',
+                                    {
+                                        onActive: function(toggler, element) {},
+                                        onBackground: function(toggler, element) {},
+                                        duration: 300,
+                                        opacity: false,
+                                        alwaysHide: false
+                                    }
+                                );
+                            }
+                        );
+
+                        window.addEvent('domready', function(){
+                            var mySlide = new Fx.Slide('admin-sidebar').hide();
+                            $('admin-sidebar').setStyle('display', 'block');
+                            $('toggle').addEvent('click', function(e){
+                                e = new Event(e);
+                                mySlide.toggle().chain(function(){
+                                    if (mySlide.open ){
+                                        $('toggle').removeClass('collapsed').addClass('expanded');
+                                    }
+                                    else{
+                                        $('toggle').removeClass('expanded').addClass('collapsed');
+                                    }
+                                });
+                                e.stop();
+                            });
+                        });
+
+                        window.addEvent('domready', function(){
+                            var del = $$('.k_element_deleted');
+                            for( var x=0; x<del.length; x++ ){
+                                del[x].setStyle('height', del[x].offsetParent.offsetHeight);
+                            }
+                        });
+
+                        function k_browse_result( id, fileurl ){
+                            $(id).set( 'value', fileurl );
+                            try{
+                                $(id + "_preview").set( {href: fileurl, style:{visibility:'visible'}} );
+                                $(id + "_img_preview").set( 'src', fileurl );
+                            }
+                            catch( e ){}
+
+                            TB_remove();
+                        }
+
+                        function k_crop_image( tpl_id, page_id, field_id, nonce ){
+                            var el_notice = 'k_notice_f_' + field_id;
+                            var el_preview = 'f_'+field_id+'_preview';
+                            var crop_pos = $('f_k_crop_pos_' + field_id).value;
+                            var qs = '<?php echo K_ADMIN_URL; ?>ajax.php?act=crop&tpl='+tpl_id+'&p='+page_id+'&tb='+encodeURIComponent( field_id )+'&nonce='+ encodeURIComponent( nonce )+'&cp='+encodeURIComponent(crop_pos);
                             var requestHTMLData = new Request (
                                 {
                                     url: qs,
                                     onComplete: function(response){
                                         if( response=='OK' ){
-                                            $('k_element_'+fname).setStyle('display', 'none');
+                                            var href = $(el_preview).get('href');
+                                            if( href.indexOf('?') != -1 ){
+                                                href = href.substr(0, href.indexOf('?'));
+                                            }
+                                            href = href + '?rand=' + Math.random();
+                                            $(el_preview).set('href', href);
+                                            try{
+                                                $('f_'+field_id+'_tb_preview').set('src', href);
+                                            }
+                                            catch( e ){}
+
+                                            alert('<?php echo $FUNCS->t('thumb_recreated'); ?>');
                                         }
                                         else{
                                             alert(response);
@@ -543,31 +567,50 @@
                                 }
                             ).send();
                         }
-                    }
-                    function k_delete_column( fid, nonce ){
-                        if( confirm('<?php echo $FUNCS->t('confirm_delete_columns'); ?>') ){
-                            var qs = 'ajax.php?act=delete-columns&fid='+fid+'&nonce='+encodeURIComponent( nonce );
-                            var requestHTMLData = new Request (
-                                {
-                                    url: qs,
-                                    onComplete: function(response){
-                                        if( response=='OK' ){
-                                            window.location.reload( true );
-                                        }
-                                        else{
-                                            alert(response);
+
+                        function k_delete_field( fid, fname, nonce ){
+                            if( confirm('<?php echo $FUNCS->t('confirm_delete_field'); ?>') ){
+                                var qs = 'ajax.php?act=delete-field&fid='+fid+'&nonce='+encodeURIComponent( nonce );
+                                var requestHTMLData = new Request (
+                                    {
+                                        url: qs,
+                                        onComplete: function(response){
+                                            if( response=='OK' ){
+                                                $('k_element_'+fname).setStyle('display', 'none');
+                                            }
+                                            else{
+                                                alert(response);
+                                            }
                                         }
                                     }
-                                }
-                            ).send();
+                                ).send();
+                            }
                         }
-                    }
-                    //]]>
-                </script>
-            <?php
+                        function k_delete_column( fid, nonce ){
+                            if( confirm('<?php echo $FUNCS->t('confirm_delete_columns'); ?>') ){
+                                var qs = 'ajax.php?act=delete-columns&fid='+fid+'&nonce='+encodeURIComponent( nonce );
+                                var requestHTMLData = new Request (
+                                    {
+                                        url: qs,
+                                        onComplete: function(response){
+                                            if( response=='OK' ){
+                                                window.location.reload( true );
+                                            }
+                                            else{
+                                                alert(response);
+                                            }
+                                        }
+                                    }
+                                ).send();
+                            }
+                        }
+                        //]]>
+                    </script>
+                <?php
 
-            $html = ob_get_contents();
-            ob_end_clean();
+                $html = ob_get_contents();
+                ob_end_clean();
+            }
 
             // render
             $_p = array();
@@ -576,9 +619,12 @@
                 $_p['tpl_name'] = $PAGE->tpl_name;
                 $_p['title'] = $PAGE->tpl_title ? $PAGE->tpl_title : $PAGE->tpl_name;
                 $_p['link'] = ( $PAGE->tpl_is_clonable ) ? K_ADMIN_URL . K_ADMIN_PAGE . '?act=list&tpl=' . $PAGE->tpl_id : '';
+                if( $cid && $rid && $PAGE->tpl_is_clonable ) $_p['link'] .= '&cid='.$cid.'&rid='.$rid;
                 if( $_GET['act'] != 'create' && !$draft_of ){
                     if( file_exists(K_SITE_DIR . $PAGE->tpl_name) && $PAGE->tpl_is_clonable && $AUTH->user->access_level >= $PAGE->tpl_access_level ){
-                        $_p['buttons'] = '<div id="create_new"><a class="button" href="'.K_ADMIN_URL . K_ADMIN_PAGE.'?act=create&tpl='. $PAGE->tpl_id.'&nonce='.$FUNCS->create_nonce( 'create_page_'.$PAGE->tpl_id ).'" title="'.$FUNCS->t('add_new_page').'"><span>'.$FUNCS->t('add_new').'</span></a></div>';
+                        $_p['buttons'] = '<div id="create_new"><a class="button" href="'.K_ADMIN_URL . K_ADMIN_PAGE.'?act=create&tpl='. $PAGE->tpl_id;
+                        if( $cid && $rid ) $_p['buttons'] .= '&cid='.$cid.'&rid='.$rid;
+                        $_p['buttons'] .= '&nonce='.$FUNCS->create_nonce( 'create_page_'.$PAGE->tpl_id ).'" title="'.$FUNCS->t('add_new_page').'"><span>'.$FUNCS->t('add_new').'</span></a></div>';
                     }
                 }
                 $_p['subtitle'] = ( $_GET['act'] == 'create' ) ? $FUNCS->t('add_new') : $FUNCS->t('edit');
@@ -589,7 +635,7 @@
                 $_p['link'] = K_ADMIN_URL . K_ADMIN_PAGE . '?o=drafts';
                 $_p['subtitle'] = $FUNCS->t('edit');
             }
-            $_p['show_advanced'] = 1;
+            $_p['show_advanced'] = $show_advanced_settings;
             $_p['content'] = $html;
             $FUNCS->render_admin_page_ex( $_p );
 
@@ -622,6 +668,7 @@
 
                 $qs = '?act=list&tpl='.$tpl_id;
                 if( isset($_GET['fid']) ) $qs .= '&fid=' . intval($_GET['fid']);
+                if( $cid && $rid ) $qs .= '&cid='.$cid.'&rid='.$rid;
                 if( isset($_GET['pg']) ) $qs .= '&pg=' . intval($_GET['pg']);
                 header("Location: ".K_ADMIN_URL . K_ADMIN_PAGE. $qs);
                 exit;
@@ -630,7 +677,7 @@
         elseif( $_GET['act'] == 'list' ){
             if( $tpl_id ){
                 // Any pages marked for deletion?
-                if( isset($_POST['page-id']) ){
+                if( isset($_POST['page-id']) && $_POST['bulk-action']=='delete' ){
                     $FUNCS->validate_nonce( 'bulk_action_page' );
 
                     $DB->begin();
@@ -665,6 +712,7 @@
                     $qs = '?act=list&tpl='.$tpl_id;
                     if( isset($_GET['fid']) ) $qs .= '&fid=' . intval($_GET['fid']);
                     if( isset($_GET['pg']) ) $qs .= '&pg=' . intval($_GET['pg']);
+                    if( $cid && $rid ) $qs .= '&cid='.$cid.'&rid='.$rid;
                     header("Location: ".K_ADMIN_URL . K_ADMIN_PAGE. $qs);
                     exit;
                 }
@@ -743,15 +791,20 @@
                         $_p['tpl_name'] = $rs[0]['name'];
                         $_p['title'] = $rs[0]['title'] ? $rs[0]['title'] : $rs[0]['name'];
                         $_p['link'] = ( $rs[0]['clonable'] ) ? K_ADMIN_URL . K_ADMIN_PAGE . '?act=list&tpl=' . $rs[0]['id'] : '';
+                        if( $cid && $rid && $rs[0]['clonable'] ) $_p['link'] .= '&cid='.$cid.'&rid='.$rid;
                         if( file_exists(K_SITE_DIR . $rs[0]['name'])  ){
                             if( $AUTH->user->access_level >= $rs[0]['access_level'] ){
                                 if( $rs[0]['gallery'] ){ // Gallery
                                     $fid = ( isset($_GET['fid']) && $FUNCS->is_non_zero_natural( $_GET['fid'] ) ) ? (int)$_GET['fid'] : 0;
                                     $fn = trim( $FUNCS->get_pretty_template_link_ex($rs[0]['name'], $dummy, 0), '/' );
-                                    $_p['buttons'] = '<div id="bulk_upload"><a class="button nocurve smoothbox" href="'.K_ADMIN_URL.'upload.php?o=gallery&tpl='. $rs[0]['id'] .'&fid='. $fid .'&fn='. $fn . '&TB_iframe=true&height=309&width=640&modal=true" title="'.$FUNCS->t('bulk_upload').'"><span>'.$FUNCS->t('bulk_upload').'</span></a></div>';
+                                    $_p['buttons'] = '<div id="bulk_upload"><a class="button nocurve smoothbox" href="'.K_ADMIN_URL.'upload.php?o=gallery&tpl='. $rs[0]['id'] .'&fid='. $fid;
+                                    if( $cid && $rid ) $_p['buttons'] .= '&cid='.$cid.'&rid='.$rid;
+                                    $_p['buttons'] .= '&fn='. $fn . '&TB_iframe=true&height=309&width=640&modal=true" title="'.$FUNCS->t('bulk_upload').'"><span>'.$FUNCS->t('bulk_upload').'</span></a></div>';
                                 }
                                 else{
-                                    $_p['buttons'] = '<div id="create_new"><a class="button nocurve" href="'.K_ADMIN_URL . K_ADMIN_PAGE.'?act=create&tpl='. $rs[0]['id'].'&nonce='.$FUNCS->create_nonce( 'create_page_'.$rs[0]['id'] ).'" title="'.$FUNCS->t('add_new_page').'"><span>'.$FUNCS->t('add_new').'</span></a></div>';
+                                    $_p['buttons'] = '<div id="create_new"><a class="button nocurve" href="'.K_ADMIN_URL . K_ADMIN_PAGE.'?act=create&tpl='. $rs[0]['id'];
+                                    if( $cid && $rid ) $_p['buttons'] .= '&cid='.$cid.'&rid='.$rid;
+                                    $_p['buttons'] .= '&nonce='.$FUNCS->create_nonce( 'create_page_'.$rs[0]['id'] ).'" title="'.$FUNCS->t('add_new_page').'"><span>'.$FUNCS->t('add_new').'</span></a></div>';
                                 }
                             }
                             if( $rs[0]['dynamic_folders'] && !$rs[0]['nested_pages'] ){
@@ -807,11 +860,11 @@
 
     // Given a clonable template record, lists all pages belonging to it
     function k_admin_list_pages( $tpl ){
-        global $DB, $AUTH, $FUNCS, $TAGS, $CTX, $Config, $PAGE;
+        global $DB, $AUTH, $FUNCS, $TAGS, $CTX, $Config, $PAGE, $cid, $rid;
 
         // first check if any custom viewer registered for this template
-        if( array_key_exists( $tpl['name'], $FUNCS->views ) ){
-            $snippet = $FUNCS->views[$tpl['name']];
+        if( array_key_exists( $tpl['name'], $FUNCS->admin_list_views ) ){
+            $snippet = $FUNCS->admin_list_views[$tpl['name']];
             if( defined('K_SNIPPETS_DIR') ){ // always defined relative to the site
                 $base_snippets_dir = K_SITE_DIR . K_SNIPPETS_DIR . '/';
             }
@@ -828,9 +881,14 @@
                     die( 'ERROR: ' . $PAGE->err_msg );
                 }
                 $parser = new KParser( $html );
-                $html = $parser->get_HTML();
-                return $html;
+                //$html = $parser->get_HTML();
+                $html = $parser->get_cached_HTML( $filepath );
+
             }
+            else{
+                $html = 'ERROR: Unable to get contents from custom list_view <b>' . $filepath . '</b>';
+            }
+            return $html;
         }
 
         // proceed with the default logic
@@ -888,10 +946,17 @@
             if(  $thumb_field ){
                 $tables .= ' inner join '.K_TBL_DATA_TEXT.' d on p.id = d.page_id';
             }
+            if( $cid && $rid ){
+                $tables .= ' inner join '.K_TBL_RELATIONS.' rel on rel.pid = p.id';
+            }
+
             $sql = "p.template_id='" . $DB->sanitize( $tpl['id'] ). "'";
             $sql .= " AND p.parent_id=0";
             if(  $thumb_field ){
                 $sql .= " AND d.field_id='".$DB->sanitize( $thumb_field )."'";
+            }
+            if( $cid && $rid ){
+                $sql .= " AND rel.cid='".$DB->sanitize($cid)."' AND rel.fid='".$DB->sanitize($rid)."'";
             }
 
             if( !$tpl['gallery'] ){
@@ -931,6 +996,7 @@
             $adjacents = 2;
             $targetpage = K_ADMIN_URL . K_ADMIN_PAGE . '?act=list&tpl=' . $tpl['id'];
             if( $fid ) $targetpage .= '&fid=' . $fid;
+            if( $cid && $rid ) $targetpage .= '&cid=' . $cid . '&rid=' . $rid;
             $pagestring = "&pg=";
             $prev_text = '&#171; ' . $FUNCS->t('prev');
             $next_text = $FUNCS->t('next') . ' &#187;';
@@ -961,17 +1027,22 @@
                 $str .= '</div>';
             }
 
+            if( $cid && $rid ){
+                $str .= _get_rel_banner( $cid, $rid );
+            }
+
             $str .= '<div class="wrap-paginator">';
             if( $has_folders ){
                 $str .= '<div class="bulk-actions">';
                 $CTX->push( '__ROOT__' );
                 $html = '';
                 $param2 = $fid;
-                $folders->visit( '_k_visitor', $html, $param2, 0/*$depth*/, 0/*$extended_info*/, array()/*$exclude*/ );
+                $folders->visit( array('KFolder', '_k_visitor'), $html, $param2, 0/*$depth*/, 0/*$extended_info*/, array()/*$exclude*/ );
                 $CTX->pop();
                 $root_folder = ( $tpl['gallery'] ) ? '--- '.$FUNCS->t('root').' ---' : $FUNCS->t('view_all_folders');
                 $str .= '<select id="f_k_folders" name="f_k_folders"><option value="-1" >'.$root_folder.'</option>' .$html . '</select>';
                 $link = K_ADMIN_URL . K_ADMIN_PAGE . '?act=list&tpl=' . $tpl['id'];
+                if( $cid && $rid ) $link .= '&cid=' . $cid . '&rid=' . $rid;
                 $str .= '<a class="button" id="btn_folder_submit" href="'.$link.'" onclick="this.style.cursor=\'wait\'; return false;"><span>'.$FUNCS->t('filter').'</span></a>';
                 $str .= '</div>';
             }
@@ -983,11 +1054,13 @@
             $str .= '</div>';
 
             if( $tpl['gallery'] ){
+                $showing_related = ( $cid && $rid )? 1 : 0;
+
                 $str .= '<div id="gallery" class="group-wrapper listing">';
 
                 // Display the immediate child folders first
                 $child_folder_count = 0;
-                if( $pgn_pno==1 && $has_folders ){
+                if( $pgn_pno==1 && $has_folders && !$showing_related ){
                     $root_folder = ( $folder ) ? $folder : $folders;
                     $child_folder_count = count($root_folder->children);
                     for( $x=0; $x<$child_folder_count; $x++ ){
@@ -1045,7 +1118,9 @@
                             $thumb_img = K_ADMIN_URL.'theme/images/exclaim.gif';
                         }
                         $abbr_title = (strlen($p['page_title'])>20) ? substr($p['page_title'], 0, 20) . '...' : $p['page_title'];
-                        $update_link = K_ADMIN_URL . K_ADMIN_PAGE . '?act=edit&tpl='. $tpl['id'] .'&p='. $p['id'] .'&nonce='.$FUNCS->create_nonce( 'edit_page_'.$p['id'] );
+                        $update_link = K_ADMIN_URL . K_ADMIN_PAGE . '?act=edit&tpl='. $tpl['id'] .'&p='. $p['id'];
+                        if( $showing_related ) $update_link .= '&cid='.$cid.'&rid='.$rid;
+                        $update_link .= '&nonce='.$FUNCS->create_nonce( 'edit_page_'.$p['id'] );
 
                         $str .= '<a href="'.$update_link.'" title="'.$p['page_title'].'" class="item_image" style="background-image:url(\''.$thumb_img.'\')">';
                         $str .= '</a>';
@@ -1062,6 +1137,7 @@
                             $qs = '?act=delete&tpl='. $tpl['id'] .'&p='. $p['id'] .'&nonce='.$nonce;
                             if( isset($_GET['fid']) ) $qs .= '&fid=' . intval($_GET['fid']);
                             if( isset($_GET['pg']) ) $qs .= '&pg=' . intval($_GET['pg']);
+                            if( $showing_related ) $qs .= '&cid='.$cid.'&rid='.$rid;
                             $str .= '<a href="'.K_ADMIN_URL . K_ADMIN_PAGE.$qs.'" '.$confirm_prompt.'><img src="'.K_ADMIN_URL.'theme/images/page_white_delete.gif" title="'.$FUNCS->t('delete').'"/></a>';
                         }
                         if( $count_drafts ){
@@ -1144,8 +1220,11 @@
                         $str .= '<td class="name'.$last_row.'">';
                         if( $p['is_master'] && $AUTH->user->access_level >= K_ACCESS_LEVEL_SUPER_ADMIN ) $str .= '<i>';
                         $nonce = $FUNCS->create_nonce( 'edit_page_'.$p['id'] );
+                        $edit_link = K_ADMIN_URL . K_ADMIN_PAGE.'?act=edit&tpl='. $tpl['id'] .'&p='. $p['id'];
+                        if( $cid && $rid ) $edit_link .= '&cid='.$cid.'&rid='.$rid;
+                        $edit_link .= '&nonce='.$nonce;
                         $abbr_title = (strlen($p['page_title'])>48) ? substr($p['page_title'], 0, 48) . '...' : $p['page_title'];
-                        $str .= '<a href="'.K_ADMIN_URL . K_ADMIN_PAGE.'?act=edit&tpl='. $tpl['id'] .'&p='. $p['id'] .'&nonce='.$nonce.'" title="'.$p['page_title'].'">'. $abbr_title .'</a>';
+                        $str .= '<a href="'.$edit_link.'" title="'.$p['page_title'].'">'. $abbr_title .'</a>';
                         if( $p['is_master'] && $AUTH->user->access_level >= K_ACCESS_LEVEL_SUPER_ADMIN ) $str .= '</i>';
                         $str .= '</td>';
 
@@ -1188,13 +1267,14 @@
 
                         // actions
                         $str .= '<td class="actions'.$last_row.'">';
-                        $str .= '<a href="'.K_ADMIN_URL . K_ADMIN_PAGE.'?act=edit&tpl='. $tpl['id'] .'&p='. $p['id'] .'&nonce='.$nonce.'"><img src="'.K_ADMIN_URL.'theme/images/page_white_edit.gif"  title="'.$FUNCS->t('edit').'"/></a>';
+                        $str .= '<a href="'.$edit_link.'"><img src="'.K_ADMIN_URL.'theme/images/page_white_edit.gif"  title="'.$FUNCS->t('edit').'"/></a>';
                         if( $can_delete && !$count_drafts ){
                             $nonce = $FUNCS->create_nonce( 'delete_page_'.$p['id'] );
                             $confirm_prompt = "onclick='if( confirm(\"".$FUNCS->t('confirm_delete_page').": ".$p['page_title']."?\") ) { return true; } return false;'";
                             $qs = '?act=delete&tpl='. $tpl['id'] .'&p='. $p['id'] .'&nonce='.$nonce;
                             if( isset($_GET['fid']) ) $qs .= '&fid=' . intval($_GET['fid']);
                             if( isset($_GET['pg']) ) $qs .= '&pg=' . intval($_GET['pg']);
+                            if( $cid && $rid ) $qs .= '&cid='.$cid.'&rid='.$rid;
                             $str .= '<a href="'.K_ADMIN_URL . K_ADMIN_PAGE.$qs.'" '.$confirm_prompt.'><img src="'.K_ADMIN_URL.'theme/images/page_white_delete.gif" title="'.$FUNCS->t('delete').'"/></a>';
                         }
                         $str .= '<a href="'. K_SITE_URL . $tpl['name'] .'?p='. $p['id'] .'" target="_blank" title="'.$FUNCS->t('view').'"><img src="'.K_ADMIN_URL.'theme/images/magnifier.gif"/></a>';
@@ -1227,6 +1307,7 @@
             $str .= $str_paginator;
             $str .= '</div>';
             $str .= '<input type="hidden" id="nonce" name="nonce" value="'.$FUNCS->create_nonce( 'bulk_action_page' ).'" />';
+            $str .= '<input type="hidden" id="bulk-action" name="bulk-action" value="delete" />';
             $str .= '</form>';
 
             // Associated JavaScript
@@ -1357,7 +1438,7 @@
     }
 
     function _k_visitor2(  &$page, &$html, &$param ){
-        global $CTX, $FUNCS;
+	global $CTX, $FUNCS;
 
         $cur = $param->_counter;
 
@@ -1399,7 +1480,7 @@
         ?>
         <tr>
             <td class="checkbox <?php echo $tr_class; ?>">
-                <input type="checkbox" name="page-id[]" class="page-selector" value="<?php echo $f->id; ?>" <?php if( !$can_delete || $f->drafts_count ) echo 'disabled="1"';?>/>
+            <input type="checkbox" name="page-id[]" class="page-selector" value="<?php echo $f->id; ?>" <?php if( !$can_delete || $f->drafts_count ) echo 'disabled="1"';?>/>
             </td>
             <td class="name <?php echo $tr_class; ?> ">
                 <?php
@@ -1461,13 +1542,13 @@
             <td class="actions <?php echo $tr_class; ?>">
                 <a href="<?php echo $update_link; ?>"><img title="<?php echo $FUNCS->t('edit'); ?>" src="<?php echo K_ADMIN_URL; ?>theme/images/page_white_edit.gif"/></a>
                 <?php
-                if( $can_delete && !$f->drafts_count ){
-                    $confirm_prompt = 'onclick="if( confirm(\''.$FUNCS->t('confirm_delete_page').': '.$f->name.'?\') ) { return true; } return false;"';
-                    $qs = $delete_link;
-                    if( isset($_GET['pg']) ) $qs .= '&pg=' . $_GET['pg'];
-                    echo '<a href="'.K_ADMIN_URL . K_ADMIN_PAGE.$qs.'" '.$confirm_prompt.'><img src="'.K_ADMIN_URL.'theme/images/page_white_delete.gif" title="'.$FUNCS->t('delete').'"/></a>';
-                }
-                echo '<a href="'. K_SITE_URL . $view_link .'" target="_blank" title="'.$FUNCS->t('view').'"><img src="'.K_ADMIN_URL.'theme/images/magnifier.gif"/></a>';
+                    if( $can_delete && !$f->drafts_count ){
+                        $confirm_prompt = 'onclick="if( confirm(\''.$FUNCS->t('confirm_delete_page').': '.$f->name.'?\') ) { return true; } return false;"';
+                        $qs = $delete_link;
+                        if( isset($_GET['pg']) ) $qs .= '&pg=' . $_GET['pg'];
+                        echo '<a href="'.K_ADMIN_URL . K_ADMIN_PAGE.$qs.'" '.$confirm_prompt.'><img src="'.K_ADMIN_URL.'theme/images/page_white_delete.gif" title="'.$FUNCS->t('delete').'"/></a>';
+                    }
+                    echo '<a href="'. K_SITE_URL . $view_link .'" target="_blank" title="'.$FUNCS->t('view').'"><img src="'.K_ADMIN_URL.'theme/images/magnifier.gif"/></a>';
                 ?>
             </td>
         </tr>
@@ -1618,6 +1699,28 @@
         <?php
         $str = ob_get_contents();
         ob_end_clean();
+
+        return $str;
+    }
+
+    function _get_rel_banner( $cid, $rid ){
+        global $DB, $FUNCS;
+
+        $rel_tables = K_TBL_PAGES . ' p' . "\r\n";
+        $rel_tables .= 'inner join ' . K_TBL_TEMPLATES . ' t on t.id = p.template_id' . "\r\n";
+        $rel_sql = "p.parent_id=0 AND p.id='" . $DB->sanitize( $cid ). "' limit 1";
+
+        $rs3 = $DB->select( $rel_tables, array('page_title', 'template_id', 'name', 'title'), $rel_sql );
+        if( count($rs3) ){
+            $rel_tpl = ( $rs3[0]['title'] ) ? $rs3[0]['title'] : $rs3[0]['name'];
+            $rel_link = K_ADMIN_URL . K_ADMIN_PAGE.'?act=edit&tpl='. $rs3[0]['template_id'] .'&p='. $cid .'&nonce='.$FUNCS->create_nonce( 'edit_page_'.$cid );
+            $rel_str = $rel_tpl . ' / <a href="'.$rel_link.'" style="text-decoration:underline"> '.$rs3[0]['page_title'].'</a>';
+        }
+        else{
+            $rel_str = '???';
+        }
+        $str = '<div style="margin-bottom: 10px;" class="notice">';
+        $str .= '<strong>Related to: </strong>' . $rel_str . '</div>';
 
         return $str;
     }

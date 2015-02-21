@@ -63,61 +63,6 @@
         include_once( K_COUCH_DIR.'edit-pages.php' );
     }
 
-
-    ////////////////////////////////////////////////////////////////////////////
-    // callback function to create folders dropdown
-    function _k_visitor( &$folder, &$html, &$node ){
-        global $CTX, $PAGE;
-
-        $level = $CTX->get('k_level', 1);
-        $f_id = $folder->id;
-        $f_name = $folder->name;
-        $f_title = $folder->title;
-        $f_selected = ($node==$f_id) ? ' SELECTED=1 ' : '';
-
-        for( $x=0; $x<$level; $x++ ){
-            $pad .= '- &nbsp;&nbsp;&nbsp;';
-            $len_pad += 3;
-        }
-        $html .= '<option value="'. $f_id .'" '.$f_selected.'>';
-
-        $avail = 30;
-        if( $len_pad+strlen($f_title) > $avail ){
-            $abbr_title = ( ($len_pad<$avail) ? substr($f_title, 0, $avail-$len_pad) : substr($pad, 0, $len_pad-$avail) ). '...';
-        }
-        else{
-            $abbr_title = $f_title;
-        }
-        $html .= $pad . $abbr_title;
-
-        $html .= '</option>';
-    }
-
-    // callback function to create nested-pages dropdown
-    function _k_visitor_pages( &$page, &$html, &$node ){
-        global $CTX, $PAGE;
-
-        $level = $CTX->get('k_level', 1);
-        $p_id = $page->id;
-        $p_title = $page->title;
-        $p_selected = ($node==$p_id) ? ' SELECTED=1 ' : '';
-
-        for( $x=0; $x<$level; $x++ ){
-            $pad .= '- &nbsp;&nbsp;&nbsp;';
-            $len_pad += 3;
-        }
-        $html .= '<option value="'. $p_id .'" '.$p_selected.'>';
-        $avail = 100;
-        if( $len_pad+strlen($p_title) > $avail ){
-            $abbr_title = ( ($len_pad<$avail) ? substr($p_title, 0, $avail-$len_pad) : substr($pad, 0, $len_pad-$avail) ). '...';
-        }
-        else{
-            $abbr_title = $p_title;
-        }
-        $html .= $pad . $abbr_title;
-        $html .= '</option>';
-    }
-
     ////////////////////////////////////////////////////////////////////////////
     function k_get_time(){
         list ($msec, $sec) = explode(' ', microtime());

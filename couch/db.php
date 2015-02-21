@@ -49,6 +49,7 @@
     define( 'K_TBL_FULLTEXT', K_DB_TABLES_PREFIX . 'couch_fulltext' );
     define( 'K_TBL_COMMENTS', K_DB_TABLES_PREFIX . 'couch_comments' );
     define( 'K_TBL_RELATIONS', K_DB_TABLES_PREFIX . 'couch_relations' );
+    define( 'K_TBL_ATTACHMENTS', K_DB_TABLES_PREFIX . 'couch_attachments' );
 
 
     class KDB{
@@ -211,6 +212,7 @@
             }
         }
 
+        // Transaction control is pretty hackish .. but is serving my purpose for now.
         function begin(){
             //@mysql_query( "SET autocommit=0" );
             //@mysql_query( "BEGIN" );

@@ -61,9 +61,9 @@
         var $ctx = array();
         // 'listfolders' and 'dropdownfolders' internally use 'folders' hence need a context
         // 'do_shortcodes' stores self object in $CTX hence needs a scope.
-        var $support_scope = array('__ROOT__', 'test', 'hide', 'each', 'pages', 'folder', 'folders', 'listfolders', 'dropdownfolders', 'parentfolders', 'breadcrumbs', 'archives', 'form', 'paypal_processor', 'search', 'comments', 'query', 'link', 'calendar', 'weeks', 'days', 'entries', 'templates', 'capture', 'fields', 'do_shortcodes', 'nested_pages', 'nested_crumbs', 'menu', 'exif');
+        var $support_scope = array('__ROOT__', 'test', 'repeat', 'hide', 'each', 'pages', 'folder', 'folders', 'listfolders', 'dropdownfolders', 'parentfolders', 'breadcrumbs', 'archives', 'form', 'paypal_processor', 'search', 'comments', 'query', 'link', 'calendar', 'weeks', 'days', 'entries', 'templates', 'capture', 'do_shortcodes', 'nested_pages', 'nested_crumbs', 'menu', 'exif');
         // All tags that 'loop' (i.e. call 'foreach( $node->children as $child )' multiple times.
-        var $support_zebra = array('__ROOT__',  'while', 'repeat', 'each', 'pages', 'folders', 'listfolders', 'dropdownfolders', 'parentfolders', 'archives', 'search', 'comments', 'query', 'weeks', 'days', 'entries', 'templates', 'fields', 'nested_pages', 'nested_crumbs', 'menu');
+        var $support_zebra = array('__ROOT__',  'while', 'repeat', 'each', 'pages', 'folders', 'listfolders', 'dropdownfolders', 'parentfolders', 'archives', 'search', 'comments', 'query', 'weeks', 'days', 'entries', 'templates', 'nested_pages', 'nested_crumbs', 'menu');
 
         function KContext(){
 
@@ -146,6 +146,18 @@
         }
 
         /*
+         * Resets the current scope (i.e. deletes all variables from it)
+         */
+        function reset(){
+            for( $x=count($this->ctx)-1; $x>=1; $x-- ){ // skip _ROOT_
+                if( isset($this->ctx[$x]['_scope_']) ){
+                    $this->ctx[$x]['_scope_'] = array();
+                    return;
+                }
+            }
+        }
+
+        /*
          * 'get' by default will fetch a var by searching upwards through the
          * hierarchy of scopes.
          * However, if 'local' is specified, it will look only in the immediate
@@ -203,6 +215,13 @@
                 }
             }
             return null;
+        }
+
+        // for future use..
+        function register_supports_zebra( $func_name ){
+            if( !isset($this->support_zebra[$func_name]) ){
+                $this->support_zebra[] = $func_name;
+            }
         }
 
         function set_zebra( $varname, $value ){
@@ -738,6 +757,30 @@
             return $DOM->get_HTML();
         }
 
+        // Caches the parsed DOM
+        function get_cached_HTML( $filepath ){
+            global $FUNCS;
+
+            if( !file_exists($filepath) ) return $this->get_HTML();
+
+            $last_mod = @filemtime( $filepath );
+            $cache_key = md5( 'k_dom_cache_' . $filepath );
+            $cache_value = @unserialize( base64_decode($FUNCS->get_setting($cache_key)) );
+            if( (!is_array($cache_value)) || ($last_mod > $cache_value['last_mod']) ){
+                $html = $this->get_HTML();
+
+                $cache_value =  base64_encode( serialize(array('last_mod'=>$last_mod, 'data'=>$this->DOM)) );
+                $FUNCS->set_setting( $cache_key, $cache_value );
+            }
+            else{
+                $this->DOM = $cache_value['data'];
+                $this->parsed = true;
+                $html = $this->get_HTML();
+            }
+
+            return $html;
+        }
+
         function get_info(){
             $DOM = &$this->get_DOM();
             return $DOM->get_info();
@@ -757,9 +800,9 @@
         }
 
         function is_valid_for_label( $char, $pos=-1 ){
-            // Labels (tag names and attributes) can contain [a-z][A-Z][0-9]_
-            // except for the first character that cannot be a numeral.
-            if( ($char>='A' && $char<='Z') || ($char>='a' && $char<='z') || ($char=='_') || (($char>='0' && $char<='9')&&($pos!=0)) ){
+            // Labels (tag names and attributes) can contain [a-z][A-Z][0-9]_-
+            // except for the first character that cannot be a numeral or an hyphen.
+            if( ($char>='A' && $char<='Z') || ($char>='a' && $char<='z') || ($char=='_') || (($char=='-')&&($pos!=0)) || (($char>='0' && $char<='9')&&($pos!=0)) ){
                 return true;
             }
             return false;

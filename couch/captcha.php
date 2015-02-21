@@ -34,7 +34,6 @@
     above, a recipient may use your version of this file under either the CPAL or the
     CCCL.
     */
-
     ob_start();
     //define( 'K_ADMIN', 1 );
 

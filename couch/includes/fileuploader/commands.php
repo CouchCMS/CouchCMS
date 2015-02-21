@@ -22,7 +22,7 @@
  * This is the File Manager Connector for PHP.
  */
 
-if ( !defined('K_ADMIN') ) die(); // cannot be loaded directly
+if ( !defined('K_COUCH_DIR') ) die(); // cannot be loaded directly
 
 function GetFolders( $resourceType, $currentFolder )
 {
@@ -233,28 +233,32 @@ function FileUpload( $resourceType, $currentFolder, $sCommand )
 		$sOriginalFileName = $sFileName ;
 
 		// Get the extension.
-		$sExtension = substr( $sFileName, ( strrpos($sFileName, '.') + 1 ) ) ;
-		$sExtension = strtolower( $sExtension ) ;
+        $sExtension = '';
+        if( strrpos($sFileName, '.')!==false ){
+            $sExtension = substr( $sFileName, ( strrpos($sFileName, '.') + 1 ) ) ;
+            $sExtension = strtolower( $sExtension ) ;
+        }
+        if( $sExtension!='' ){
+            if ( isset( $Config['SecureImageUploads'] ) )
+            {
+                if ( ( $isImageValid = IsImageValid( $oFile['tmp_name'], $sExtension ) ) === false )
+                {
+                    $sErrorNumber = '202' ;
+                }
+            }
 
-		if ( isset( $Config['SecureImageUploads'] ) )
-		{
-			if ( ( $isImageValid = IsImageValid( $oFile['tmp_name'], $sExtension ) ) === false )
-			{
-				$sErrorNumber = '202' ;
-			}
-		}
-
-		if ( isset( $Config['HtmlExtensions'] ) )
-		{
-			if ( !IsHtmlExtension( $sExtension, $Config['HtmlExtensions'] ) &&
-				( $detectHtml = DetectHtml( $oFile['tmp_name'] ) ) === true )
-			{
-				$sErrorNumber = '202' ;
-			}
-		}
+            if ( isset( $Config['HtmlExtensions'] ) )
+            {
+                if ( !IsHtmlExtension( $sExtension, $Config['HtmlExtensions'] ) &&
+                    ( $detectHtml = DetectHtml( $oFile['tmp_name'] ) ) === true )
+                {
+                    $sErrorNumber = '202' ;
+                }
+            }
+        }
 
 		// Check if it is an allowed extension.
-		if ( !$sErrorNumber && IsAllowedExt( $sExtension, $resourceType ) )
+		if ( $sExtension!='' && !$sErrorNumber && IsAllowedExt( $sExtension, $resourceType ) )
 		{
 			$iCounter = 0 ;
 

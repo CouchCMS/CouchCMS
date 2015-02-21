@@ -198,6 +198,7 @@
       file_ext             varchar(20),
       file_size            int DEFAULT '0',
       file_meta            text,
+      creation_IP varchar(45),
 
       PRIMARY KEY (id)
     ) ENGINE = InnoDB CHARACTER SET utf8 COLLATE utf8_general_ci;";
@@ -246,6 +247,18 @@
 	`cid`     int NOT NULL,
 	`weight`  int DEFAULT '0',
 	PRIMARY KEY (`pid`, `fid`, `cid`)
+    ) ENGINE = InnoDB CHARACTER SET `utf8` COLLATE `utf8_general_ci`;";
+
+    $k_stmts[] = "CREATE TABLE `".K_TBL_ATTACHMENTS."` (
+    `attach_id`       bigint(11) UNSIGNED AUTO_INCREMENT NOT NULL,
+    `file_real_name`  varchar(255) NOT NULL,
+    `file_disk_name`  varchar(255) NOT NULL,
+    `file_extension`  varchar(255) NOT NULL,
+    `file_size`       int(20) UNSIGNED NOT NULL DEFAULT '0',
+    `file_time`       int(10) UNSIGNED NOT NULL DEFAULT '0',
+    `is_orphan`       tinyint(1) UNSIGNED DEFAULT '1',
+    `hit_count`       int(10) UNSIGNED DEFAULT '0',
+    PRIMARY KEY (`attach_id`)
     ) ENGINE = InnoDB CHARACTER SET `utf8` COLLATE `utf8_general_ci`;";
 
     $k_stmts[] = "CREATE INDEX ".K_TBL_COMMENTS."_Index01
@@ -376,6 +389,8 @@
 
     $k_stmts[] = "CREATE INDEX `".K_TBL_PAGES."_Index19` ON `".K_TBL_PAGES."` (`template_id`, `page_folder_id`, `file_size`);";
 
+    $k_stmts[] = "CREATE INDEX `".K_TBL_PAGES."_Index20` ON `".K_TBL_PAGES."` (`creation_IP`, `creation_date`);";
+
     $k_stmts[] = "CREATE UNIQUE INDEX ".K_TBL_TEMPLATES."_Index01
       ON ".K_TBL_TEMPLATES."
       (name);";
@@ -410,7 +425,19 @@
 
     $k_stmts[] = "CREATE INDEX `".K_TBL_RELATIONS."_Index03`
     ON `".K_TBL_RELATIONS."`
-    (`cid`);";
+    (`cid`, `fid`);";
+
+    $k_stmts[] = "CREATE INDEX `".K_TBL_ATTACHMENTS."_Index01`
+    ON `".K_TBL_ATTACHMENTS."`
+    (`is_orphan`);";
+
+    $k_stmts[] = "CREATE INDEX `".K_TBL_ATTACHMENTS."_Index02`
+    ON `".K_TBL_ATTACHMENTS."`
+    (`file_time`);";
+
+    $k_stmts[] = "CREATE INDEX `".K_TBL_ATTACHMENTS."_Index03`
+    ON `".K_TBL_ATTACHMENTS."`
+    (`is_orphan`, `file_time`);";
 
     $k_stmts[] = "INSERT INTO ".K_TBL_USER_LEVELS." (id, name, title, k_level, disabled) VALUES (1, 'superadmin', 'Super Admin', 10, 0);";
     $k_stmts[] = "INSERT INTO ".K_TBL_USER_LEVELS." (id, name, title, k_level, disabled) VALUES (2, 'admin', 'Administrator', 7, 0);";

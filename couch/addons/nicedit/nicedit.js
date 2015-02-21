@@ -270,7 +270,7 @@ var nicEditorConfig = bkClass.extend({
 	},
 	iconsPath : '../nicEditorIcons.gif',
 	buttonList : ['save','bold','italic','underline','left','center','right','justify','ol','ul','fontSize','fontFamily','fontFormat','indent','outdent','image','upload','link','unlink','forecolor','bgcolor'],
-	iconList : {"bgcolor":1,"forecolor":2,"bold":3,"center":4,"hr":5,"indent":6,"italic":7,"justify":8,"left":9,"ol":10,"outdent":11,"removeformat":12,"right":13,"save":24,"strikethrough":15,"subscript":16,"superscript":17,"ul":18,"underline":19,"image":20,"link":21,"unlink":22,"close":23,"arrow":25}
+	iconList : {"xhtml":1,"bgcolor":2,"forecolor":3,"bold":4,"center":5,"hr":6,"indent":7,"italic":8,"justify":9,"left":10,"ol":11,"outdent":12,"removeformat":13,"right":14,"save":25,"strikethrough":16,"subscript":17,"superscript":18,"ul":19,"underline":20,"image":21,"link":22,"unlink":23,"close":24,"arrow":26}
 
 });
 /* END CONFIG */
@@ -451,7 +451,7 @@ var nicEditorInstance = bkClass.extend({
 	init : function() {
 		this.elm.setAttribute('contentEditable','true');
 		if(this.getContent() == "") {
-			this.setContent('<br />');
+			//this.setContent('<br />');
 		}
 		this.instanceDoc = document.defaultView;
 		this.elm.addEvent('mousedown',this.selected.closureListener(this)).addEvent('keypress',this.keyDown.closureListener(this)).addEvent('focus',this.selected.closure(this)).addEvent('blur',this.blur.closure(this)).addEvent('keyup',this.selected.closure(this));
@@ -479,7 +479,7 @@ var nicEditorInstance = bkClass.extend({
 
 	getRng : function() {
 		var s = this.getSel();
-		if(!s) { return null; }
+		if(!s || s.rangeCount === 0) { return; }
 		return (s.rangeCount > 0) ? s.getRangeAt(0) : s.createRange();
 	},
 
@@ -494,6 +494,7 @@ var nicEditorInstance = bkClass.extend({
 
 	selElm : function() {
 		var r = this.getRng();
+		if(!r) { return; }
 		if(r.startContainer) {
 			var contain = r.startContainer;
 			if(r.cloneContents().childNodes.length == 1) {
@@ -530,7 +531,7 @@ var nicEditorInstance = bkClass.extend({
 	},
 
 	selected : function(e,t) {
-		if(!t) {t = this.selElm()}
+		if(!t && !(t = this.selElm)) { t = this.selElm(); }
 		if(!e.ctrlKey) {
 			var selInstance = this.ne.selectedInstance;
 			if(selInstance != this) {
@@ -1356,3 +1357,177 @@ var nicEditorSaveButton = nicEditorButton.extend({
 
 nicEditors.registerPlugin(nicPlugin,nicSaveOptions);
 
+
+var nicXHTML = bkClass.extend({
+	stripAttributes : ['_moz_dirty','_moz_resizing','_extended'],
+	noShort : ['style','title','script','textarea','a'],
+	cssReplace : {'font-weight:bold;' : 'strong', 'font-style:italic;' : 'em', 'text-decoration:underline;' : 'u', 'margin-left:' : 'blockquote'},
+	sizes : {1 : 'xx-small', 2 : 'x-small', 3 : 'small', 4 : 'medium', 5 : 'large', 6 : 'x-large'},
+
+	construct : function(nicEditor) {
+		this.ne = nicEditor;
+		//if(this.ne.options.xhtml) {
+			nicEditor.addEvent('get',this.cleanup.closure(this));
+		//}
+	},
+
+	cleanup : function(ni) {
+		var node = ni.getElm();
+		var xhtml = this.toXHTML(node);
+		ni.content = xhtml;
+	},
+
+	toXHTML : function(n,r,d) {
+		var txt = '';
+		var attrTxt = '';
+		var cssTxt = '';
+		var nType = n.nodeType;
+		var nName = n.nodeName.toLowerCase();
+		var nChild = n.hasChildNodes && n.hasChildNodes();
+		var extraNodes = new Array();
+
+		switch(nType) {
+			case 1:
+				var nAttributes = n.attributes;
+
+				switch(nName) {
+					case 'b':
+						nName = 'strong';
+						break;
+					case 'i':
+						nName = 'em';
+						break;
+					case 'font':
+						nName = 'span';
+						break;
+				}
+
+				if(r) {
+					for(var i=0;i<nAttributes.length;i++) {
+						var attr = nAttributes[i];
+
+						var attributeName = attr.nodeName.toLowerCase();
+						var attributeValue = attr.nodeValue;
+
+						if(!attr.specified || !attributeValue || bkLib.inArray(this.stripAttributes,attributeName) || typeof(attributeValue) == "function") {
+							continue;
+						}
+
+						switch(attributeName) {
+							case 'style':
+								var css = attributeValue.replace(/ /g,"");
+								for(itm in this.cssReplace) {
+									if(css.indexOf(itm) != -1) {
+										extraNodes.push(this.cssReplace[itm]);
+										css = css.replace(itm,'');
+									}
+								}
+								cssTxt += css;
+								attributeValue = "";
+							break;
+							case 'class':
+								attributeValue = attributeValue.replace("Apple-style-span","");
+							break;
+							case 'size':
+								cssTxt += "font-size:"+this.sizes[attributeValue]+';';
+								attributeValue = "";
+							break;
+						}
+
+						if(attributeValue) {
+							attrTxt += ' '+attributeName+'="'+attributeValue+'"';
+						}
+					}
+
+					if(cssTxt) {
+						attrTxt += ' style="'+cssTxt+'"';
+					}
+
+					for(var i=0;i<extraNodes.length;i++) {
+						txt += '<'+extraNodes[i]+'>';
+					}
+
+					if(attrTxt == "" && nName == "span") {
+						r = false;
+					}
+					if(r) {
+						txt += '<'+nName;
+						if(nName != 'br') {
+							txt += attrTxt;
+						}
+					}
+				}
+
+
+
+				if(!nChild && !bkLib.inArray(this.noShort,attributeName)) {
+					if(r) {
+						txt += ' />';
+					}
+				} else {
+					if(r) {
+						txt += '>';
+					}
+
+					for(var i=0;i<n.childNodes.length;i++) {
+						var results = this.toXHTML(n.childNodes[i],true,true);
+						if(results) {
+							txt += results;
+						}
+					}
+				}
+
+				if(r && nChild) {
+					txt += '</'+nName+'>';
+				}
+
+				for(var i=0;i<extraNodes.length;i++) {
+					txt += '</'+extraNodes[i]+'>';
+				}
+
+				break;
+			case 3:
+				//if(n.nodeValue != '\n') {
+					//txt += n.nodeValue;
+                    var v = String(n.nodeValue).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                    //v = v.replace(/&amp;(amp|quot|#39|lt|gt);/g, '&$1;');
+                    txt += v;
+				//}
+				break;
+		}
+
+		return txt;
+	}
+});
+nicEditors.registerPlugin(nicXHTML);
+
+
+
+
+/* START CONFIG */
+var nicCodeOptions = {
+	buttons : {
+		'xhtml' : {name : 'Edit HTML', type : 'nicCodeButton'}
+	}
+
+};
+/* END CONFIG */
+
+var nicCodeButton = nicEditorAdvancedButton.extend({
+	width : '350px',
+
+	addPane : function() {
+		this.addForm({
+			'' : {type : 'title', txt : 'Edit HTML'},
+			'code' : {type : 'content', 'value' : this.ne.selectedInstance.getContent(), style : {width: '340px', height : '200px'}}
+		});
+	},
+
+	submit : function(e) {
+		var code = this.inputs['code'].value;
+		this.ne.selectedInstance.setContent(code);
+		this.removePane();
+	}
+});
+
+nicEditors.registerPlugin(nicPlugin,nicCodeOptions);

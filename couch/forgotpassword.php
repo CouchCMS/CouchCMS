@@ -43,9 +43,9 @@
 
     $AUTH = new KAuth();
     if( $AUTH->user->id != -1 ){
-        // if already logged-in, why are you here?
-        header("Location: ".rawurldecode(K_SITE_URL));
-        die;
+	// if already logged-in, why are you here?
+	header("Location: ".rawurldecode(K_SITE_URL));
+	die;
     }
 
     $msg = "";
@@ -180,7 +180,7 @@
         global $FUNCS;
 
         if( empty($msg) ){
-            $msg = $FUNCS->t('recovery_prompt');
+	    $msg = $FUNCS->t('recovery_prompt');
         }
         $msg_div = '<div class="'.$msg_class.'" style="margin-bottom:10px; display:';
         if( $msg ){
@@ -206,6 +206,6 @@
             <?php } ?>
 
         <?php echo( $FUNCS->login_footer() ); ?>
-    <?php
+        <?php
     }
-    ?>
+?>

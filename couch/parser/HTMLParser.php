@@ -79,7 +79,7 @@
             if( $this->cleanXSS ){
                 if( $type == K_NODE_TYPE_TEXT ){
                     $text = $FUNCS->escape_HTML( $text );
-                    if( $this->for_comments ){
+                    if( $this->for_comments==1 ){
                         $text = $this->nl2br( $text );
                     }
                 }
@@ -118,7 +118,7 @@
             parent::KNode($type, $name, $attr, $text );
         }
 
-         function normalize_entities( $str ){
+        function normalize_entities( $str ){
             $found = true;
             while ( $found == true ){
                 $str_prev = $str;
@@ -200,7 +200,8 @@
                  'onurlflip', 'seeksegmenttime',
                  'moz-binding', 'expression', 'mocha',
                  'document.cookie', 'document.write', 'window.location', 'document.location',
-                 'datafld', 'dataformatas', 'datasrc', 'binding', 'behaviour'
+                 'datafld', 'dataformatas', 'datasrc', 'binding', 'behavior',
+                 'onformchange', 'onforminput', 'formaction', 'oninput', 'dirname', 'pattern', 'mhtml:',
                  );
 
             for( $i = 0; $i < count($ra2); $i++ ){
@@ -239,6 +240,7 @@
                     }
 
                     foreach( $this->children as $node ){
+                        //if( $this->escape_tag ){ $node->escape_tag = 1; }
                         $html .= $node->get_HTML( $level++ );
                     }
                     $html .= $this->is_self_closing ? '' : $opening_tag.'/' . $this->name . $closing_tag;
@@ -263,6 +265,7 @@
             }
             $text = preg_replace( "/\n\n+/", "\n\n", $text );
 
+            //$text = nl2br( $text );
             while( preg_match("/[^\^\>](\n)[^\$]/", $text, $matches) ){ //skip those at the very ends
                 $text = preg_replace( "/".$matches[1]."/", "<br />\n", $text );
             }
@@ -283,6 +286,16 @@
         var $cleanXSS;
         var $for_comments;
         var $allowed_tags = null;
+
+        var $HTML4_tags = array(
+                        'a','abbr','acronym','address','applet','area','b','base','basefont','bdo','big','blockquote','body',
+                        'br','button','caption','center','cite','code','col','colgroup','dd','del','dfn','dir','div','dl','dt',
+                        'em','fieldset','font','form','frame','frameset','h1','h2','h3','h4','h5','h6','head','hr','html','i',
+                        'iframe','img','input','ins','isindex','kbd','label','legend','li','link','map','menu','meta','noframes',
+                        'noscript','object','ol','optgroup','option','p','param','pre','q','s','samp','script','select','small',
+                        'span','strike','strong','style','sub','sup','table','tbody','td','textarea','tfoot','th','thead','title',
+                        'tr','tt','u','ul','var'
+                        );
 
         function KHTMLParser( $str, $ignore_tags=null, $cleanXSS=0, $for_comments=0, $allowed_html_tags='' ){
             $this->str = $str;
@@ -419,8 +432,7 @@
         }
 
         function &get_next_tag(){
-
-           $pattern = '/<(\/?(?(?<=\/)\s*[A-Z]|[A-Z])[A-Z0-9]*)\s*((?:[A-Z]+\s*=\s*["\'][^"\']*["\']|[^<>])*)>/is';
+            $pattern = '/<(\/?(?(?<=\/)\s*[A-Z]|[A-Z])[A-Z0-9]*)\s*((?:[A-Z]+\s*=\s*["\'][^"\']*["\']|[^<>])*)>/is';
 
             while( 1==1 ){
                 $res = preg_match( $pattern, $this->str, $matches, PREG_OFFSET_CAPTURE, $this->pos ); //We'll now require php 4.3.3
@@ -442,7 +454,10 @@
                     $node->is_ignored = 1;
                 }
 
-                return $node;
+                // return tag only if it is a valid HTML4 tag
+                //if( in_array($node->name, $this->HTML4_tags) ){
+                    return $node;
+                //}
             }
         }
 

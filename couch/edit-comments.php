@@ -48,6 +48,7 @@
 
                 $comment = new KComment( $comment_id );// get values from database into fields
 
+                $errors = '';
                 if( isset($_POST['op']) && $_POST['op']=='save' ){
                     $_POST['f_k_date'] = $FUNCS->sanitize_posted_date();
                     $_POST['f_k_approved'] = ( isset($_POST['f_status']) ) ? '1' : '0';
@@ -462,7 +463,7 @@
         function KComment( $id ){
             global $DB;
             $rs = $DB->select( K_TBL_COMMENTS . " cc
-                                    inner join ".K_TBL_TEMPLATES." ct on ct.id=cc.tpl_id", array('cc.*, ct.name tpl_name, ct.clonable'), "cc.id='" . $DB->sanitize( $id ). "'" );
+                                inner join ".K_TBL_TEMPLATES." ct on ct.id=cc.tpl_id", array('cc.*, ct.name tpl_name, ct.clonable'), "cc.id='" . $DB->sanitize( $id ). "'" );
             if( count($rs) ){
                 $row = $rs[0];
                 foreach( $row as $k=>$v ){

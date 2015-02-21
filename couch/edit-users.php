@@ -53,6 +53,7 @@
                 $user = new KUser( $user_id );
                 $user->populate_fields(); // get values from database into fields
 
+                $errors = '';
                 if( isset($_POST['op']) && $_POST['op']=='save' ){
                     $_POST['f_k_access_level'] = intval( $_POST['f_k_levels_list'] );
                     $_POST['f_k_disabled'] = ( isset($_POST['f_k_disabled_check']) ) ? 1 : 0;
