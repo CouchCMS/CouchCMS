@@ -1,0 +1,78 @@
+.k_form {
+	margin: 0;
+	padding: 15px;
+	color: #222;
+	background: #fff;
+	font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+	border: 1px solid #999;
+	-moz-border-radius:5px;
+	}
+
+	.k_form fieldset {
+		border: none;
+		border-top: 1px solid #999;
+		clear: both;
+		margin: 20px 0 10px 0;
+		padding: 0;
+		}
+
+	.k_form legend {
+		font-size: 1.1em;
+  		font-weight: bold;
+  		margin-bottom: 10px;
+  		padding: 0 5px;
+  		}
+
+  	.k_form dl {
+		margin: 0;
+	   }
+
+  	.k_form dt {
+  		clear: both;
+  		display: block;
+  		float: left;
+  		margin: 10px 0 0 5px;
+  		padding: 0;
+  		width: 100px;
+  		}
+
+  	.k_form dd {
+  		display: block;
+  		float: left;
+  		margin: 10px 0 10px 0;
+		padding:0;
+		width: 360px;
+  		}
+		.k_form dd label, .k_form dd img{
+			display: block;
+		}
+	.k_form .k_instructions{
+		font-size: 0.8em;
+		margin: 5px 0 0 0;
+	}
+
+.k_fielderror {
+	color: #e00000;
+}
+
+.k_errormessage,
+.k_successmessage    { padding: .8em; margin-bottom: 1em; border: 2px solid #ddd; }
+
+.k_errormessage      { background: #FBE3E4; color: #8a1f11; border-color: #FBC2C4; }
+.k_successmessage    { background: #E6EFC2; color: #264409; border-color: #C6D880; }
+
+.k_form input[type="text"] { width:100% }
+.k_form textarea  { width:100% }
+
+.k_form textarea,
+.k_form input[type="text"],
+.k_form input[type="password"],
+.k_form select {
+	background-color:#FFFFFF;
+	border: 1px solid #d3d3d3;
+}
+
+.k_form input:focus,
+.k_form textarea:focus{
+  border-color: #999;
+}

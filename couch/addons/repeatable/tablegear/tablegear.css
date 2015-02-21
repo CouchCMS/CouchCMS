@@ -1,0 +1,37 @@
+/* REPEATING REGIONS TABLE - added by Davor, 18 Mar 2012 */
+.tableholder { overflow-x: auto; overflow-y: hidden; padding: 8px 0px 5px; }
+.rr { background: #fff; border-left: 1px solid #d3d3d3; border-top: 1px solid #d3d3d3; -moz-border-radius: 5px; border-radius: 5px; min-width:720px; table-layout: fixed; }
+.rr tr:nth-child(2n) td { background:#fff }
+.rr th, .rr td { border-bottom: 1px solid #d3d3d3; border-right: 1px solid #d3d3d3 }
+.rr th, .rr thead td  { background: url(th-bg.png) repeat-x 0 0; font-size: 13px; line-height:1; padding:8px 8px 7px }
+.rr tr.odd { background-color: #fff; }
+.rr tr.even { background-color: #F3F9FE; }
+.rr tr.even td{ background-color: transparent; }
+.rr tr:hover td { background: #FFFFE0 }
+.rr thead tr:hover td { background: url(th-bg.png) repeat-x 0 0; }
+.rr td { border-top: 1px solid #fff; padding: 6px 8px; vertical-align:top }
+.rr th:first-child { -moz-border-radius: 5px 0 0; border-radius: 5px 0 0 }
+.rr th:last-child { -moz-border-radius: 0 5px 0 0; border-radius: 0 5px 0 0 }
+.rr tr:last-child td:first-child { -moz-border-radius: 5px 0 0 0; border-radius: 5px 0 0 0 }
+.rr tr:last-child td:last-child { -moz-border-radius: 0 0 5px 0; border-radius: 0 0 5px 0 }
+
+.rr td.dg-arrange-table-rows-drag-icon, .rr td.dg-arrange-table-header {  padding:0; margin:0; width: 7px !important; }
+.rr td.delete { padding:8px 6px 7px; margin:0; width: 16px !important; }
+.rr td.highlite { background-color: #FBE3E4 !important; border-color:#FBC2C4;}
+.rr .editable span.shim{ display: none; }
+.rr .editable textarea{ overflow: auto; height: 130px; }
+.tableholder p.addRow{ float:left;}
+.tableholder p.addRow a { cursor:pointer; height: 24px; display:block; padding-left: 20px; background:transparent url(add.png) no-repeat scroll 0;}
+.tableholder ul.k_element_deleted_nav { float:left; margin-top: -10px;}
+.tableholder div.k_cell_deleted{
+   background-color:#FBE3E4;
+   cursor:pointer;
+   height:100%;
+   left:0;
+   opacity:0.6;
+   filter: alpha(opacity=60);
+   position:absolute;
+   top:0;
+   width:100%;
+   z-index:9999;
+}

@@ -1,0 +1,51 @@
+
+REQUIREMENTS
+------------
+Please see http://www.couchcms.com/docs/requirements.html
+
+
+INSTALLATION
+------------
+Please see http://www.couchcms.com/docs/tutorials/portfolio-site/building-a-real-world-site.html
+
+
+REBRANDING
+----------
+In couch/config.php, find the following lines and
+uncomment the ones containing 'define' (i.e. remove the '//' prefixed to 'define') and add your own info -
+
+    // 23a. Company Logo on light background  (Max. 171 x 64 pixels. Needs to be placed within 'couch/theme/images/' folder)
+    //define( 'K_LOGO_LIGHT', 'couch.gif' );
+
+    // 23b. Company Logo on dark background  (Max. 171 x 64 pixels. Needs to be placed within 'couch/theme/images/' folder)
+    //define( 'K_LOGO_DARK', 'couch_dark.gif' );
+
+    // 23c. Footer content (Company name and link)
+    //define( 'K_ADMIN_FOOTER', '<a href="http://www.yourcompany.com">COMPANY NAME</a>' );
+
+
+LOCALIZING THE ADMIN PANEL
+--------------------------
+The default locale of Couch's admin panel is English.
+It can be localized to German or French languages by changing the following
+line in couch/config.php -
+
+    define( 'K_ADMIN_LANG', 'EN' );
+
+to 'DE' for German or 'FR' for French.
+Both these locales have their respective language files (DE.php, FR.php) present in couch/lang/ folder.
+For locales other than these, any of these files can be renamed and modified to create the locale that suits you.
+
+
+LOCALIZING CKEDITOR
+-------------------
+CKEditor used with richtext type editable regions can also be localized to German or French by changing.
+the following line in couch/includes/ckeditor/config.js -
+
+    config.language = 'en';
+
+to 'de' for German or 'fr' for French.
+Both these locales have their respective language files (de.js, fr.js) present in couch/includes/ckeditor/lang/ folder.
+For locales other than these, You can download the corresponding language file from
+http://www.couchcms.com/ckeditor_354_lang.zip
+
