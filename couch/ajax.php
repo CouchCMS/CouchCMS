@@ -41,8 +41,7 @@
     if ( !defined('K_COUCH_DIR') ) define( 'K_COUCH_DIR', str_replace( '\\', '/', dirname(realpath(__FILE__) ).'/') );
     require_once( K_COUCH_DIR.'header.php' );
 
-    //$DB = new KDB();
-    $AUTH = new KAuth( K_ACCESS_LEVEL_ADMIN, 0 );
+    $AUTH->check_access( K_ACCESS_LEVEL_ADMIN, 1 );
 
     $response = '';
     if( isset($_GET['act']{0}) ){
@@ -133,6 +132,13 @@
                 if( count($rs) ){
                     $DB->begin();
 
+                    // HOOK: alter_template_delete
+                    $rec = $rs[0]; $msg='Unable to delete template';
+                    $skip = $FUNCS->dispatch_event( 'alter_template_delete', array($rec, &$msg) );
+                    if( $skip ){
+                        die( $msg );
+                    }
+
                     // Confirm no cloned pages exist
                     if( $rs[0]['clonable'] ){
                         $rs2 = $DB->select( K_TBL_PAGES, array('*'), "template_id='" . $DB->sanitize( $tpl_id ). "'" );
@@ -160,6 +166,9 @@
                     $rs = $DB->delete( K_TBL_FOLDERS, "template_id='" . $DB->sanitize( $tpl_id ). "'" );
                     if( $rs==-1 ) die( "ERROR: Unable to delete template data from K_TBL_FOLDERS" );
 
+                    // HOOK: template_deleted
+                    $FUNCS->dispatch_event( 'template_deleted', array($rec) );
+
                     // wrap up
                     $DB->commit( 1 );
                     $FUNCS->invalidate_cache();
@@ -185,6 +194,10 @@
                 if( count($rs) ){
                     $DB->begin();
 
+                    // HOOK: alter_datafield_delete_for_allpages
+                    $rec = $rs[0];
+                    $FUNCS->dispatch_event( 'alter_datafield_delete_for_allpages', array($rec) );
+
                     // If field is udf, intimate it about the impending deletion
                     if( !$FUNCS->is_core_type($rs[0]['k_type']) ){
                         $classname = $FUNCS->udfs[$rs[0]['k_type']]['handler'];
@@ -206,6 +219,9 @@
                     // finally remove this field
                     $rs = $DB->delete( K_TBL_FIELDS, "id='" . $DB->sanitize( $fid ). "'" );
                     if( $rs==-1 ) die( "ERROR: Unable to delete field K_TBL_FIELDS" );
+
+                    // HOOK: field_deleted
+                    $FUNCS->dispatch_event( 'field_deleted', array($rec) );
 
                     // wrap up
                     $DB->commit( 1 );

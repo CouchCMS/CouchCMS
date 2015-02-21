@@ -44,8 +44,10 @@
 
     // sabotage credentials
     $cookie_name = 'couchcms_'. md5( K_SITE_URL );
-    if( $_COOKIE[$cookie_name] ) unset( $_COOKIE[$cookie_name] );
-    if( $_POST['k_login'] ) $_POST['k_user_name'] = '!@#$%^&';
+    if( $_COOKIE[$cookie_name] ){
+        unset( $_COOKIE[$cookie_name] );
+        $AUTH->delete_cookie();
+    }
 
     // authenticate if you can :)
     $AUTH = new KAuth( K_ACCESS_LEVEL_ADMIN );

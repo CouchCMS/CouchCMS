@@ -217,11 +217,23 @@
             return null;
         }
 
-        // for future use..
-        function register_supports_zebra( $func_name ){
-            if( !isset($this->support_zebra[$func_name]) ){
-                $this->support_zebra[] = $func_name;
+        // For internal use. Exact equivalent of get() but for objects of internal use.
+        function &get_object_ex( $objname, $local=false ){
+            if( $local ){
+                // search only in local scope
+                for( $x=count($this->ctx)-1; $x>=0; $x-- ){
+                    if( isset($this->ctx[$x]['_obj_']) ){
+                        return $this->ctx[$x]['_obj_'][$objname];
+                    }
+                }
             }
+
+            for( $x=count($this->ctx)-1; $x>=0; $x-- ){
+                if( isset($this->ctx[$x]['_scope_']) && isset($this->ctx[$x]['_obj_'][$objname]) ){
+                    return $this->ctx[$x]['_obj_'][$objname];
+                }
+            }
+            return null;
         }
 
         function set_zebra( $varname, $value ){
@@ -261,9 +273,9 @@
         }
 
         function get_HTML(){
-            global $TAGS, $CTX, $FUNCS, $PAGE, $AUTH;
+            global $TAGS, $CTX, $FUNCS, $PAGE, $AUTH, $KMEMBER;
 
-
+            $html='';
             switch( $this->type ){
                 case K_NODE_TYPE_ROOT:
                     if( count($CTX->ctx)==0 ){ //The very root (not nested or embedded)
@@ -272,6 +284,12 @@
                         if( $AUTH ){
                             $FUNCS->set_userinfo_in_context();
                         }
+
+                        // If members module active, set member's info in context
+                        if( is_object($KMEMBER) ){
+                            $KMEMBER->check_login();
+                        }
+
                         // Set page info in context
                         if( $PAGE ){
                             $PAGE->set_context();
@@ -294,14 +312,34 @@
                     if( $this->name=='if' || $this->name=='else' || $this->name=='while' ) $func = 'k_'.$func;
 
                     if( method_exists($TAGS, $func) ){
-                       $params = $FUNCS->resolve_parameters( $this->attributes );
-                       $html = call_user_func( array($TAGS, $func), $params, $this );
+                        if( !($this->name=='if' || $this->name=='while' || $this->name=='not' || $this->name=='else_if') ){
+                            $params = $FUNCS->resolve_parameters( $this->attributes );
+                        }
+
+                        // HOOK: alter_tag_execute
+                        $skip = $FUNCS->dispatch_event( 'alter_tag_execute', array($this->name, &$params, &$this, &$html) );
+
+                        if( !$skip ){
+                            $html = call_user_func( array($TAGS, $func), $params, $this );
+                        }
+
+                        // HOOK: tag_executed
+                        $FUNCS->dispatch_event( 'tag_executed', array($this->name, &$params, &$this, &$html) );
                     }
                     else{
                         $tagname = $this->name;
                         if( array_key_exists( $tagname, $FUNCS->tags) ){
                             $params = $FUNCS->resolve_parameters( $this->attributes );
-                            $html = call_user_func( $FUNCS->tags[$tagname]['handler'], $params, $this );
+
+                            // HOOK: alter_tag_execute
+                            $skip = $FUNCS->dispatch_event( 'alter_tag_execute', array($this->name, &$params, &$this, &$html) );
+
+                            if( !$skip ){
+                                $html = call_user_func( $FUNCS->tags[$tagname]['handler'], $params, $this );
+                            }
+
+                            // HOOK: tag_executed
+                            $FUNCS->dispatch_event( 'tag_executed', array($this->name, &$params, &$this, &$html) );
                         }
                         else{
                             // after search in installed modules..
@@ -487,7 +525,7 @@
                             if( !($this->pos == $starts ? $this->is_valid_for_label($c, 0) : $this->is_valid_for_label($c)) ){
                                 if( $this->is_white_space($c) && $this->pos!=$starts ){
                                     $tag_name = substr( $this->str, $starts, $this->pos-$starts );
-                                    if( $tag_name == 'if' || $tag_name == 'while' || $tag_name == 'not' ) $processing_cond = true;
+                                    if( $tag_name == 'if' || $tag_name == 'while' || $tag_name == 'not' || $tag_name == 'else_if' ) $processing_cond = true;
 
                                     $starts = $this->pos+1;
                                     $this->state = K_STATE_ATTR_NAME;

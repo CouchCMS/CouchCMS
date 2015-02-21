@@ -37,6 +37,10 @@
 
     if ( !defined('K_ADMIN') ) die(); // cannot be loaded directly
     require_once( K_COUCH_DIR.'includes/ckeditor/ckeditor.php' );
+    require_once( K_COUCH_DIR.'comment.php' );
+
+    // HOOK: edit_comment
+    $FUNCS->dispatch_event( 'edit_comment' );
 
     if( isset($_GET['act']{0}) ){
         $comment_id = ( isset($_GET['id']) && $FUNCS->is_non_zero_natural($_GET['id']) ) ? (int)$_GET['id'] : null;
@@ -53,19 +57,37 @@
                     $_POST['f_k_date'] = $FUNCS->sanitize_posted_date();
                     $_POST['f_k_approved'] = ( isset($_POST['f_status']) ) ? '1' : '0';
 
-                    for( $x=0; $x<count($comment->fields); $x++ ){
-                        $f = &$comment->fields[$x];
-                        $f->store_posted_changes( $_POST['f_'.$f->name] ); // get posted values into fields
+                    // HOOK: alter_edit_comment_posted_data
+                    $skip = $FUNCS->dispatch_event( 'alter_edit_comment_posted_data', array(&$comment) );
+
+                    if( !$skip ){
+                        for( $x=0; $x<count($comment->fields); $x++ ){
+                            $f = &$comment->fields[$x];
+                            $f->store_posted_changes( $_POST['f_'.$f->name] ); // get posted values into fields
+                        }
                     }
+
+                    // HOOK: edit_comment_presave
+                    $FUNCS->dispatch_event( 'edit_comment_presave', array(&$comment) );
 
                     $errors = $comment->save();
 
+                    // HOOK: edit_comment_saved
+                    $FUNCS->dispatch_event( 'edit_comment_saved', array(&$comment, &$errors) );
+
                     if( !$errors ){
-                        //$info = 'Comment modified';
+                        $FUNCS->invalidate_cache();
+                        $loc = K_ADMIN_URL . K_ADMIN_PAGE.'?o=comments&act=edit&id='.$comment->id.'&nonce=' . $FUNCS->create_nonce( 'update_comment_'.$comment->id );
+                        header( "Location: ".$loc );
+                        exit;
                     }
                 }
 
                 // start building content for output
+
+                // HOOK: edit_comment_prerender
+                $FUNCS->dispatch_event( 'edit_comment_prerender', array(&$comment) );
+
                 ob_start();
                 $err_div = '<div class="error" style="margin-bottom:10px; color:red; display:';
                 if( $errors ){
@@ -440,186 +462,3 @@
         }
         return $page_link . $qs;
     }
-
-    ////////////////////////////////////////////////////////////////////////////
-    class KComment{
-        var $id = '-1';
-        var $tpl_id = '';
-        var $page_id = '';
-        var $user_id = '';
-        var $name = '';
-        var $email = '';
-        var $link = '';
-        var $ip_addr = '';
-        var $date = '';
-        var $data = '';
-        var $approved = 0;
-
-        var $tpl_name = '';
-        var $clonable = '';
-
-        var $fields = array();
-
-        function KComment( $id ){
-            global $DB;
-            $rs = $DB->select( K_TBL_COMMENTS . " cc
-                                inner join ".K_TBL_TEMPLATES." ct on ct.id=cc.tpl_id", array('cc.*, ct.name tpl_name, ct.clonable'), "cc.id='" . $DB->sanitize( $id ). "'" );
-            if( count($rs) ){
-                $row = $rs[0];
-                foreach( $row as $k=>$v ){
-                    if( isset($this->$k ) ) $this->$k = $v;
-                }
-
-                $this->populate_fields();
-            }
-        }
-
-        function populate_fields(){
-            global $FUNCS;
-            $fields = array(
-                        'name'=>$FUNCS->t('name'), /*'Name',*/
-                        'email'=>$FUNCS->t('email'), /*'E-Mail',*/
-                        'link'=>$FUNCS->t('website'), /*'Website',*/
-                        'data'=>$FUNCS->t('comment'), /*'Comment',*/
-                        'date'=>'Submitted on',
-                        'approved'=>'Approved'
-                        );
-
-            foreach( $fields as $k=>$v ){
-                $field_info = array(
-                    'id' => -1,
-                    'name' => '',
-                    'label' => '',
-                    'k_desc' => '',
-                    'k_type' => 'text',
-                    'hidden' => '0',
-                    'data' => '',
-                    'required' => '1',
-                    'validator' => '',
-                    'system' => '1'
-                );
-
-                $field_info['name'] = 'k_'.$k;
-                $field_info['label'] = $v;
-                $field_info['data'] = $this->$k;
-
-                if( $k=='email' ){
-                    $field_info['validator'] = 'email';
-                }
-                elseif( $k=='link' ){
-                    $field_info['required'] = '0';
-                }
-                elseif( $k=='data' ){
-                    $field_info['k_type'] = 'richtext';
-                    $field_info['toolbar'] = 'basic';
-                }
-
-                if( $k=='date' || $k=='approved' ){
-                    $field_info['hidden'] = '1';
-                }
-
-                $this->fields[] = new KFieldUser( $field_info, $this->fields );
-            }
-        }
-
-        function get_link(){
-            global $FUNCS;
-
-            $parent_link = ( K_PRETTY_URLS ) ? $FUNCS->get_pretty_template_link( $this->tpl_name ) : $this->tpl_name;
-            return K_SITE_URL . $parent_link . "?comment=" . $this->id;
-        }
-
-        function save(){
-            global $AUTH, $FUNCS, $DB;
-
-            // Validate all system  fields before persistng changes
-            $errors = 0;
-            for( $x=0; $x<count($this->fields); $x++ ){
-                $f = &$this->fields[$x];
-                if( !$f->validate() ) $errors++;
-            }
-            if( $errors ) return $errors;
-
-            $arr_update = array();
-            unset( $f );
-            for( $x=0; $x<count($this->fields); $x++ ){
-                $f = &$this->fields[$x];
-                if( $f->system ){
-                    $name = substr( $f->name, 2 ); // remove the 'k_' prefix from system fields
-                    $prev_value = $this->$name;
-                    $this->$name = $arr_update[$name] = $f->get_data();
-                }
-                unset( $f );
-            }
-
-            $DB->begin();
-            // Serialize access
-            $DB->select( K_TBL_PAGES, array('comments_count'), "id='" . $DB->sanitize( $this->page_id ). "' FOR UPDATE" );
-
-            // persist changes
-            $rs = $DB->update( K_TBL_COMMENTS, $arr_update, "id='" . $DB->sanitize( $this->id ). "'" );
-            if( $rs==-1 ) die( "ERROR: Unable to save data in K_TBL_COMMENTS" );
-
-            // adjust comments count for the page
-            $rs = $FUNCS->update_comments_count( $this->page_id );
-            if( $FUNCS->is_error($rs) ) die( "ERROR: Unable to update comments count in K_TBL_PAGES" );
-
-            $DB->commit();
-
-            // Invalidate cache
-            $FUNCS->invalidate_cache();
-
-        }
-
-        function approve( $approve=1 ){
-            global $DB, $FUNCS;
-
-            if( $this->id != -1 && ($approve==1 || $approve==0) ){
-
-                $DB->begin();
-                // Serialize access
-                $DB->select( K_TBL_PAGES, array('comments_count'), "id='" . $DB->sanitize( $this->page_id ). "' FOR UPDATE" );
-
-                $rs = $DB->update( K_TBL_COMMENTS, array('approved'=>$approve), "id='" . $DB->sanitize( $this->id ). "'" );
-                if( $rs==-1 ) die( "ERROR: Unable to update data in K_TBL_COMMENTS" );
-
-                // adjust comments count for the page
-                $rs = $FUNCS->update_comments_count( $this->page_id );
-                if( $FUNCS->is_error($rs) ) die( "ERROR: Unable to update comments count in K_TBL_PAGES" );
-
-                $DB->commit();
-                $this->approved = $approve;
-
-                // Invalidate cache
-                $FUNCS->invalidate_cache();
-            }
-
-        }
-
-        function delete(){
-            global $DB, $FUNCS;
-
-            // remove comment
-            if( $this->id != -1 ){
-                $DB->begin();
-                // Serialize access
-                $DB->select( K_TBL_PAGES, array('comments_count'), "id='" . $DB->sanitize( $this->page_id ). "' FOR UPDATE" );
-
-                $rs = $DB->delete( K_TBL_COMMENTS, "id='" . $DB->sanitize( $this->id ). "'" );
-                if( $rs==-1 ) die( "ERROR: Unable to delete comment from K_TBL_COMMENTS" );
-
-                // adjust comments count for the page
-                $rs = $FUNCS->update_comments_count( $this->page_id );
-                if( $FUNCS->is_error($rs) ) die( "ERROR: Unable to update comments count in K_TBL_PAGES" );
-
-                $DB->commit();
-                $this->id = -1;
-
-                // Invalidate cache
-                $FUNCS->invalidate_cache();
-            }
-
-        }
-
-
-    }// end class KComments

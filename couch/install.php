@@ -185,11 +185,11 @@
       comments_count     int DEFAULT '0',
       comments_open      int(1) DEFAULT '1',
       nested_parent_id   int DEFAULT '-1',
-      weight 		 int DEFAULT '0',
-      show_in_menu 	 int(1) DEFAULT '1',
-      menu_text		 varchar(255),
-      is_pointer 	 int(1) DEFAULT '0',
-      pointer_link 	 text,
+      weight             int DEFAULT '0',
+      show_in_menu       int(1) DEFAULT '1',
+      menu_text          varchar(255),
+      is_pointer         int(1) DEFAULT '0',
+      pointer_link       text,
       pointer_link_detail text,
       open_external int(1) DEFAULT '0',
       masquerades          int(1) DEFAULT '0',
@@ -223,30 +223,34 @@
       dynamic_folders   int(1) DEFAULT '0',
       nested_pages int(1) DEFAULT '0',
       gallery          int(1) DEFAULT '0',
+      handler          text,
+      custom_params    text,
       PRIMARY KEY (id)
     ) ENGINE = InnoDB CHARACTER SET utf8 COLLATE utf8_general_ci;";
 
     $k_stmts[] = "CREATE TABLE ".K_TBL_USERS." (
       id                 int AUTO_INCREMENT NOT NULL,
-      name               varchar(128) NOT NULL,
+      name               varchar(255) NOT NULL,
       title              varchar(255),
       password           varchar(64) NOT NULL,
       email              varchar(128) NOT NULL,
       activation_key     varchar(64),
+      password_reset_key varchar(64),
       registration_date  datetime,
       access_level       int DEFAULT '0',
       disabled           int DEFAULT '0',
       system             int DEFAULT '0',
       last_failed        bigint(11) DEFAULT '0',
+      failed_logins      int DEFAULT '0',
       PRIMARY KEY (id)
     ) ENGINE = InnoDB CHARACTER SET utf8 COLLATE utf8_general_ci;";
 
     $k_stmts[] = "CREATE TABLE `".K_TBL_RELATIONS."` (
-	`pid`     int NOT NULL,
-	`fid`     int NOT NULL,
-	`cid`     int NOT NULL,
-	`weight`  int DEFAULT '0',
-	PRIMARY KEY (`pid`, `fid`, `cid`)
+    `pid`     int NOT NULL,
+    `fid`     int NOT NULL,
+    `cid`     int NOT NULL,
+    `weight`  int DEFAULT '0',
+    PRIMARY KEY (`pid`, `fid`, `cid`)
     ) ENGINE = InnoDB CHARACTER SET `utf8` COLLATE `utf8_general_ci`;";
 
     $k_stmts[] = "CREATE TABLE `".K_TBL_ATTACHMENTS."` (
@@ -258,6 +262,7 @@
     `file_time`       int(10) UNSIGNED NOT NULL DEFAULT '0',
     `is_orphan`       tinyint(1) UNSIGNED DEFAULT '1',
     `hit_count`       int(10) UNSIGNED DEFAULT '0',
+    `creation_ip`     varchar(45),
     PRIMARY KEY (`attach_id`)
     ) ENGINE = InnoDB CHARACTER SET `utf8` COLLATE `utf8_general_ci`;";
 
@@ -399,6 +404,10 @@
       ON ".K_TBL_USERS."
       (activation_key);";
 
+    $k_stmts[] = "CREATE INDEX ".K_TBL_USERS."_password_reset_key
+      ON ".K_TBL_USERS."
+      (password_reset_key);";
+
     $k_stmts[] = "CREATE INDEX ".K_TBL_USERS."_index01
       ON ".K_TBL_USERS."
       (access_level);";
@@ -438,6 +447,10 @@
     $k_stmts[] = "CREATE INDEX `".K_TBL_ATTACHMENTS."_Index03`
     ON `".K_TBL_ATTACHMENTS."`
     (`is_orphan`, `file_time`);";
+
+    $k_stmts[] = "CREATE INDEX `".K_TBL_ATTACHMENTS."_Index04`
+    ON `".K_TBL_ATTACHMENTS."`
+    (`creation_ip`, `file_time`);";
 
     $k_stmts[] = "INSERT INTO ".K_TBL_USER_LEVELS." (id, name, title, k_level, disabled) VALUES (1, 'superadmin', 'Super Admin', 10, 0);";
     $k_stmts[] = "INSERT INTO ".K_TBL_USER_LEVELS." (id, name, title, k_level, disabled) VALUES (2, 'admin', 'Administrator', 7, 0);";
@@ -500,7 +513,7 @@
             $pwd = $DB->sanitize( $pwd );
             $email = $DB->sanitize( $email );
             $creation_time = $FUNCS->get_current_desktop_time();
-            $k_stmts[] = "INSERT INTO ".K_TBL_USERS." (id, name, title, password, email, activation_key, registration_date, access_level, disabled, system, last_failed) VALUES (1, '".$name."', '".$name."', '".$pwd."', '".$email."', '', '".$creation_time."', 10, 0, 1, 0);";
+            $k_stmts[] = "INSERT INTO ".K_TBL_USERS." (id, name, title, password, email, activation_key, password_reset_key, registration_date, access_level, disabled, system, last_failed, failed_logins) VALUES (1, '".$name."', '".$name."', '".$pwd."', '".$email."', '', '', '".$creation_time."', 10, 0, 1, 0, 0);";
 
             foreach( $k_stmts as $sql ){
                 @mysql_query( $sql );
@@ -595,4 +608,3 @@
     $parser = new KParser( $html );
     echo $parser->get_HTML();
     die();
-

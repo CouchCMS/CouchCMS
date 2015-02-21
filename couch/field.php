@@ -95,6 +95,9 @@
         var $requires_multipart = 0;
         var $trust_mode = 1;
         var $no_js = 0;
+        var $orig_data = null;
+
+        var $no_render = 0;
 
         var $available_validators = array(
             'min_len' => 'KFuncs::validate_min_len',
@@ -232,7 +235,7 @@
                     $val_separator = ( $this->val_separator ) ? $this->val_separator : '=';
 
                     // get the selected options
-                    $selected = html_entity_decode( $post_val, ENT_QUOTES );
+                    $selected = html_entity_decode( $post_val, ENT_QUOTES, K_CHARSET );
                     if( $this->k_type=='checkbox' ){
                         $selected = ( $selected != '' ) ? array_map( "trim", preg_split( "/(?<!\\\)\\".$separator."/", $selected ) ) : array();
                         for( $x=0; $x<count($selected); $x++ ){
@@ -290,14 +293,14 @@
                 if( strpos($post_val, $domain_prefix)===0 ){
                     $post_val = substr( $post_val, strlen($domain_prefix) );
                     $post_val = ( $post_val ) ? ':' . $post_val : ':'; // add marker
-                    $orig_data = $this->data;
+                    if( is_null($this->orig_data) ) $this->orig_data = $this->data;
                 }
                 else{
-                    $orig_data = $this->get_data();
+                    if( is_null($this->orig_data) ) $this->orig_data = $this->get_data();
                 }
             }
             else{
-                $orig_data = $this->get_data();
+                if( is_null($this->orig_data) ) $this->orig_data = $this->get_data();
             }
 
             if( $this->trust_mode==0 && in_array($this->k_type, array('text', 'textarea', 'richtext')) ){
@@ -313,7 +316,7 @@
             else{
                 $this->data = ($this->k_type=='textarea' && $this->no_xss_check) ? $post_val : $FUNCS->cleanXSS( $post_val );
             }
-            $this->modified = ( strcmp( $orig_data, $this->data )==0 )? false : true; // values unchanged
+            $this->modified = ( strcmp( $this->orig_data, $this->data )==0 )? false : true; // values unchanged
         }
 
         // Meant to be overridden by custom fields to store raw data picked from database into the field object.
@@ -367,7 +370,7 @@
             global $FUNCS;
 
             if( $this->deleted ) return true; // skip deleted fields
-            if( $this->page->tpl_nested_pages && !$this->system && $this->page->fields[10]->get_data() ) return true; // skip custom fields if this nested page is a pointer_page
+            if( $this->page->tpl_nested_pages && !$this->system && $this->page->_fields['k_is_pointer']->get_data() ) return true; // skip custom fields if this nested page is a pointer_page
 
             $this->err_msg = '';
             $separator = ( $this->k_separator ) ? $this->k_separator : '|';
@@ -524,6 +527,10 @@
             return false;
         }
 
+        function _prep_cached(){
+
+        }
+
         function render(){
             global $FUNCS, $AUTH, $PAGE;
 
@@ -558,7 +565,7 @@
             $notice0 = '';
             $notice1 = '<span class="k_notice" id="k_notice_'.$input_id.'">';
             $style ='';
-            if( ($this->system && $this->hidden) || ($this->deleted && $AUTH->user->access_level < K_ACCESS_LEVEL_SUPER_ADMIN) ){
+            if( ($this->system && $this->hidden) || ($this->deleted && $AUTH->user->access_level < K_ACCESS_LEVEL_SUPER_ADMIN) || $this->no_render ){
                 $style= ' style="display:none;" ';
             }
 
@@ -643,9 +650,9 @@
 
                     if( $this->trust_mode ){
                         if( K_USE_KC_FINDER ){
-                            $this->page->CKEditor->config['filebrowserBrowseUrl'] = K_ADMIN_URL . 'includes/kcfinder/browse.php?cms=couch&type=file';
-                            $this->page->CKEditor->config['filebrowserImageBrowseUrl'] = K_ADMIN_URL . 'includes/kcfinder/browse.php?cms=couch&type=image';
-                            $this->page->CKEditor->config['filebrowserFlashBrowseUrl'] = K_ADMIN_URL . 'includes/kcfinder/browse.php?cms=couch&type=flash';
+                            $this->page->CKEditor->config['filebrowserBrowseUrl'] = K_ADMIN_URL . 'includes/kcfinder/browse.php?nonce='.$FUNCS->create_nonce( 'kc_finder' ).'&type=file';
+                            $this->page->CKEditor->config['filebrowserImageBrowseUrl'] = K_ADMIN_URL . 'includes/kcfinder/browse.php?nonce='.$FUNCS->create_nonce( 'kc_finder' ).'&type=image';
+                            $this->page->CKEditor->config['filebrowserFlashBrowseUrl'] = K_ADMIN_URL . 'includes/kcfinder/browse.php?nonce='.$FUNCS->create_nonce( 'kc_finder' ).'&type=flash';
                             $this->page->CKEditor->config['filebrowserWindowWidth'] = '670';
                         }
                         else{
@@ -787,7 +794,7 @@
                 if( $this->input_width ){ $style_rr = ' style="width:'.$this->input_width.'px"'; } // Set by repeatable tag
                 $html .= '<input type="text" size="65" value="'.$value.'" name="'.$input_name.'" id="'.$input_id.'" class="k_image_text" '.$notice0.$style_rr.'/>';
                 if( K_USE_KC_FINDER ){
-                    $link = K_ADMIN_URL.'includes/kcfinder/browse.php?cms=couch&type=image&TB_iframe=true&height=480&width=640&modal=true';
+                    $link = K_ADMIN_URL.'includes/kcfinder/browse.php?nonce='.$FUNCS->create_nonce( 'kc_finder' ).'&type=image&TB_iframe=true&height=480&width=640&modal=true';
                     $html .= '<a class="button smoothbox" data-kc-finder="'.$input_id.'" href="'. $link .'"><span>'.$FUNCS->t('browse_server').'</span></a>';
                 }
                 else{
@@ -839,7 +846,7 @@
                 if( $this->input_width ){ $style_rr = ' style="width:'.$this->input_width.'px"'; } // Set by repeatable tag
                 $html .= '<input type="text" size="65" value="'.$value.'" name="'.$input_name.'" id="'.$input_id.'" class="k_file_text" '.$notice0.$style_rr.'/>';
                 if( K_USE_KC_FINDER ){
-                    $link = K_ADMIN_URL.'includes/kcfinder/browse.php?cms=couch&type=file&TB_iframe=true&height=480&width=640&modal=true';
+                    $link = K_ADMIN_URL.'includes/kcfinder/browse.php?nonce='.$FUNCS->create_nonce( 'kc_finder' ).'&type=file&TB_iframe=true&height=480&width=640&modal=true';
                     $html .= '<a class="button smoothbox" data-kc-finder="'.$input_id.'" href="'. $link .'"><span>'.$FUNCS->t('browse_server').'</span></a>';
                 }
                 else{
@@ -856,7 +863,7 @@
             else if( $this->k_type=='dropdown' || $this->k_type=='radio' || $this->k_type=='checkbox' ){
 
                 $value = trim($value);
-                $selected = html_entity_decode( $value, ENT_QUOTES );
+                $selected = html_entity_decode( $value, ENT_QUOTES, K_CHARSET );
                 if( $selected=='' && $_SERVER['REQUEST_METHOD']!='POST' ){ // the posted value can also be a blank, hence this check.
                     $selected = trim( $this->opt_selected );
                 }
@@ -905,7 +912,7 @@
                             $html .= '>'.$opt.'</option>';
                         }
                         else{
-                            $html .= ( $this->html_before )? $this->html_before : '<label>';
+                            $html .= ( $this->html_before ) ? $this->html_before : '<label for="'.$input_id . $count.'">';
                             $html .= '<input type="'.$input_type.'" name="'.$input_name.'" id="'.$input_id . $count.'" value="';
                             if( $this->k_type=='radio' ){
                                 $html .= $opt_val.'" '.$extra .' ';
@@ -967,9 +974,14 @@
                 $post_val = $str_val;
             }
 
-            $orig_data = $this->get_data();
-            $this->data = ($this->k_type=='textarea' && $this->no_xss_check) ? $post_val : $FUNCS->cleanXSS( $post_val, 0, $this->allowed_html_tags );
-            $this->modified = ( strcmp( $orig_data, $this->data )==0 )? false : true; // values unchanged
+            if( is_null($this->orig_data) ) $this->orig_data = $this->get_data();
+            if( $this->trust_mode==0 && ($this->k_type=='text' || $this->k_type=='textarea') ){
+                $this->data = trim( $FUNCS->cleanXSS(strip_tags($post_val)) );
+            }
+            else{
+                $this->data = ($this->k_type=='textarea' && $this->no_xss_check) ? $post_val : $FUNCS->cleanXSS( $post_val, 0, $this->allowed_html_tags );
+            }
+            $this->modified = ( strcmp( $this->orig_data, $this->data )==0 )? false : true; // values unchanged
         }
 
         function _render( $input_name, $input_id, $extra='' ){
@@ -1124,7 +1136,7 @@
             global $FUNCS;
             if( $this->deleted ) return; // no need to store
 
-            $orig_data = $this->data;
+            if( is_null($this->orig_data) ) $this->orig_data = $this->data;
 
             // strip off domain info from posted value, if it is an internal link
             $domain_prefix = K_SITE_URL;
@@ -1135,7 +1147,7 @@
             }
 
             $this->data = $FUNCS->cleanXSS( $post_val );
-            $this->modified = ( strcmp( $orig_data, $this->data )==0 )? false : true; // values unchanged
+            $this->modified = ( strcmp( $this->orig_data, $this->data )==0 )? false : true; // values unchanged
         }
 
         function get_data_to_save(){
@@ -1161,7 +1173,7 @@
             $page_id = ( isset($_GET['p']) && $FUNCS->is_non_zero_natural($_GET['p']) ) ? (int)$_GET['p'] : null;
             $label = '&nbsp;';
             $desc = '';
-            $visibility = ($this->page->fields[10]->get_data()) ? 'block' : 'none'; //is_pointer
+            $visibility = ($this->page->_fields['k_is_pointer']->get_data()) ? 'block' : 'none'; //is_pointer
             $html .= '<div id="wrapper_k_pointer_link" style="display:'.$visibility.';">';
             $html .= '<div class="group-wrapper_ex">';
             $html .= '<div class="group-toggler_ex">';
@@ -1173,16 +1185,16 @@
             // Append 'masquerades' rado buttons too
             $visibility = (strtolower($this->page->tpl_name)=='index.php') ? 'block' : 'none'; //No masquerading option for templates other than index.php (will always only redirect).
             $html .= '<div style="display:'.$visibility.';">';
-            $checked = (!$this->page->fields[14]->get_data())?'checked="checked"':'';
+            $checked = (!$this->page->_fields['k_masquerades']->get_data())?'checked="checked"':'';
             $html .= '<input type="radio" '. $checked .' value="0" id="f_masquerades_0" name="f_masquerades" />';
             $html .= '<label for="f_masquerades_0">'. $FUNCS->t('redirects') .'</label>&nbsp;';
-            $checked = ($this->page->fields[14]->get_data())?'checked="checked"':'';
+            $checked = ($this->page->_fields['k_masquerades']->get_data())?'checked="checked"':'';
             $html .= '<input type="radio" '. $checked .' value="1" id="f_masquerades_1" name="f_masquerades" />';
             $html .= '<label for="f_masquerades_1">'. $FUNCS->t('masquerades') .'</label>&nbsp;';
             $html .= '</div>';
 
             // ..and the 'strict check'
-            $checked = (!$this->page->fields[15]->get_data())?'checked="checked"':'';
+            $checked = (!$this->page->_fields['k_strict_matching']->get_data())?'checked="checked"':'';
             $html .= '<div style="margin-top: 3px; margin-bottom: 8px;"><label><input type="checkbox" name="f_strict_matching" '. $checked .' value="1"/>'. $FUNCS->t('strict_matching') .'</label></div>';
 
             $html .= '</div></div>';
@@ -1281,9 +1293,9 @@
             global $FUNCS;
             if( $this->deleted ) return; // no need to store
 
-            $orig_data = $this->data;
+            if( is_null($this->orig_data) ) $this->orig_data = $this->data;
             $this->data = $FUNCS->cleanXSS( $post_val );
-            $this->modified = ( strcmp( $orig_data, $this->data )==0 )? false : true; // values unchanged
+            $this->modified = ( strcmp( $this->orig_data, $this->data )==0 )? false : true; // values unchanged
         }
 
         // Output to front-end.
@@ -1329,33 +1341,58 @@
         // The following are invoked during the CRUD events of a field's life.
         // Come in handy for fields that store data in separate tables.
 
-        // Called from 'cms:editable' when this type of field gets added to a template for thr first time
-        function _create(){
+        // Called from page's save() routine while saving a new page.
+        // Also called from 'cms:editable' for all existing pages when this type
+        // of field gets added to a template for the first time
+        // (in which case the '$first_time' param is '1'
+        // UDFs may want to INSERT records here if using custom tables.
+        function _create( $page_id, $first_time=0 ){
+            return;
+        }
+
+        // Called by the page this field belongs to when the page gets cloned
+        // UDFs may want to INSERT records here if using custom tables.
+        function _clone( $cloned_page_id, $cloned_page_title ){
             return;
         }
 
         // Called from 'cms:editable' when this type of field gets modified in a template (i.e. its parameters)
-        function _update( $orig_values ){
+        function _update_schema( $orig_values ){
+            return;
+        }
+
+        // Called from page's save() routine
+        // UDFs may want to UPDATE records here if using custom tables.
+        function _update( $page_id ){
             return;
         }
 
         // Called either from a page being deleted
         // or when this field's definition gets removed from a template (in which case the $page_id param would be '-1' )
-        // IMP: when $page_id is -1, this routine is called from ajax.php which creates the field object using dummy params for $PAGE an d $siblings -
+        // IMP: when $page_id is -1, this routine is called from ajax.php (admin-panel) which creates the field object using dummy params for $PAGE and $siblings -
         // so cannot use these here.
+        // UDFs may want to DELETE records here if using custom tables.
+        // If $page_id is -1, could delete all records
         function _delete( $page_id ){
             return;
         }
 
-        // Called by the page this field belongs to when the page gets cloned
-        function _clone( $cloned_page_id, $cloned_page_title ){
+        // Called when the page this field belongs to is being recreated from a cloned page.
+        // Should prepare for the impending get_data_to_save()/_update() via $PAGE->save()
+        function _unclone( &$cloned_field ){
             return;
         }
 
-        // Called when the page this field belongs to is being recreated from a cloned page.
-        // Should prepare for thr impending get_data_to_save() via $PAGE->save()
-        function _unclone( &$cloned_field ){
-            return;
+        function is_empty(){
+            $data = trim( $this->get_data() );
+            return ( strlen($data) ) ? false : true;
+        }
+
+        // called when a cached field object is reused in creating new page object.
+        // Any private data saved with the cached field object can be deleted here
+        // to allow the field's reuse.
+        function _prep_cached(){
+
         }
     }
 
@@ -1383,9 +1420,9 @@
         function store_posted_changes( $post_val ){
             global $FUNCS;
 
-            $orig_data = $this->data;
+            if( is_null($this->orig_data) ) $this->orig_data = $this->data;
             $this->data = $FUNCS->cleanXSS( $post_val );
-            $this->modified = ( strcmp( $orig_data, $this->data )==0 )? false : true; // values unchanged
+            $this->modified = ( strcmp( $this->orig_data, $this->data )==0 )? false : true; // values unchanged
         }
 
         // Render input field

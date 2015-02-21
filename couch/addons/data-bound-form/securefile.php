@@ -39,7 +39,6 @@
 
     // UDF for secure file upload
     class SecureFile extends KUserDefinedField{
-        var $orig_data = array();
 
         function SecureFile( $row, &$page, &$siblings ){
             global $FUNCS;
@@ -47,6 +46,7 @@
             // call parent
             parent::KUserDefinedField( $row, $page, $siblings );
 
+            $this->orig_data = array();
             $this->requires_multipart = 1;
         }
 
@@ -62,12 +62,16 @@
                                  'tiff', 'txt', 'vsd', 'wav', 'wma', 'wmv', 'xls', 'xml', 'zip'
                                 ) ;
             $default_max_size = 512; // in KB
+            $default_max_width = 2048;
+            $default_max_height = 2048;
 
             // get supplied params
             extract( $FUNCS->get_named_vars(
                         array(
                                 'allowed_ext'=>'', /* e.g. jpeg,jpg,gif,png */
                                 'max_size'=>'0',    /* in KB */
+                                'max_width'=>'0',
+                                'max_height'=>'0',
                                 'thumb_width'=>'',
                                 'thumb_height'=>'',
                                 'thumb_enforce_max'=>'0',
@@ -83,6 +87,8 @@
             // sanitize params
             $allowed_ext = trim( $allowed_ext );
             $max_size = trim( $max_size );
+            $max_width = trim( $max_width );
+            $max_height = trim( $max_height );
             $thumb_width = abs( (int)$thumb_width );
             $thumb_height = abs( (int)$thumb_height );
             $thumb_enforce_max = ( $thumb_enforce_max==1 ) ? 1 : 0;
@@ -96,6 +102,8 @@
             $show_submit = ( $show_submit==1 ) ? 1 : 0;
 
             $max_size = ( $FUNCS->is_non_zero_natural($max_size) ) ? $max_size : $default_max_size;
+            $max_width = ( $FUNCS->is_non_zero_natural($max_width) ) ? $max_width : $default_max_width;
+            $max_height = ( $FUNCS->is_non_zero_natural($max_height) ) ? $max_height : $default_max_height;
             $allowed_extensions = array();
             $arr_ext = array_map( "trim", explode( ',', $allowed_ext ) );
             foreach( $arr_ext as $ext ){
@@ -107,6 +115,8 @@
             $attr = array();
             $attr['allowed_ext'] = implode( ',', $allowed_extensions );
             $attr['max_size'] = $max_size;
+            $attr['max_width'] = $max_width;
+            $attr['max_height'] = $max_height;
             $attr['thumb_width'] = $thumb_width;
             $attr['thumb_height'] = $thumb_height;
             $attr['thumb_enforce_max'] = $thumb_enforce_max;
@@ -135,7 +145,7 @@
                 $delete_caption = $this->delete_caption;
                 if( $this->show_preview && $this->_is_image($this->data['file_ext']) ){
                     $use_thumb = ( $this->use_thumb_for_preview && ($this->thumb_width || $this->thumb_height) ) ? 1 : 0;
-                    $data = $this->data['file_id'] . '|' . $use_thumb . '|0|0|0|0';
+                    $data = $this->data['file_id'] . '|' . $use_thumb . '|0|0|0|0|0|0';
                     $link = K_ADMIN_URL . 'download.php?auth=' . urlencode( $data . '|' . $FUNCS->hash_hmac($data, $FUNCS->hash_hmac($data, $FUNCS->get_secret_key())) );
 
                     $html .= '<div class="secure_file_preview_wrapper">';
@@ -149,7 +159,7 @@
                 }
 
                 if( defined('K_ADMIN') ){
-                    $data = $this->data['file_id'] . '|0|0|0|0|2';
+                    $data = $this->data['file_id'] . '|0|0|0|0|2|0|0';
                     $link = K_ADMIN_URL . 'download.php?auth=' . urlencode( $data . '|' . $FUNCS->hash_hmac($data, $FUNCS->hash_hmac($data, $FUNCS->get_secret_key())) );
                     $html .= '<span id="file_name_' . $input_id . '" name="file_name_'. $input_name .'"><a href="'.$link.'">'.$this->data['file_name'].'</a></span>&nbsp;';
                 }
@@ -343,7 +353,7 @@
             $file_ext = $ext = '';
             $pos = strrpos( $file_name, '.' );
             if( $pos!==false ){
-                $ext = trim( substr($file_name, $pos+1) );
+                $ext = strtolower( trim(substr($file_name, $pos+1)) );
                 if( $ext ){
                     $file_ext = $ext;
                     $ext = '.' . $ext;
@@ -399,10 +409,17 @@
             // if the moved file 'claims' to be an image..
             if( $this->_is_image($file_ext) ){
                 // ..verify that it is indeed so
-                if( @getimagesize($dest_file_path)===false ){
+                $info = @getimagesize($dest_file_path);
+                if( $info===false || !in_array($info[2], array(IMAGETYPE_GIF, IMAGETYPE_JPEG, IMAGETYPE_PNG)) ){
                     @unlink( $dest_file_path );
                     return $FUNCS->raise_error( 'Invalid file content' );
                 }
+                // ..check the permissible dimensions
+                if( $info[0]>$this->max_width || $info[1]>$this->max_height ){
+                    return $FUNCS->raise_error( 'The dimensions of image exceed the permitted '.$this->max_width.'px X '.$this->max_height.'px' );
+                }
+
+                // all ok
                 $process_image = 1;
             }
             else{
@@ -434,6 +451,7 @@
                                 'file_extension'=>$file_ext,
                                 'file_size'=>$file_size,
                                 'file_time'=>time(),
+                                'creation_ip'=>trim( $FUNCS->cleanXSS(strip_tags($_SERVER['REMOTE_ADDR'])) ),
                                 'is_orphan'=>1
                                 )
                             );
@@ -516,16 +534,18 @@
         //////
         // Handles 'cms:show_securefile' tag
         function show_handler( $params, $node ){
-            global $FUNCS, $CTX;
+            global $FUNCS, $CTX, $DB;
             if( !count($node->children) ) return;
 
             extract( $FUNCS->get_named_vars(
                 array(
-                    'var'=>''
+                    'var'=>'',
+                    'with_hits'=>'0'
                 ),
                 $params)
             );
             $var = trim( $var );
+            $with_hits = ( $with_hits==1 ) ? 1 : 0;
 
             if( $var ){
                 // get the data array from CTX
@@ -539,6 +559,16 @@
                     $is_image = ( SecureFile::_is_image($obj['file_ext']) ) ? 1 : 0;
                     $CTX->set( 'file_is_image', $is_image );
                     $CTX->set( 'file_size', $obj['file_size'] );
+
+                    // hit count
+                    $hit_count = '0';
+                    if( $with_hits ){
+                        $rs = $DB->select( K_TBL_ATTACHMENTS, array('hit_count'), "attach_id='" . $DB->sanitize( $obj['file_id'] )."'" );
+                        if( count($rs) ){
+                            $hit_count = $rs[0]['hit_count'];
+                        }
+                    }
+                    $CTX->set( 'file_hit_count', $hit_count );
 
                     // and call the children tags
                     foreach( $node->children as $child ){

@@ -75,45 +75,39 @@
 
             $this->secret_key = $FUNCS->get_secret_key();
 
-            // get the current user
-            $this->user = &$this->authenticate();
+            // get current user, if any
+            $this->user = &$this->_authenticate_cookie();
             if( !$this->user ){
+                $this->user = new KUser();
+            }
 
-                if( !$required_access_level ){
-                    // create an anonymous user
-                    $this->user = new KUser();
+            // for backward compatibility .. deprecated now
+            if( $required_access_level ){
+                $this->check_access( $required_access_level, !$prompt );
+            }
+        }
+
+        function check_access( $required_access_level=0, $kill=0 ){
+            global $FUNCS;
+
+            if( $this->user->access_level < $required_access_level ){
+                if( $kill ){
+                    ob_end_clean();
+                    die();
                 }
                 else{
-                    if( $prompt ){
-                        $this->show_login();
+                    // if user is authenticated but with insufficient privileges
+                    if( $this->user->id != -1 ){
+                        $this->show_insufficient_privileges();
                     }
                     else{
-                        ob_end_clean();
-                        die();
+                        // prompt for login
+                        $url = $FUNCS->get_login_link();
+                        $this->redirect( $url );
                     }
+
                 }
             }
-
-            // if logged in user has insufficient priveleges
-            if( $this->user->access_level < $required_access_level ){
-                $this->show_insufficient_privileges();
-            }
-        }
-
-        function check_access( $level, $show=0 ){
-            if( $this->user->access_level < $level ){
-                if( $show ) $this->show_insufficient_privileges();
-                return 0;
-            }
-            return 1;
-        }
-
-        function &authenticate(){
-            $user = &$this->_authenticate_post();
-            if( !$user ){
-                $user = &$this->_authenticate_cookie();
-            }
-            return $user;
         }
 
         function &_authenticate_cookie(){
@@ -123,14 +117,12 @@
                 $cookie = $FUNCS->cleanXSS( $_COOKIE[$this->cookie_name] );
                 list( $username, $expiry, $hash ) = explode( ':', $cookie );
                 if( time() < $expiry ){
-                    if( $cookie == $this->create_cookie($username, $expiry) ){// if cookies match
+                    if( $cookie === $this->create_cookie($username, $expiry) ){// if cookies match
                         // get user from database
                         $user = new KUser( $username );
-                        if( $user->id == -1 ) return;
-                        if( $user->disabled ){
-                            $this->error = $FUNCS->t('account_disabled'); return;
+                        if( $user->id != -1 && !$user->disabled ){
+                            return $user;
                         }
-                        return $user;
                     }
                 }
 
@@ -139,71 +131,100 @@
             }
         }
 
-        function &_authenticate_post(){
+        function login( $username='', $pwd='', $remember='' ){
             global $DB, $FUNCS;
 
-            if( $_POST['k_login'] ){
-                $this->error = '';
-                $now = time();
-                $max_lockout = $now - 15;
-
-                if( isset($_POST['k_cookie_test']) && empty($_COOKIE['couchcms_testcookie']) ){
-                    $this->error = $FUNCS->t('prompt_cookies');
-                    return;
-                }
-
-                $username = $FUNCS->cleanXSS( trim($_POST['k_user_name']) );
-                $pwd = $FUNCS->cleanXSS( trim($_POST['k_user_pwd']) );
-
-                if( empty($username) ){
-                    $this->error = $FUNCS->t('prompt_username'); return;
-                }
-                if( empty($pwd) ){
-                    $this->error = $FUNCS->t('prompt_password'); return;
-                }
-
-                // get user from database
-                $user = new KUser( $username );
-                if( $user->id == -1 ){
-                    $this->error = $FUNCS->t('invalid_credentials'); return;
-                }
-                //Ensure login attempt not within 15 secs of last failed attempt
-                if( $user->last_failed > $max_lockout ){
-                    $this->error = $FUNCS->t('invalid_credentials'); return;
-                }
-                if( $user->disabled ){
-                    $this->error = $FUNCS->t('account_disabled'); return;
-                }
-
-                // check password
-                $check = $this->hasher->CheckPassword( $pwd, $user->password );
-                if( !$check ){
-                    // Update user record with last_failed_login time here
-                    $rs = $DB->update( K_TBL_USERS, array('last_failed'=>$now), "id='" . $DB->sanitize( $user->id ). "'" );
-                    if( $rs==-1 ) die( "ERROR: Unable to update data in K_TBL_USERS" );
-
-                    $this->error = $FUNCS->t('invalid_credentials'); return;
-                }
-
-                // set an access cookie for future visits of this user
-                $this->set_cookie( $username );
+            if( isset($_POST['k_cookie_test']) && empty($_COOKIE['couchcms_testcookie']) ){
+                return $FUNCS->raise_error( $FUNCS->t('prompt_cookies') );
             }
 
-            return $user;
+            $now = time();
+            $max_lockout = $now - 20;
+
+            $username = strlen( trim($username) ) ? $username : $_POST['k_user_name'];
+            $pwd = strlen( trim($pwd) ) ? $pwd : $_POST['k_user_pwd'];
+            $remember = strlen( trim($remember) ) ? $remember : $_POST['k_user_remember'][0];
+
+            $username = $FUNCS->cleanXSS( trim($username) );
+            $pwd = $FUNCS->cleanXSS( trim($pwd) );
+            $remember = ( trim($remember)==='1' ) ? 1 : 0;
+
+            if( empty($username) ){
+                return $FUNCS->raise_error( $FUNCS->t('prompt_username') );
+            }
+            if( empty($pwd) ){
+                return $FUNCS->raise_error( $FUNCS->t('prompt_password') );
+            }
+
+            // get user from database
+            $user = new KUser( $username );
+            if( $user->id == -1 ){
+                return $FUNCS->raise_error( $FUNCS->t('invalid_credentials') );
+            }
+
+            // ensure no more than 3 failed login attempts within 20 seconds
+            if( ($user->failed_logins >= 3) && ($user->last_failed > $max_lockout) ){
+                return $FUNCS->raise_error( $FUNCS->t['invalid_credentials'] );
+            }
+
+            if( $user->disabled ){
+                return $FUNCS->raise_error( $FUNCS->t('account_disabled') );
+            }
+
+            // check password
+            $check = $this->hasher->CheckPassword( $pwd, $user->password );
+            if( !$check ){
+
+                // Update user record with last_failed_login time and number of failed attempts
+                $sql = "UPDATE ".K_TBL_USERS." SET last_failed='".$now."', failed_logins=failed_logins+1 WHERE id='".$DB->sanitize( $user->id )."'";
+                $DB->_query( $sql );
+
+                return $FUNCS->raise_error( $FUNCS->t('invalid_credentials') );
+            }
+
+            // All OK .. user can login.
+            // reset failed login counter for this user
+            if( $user->failed_logins ){
+                $sql = "UPDATE ".K_TBL_USERS." SET last_failed='0', failed_logins='0' WHERE id='".$DB->sanitize( $user->id )."'";
+                $DB->_query( $sql );
+            }
+
+            $this->user = &$user;
+
+            // set an access cookie for future visits of this user
+            $this->set_cookie( $username, $remember );
+
         }
 
-        function set_cookie( $username ){
+        function logout( $nonce='' ){
+            global $FUNCS;
+
+            $FUNCS->validate_nonce( 'logout'.$this->user->id, $nonce );
+            $this->delete_cookie();
+
+        }
+
+        function set_cookie( $username, $remember=0 ){
             // create a httpOnly cookie
-            $cookie_expiry = time() + (3600 * 12); // 12 hours
+            $days_valid = ( $remember ) ? 14 : 1;
+            $cookie_expiry = time() + (3600 * 24 * $days_valid);
             $cookie = $this->create_cookie( $username, $cookie_expiry );
             if( version_compare(phpversion(), '5.2.0', '>=') ) {
-                setcookie($this->cookie_name, $cookie, 0, $this->cookie_path, null, null, true);
+                if( $remember ){
+                    setcookie($this->cookie_name, $cookie, $cookie_expiry, $this->cookie_path, null, null, true);
+                }
+                else{
+                    setcookie($this->cookie_name, $cookie, 0, $this->cookie_path, null, null, true);
+                }
             }
             else{
-                //setcookie($this->cookie_name, $cookie, $cookie_expiry, $this->cookie_path . '; httponly'); //this works too but safe to be explicit
-                //$date = gmstrftime("%a, %d-%b-%Y %H:%M:%S", $cookie_expiry ) .' GMT';
-                //header("Set-Cookie: ".rawurlencode($this->cookie_name)."=".rawurlencode($cookie)."; expires=$date; path=$this->cookie_path; httpOnly");
-                header("Set-Cookie: ".rawurlencode($this->cookie_name)."=".rawurlencode($cookie)."; path=$this->cookie_path; httpOnly");
+                if( $remember ){
+                    $date = gmstrftime("%a, %d-%b-%Y %H:%M:%S", $cookie_expiry ) .' GMT';
+                    header("Set-Cookie: ".rawurlencode($this->cookie_name)."=".rawurlencode($cookie)."; expires=$date; path=$this->cookie_path; httpOnly");
+                }
+                else{
+                    header("Set-Cookie: ".rawurlencode($this->cookie_name)."=".rawurlencode($cookie)."; path=$this->cookie_path; httpOnly");
+                }
             }
         }
 
@@ -226,7 +247,26 @@
             }
         }
 
-        function show_login(){
+        function redirect( $dest ){
+            global $FUNCS, $DB;
+
+            // sanity checks
+            $dest = $FUNCS->sanitize_url( trim($dest) );
+            if( !strlen($dest) ){
+                $dest = ( $this->user->access_level < K_ACCESS_LEVEL_ADMIN ) ? K_SITE_URL : K_ADMIN_URL . K_ADMIN_PAGE;;
+            }
+            elseif( strpos(strtolower($dest), 'http')===0 ){
+                if( strpos($dest, K_SITE_URL)!==0 ){ // we don't allow redirects external to our site
+                    $dest = K_SITE_URL;
+                }
+            }
+
+            $DB->commit( 1 );
+            header( "Location: ".$dest );
+            die();
+        }
+
+        function show_login( $res ){
             global $FUNCS;
 
             ob_end_clean();
@@ -234,9 +274,9 @@
             setcookie( 'couchcms_testcookie', 'CouchCMS test cookie', 0, $this->cookie_path, null);
 
             $err_div = '<div class="error" style="margin-bottom:10px; display:';
-            if( $this->error ){
+            if( $FUNCS->is_error($res) ){
                 $err_div .= "block\">";
-                $err_div .= $this->error;
+                $err_div .= $res->err_msg;
             }
             else{
                 $err_div .= "none\">&nbsp;";
@@ -273,13 +313,11 @@
 
             $ret = ob_end_clean();
             header( 'Content-Type: text/html; charset='.K_CHARSET );
-            $nonce = $FUNCS->create_nonce( 'logout'.$this->user->id, $this->user->name );
-            $redirect = urlencode( $_SERVER["REQUEST_URI"] );
-            $logout_link = K_ADMIN_URL.'login.php?act=logout&nonce='.$nonce. '&redirect='.$redirect;
+            $logout_link = $FUNCS->get_logout_link();
             $logout_link = '<a href="'.$logout_link.'">'.$FUNCS->t('logout').'</a>';
             ?>
             <?php echo( $FUNCS->login_header() ); ?>
-            	<div class='wrapper'>
+                <div class='wrapper'>
                     <h1 style="margin: 0 0 10px 0; padding: 0pt; font-size: 20px;"><?php echo $FUNCS->t('access_denied'); ?></h1>
                     <p><?php echo $FUNCS->t('insufficient_privileges'); ?></p>
                     <?php echo $logout_link; ?>
@@ -288,5 +326,42 @@
             <?php
             die();
         }
-    }
 
+        // utilty functions shared with 'extended users'
+        function reset_key( $username ){
+            global $FUNCS, $DB;
+
+            $user = new KUser( $username );
+
+            if( $user->id==-1 ){
+                return $FUNCS->raise_error( $FUNCS->t( 'no_such_user' ) );
+            }
+            if( $user->disabled ){
+                return $FUNCS->raise_error( $FUNCS->t( 'account_disabled' ) );
+            }
+
+            $id = $user->id;
+            $key = $user->password_reset_key;
+
+            if( empty($key) ){
+                $key = $FUNCS->generate_key( 32 );
+                $rs = $DB->update( K_TBL_USERS, array('password_reset_key'=>$key), "id='" . $DB->sanitize( $id ). "'" );
+                if( $rs==-1 ) die( "ERROR: Unable to update K_TBL_USERS" );
+
+                $user->password_reset_key = $key;
+            }
+
+            return $user;
+
+        }
+
+        function get_hash( $user, $value, $expiry  ){
+            global $FUNCS;
+
+            $data = $user . '|' . $value . '|' . $expiry;
+            $key = $FUNCS->hash_hmac( $data, $FUNCS->_get_nonce_secret_key() );
+            $hash = $FUNCS->hash_hmac( $data, $key );
+
+            return $data . '|' . $hash;
+        }
+    }

@@ -44,19 +44,23 @@
         var $password = '';
         var $email = '';
         var $activation_key = '';
+        var $password_reset_key = '';
         var $registration_date = '';
         var $access_level = 0;
         var $disabled = '0';
         var $system = '0';
         var $last_failed = '0';
+        var $failed_logins = '0';
 
         var $fields = array();
 
-        function KUser( $id='' ){
-            global $DB;
+        var $_template_locked = 0;
+
+        function KUser( $id='', $is_numeric=0 ){
+            global $FUNCS, $DB;
 
             if( $id ){
-                if( is_numeric($id) ){
+                if( $is_numeric ){
                     $rs = $DB->select( K_TBL_USERS, array('*'), "id='" . $DB->sanitize( $id ). "'" );
                 }
                 else{
@@ -73,7 +77,11 @@
                         if( isset($this->$k ) ) $this->$k = $v;
                     }
                 }
+
             }
+
+            // HOOK: user_loaded
+            $FUNCS->dispatch_event( 'user_loaded', array(&$this) );
 
         }
 
@@ -104,7 +112,7 @@
 
                 if( $k=='name' ){
                     $field_info['k_desc'] = $FUNCS->t('user_name_restrictions');
-                    $field_info['validator'] = 'title_ready|min_len=4';
+                    $field_info['validator'] = 'title_ready|min_len=4|max_len=255';
                 }
                 elseif( $k=='email' ){
                     $field_info['validator'] = 'email';
@@ -125,7 +133,7 @@
                     'hidden' => '0',
                     'data' => '',
                     'required' => ($this->id == -1) ? '1' : '0',
-                    'validator' => 'min_len='.K_MIN_PASSWORD_LEN,
+                    'validator' => 'min_len='.K_MIN_PASSWORD_LEN.'|max_len=64',
                     'system' => '0'
                 );
             $this->fields[] = new KFieldUser( $field_info, $this->fields );
@@ -143,6 +151,9 @@
                     'system' => '0'
                 );
             $this->fields[] = new KFieldUser( $field_info, $this->fields );
+
+            // HOOK: alter_user_fields_info
+            $FUNCS->dispatch_event( 'alter_user_fields_info', array(&$this->fields, &$this) );
         }
 
         function save(){
@@ -153,24 +164,25 @@
                 die( "Cheating?!" );
             }
 
-
-            // Validate all system  fields before persistng changes
-            $errors = 0;
-            for( $x=0; $x<count($this->fields); $x++ ){
-                $f = &$this->fields[$x];
-                if( !$f->validate() ) $errors++;
-            }
-            if( $errors ) return $errors;
-
             $DB->begin();
-            // Serialize access
-            //$DB->select( K_TBL_USERS, array('id'), "access_level='10' FOR UPDATE" ); // results in deadlock
-            $DB->update( K_TBL_SETTINGS, array('k_key'=>'secret_key'), "k_key='secret_key'" );
+
+            // HOOK: user_presave
+            // the save process is about to begin.
+            // Field values can be adjusted before subjecting them to the save routine.
+            $FUNCS->dispatch_event( 'user_presave', array(&$this) );
+
+            // HOOK: user_prevalidate
+            // all fields are ready for validation. Do any last minute tweaking before validation begins.
+            $FUNCS->dispatch_event( 'user_prevalidate', array(&$this->fields, &$this) );
+
+            $errors = 0;
 
             // Verify that name & email are unique before proceeding
             $f = &$this->fields[0];
             $name = $f->get_data();
             if( $f->modified ){
+                $this->_lock_template();
+
                 $rs = $DB->select( K_TBL_USERS, array('id'), "name='" . $DB->sanitize( $name ). "' and id != " . $DB->sanitize( $this->id ));
                 if( count($rs) ){
                     $f->err_msg = $FUNCS->t('user_name_exists');
@@ -180,6 +192,8 @@
             $f = &$this->fields[2];
             $email = $f->get_data();
             if( $f->modified ){
+                $this->_lock_template();
+
                 $rs = $DB->select( K_TBL_USERS, array('id'), "email='" . $DB->sanitize( $email ). "' and id != " . $DB->sanitize( $this->id ));
                 if( count($rs) ){
                     $f->err_msg = $FUNCS->t('email_exists');
@@ -199,18 +213,38 @@
 
             if( $errors ){ $DB->rollback(); return $errors; }
 
+            // Validate all fields before persisting changes
+            for( $x=0; $x<count($this->fields); $x++ ){
+                $f = &$this->fields[$x];
+                if( !$f->validate() ) $errors++;
+            }
+
+            // HOOK: user_validate
+            // can add some custom validation here if required.
+            $FUNCS->dispatch_event( 'user_validate', array(&$this->fields, &$errors, &$this) );
+
+            if( $errors ){ $DB->rollback(); return $errors; }
+
             // verify that the changes to the account's level are permitted to the logged-in user.
             $f = &$this->fields[3];
             $level = $f->get_data();
-            if( $level > $AUTH->user->access_level ){
-                die( "Cheating?!" );
+            if( $this->id != -1 ){
+                if( $level > $AUTH->user->access_level ){
+                    die( "Cheating?!" );
+                }
+                if( ($level == $AUTH->user->access_level) && ($this->id != $AUTH->user->id) ){
+                    die( "Cheating?!" );
+                }
+                if( ($level < $AUTH->user->access_level) && ($this->id == $AUTH->user->id) ){
+                    $f->data = $AUTH->user->access_level;
+                    $f->modified = true;
+                }
             }
-            if( ($level == $AUTH->user->access_level) && ($this->id != $AUTH->user->id) ){
-                die( "Cheating?!" );
-            }
-            if( ($level < $AUTH->user->access_level) && ($this->id == $AUTH->user->id) ){
-                $f->data = $AUTH->user->access_level;
-                $f->modified = true;
+            else{
+                // provision for frontend user account creation
+                if( ($AUTH->user->access_level < K_ACCESS_LEVEL_ADMIN) && ($level > K_ACCESS_LEVEL_AUTHENTICATED) ){
+                    die( "Cheating?!" );
+                }
             }
 
             // get hash of the password
@@ -236,26 +270,34 @@
                 foreach( $rec as $k=>$v ){
                     $this->$k = $v;
                 }
+
+                $action = 'insert';
+            }
+            else{
+                $action = 'update';
             }
 
             $arr_update = array();
             unset( $f );
             for( $x=0; $x<count($this->fields); $x++ ){
                 $f = &$this->fields[$x];
-                if( $f->system ){
+                if( $f->system && $f->modified ){
                     $name = substr( $f->name, 2 ); // remove the 'k_' prefix from system fields
                     if( ($name=='access_level' || $name=='disabled') && ($this->id == $AUTH->user->id) ){
                         // cannot change one's own level or disable oneself
                         continue;
                     }
-                    $prev_value = $this->$name;
+                    $prev_value = $f->orig_data;
                     $this->$name = $f->get_data();
                     $arr_update[$name] = $f->get_data();
 
-                    if( $name=='name' && $f->modified  ){
+                    if( $name=='name' ){
                         if( $AUTH->user->name == $prev_value ){
                             $AUTH->set_cookie( $f->get_data() );
                         }
+                    }
+                    elseif( $name=='disabled' ){
+                        $arr_update['activation_key'] = ( !$prev_value ) ? $FUNCS->generate_key( 32 ) : '';
                     }
                 }
                 unset( $f );
@@ -266,8 +308,18 @@
             }
 
             // persist changes
-            $rs = $DB->update( K_TBL_USERS, $arr_update, "id='" . $DB->sanitize( $this->id ). "'" );
-            if( $rs==-1 ) die( "ERROR: Unable to save data in K_TBL_USERS" );
+            if( count($arr_update) ){
+
+                // HOOK: alter_user_save
+                $FUNCS->dispatch_event( 'alter_user_save', array(&$arr_update, &$this->fields, &$this, $action) );
+
+                $rs = $DB->update( K_TBL_USERS, $arr_update, "id='" . $DB->sanitize( $this->id ). "'" );
+                if( $rs==-1 ) die( "ERROR: Unable to save data in K_TBL_USERS" );
+            }
+
+            // HOOK: user_saved
+            $FUNCS->dispatch_event( 'user_saved', array(&$this, $action, &$errors) );
+            if( $errors ){ $DB->rollback(); return $errors; }
 
             $DB->commit();
 
@@ -278,7 +330,7 @@
         }
 
         function delete(){
-            global $DB, $AUTH;
+            global $DB, $AUTH, $FUNCS;
 
             // remove user
             if( $this->id != -1 ){
@@ -291,12 +343,29 @@
                 //$DB->select( K_TBL_USERS, array('id'), "access_level='10' FOR UPDATE" );
                 $DB->update( K_TBL_SETTINGS, array('k_key'=>'secret_key'), "k_key='secret_key'" );
 
+                // HOOK: user_predelete
+                $FUNCS->dispatch_event( 'user_predelete', array(&$this) );
+
                 $rs = $DB->delete( K_TBL_USERS, "id='" . $DB->sanitize( $this->id ). "'" );
                 if( $rs==-1 ) die( "ERROR: Unable to delete user from K_TBL_USERS" );
+
+                // HOOK: user_deleted
+                $FUNCS->dispatch_event( 'user_deleted', array(&$this) );
 
                 $DB->commit();
             }
         }
 
+        function _lock_template(){
+            global $DB;
+
+            if( !$this->_template_locked ){
+                // Hack of a semaphore. To serialize access.. lock template
+                //$DB->select( K_TBL_USERS, array('id'), "access_level='10' FOR UPDATE" ); // results in deadlock
+                $DB->update( K_TBL_SETTINGS, array('k_key'=>'secret_key'), "k_key='secret_key'" );
+                $this->_template_locked = 1;
+            }
+
+        }
 
     }// end class KUser

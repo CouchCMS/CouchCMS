@@ -368,7 +368,7 @@
         }
 
         // Called from 'cms:editable' when this type of field gets modified in a template (i.e. its parameters)
-        function _update( $orig_values ){
+        function _update_schema( $orig_values ){
             global $DB;
 
             // if 'masterpage' (i.e. related template) changed, remove all previous relation records for this field as they are now defunct
@@ -380,8 +380,8 @@
                     ob_end_clean();
                     die( 'Error: Tag "editable" type="relation" - masterpage: "'.$masterpage.'" not found.' );
                 }
-                $rs = $DB->delete( K_TBL_RELATIONS, "fid='" . $this->id . "'" );
-                if( $rs==-1 ) die( "ERROR: Unable to delete records from K_TBL_RELATIONS" );
+                //$rs = $DB->delete( K_TBL_RELATIONS, "fid='" . $this->id . "'" );
+                //if( $rs==-1 ) die( "ERROR: Unable to delete records from K_TBL_RELATIONS" );
             }
             return;
         }
@@ -399,6 +399,9 @@
             else{
                 // Remove all records from the relation table for the page being deleted
                 $rs = $DB->delete( K_TBL_RELATIONS, "pid='" . $DB->sanitize( $page_id ). "' AND fid='".$this->id."'" );
+                if( $rs==-1 ) die( "ERROR: Unable to delete records from K_TBL_RELATIONS" );
+
+                $rs = $DB->delete( K_TBL_RELATIONS, "cid='" . $DB->sanitize( $page_id ). "' AND fid='".$this->id."'" );
                 if( $rs==-1 ) die( "ERROR: Unable to delete records from K_TBL_RELATIONS" );
             }
             return;

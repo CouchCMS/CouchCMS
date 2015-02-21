@@ -43,7 +43,7 @@
 	require_once( K_COUCH_DIR.'header.php' );
 	header( 'Content-Type: text/html; charset='.K_CHARSET );
 
-	$AUTH = new KAuth( K_ACCESS_LEVEL_ADMIN, 0 );
+    $AUTH->check_access( K_ACCESS_LEVEL_ADMIN, 1 );
 
 	$tpl = ( isset($_GET['tpl']) && $FUNCS->is_non_zero_natural($_GET['tpl']) ) ? (int)$_GET['tpl'] : null;
 	if( is_null($tpl) ) die( 'No template specified' );
@@ -227,13 +227,13 @@
 			return $FUNCS->raise_error( $pg->err_msg );
 	    }
 	    // fill fields
-	    $f =  &$pg->fields[0]; // title
+	    $f =  &$pg->_fields['k_page_title']; // title
 	    $f->store_posted_changes( $page_title );
 	    unset( $f );
-	    $f = &$pg->fields[2]; // folder
+	    $f = &$pg->_fields['k_page_folder_id']; // folder
 	    $f->store_posted_changes( $fid );
 	    unset( $f );
-	    $f = &$pg->fields[3]; // publish date
+	    $f = &$pg->_fields['k_publish_date']; // publish date
 	    $f->store_posted_changes( $FUNCS->get_current_desktop_time() );
 	    unset( $f );
 

@@ -131,35 +131,35 @@
             return $html;
         }
 
-	function parse_attr( $str_attr ){
-	    $attrs = array();
-	    $regex = '/(\w+)\s*=\s*(["\'])(.*?)\2(?:$|\s)|(\w+)\s*=\s*([^\s"\']+)(?:$|\s)|(["\'])(.*?)\6(?:$|\s)|(\S+)(?:$|\s)/is';
-	    // [footag  gender="fe'm"ale" sex='m'a"le' color=red "r'e"d" 'r'e"d' red?@]
-	    $cnt = preg_match_all( $regex, $str_attr, $matches, PREG_SET_ORDER );
-	    if( $cnt ){
-		foreach( $matches as $match ){
-		    $attr = array();
+        function parse_attr( $str_attr ){
+            $attrs = array();
+            $regex = '/(\w+)\s*=\s*(["\'])(.*?)\2(?:$|\s)|(\w+)\s*=\s*([^\s"\']+)(?:$|\s)|(["\'])(.*?)\6(?:$|\s)|(\S+)(?:$|\s)/is';
+            // [footag  gender="fe'm"ale" sex='m'a"le' color=red "r'e"d" 'r'e"d' red?@]
+            $cnt = preg_match_all( $regex, $str_attr, $matches, PREG_SET_ORDER );
+            if( $cnt ){
+                foreach( $matches as $match ){
+                    $attr = array();
 
-		    if( isset($match[8]) ){
-                $attr['rhs'] = $match[8];
-		    }
-		    elseif( isset($match[7]) ){
-                $attr['rhs'] = $match[7];
-		    }
-		    elseif( isset($match[5]) ){
-                $attr['lhs'] = $match[4];
-                $attr['rhs'] = $match[5];
-		    }
-		    elseif( isset($match[3]) ){
-                $attr['lhs'] = $match[1];
-                $attr['rhs'] = $match[3];
-		    }
-		    if( count($attr) ) $attrs[] = $attr;
-		}
-	    }
+                    if( isset($match[8]) ){
+                        $attr['rhs'] = $match[8];
+                    }
+                    elseif( isset($match[7]) ){
+                        $attr['rhs'] = $match[7];
+                    }
+                    elseif( isset($match[5]) ){
+                        $attr['lhs'] = $match[4];
+                        $attr['rhs'] = $match[5];
+                    }
+                    elseif( isset($match[3]) ){
+                        $attr['lhs'] = $match[1];
+                        $attr['rhs'] = $match[3];
+                    }
+                    if( count($attr) ) $attrs[] = $attr;
+                }
+            }
 
-	    return $attrs;
-	}
+            return $attrs;
+        }
 
     }// end class KBBNode
 

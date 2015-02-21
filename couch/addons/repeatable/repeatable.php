@@ -39,7 +39,6 @@
 
     class Repeatable extends KUserDefinedField{
         var $cells = array(); // array of fields representing each cell in a row
-        var $orig_data = array();
         var $rendered_data = null;
         var $rendered_deleted_html = null;
         var $validation_errors = 0;
@@ -49,6 +48,7 @@
             parent::KUserDefinedField( $row, $page, $siblings );
 
             // now for own logic
+            $this->orig_data = array();
             $this->_fill_cells_info();
 
         }

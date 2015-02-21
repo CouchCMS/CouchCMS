@@ -7,7 +7,7 @@ if ( !defined('K_COUCH_DIR') ) die(); // cannot be loaded directly
 
     // Customize specific editor instances on the fly.
     // The "instanceCreated" event is fired for every editor instance created.
-    CKEDITOR.on( 'instanceCreated', function( event ) {
+    CKEDITOR.on( 'instanceCreated', function( event ){
 
         var editor = event.editor;
         var inline = editor.element.$.getAttribute("data-k-inline");
@@ -33,6 +33,12 @@ if ( !defined('K_COUCH_DIR') ) die(); // cannot be loaded directly
                     editor.config['filebrowserImageBrowseUrl'] = '<?php echo K_ADMIN_URL; ?>includes/fileuploader/browser/browser.html?Type=Image';
                     editor.config['filebrowserWindowWidth'] = '600';
                 <?php endif; ?>
+
+                editor.on( 'mode', function(){
+                    if( editor.readOnly ){
+                        editor.setReadOnly( false );
+                    }
+                });
 
                 function set_toolbar(){
                     var element = editor.element;
@@ -61,7 +67,7 @@ if ( !defined('K_COUCH_DIR') ) die(); // cannot be loaded directly
                         }
                     }
                     if( toolbar=='default' ){
-                        if ( element.is('h1', 'h2', 'h3', 'h4', 'h5', 'h6') ) {
+                        if ( element.is('h1', 'h2', 'h3', 'h4', 'h5', 'h6') ){
                             toolbar='small';
                         }
                         else{
@@ -73,7 +79,7 @@ if ( !defined('K_COUCH_DIR') ) die(); // cannot be loaded directly
                         case "small":
                             editor.config.toolbar = [
                                 [ 'Bold', 'Italic', 'Underline' ],
-                                [ 'inlinesave']
+                                [ 'inlinesave' ]
                             ];
                             break;
                         case "basic":
@@ -82,7 +88,7 @@ if ( !defined('K_COUCH_DIR') ) die(); // cannot be loaded directly
                                 [ 'Format' ],
                                 [ 'NumberedList', 'BulletedList', 'Blockquote', 'Link', 'Unlink' ],
                                 [ 'Undo', 'Redo', 'RemoveFormat' ],
-                                [ 'inlinesave']
+                                [ 'inlinesave' ]
                             ];
                             break;
                         case "medium":
@@ -96,7 +102,7 @@ if ( !defined('K_COUCH_DIR') ) die(); // cannot be loaded directly
                                 [ 'Cut', 'Copy', 'Paste', 'PasteText', 'PasteFromWord' ],
                                 [ 'Image', 'Table', 'HorizontalRule', 'Smiley', 'SpecialChar' ],
                                 [ 'Link', 'Unlink', 'Anchor' ],
-                                [ 'inlinesave']
+                                [ 'inlinesave' ]
                             ];
                             break;
                         case "full":
@@ -112,7 +118,7 @@ if ( !defined('K_COUCH_DIR') ) die(); // cannot be loaded directly
                                 '/',
                                 [ 'Styles', 'Format', 'Font', 'FontSize' ],
                                 [ 'TextColor', 'BGColor' ],
-                                [ 'inlinesave']
+                                [ 'inlinesave' ]
                             ];
                             break;
                     }
@@ -130,7 +136,7 @@ if ( !defined('K_COUCH_DIR') ) die(); // cannot be loaded directly
         if( window.CKEDITOR && window.CKEDITOR.k_regions ){
             for( var i=0;i<window.CKEDITOR.k_regions.length;i++ ){
                 if( window.CKEDITOR.k_regions[i].checkDirty() ){
-                    return '<?php echo( $prompt_text ); ?>';
+                    return '<?php echo $prompt_text; ?>';
                 }
             }
 

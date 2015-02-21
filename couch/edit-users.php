@@ -36,6 +36,7 @@
     */
 
     if ( !defined('K_ADMIN') ) die(); // cannot be loaded directly
+    require_once( K_COUCH_DIR.'includes/ckeditor/ckeditor.php' );
 
     if( isset($_GET['act']{0}) ){
         $user_id = ( isset($_GET['id']) && $FUNCS->is_non_zero_natural($_GET['id']) ) ? (int)$_GET['id'] : null;
@@ -50,7 +51,7 @@
                     $FUNCS->validate_nonce( 'update_user_' . $user_id );
                 }
 
-                $user = new KUser( $user_id );
+                $user = new KUser( $user_id, 1 );
                 $user->populate_fields(); // get values from database into fields
 
                 $errors = '';
@@ -58,12 +59,23 @@
                     $_POST['f_k_access_level'] = intval( $_POST['f_k_levels_list'] );
                     $_POST['f_k_disabled'] = ( isset($_POST['f_k_disabled_check']) ) ? 1 : 0;
 
-                    for( $x=0; $x<count($user->fields); $x++ ){
-                        $f = &$user->fields[$x];
-                        $f->store_posted_changes( $_POST['f_'.$f->name] ); // get posted values into fields
+                    // HOOK: alter_edit_user_posted_data
+                    $skip = $FUNCS->dispatch_event( 'alter_edit_user_posted_data', array(&$user) );
+
+                    if( !$skip ){
+                        for( $x=0; $x<count($user->fields); $x++ ){
+                            $f = &$user->fields[$x];
+                            $f->store_posted_changes( $_POST['f_'.$f->name] ); // get posted values into fields
+                        }
                     }
 
+                    // HOOK: edit_user_presave
+                    $FUNCS->dispatch_event( 'edit_user_presave', array(&$user) );
+
                     $errors = $user->save();
+
+                    // HOOK: edit_user_saved
+                    $FUNCS->dispatch_event( 'edit_user_saved', array(&$user, &$errors) );
 
                     if( !$errors ){
                         // if the logged-in user is the same as the user account being edited, use the user object's name in nonce as it might have changed.
@@ -133,7 +145,7 @@
         elseif( $_GET['act'] == 'delete' ){
             if( $user_id ){
                 $FUNCS->validate_nonce( 'delete_user_' . $user_id );
-                $user = new KUser( $user_id );
+                $user = new KUser( $user_id, 1 );
                 $user->delete();
 
                 $qs = '?o=users';
@@ -151,7 +163,7 @@
             foreach( $_POST['user-id'] as $v ){
                 if( $FUNCS->is_non_zero_natural($v) ){
                     $user_id = intval( $v );
-                    $user = new KUser( $user_id );
+                    $user = new KUser( $user_id, 1 );
 
                     // execute action
                     $user->delete();

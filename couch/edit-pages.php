@@ -165,7 +165,7 @@
                     // first test if the indicated folder does exist..
                     if( $f_id && $PAGE->folders->find_by_id( $f_id ) ){
                         // if it does, set it in the folders select dropdown
-                        $PAGE->fields[2]->data = $f_id;
+                        $PAGE->_fields['k_page_folder_id']->data = $f_id;
                     }
 
                     // any preset related-page?
@@ -207,16 +207,29 @@
 
                     // move posted data into fields
                     $refresh_form = $refresh_errors = 0;
-                    for( $x=0; $x<count($PAGE->fields); $x++ ){
-                        $f = &$PAGE->fields[$x];
-                        $f->store_posted_changes( $_POST['f_'.$f->name] );
-                        if( $f->refresh_form ) $refresh_form = 1;
-                        if( $f->err_msg_refresh ) $refresh_errors++;
-                        unset( $f );
+
+                    // HOOK: alter_edit_page_posted_data
+                    $skip = $FUNCS->dispatch_event( 'alter_edit_page_posted_data', array(&$PAGE, &$refresh_form, &$refresh_errors) );
+
+                    if( !$skip ){
+                        for( $x=0; $x<count($PAGE->fields); $x++ ){
+                            $f = &$PAGE->fields[$x];
+                            $f->store_posted_changes( $_POST['f_'.$f->name] );
+                            if( $f->refresh_form ) $refresh_form = 1;
+                            if( $f->err_msg_refresh ) $refresh_errors++;
+                            unset( $f );
+                        }
                     }
 
                     if( !$refresh_form ){
+
+                        // HOOK: edit_page_presave
+                        $FUNCS->dispatch_event( 'edit_page_presave', array(&$PAGE) );
+
                         $errors = $PAGE->save();
+
+                        // HOOK: edit_page_saved
+                        $FUNCS->dispatch_event( 'edit_page_saved', array(&$PAGE, &$errors) );
 
                         if( !$errors ){
 
@@ -279,6 +292,10 @@
                 } // if save
 
                 // start building content for output
+
+                // HOOK: edit_page_prerender
+                $FUNCS->dispatch_event( 'edit_page_prerender', array(&$PAGE) );
+
                 ob_start();
                 $err_div = '<div class="error" style="margin-bottom:10px; color:red; display:';
                 if( $errors ){
@@ -296,7 +313,7 @@
                         <div id="admin-sidebar" >
                         <?php if( !$draft_of ){ ?>
                             <?php if( $_GET['act'] == 'edit' ){
-                                $visibility = ( $PAGE->tpl_nested_pages && $PAGE->fields[10]->get_data() ) ? 'hidden' : 'visible'; // hide draft button if nestable page is a 'pointer page'
+                                $visibility = ( $PAGE->tpl_nested_pages && $PAGE->_fields['k_is_pointer']->get_data() ) ? 'hidden' : 'visible'; // hide draft button if nestable page is a 'pointer page'
                             ?>
                             <div id="create-draft" style="margin-top:0px; visibility:<?php echo $visibility; ?>;">
                                 <a class="button" id="btn_draft" href="#" title="<?php echo $FUNCS->t('create_draft_msg'); ?>" onclick="this.style.cursor='wait'; $('f_k_create_draft').set( 'value', '1' ); $('frm_edit_page').submit(); return false;"><span><?php echo $FUNCS->t('create_draft'); ?></span></a>
@@ -316,7 +333,7 @@
                                     }
                                     else{
                                         if( !$inherited ){
-                                            $level = $PAGE->fields[4]->get_data();
+                                            $level = $PAGE->_fields['k_access_level']->get_data();
                                         }
                                         echo $FUNCS->access_levels_dropdown( $level /*selected*/, $AUTH->user->access_level/*max*/, 0/*min*/, $inherited/*disabled*/);
                                     }
@@ -326,7 +343,7 @@
 
                             <?php
                                 $visibility = ( $PAGE->tpl_is_commentable ) ? 'block' : 'none';
-                                $checked = ( $PAGE->fields[5]->get_data() ) ? 'checked="checked"' : '';
+                                $checked = ( $PAGE->_fields['k_comments_open']->get_data() ) ? 'checked="checked"' : '';
                              ?>
                             <div id="comments-open" style="margin-top:10px; display:<?php echo $visibility; ?>">
                                 <label><b><?php echo $FUNCS->t('comments'); ?>:</b></label><br>
@@ -338,7 +355,7 @@
 
                             <?php if( $PAGE->tpl_nested_pages ): ?>
                                 <div id="publish-date" style="margin-top:10px">
-                                    <?php $publish_date = $PAGE->fields[3]->get_data(); ?>
+                                    <?php $publish_date = $PAGE->_fields['k_publish_date']->get_data(); ?>
                                     <label><b><?php echo $FUNCS->t('status'); ?>:</b></label><br>
                                     <input type="radio" <?php if( $publish_date != '0000-00-00 00:00:00' ){?>checked="checked"<?php } ?> value="1" id="f_publish_status_1" name="f_publish_status" />
                                     <label for="f_publish_status_1"><?php echo $FUNCS->t('active'); ?></label>&nbsp;
@@ -346,37 +363,37 @@
                                     <label for="f_publish_status_0"><?php echo $FUNCS->t('inactive'); ?></label><br>
                                     <div id="date-dropdown" style="display:none">
                                     <?php
-                                        echo $FUNCS->date_dropdowns( $PAGE->fields[3]->get_data() );
+                                        echo $FUNCS->date_dropdowns( $PAGE->_fields['k_publish_date']->get_data() );
                                     ?>
                                     </div>
                                 </div>
                                 <div id="menu" style="margin-top:10px;">
                                     <label><b><?php echo $FUNCS->t('menu'); ?>:</b></label><br>
                                     <label>
-                                        <?php $checked = ( $PAGE->fields[8]->get_data() ) ? 'checked="checked"' : ''; ?>
+                                        <?php $checked = ( $PAGE->_fields['k_show_in_menu']->get_data() ) ? 'checked="checked"' : ''; ?>
                                         <input type="checkbox" value="1" <?php echo $checked; ?> name="f_show_in_menu" /><?php echo $FUNCS->t('show_in_menu'); ?>
                                     </label>
                                 </div>
                                 <div id="menu-text" style="margin-top:10px;">
                                     <label><b><?php echo $FUNCS->t('menu_text'); ?>:</b></label><br>
-                                    <input type="text" style="width: 185px;" class="k_text" maxlength="255" value="<?php echo $PAGE->fields[9]->get_data(); ?>" name="f_menu_text" id="f_menu_text"/>
+                                    <input type="text" style="width: 185px;" class="k_text" maxlength="255" value="<?php echo $PAGE->_fields['k_menu_text']->get_data(); ?>" name="f_menu_text" id="f_menu_text"/>
                                     <span class="k_desc"><i>(<?php echo $FUNCS->t('leave_empty'); ?>)</i></span>
                                 </div>
                                 <div id="is_pointer" style="margin-top:10px;">
                                     <label><b><?php echo $FUNCS->t('menu_link'); ?>:</b></label><br>
                                     <label>
-                                        <?php $checked = ( $PAGE->fields[11]->get_data() ) ? 'checked="checked"' : ''; ?>
+                                        <?php $checked = ( $PAGE->_fields['k_open_external']->get_data() ) ? 'checked="checked"' : ''; ?>
                                         <input type="checkbox" value="1" <?php echo $checked; ?> name="f_open_external" /><?php echo $FUNCS->t('separate_window'); ?>
                                     </label><br />
                                     <label>
-                                        <?php $checked = ( $PAGE->fields[10]->get_data() ) ? 'checked="checked"' : ''; ?>
+                                        <?php $checked = ( $PAGE->_fields['k_is_pointer']->get_data() ) ? 'checked="checked"' : ''; ?>
                                         <input type="checkbox" value="1" <?php echo $checked; ?> name="f_is_pointer" onClick="if(this.checked){$('admin-wrapper-custom_fields').setStyle('visibility', 'hidden');<?php if( $_GET['act'] != 'create' ){ echo"\$('create-draft').setStyle('visibility', 'hidden');"; } ?>$('wrapper_k_pointer_link').setStyle('display', 'block'); }
                                         else{$('admin-wrapper-custom_fields').setStyle('visibility', 'visible');<?php if( $_GET['act'] != 'create' ){ echo"\$('create-draft').setStyle('visibility', 'visible');"; } ?>$('wrapper_k_pointer_link').setStyle('display', 'none');}" /><?php echo $FUNCS->t('points_to_another_page'); ?>
                                     </label>
                                 </div>
                             <?php else: ?>
                                 <div id="publish-date" style="margin-top:10px">
-                                    <?php $publish_date = $PAGE->fields[3]->get_data(); ?>
+                                    <?php $publish_date = $PAGE->_fields['k_publish_date']->get_data(); ?>
                                     <label><b><?php echo $FUNCS->t('status'); ?>:</b></label><br>
                                     <input type="radio" <?php if( $publish_date == '0000-00-00 00:00:00' ){?>checked="checked"<?php } ?> value="0" id="f_publish_status_0" name="f_publish_status" onClick="$('date-dropdown').setStyle('visibility', 'hidden')"/>
                                     <label for="f_publish_status_0"><?php echo $FUNCS->t('unpublished'); ?></label><br>
@@ -384,7 +401,7 @@
                                     <label for="f_publish_status_1"><?php echo $FUNCS->t('published'); ?></label><br>
                                     <div id="date-dropdown" style="visibility:<?php if( $publish_date == '0000-00-00 00:00:00' ){ echo 'hidden'; } else{ echo 'visible'; }?>; margin-top:4px;">
                                     <?php
-                                        echo $FUNCS->date_dropdowns( $PAGE->fields[3]->get_data() );
+                                        echo $FUNCS->date_dropdowns( $PAGE->_fields['k_publish_date']->get_data() );
                                     ?>
                                     </div>
                                 </div>
@@ -437,14 +454,14 @@
 
                             <?php
                             $has_custom_fields = 0;
-                            if( $draft_of ) $PAGE->fields[1]->hidden = 1;
+                            if( $draft_of ) $PAGE->_fields['k_page_name']->hidden = 1;
                             if( $PAGE->tpl_nested_pages ) {
-                                $custom_fields_visibility = ($PAGE->fields[10]->get_data()) ? 'hidden' : 'visible'; // hide custom fields if this nested page is pointer_page
+                                $custom_fields_visibility = ($PAGE->_fields['k_is_pointer']->get_data()) ? 'hidden' : 'visible'; // hide custom fields if this nested page is pointer_page
                             }
                             for( $x=0; $x<count($PAGE->fields); $x++ ){
                                 if( !$PAGE->fields[$x]->system ){
                                     if( $PAGE->tpl_nested_pages && !$has_custom_fields) {
-                                        //$custom_fields_visibility = ($PAGE->fields[10]->get_data()) ? 'hidden' : 'visible'; // hide custom fields if this nested page is pointer_page
+                                        //$custom_fields_visibility = ($PAGE->_fields['k_is_pointer']->get_data()) ? 'hidden' : 'visible'; // hide custom fields if this nested page is pointer_page
                                         echo '<div id="admin-wrapper-custom_fields" style="visibility:'.$custom_fields_visibility.';" >';
                                     }
                                     $has_custom_fields = 1;
@@ -1343,11 +1360,11 @@
         $next_text = $FUNCS->t('next') . ' &#187;';
         $simple = 0;
 
-	// record counts
-	$first_record_on_page = ($limit * ($pgn_pno - 1)) + 1;
-	$last_record_on_page = $first_record_on_page + $limit - 1;
-	if( $last_record_on_page > $total_rows ) $last_record_on_page = $total_rows;
-	$total_records_on_page = $last_record_on_page - ( $first_record_on_page-1 );
+        // record counts
+        $first_record_on_page = ($limit * ($pgn_pno - 1)) + 1;
+        $last_record_on_page = $first_record_on_page + $limit - 1;
+        if( $last_record_on_page > $total_rows ) $last_record_on_page = $total_rows;
+        $total_records_on_page = $last_record_on_page - ( $first_record_on_page-1 );
 
         $str .= '<div id="pages-listing">'; // AJAX container
         $str .= '<form name="frm_list_pages" id="frm_list_pages" action="" method="post">';
@@ -1438,7 +1455,7 @@
     }
 
     function _k_visitor2(  &$page, &$html, &$param ){
-	global $CTX, $FUNCS;
+        global $CTX, $FUNCS;
 
         $cur = $param->_counter;
 

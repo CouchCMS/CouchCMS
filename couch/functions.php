@@ -40,6 +40,7 @@
     require_once( K_COUCH_DIR.'parser/parser.php' );
     require_once( K_COUCH_DIR.'parser/HTMLParser.php' );
     require_once( K_COUCH_DIR.'search.php' );
+    require_once( K_COUCH_DIR.'event.php' );
 
     class KFuncs{
         var $latin_charset;
@@ -63,6 +64,8 @@
         var $styles = array();
         var $repeatable = array();
 
+        var $_ed;
+
         function KFuncs(){
             define( '_64e3',  (64.0 * 64.0 * 64.0) );
             define( '_64e4',  (64.0 * 64.0 * 64.0 * 64.0) );
@@ -70,6 +73,8 @@
             define( '_64e16', (_64e4 * _64e4 * _64e4 * _64e4) );
             define( '_64e63', (_64e15 * _64e16 * _64e16 * _64e16) );
             define( '_64e64', (_64e16 * _64e16 * _64e16 * _64e16) );
+
+            $this->_ed = new EventDispatcher();
         }
 
         function raise_error( $err_msg ){
@@ -174,6 +179,9 @@
             if( $AUTH->user->access_level >= K_ACCESS_LEVEL_SUPER_ADMIN ){
                 $DB->begin();
 
+                // HOOK: post_process_page_start
+                $this->dispatch_event( 'post_process_page_start' );
+
                 // Process deleted fields
                 $dirty = array();
                 foreach( $PAGE->fields as $field ){
@@ -214,6 +222,9 @@
                 if( !$PAGE->tpl_dynamic_folders ){
                     $PAGE->folders->process_delete();
                 }
+
+                // HOOK: post_process_page_end
+                $this->dispatch_event( 'post_process_page_end' );
 
                 $DB->commit();
             }
@@ -399,7 +410,7 @@
                     374 => 'Y', // LATIN CAPITAL LETTER Y WITH CIRCUMFLEX
                     375 => 'y', // LATIN SMALL LETTER Y WITH CIRCUMFLEX
                     376 => 'Y', // LATIN CAPITAL LETTER Y WITH DIAERESIS (&Yuml;)
-                    377 => 'Z' // LATIN CAPITAL LETTER Z WITH ACUTE
+                    377 => 'Z'  // LATIN CAPITAL LETTER Z WITH ACUTE
                 );
             } // end array $latin_charset
 
@@ -986,22 +997,22 @@
                 $CTX->set( 'k_user_access_level', $AUTH->user->access_level );
                 $CTX->set( 'k_user_disabled', '0' );
 
-                $redirect = urlencode( $_SERVER["REQUEST_URI"] );
                 if( $AUTH->user->id != -1 ){
                     $CTX->set( 'k_logged_in', 1 );
-                    $nonce = $this->create_nonce( 'logout'.$AUTH->user->id );
-                    $logout_link = K_ADMIN_URL.'login.php?act=logout&nonce='.$nonce. '&redirect='.$redirect;
-                    $CTX->set( 'k_logout_link', $logout_link );
+                    $CTX->set( 'k_logout_link', $this->get_logout_link() );
                 }
                 else{
                     $CTX->set( 'k_logged_out', 1 );
-                    $CTX->set( 'k_login_link', K_ADMIN_URL.'login.php?redirect='.$redirect );
+                    $CTX->set( 'k_login_link', $this->get_login_link() );
                 }
             }
             else{
                 $CTX->set( 'k_user_disabled', '1' );
                 $CTX->set( 'k_user_access_level', 0 );
             }
+
+            // HOOK: alter_folder_set_context
+            $this->dispatch_event( 'alter_user_set_context' );
         }
 
         function access_levels_dropdown( $selected_level, $max_level, $min_level=0, $inherited=0 ){
@@ -1147,6 +1158,61 @@
             return $this->cmp_date( $str_date1, $str_date2, 1 );
         }
 
+        function get_link( $masterpage ){
+            if( K_PRETTY_URLS ){
+                return K_SITE_URL . $this->get_pretty_template_link( $masterpage );
+            }
+            else{
+                return K_SITE_URL . $masterpage;
+            }
+        }
+
+        function get_login_link( $redirect='' ){
+            global $AUTH;
+
+            $link = '';
+            $redirect =  trim( $redirect );
+
+
+            // HOOK: get_login_link
+            $this->dispatch_event( 'get_login_link', array(&$link, &$redirect) );
+
+            if( trim($link)==false ){
+                if( $AUTH->user->id == -1 ){
+                    if( !strlen($redirect) ){ $redirect = $_SERVER["REQUEST_URI"]; }
+                    $link = K_ADMIN_URL.'login.php?redirect='.urlencode( $redirect );
+                }
+                else{
+                    $link = 'javascript:void(0)';
+                }
+            }
+
+            return $link;
+        }
+
+        function get_logout_link( $redirect='' ){
+            global $AUTH;
+
+            $link = '';
+            $redirect =  trim( $redirect );
+
+            // HOOK: get_logout_link
+            $this->dispatch_event( 'get_logout_link', array(&$link, &$redirect) );
+
+            if( trim($link)==false ){
+                if( $AUTH->user->id != -1 ){
+                    $nonce = $this->create_nonce( 'logout'.$AUTH->user->id, $AUTH->user->name );
+                    if( !strlen($redirect) ){ $redirect = $_SERVER["REQUEST_URI"]; }
+                    $link = K_ADMIN_URL.'login.php?act=logout&nonce='.$nonce. '&redirect='.urlencode( $redirect );
+                }
+                else{
+                    $link = 'javascript:void(0)';
+                }
+            }
+
+            return $link;
+        }
+
         function get_archive_link( $template_name, $year, $month, $day ){
             global $PAGE;
 
@@ -1236,7 +1302,9 @@
                 array_multisort( $depth, SORT_DESC, SORT_NUMERIC, $pretty_tpl_names, SORT_DESC, SORT_STRING, $rs );
 
                 // Loop once again through the templates, generating rewrite rules for each.
-                $header = '';
+                $header = '<!doctype html><html>';
+                $header .= '<head><meta charset="utf-8"/></head>';
+                $header .= '<body style="padding:30px;margin:0;background-color:#fff;color:#111;font:12px/16px Menlo,Monaco,Consolas,\'Courier New\',monospace;">';
                 $for_index = '';
                 $body = '';
                 $sep = '<br>';
@@ -1304,6 +1372,7 @@
                 $header .= 'RewriteRule . - [L]' . $sep;
 
                 $footer = '&lt;/IfModule&gt;';
+                $footer .= '</body></html>';
 
                 return $header . $body . $footer;
             }
@@ -2027,10 +2096,12 @@ OUT;
             $str = "\r\n=======================" . $ts . "=======================\r\n" . $msg . "\r\n";
 
             $fp = @fopen( $file,'a' );
-            flock( $fp, LOCK_EX );
-            @fwrite( $fp, $str );
-            flock( $fp, LOCK_UN );
-            @fclose( $fp );
+            if( $fp ){
+                @flock( $fp, LOCK_EX );
+                @fwrite( $fp, $str );
+                @flock( $fp, LOCK_UN );
+                @fclose( $fp );
+            }
         }
 
         // Called while processing paypal IPN to validate transaction
@@ -2254,7 +2325,7 @@ OUT;
             }
         }
 
-        function insert_comment(){
+        function insert_comment( $params, $node ){
             global $DB, $PAGE, $AUTH;
             $tpl_id = '';
             $page_id = '';
@@ -2342,22 +2413,33 @@ OUT;
                         }
                     }
 
+                    $arr_insert = array(
+                        'tpl_id'=>$tpl_id,
+                        'page_id'=>$page_id,
+                        'user_id'=>$user_id,
+                        'name'=>$name,
+                        'email'=>$email,
+                        'link'=>$link,
+                        'ip_addr'=>$ip_addr,
+                        'date'=>$date,
+                        'data'=>$data,
+                        'approved'=>$approved
+                    );
+
+                    // HOOK: alter_comment_insert
+                    $this->dispatch_event( 'alter_comment_insert', array(&$arr_insert, &$approved, $params, $node) );
+
                     // if everything ok, go for it
-                    $rs = $DB->insert( K_TBL_COMMENTS, array(
-                                                 'tpl_id'=>$tpl_id,
-                                                 'page_id'=>$page_id,
-                                                 'user_id'=>$user_id,
-                                                 'name'=>$name,
-                                                 'email'=>$email,
-                                                 'link'=>$link,
-                                                 'ip_addr'=>$ip_addr,
-                                                 'date'=>$date,
-                                                 'data'=>$data,
-                                                 'approved'=>$approved
-                                                 )
-                            );
+                    $rs = $DB->insert( K_TBL_COMMENTS, $arr_insert );
                     if( $rs!=1 ){ $DB->rollback();  return $this->raise_error( "Failed to insert record in K_TBL_COMMENTS" );}
                     $comment_id =  $DB->last_insert_id;
+
+                    // HOOK: comment_inserted
+                    $err_msg = $this->dispatch_event( 'comment_inserted', array($comment_id, $arr_insert, &$approved, $params, $node) );
+                    if( $err_msg ){
+                        $DB->rollback();
+                        return $this->raise_error( $err_msg );
+                    }
 
                     if( $approved ){
                         // increase comments count for the page
@@ -2415,22 +2497,42 @@ OUT;
                 $neg = 1;
                 $elem = trim( substr($elem, strpos($elem, ' ')) ); // remove NOT
             }
-            $arr_elems = array_map( "trim", explode( ',', $elem ) );
-            $sep = " AND ";
-            if( $neg ) $sep .= "NOT";
-            $sep .= "(";
-            foreach( $arr_elems as $elem ){
-                if( $elem  ){
-                    $validated = ( $validate_natural ) ? $this->is_natural($elem) : 1;
-                    if( $validated ){
+
+            if( $validate_natural ){
+                $sql = ' AND ' . $field_name;
+                $arr_elems = array_filter( explode(',', $elem), array($this, '_validate_natural') );
+                $count = count( $arr_elems );
+                if( !$count ) return;
+
+                if( $count>1 ){
+                    $sql .= ( $neg ) ? ' NOT IN' : ' IN';
+                    $sql .= '(' . implode( ",", $arr_elems ) . ')';
+                }
+                else{
+                    $sql .= ( $neg ) ? '!=' : '=';
+                    $arr_elems = array_values( $arr_elems );
+                    $sql .= $arr_elems[0];
+                }
+            }
+            else{
+                $arr_elems = array_map( "trim", explode( ',', $elem ) );
+                $sep = " AND ";
+                if( $neg ) $sep .= "NOT";
+                $sep .= "(";
+                foreach( $arr_elems as $elem ){
+                    if( $elem  ){
                         $sql .= $sep . $field_name."='" . $DB->sanitize( $elem )."'";
                         $sep = " OR ";
                     }
                 }
+                if( $sep == " OR " ) $sql .= ")";
             }
-            if( $sep == " OR " ) $sql .= ")";
 
             return $sql;
+        }
+
+        function _validate_natural( $str ){
+            return (bool)$this->is_natural( $str );
         }
 
         function get_gravatar( $email='', $size=48, $default='' ){
@@ -2576,6 +2678,27 @@ OUT;
             }
 
             $this->udform_fields[$fieldtype] = array( 'handler'=>$handler_class );
+        }
+
+        // wrapper functions for event dispatcher
+        function dispatch_event( $event_name, $args=array() ){
+            return $this->_ed->dispatch( $event_name, $args );
+        }
+
+        function add_event_listener( $event_name, $listener, $priority = 0 ){
+            $this->_ed->add_listener( $event_name, $listener, $priority );
+        }
+
+        function remove_event_listener( $event_name, $listener ){
+            $this->_ed->remove_listener( $event_name, $listener );
+        }
+
+        function has_event_listeners( $event_name = null ){
+            return $this->_ed->has_listeners( $event_name );
+        }
+
+        function get_event_listeners( $event_name = null ){
+            return $this->_ed->get_listeners( $event_name );
         }
 
         // Store the passed script to output it in admin. (called from udfs)
@@ -3009,8 +3132,7 @@ OUT;
             echo '<li>|</li>';
             echo '<li><a href="'.K_SITE_URL.'" target="_blank">'.$this->t('view_site').'</a></li>';
             echo '<li>|</li>';
-            $nonce = $this->create_nonce( 'logout'.$AUTH->user->id );
-            echo '<li><a href="'.K_ADMIN_URL.'login.php?act=logout&nonce='.$nonce.'">'.$this->t('logout').'</a></li>';
+            echo '<li><a href="'.$this->get_logout_link(K_ADMIN_URL . K_ADMIN_PAGE).'">'.$this->t('logout').'</a></li>';
             echo '</ul>';
             ?>
             <noscript>
@@ -3176,4 +3298,3 @@ OUT;
             $this->err_msg = $err_msg;
         }
     }
-

@@ -146,7 +146,7 @@
 
     // 25.
     // Set the following to '1' if you wish to use KCFinder as the default file-browser (will require PHP5 and modern browsers)
-    define( 'K_USE_KC_FINDER', 0 );
+    define( 'K_USE_KC_FINDER', 1 );
 
     // 99.
     // VERY IMPORTANT!

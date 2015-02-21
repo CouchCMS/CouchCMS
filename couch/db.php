@@ -120,13 +120,14 @@
 
         }
 
-        function select( $tbl, $params, $clause='' ){
+        function select( $tbl, $params, $clause='', $distinct='' ){
             $sep = '';
             foreach( $params as $field ){
                 $fields .= $sep . $field;
                 $sep = ', ';
             }
-            $sql = 'SELECT ' . $fields . ' FROM ' . $tbl;
+            $sql = ( $distinct ) ? 'SELECT DISTINCT ' : 'SELECT ';
+            $sql .= $fields . ' FROM ' . $tbl;
             if( $clause ) $sql .= ' WHERE ' . $clause;
 
             $this->_query( $sql );

@@ -50,8 +50,8 @@
 
     if( !defined('K_COUCH_DIR') ) die(); // cannot be loaded directly
 
-    define( 'K_COUCH_VERSION', '1.4' ); // Changes with every release
-    define( 'K_COUCH_BUILD', '20140117' ); // YYYYMMDD - do -
+    define( 'K_COUCH_VERSION', '1.4.5RC1' ); // Changes with every release
+    define( 'K_COUCH_BUILD', '20140929' ); // YYYYMMDD - do -
 
     if( file_exists(K_COUCH_DIR.'config.php') ){
         require_once( K_COUCH_DIR.'config.php' );
@@ -59,6 +59,7 @@
     else{
         die( '<h3>"config.php" not found. Perhaps you forgot to rename the "config.example.php" file to "config.php" after editing it?</h3>' );
     }
+    if( function_exists('mb_internal_encoding') ) mb_internal_encoding( K_CHARSET );
 
     // Check license
     // Ultra-simplified now that there is no IonCube involved :)
@@ -164,8 +165,8 @@
     }
     if( !defined('K_HTML4_SELFCLOSING_TAGS') ) define( 'K_HTML4_SELFCLOSING_TAGS', 0 );
 
-    if( version_compare( '4.3.3', phpversion(), '>' ) ) {
-        die( 'You are using PHP version '. phpversion().' but the CMS requires at least 4.3.3' );
+    if( version_compare( '5.0.0', phpversion(), '>' ) ) {
+        die( 'You are using PHP version '. phpversion().' but the CMS requires at least 5.0' );
     }
     if( version_compare(phpversion(), '5.0') < 0 ){
         /*
@@ -177,10 +178,6 @@
         ');
         */
         define( 'K_PHP_4', 1 );
-    }
-    else{
-        // unencode file containg clone method for ioncube to work in php4 mode
-        require_once( K_COUCH_DIR.'p7h.php' );
     }
 
     // Refuse to run on IIS
@@ -486,6 +483,32 @@
                 $_sql = "CREATE INDEX `".K_TBL_ATTACHMENTS."_Index03` ON `".K_TBL_ATTACHMENTS."` (`is_orphan`, `file_time`);";
                 $DB->_query( $_sql );
             }
+            // upgrade to 1.4.5RC1
+            if( version_compare("1.4.5RC1", $_ver, ">") ){
+                $_sql = "ALTER TABLE `".K_TBL_ATTACHMENTS."` ADD `creation_ip` varchar(45);";
+                $DB->_query( $_sql );
+
+                $_sql = "CREATE INDEX `".K_TBL_ATTACHMENTS."_index04` ON `".K_TBL_ATTACHMENTS."` (`creation_ip`, `file_time`);";
+                $DB->_query( $_sql );
+
+                $_sql = "ALTER TABLE `".K_TBL_TEMPLATES."` ADD `handler` text;";
+                $DB->_query( $_sql );
+
+                $_sql = "ALTER TABLE `".K_TBL_TEMPLATES."` ADD `custom_params` text;";
+                $DB->_query( $_sql );
+
+                $_sql = "ALTER TABLE `".K_TBL_USERS."` ADD `password_reset_key` varchar(64);";
+                $DB->_query( $_sql );
+
+                $_sql = "ALTER TABLE `".K_TBL_USERS."` ADD `failed_logins` int DEFAULT '0';";
+                $DB->_query( $_sql );
+
+                $_sql = "CREATE INDEX `".K_TBL_USERS."_password_reset_key` ON `".K_TBL_USERS."` (`password_reset_key`);";
+                $DB->_query( $_sql );
+
+                $_sql = "ALTER TABLE `".K_TBL_USERS."` MODIFY `name` varchar(255) NOT NULL;";
+                $DB->_query( $_sql );
+            }
 
             // Finally update version number
             $_rs = $DB->update( K_TBL_SETTINGS, array('k_value'=>K_COUCH_VERSION), "k_key='k_couch_version'" );
@@ -542,17 +565,22 @@
     $TAGS = new KTags();
     $CTX = new KContext();
     $PAGE; // Current page being handled
-    $AUTH = new KAuth( ); // Current user's authentication info
 
     // addons to 1.3
     require_once( K_COUCH_DIR . 'addons/nicedit/nicedit.php' );
     require_once( K_COUCH_DIR . 'addons/repeatable/repeatable.php' );
     require_once( K_COUCH_DIR . 'addons/relation/relation.php' );
 
-    // include custom functions if any
+    // include custom functions/addons if any
     if( file_exists(K_COUCH_DIR . 'addons/kfunctions.php') ){
         include_once( K_COUCH_DIR.'addons/kfunctions.php' );
     }
     if( file_exists(K_SITE_DIR . 'kfunctions.php') ){
         include_once( K_SITE_DIR . 'kfunctions.php' );
     }
+
+    // Current user's authentication info
+    $AUTH = new KAuth( );
+
+    // All addons loaded at this point
+    $FUNCS->dispatch_event( 'init' );

@@ -42,37 +42,25 @@
     require_once( K_COUCH_DIR.'header.php' );
     $_GET['redirect'] = $get; // can bypass sanitization because we'll sanitize URL ourselves later on.
 
-    $AUTH = new KAuth();
     $default_dest = ( $AUTH->user->access_level < K_ACCESS_LEVEL_ADMIN ) ? K_SITE_URL : K_ADMIN_URL . K_ADMIN_PAGE;
-    //$default_dest = K_SITE_URL; // if no redirect specified, send to site's home-page. Don't reveal admin panel's location.
+    $dest = isset($_GET['redirect']) ? $_GET['redirect'] : $default_dest;
 
-    // check if logout requested
-    if( isset($_GET['act']{0}) && $_GET['act'] == 'logout' ){
-        if( $AUTH->user->id != -1 ){
-            $FUNCS->validate_nonce( 'logout'.$AUTH->user->id );
-            $AUTH->delete_cookie();
+    if( $AUTH->user->id != -1 ){ // if user logged-in
+        // check if logout requested
+        if( isset($_GET['act']{0}) && $_GET['act'] == 'logout' ){
+            $AUTH->logout();
         }
-        else{
-            // not logged in, why are you here?
-            header("Location: ".K_SITE_URL);
-            die;
-        }
+        $AUTH->redirect( $dest );
     }
     else{
-        // Login
-        $AUTH = new KAuth( K_ACCESS_LEVEL_AUTHENTICATED );
-    }
+        // login
+        if( $_POST['k_login'] ){
+            $res = $AUTH->login();
 
-    if( isset($_GET['redirect']) ){
-        $ref = $FUNCS->sanitize_url( trim($_GET['redirect']) ); // $_GET already comes urldecoded
-
-        if( strpos(strtolower($ref), 'http')===0 ){ // we don't allow redirects external to our site
-            $ref = K_SITE_URL;
+            if( !$FUNCS->is_error($res) ){
+                $AUTH->redirect( $dest );
+            }
         }
-    }
-    else{
-        $ref = $default_dest;
-    }
 
-    header("Location: ".$ref);
-    die();
+        $AUTH->show_login( $res );
+    }

@@ -715,7 +715,7 @@
                 $qs .= "&return=" . urlencode( $return_url );
                 $qs .= "&cancel_return=" . urlencode( $cancel_url );
                 if( $logo ){
-                   $qs = '&image_url='.urlencode( $logo );
+                   $qs .= '&image_url='.urlencode( $logo );
                 }
                 if( $KSESSION->get_var('contact_email') ){
                     $qs .= "&email=" . urlencode( substr($KSESSION->get_var('contact_email'), 0, 127) );

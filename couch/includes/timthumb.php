@@ -93,7 +93,7 @@ function k_resize_image( $src, $dest=0, $new_width=0, $new_height=0, $zoom_crop=
 			$new_height = $height;
 
 			// if new dimensions already within bounds (and this not a thumbnail that we are creating), return.
-			if( $dest && ($new_width <= $max_width) && ($new_height <= $max_height) ){
+			if( ($src==$dest) && ($new_width <= $max_width) && ($new_height <= $max_height) ){
 				return;
 			}
 
@@ -153,7 +153,7 @@ function k_resize_image( $src, $dest=0, $new_width=0, $new_height=0, $zoom_crop=
 			$cmp_y = $height / $new_height;
 
 			// if new dimensions equal to the original (and this not a thumbnail that we are creating), return.
-			if( $dest && ($cmp_x==1) && ($cmp_y==1) ){
+			if( ($src==$dest) && ($cmp_x==1) && ($cmp_y==1) ){
 				return;
 			}
 

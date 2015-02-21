@@ -785,8 +785,8 @@
                 $link = K_ADMIN_URL . K_ADMIN_PAGE . '?act=edit&tpl='. $CTX->get('k_template_id') .'&p='. $CTX->get('k_page_id') .'&nonce='.$nonce;
             }
             elseif( $CTX->get('k_is_list_page') ){ /* Non-clonable page */
-                $nonce = $FUNCS->create_nonce( 'edit_page_'.$PAGE->tpl_id );
-                $link = K_ADMIN_URL . K_ADMIN_PAGE . '?act=edit&tpl=' . $PAGE->tpl_id .'&nonce='.$nonce;
+                $nonce = $FUNCS->create_nonce( 'edit_page_'.$CTX->get('k_template_id') );
+                $link = K_ADMIN_URL . K_ADMIN_PAGE . '?act=edit&tpl=' . $CTX->get('k_template_id') .'&nonce='.$nonce;
             }
             else{ /* List view */
                 $link = K_ADMIN_URL . K_ADMIN_PAGE . '?act=list&tpl=' . $PAGE->tpl_id;
@@ -840,14 +840,29 @@
             $cond = $FUNCS->resolve_condition( $node->attributes );
             if( eval("return ".$cond.";") ){
                 foreach( $children as $child ){
-                    if( $child->type == K_NODE_TYPE_CODE && $child->name == 'else' ){ break; }
+                    if( $child->type == K_NODE_TYPE_CODE && ($child->name == 'else' || $child->name == 'else_if') ){ break; }
                     $html .= $child->get_HTML();
                 }
             }
             else{
                 $ok = false;
                 foreach( $children as $child ){
-                    if( $child->type == K_NODE_TYPE_CODE && $child->name == 'else' ){ $ok = true; }
+                    if( $child->type == K_NODE_TYPE_CODE && ($child->name == 'else' || $child->name == 'else_if') ){
+                        if( $ok ){
+                            break;
+                        }
+                        else{
+                            if( $child->name == 'else' ){
+                                $ok = true;
+                            }
+                            else{
+                                $cond = $FUNCS->resolve_condition( $child->attributes );
+                                if( eval("return ".$cond.";") ){
+                                    $ok = true;
+                                }
+                            }
+                        }
+                    }
                     if( $ok ){
                         $html .= $child->get_HTML();
                     }
@@ -865,6 +880,10 @@
         }
 
         function k_else( $params, $node ){
+            if( count($node->children) ) {die("ERROR: Tag \"".$node->name."\" is a self closing tag");}
+        }
+
+        function else_if( $params, $node ){
             if( count($node->children) ) {die("ERROR: Tag \"".$node->name."\" is a self closing tag");}
         }
 
@@ -1042,11 +1061,15 @@
                         $core_params,
                         $params);
 
+            // HOOK: alter_editable_start
+            $FUNCS->dispatch_event( 'alter_editable_start', array(&$attr, $params, $node, &$called_from_repeatable) );
+
             $attr['name'] = trim( $attr['name'] );
             $attr['type'] = strtolower( trim($attr['type']) );
             if( !$attr['type'] ){ $attr['type']='textarea'; }
 
             $is_udf = 0;
+            $attr_udf = array();
             if( !$FUNCS->is_core_type($attr['type']) ){
                 // is it a udf?
                 if( array_key_exists($attr['type'], $FUNCS->udfs) ){
@@ -1141,6 +1164,10 @@
                 return $attr;
             }
 
+            // HOOK: alter_editable
+            $skip = $FUNCS->dispatch_event( 'alter_editable', array(&$attr, &$attr_udf, $params, $node, $called_from_repeatable) );
+            if( $skip ) return;
+
             extract( $attr );
 
             if( !$name ) {die("ERROR: Tag \"".$node->name."\" needs a 'name' attribute");}
@@ -1191,10 +1218,6 @@
                             }
                             if( count($prev_udf_values) ){
                                 $modified['custom_params'] = $FUNCS->serialize($attr_udf);
-                                // Call udf to do something for 'update' event
-                                if( $field->k_type == $orig_field_type ){
-                                    $field->_update( $prev_udf_values );
-                                }
                             }
                         }
                         // Check if the default text (if any) has changed
@@ -1206,8 +1229,21 @@
                             $modified['deleted'] = $field->deleted = "0";
                         }
 
+                        // HOOK: alter_editable_modifications
+                        $FUNCS->dispatch_event( 'alter_editable_modifications', array(&$modified, $field, $params, $node) );
+
                         if( count($modified) ){
                             $DB->begin();
+
+                            // HOOK: alter_field_update
+                            $FUNCS->dispatch_event( 'alter_field_update', array(&$modified, $field, $params, $node) );
+
+                            if( array_key_exists('custom_params', $modified) ){
+                                // Call udf to do something for 'update_schema' event
+                                if( $field->k_type == $orig_field_type ){
+                                    $field->_update_schema( $prev_udf_values );
+                                }
+                            }
 
                             // Check if search_type of custom field changed
                             if( array_key_exists('search_type', $modified) ){
@@ -1247,6 +1283,9 @@
                             $modified['_html'] = $tag;
                             $rs = $DB->update( K_TBL_FIELDS, $modified, "id='" . $DB->sanitize( $field->id ). "'" );
                             if( $rs==-1 ) die( "ERROR: Unable to save modified editable field" );
+
+                            // HOOK: field_updated
+                            $FUNCS->dispatch_event( 'field_updated', array(&$modified, $field, $params, $node) );
 
                             $DB->commit();
                         }
@@ -1319,6 +1358,9 @@
                         $fields['custom_params'] =  $FUNCS->serialize($attr_udf);
                     }
 
+                    // HOOK: alter_field_insert
+                    $FUNCS->dispatch_event( 'alter_field_insert', array(&$fields, $attr, $is_udf, $params, $node) );
+
                     $rs = $DB->insert( K_TBL_FIELDS, $fields );
                     if( $rs==-1 ) die( "ERROR: Unable to insert record in K_TBL_FIELDS" );
                     $field_id = $DB->last_insert_id;
@@ -1328,8 +1370,6 @@
                     if( $is_udf ){
                         $classname = $FUNCS->udfs[$attr['type']]['handler'];
                         $f = new $classname( $rs[0], $PAGE, $PAGE->fields );
-                        // Call udf to do something for 'create' event
-                        $f->_create();
                     }
                     else{
                         $f = new KField( $rs[0], $PAGE, $PAGE->fields );
@@ -1350,10 +1390,23 @@
                                 $arr_to_fields['search_value'] = '';
                             }
 
+                            // HOOK: alter_datafield_insert_for_existingpage
+                            $FUNCS->dispatch_event( 'alter_datafield_insert_for_existingpage', array($rec, &$arr_to_fields, &$to_table, &$f, &$PAGE, $params, $node) );
+
                             $rs2 = $DB->insert( $to_table, $arr_to_fields );
-                            if( $rs2==-1 ) die( "ERROR: Failed to insert record in K_TBL_FIELDS in" . $to_table );
+                            if( $rs2==-1 ) die( "ERROR: Failed to insert record for K_TBL_FIELDS in" . $to_table );
+
+                            if( $is_udf ){
+                                // Call udf to do something for 'create' event
+                                $f->_create( $rec['id'], 1 );
+                            }
+
                         }
                     }
+
+                    // HOOK: field_inserted
+                    $FUNCS->dispatch_event( 'field_inserted', array( &$f, $is_udf, &$PAGE, $params, $node) );
+
                     $DB->commit();
 
                     if( !$hidden && !($PAGE->is_master && $PAGE->tpl_is_clonable) ){
@@ -1370,8 +1423,8 @@
             global $FUNCS, $PAGE, $DB, $AUTH;
 
             if( $AUTH->user->access_level >= K_ACCESS_LEVEL_SUPER_ADMIN ){
-                $attr = $FUNCS->get_named_vars(
-                            array( 'title'=>'',
+                $core_params = array(
+                                   'title'=>'',
                                    'clonable'=>'0',
                                    'access_level'=>'0',
                                    'executable'=>'1',
@@ -1380,9 +1433,15 @@
                                    'order'=>'0',
                                    'dynamic_folders'=>'0',
                                    'nested_pages'=>'0',
-                                   'gallery'=>'0'
-                                  ),
+                                   'gallery'=>'0',
+                                   'handler'=>''
+                                  );
+                $attr = $FUNCS->get_named_vars(
+                            $core_params,
                             $params);
+
+                // HOOK: alter_template_tag_params
+                $FUNCS->dispatch_event( 'alter_template_tag_params', array(&$attr, $params, $node) );
 
                 $attr['clonable'] = $FUNCS->is_natural( $attr['clonable'] ) ? intval( $attr['clonable'] ) : 0;
                 if( $attr['clonable']!= 0 ) $attr['clonable'] = 1;
@@ -1405,8 +1464,23 @@
                     $attr['clonable'] = 1; // gallery works only with clonable templates
                     $attr['nested_pages'] = 0; // gallery cannot work with nested-pages
                 }
+                $attr['handler'] = strtolower( trim($attr['handler']) );
 
-                $rs = $DB->select( K_TBL_TEMPLATES, array('description', 'title', 'clonable', 'access_level', 'executable', 'commentable', 'hidden', 'k_order', 'dynamic_folders', 'nested_pages', 'gallery'), "id='" . $DB->sanitize( $PAGE->tpl_id ). "'" );
+                // HOOK: add_template_params
+                // give modules a chance to add their custom params
+                $attr_custom = array();
+                $FUNCS->dispatch_event( 'add_template_params', array(&$attr_custom, $params, $node) );
+                foreach( $attr_custom as $k=>$v ){
+                    if( array_key_exists($k, $core_params) ){
+                        unset( $attr_custom[$k] );
+                    }
+                }
+
+                // HOOK: alter_template
+                $FUNCS->dispatch_event( 'alter_template', array(&$attr, &$attr_custom, $params, $node) );
+                if( array_key_exists('custom_params', $attr) ) unset( $attr['custom_params'] );
+
+                $rs = $DB->select( K_TBL_TEMPLATES, array('*'), "id='" . $DB->sanitize( $PAGE->tpl_id ). "'" );
                 if( count($rs) ){
                     $rec = $rs[0];
                     $modified = array();
@@ -1430,6 +1504,31 @@
                             $modified[$k] = trim($v);
                         }
                     }
+
+                    // any custom params added, removed or modified?
+                    $custom_params = $rec['custom_params'];
+                    if( strlen($custom_params) ){
+                        $custom_params = $FUNCS->unserialize($custom_params);
+                    }
+                    if( !is_array($custom_params) ) $custom_params=array();
+                    $prev_custom_values = array();
+                    foreach( $attr_custom as $k=>$v ){
+                        if( !array_key_exists($k, $custom_params) || $custom_params[$k]!=$v ){
+                            $prev_custom_values[$k] = $custom_params[$k];
+                        }
+                    }
+                    foreach( $custom_params as $k=>$v ){
+                        if( !array_key_exists($k, $attr_custom) ){
+                            $prev_custom_values[$k] = $v;
+                        }
+                    }
+                    if( count($prev_custom_values) ){
+                        $modified['custom_params'] = $FUNCS->serialize($attr_custom);
+                    }
+
+                    // HOOK: alter_template_modified
+                    $FUNCS->dispatch_event( 'alter_template_modified', array($rec, $attr, $prev_custom_values, $attr_custom, &$modified, $params, $node) );
+
                     if( count($modified) ){
                         $rs2 = $DB->update( K_TBL_TEMPLATES, $modified, "id='" . $DB->sanitize( $PAGE->tpl_id ). "'" );
                         if( $rs2==-1 ) die( "ERROR: Tag: '.$node->name.' Unable to save modified template attribute" );
@@ -1439,6 +1538,9 @@
                             $DB->update( K_TBL_TEMPLATES, array('description'=>$DB->sanitize( $rs[0]['description'] )), "id='" . $DB->sanitize( $PAGE->tpl_id ) . "'" );
                             $PAGE->reset_weights_of(); // entire tree
                         }
+
+                        // HOOK: template_modified
+                        $FUNCS->dispatch_event( 'template_modified', array($rec, $attr, $prev_custom_values, $attr_custom, $modified, $params, $node) );
                     }
                 }
                 foreach( $node->children as $child ){
@@ -1542,8 +1644,13 @@
                                'return_sql'=>'0',
 
                                'show_unpublished'=>'0', /* only for admins */
+                               'aggregate_by'=>'',    /* the relation field to aggregate for count */
                               ),
                         $params);
+
+            // HOOK: alter_page_tag_params
+            $FUNCS->dispatch_event( 'alter_page_tag_params', array(&$attr, $params, $node, &$mode) );
+
             extract( $attr );
 
             // sanitize params
@@ -1563,6 +1670,7 @@
             $fetch_pages = ( $fetch_pages==1 ) ? 1 : 0;
             $return_sql = ( $return_sql==1 || $return_sql==2 ) ? intval( $return_sql ) : 0;
             $show_unpublished = ( $show_unpublished==1 ) ? 1 : 0;
+            $aggregate_by = trim( $aggregate_by );
 
             $qs_param = trim( $qs_param );
             if( $qs_param=='' ){
@@ -1579,16 +1687,23 @@
             $sql = '';
             $order_sql = '';
             $limit_sql = '';
+            $distinct = 0;
+            $group_by = array();
+            $having = array();
+
+            $count_query_field_as = 'cnt';
+            $rec_tpl = array();
+
             if( $mode==0 || $mode==3 || $mode==4 ){ // 3 if called from calender tag, 4 if called from related_pages/reverse_related_pages tag
-                $query_table = K_TBL_PAGES;
+                $query_table = K_TBL_PAGES . ' p';
                 $default_orderby = 'publish_date';
                 if( $mode==4 ){ // related pages
                     if( $pid ){
-                        $query_table .= "\r\n" .'inner join '.K_TBL_RELATIONS.' rel on rel.cid = id';
+                        $query_table .= "\r\n" .'inner join '.K_TBL_RELATIONS.' rel on rel.cid = p.id';
                         $sql .= "rel.pid=".$DB->sanitize($pid)." AND rel.fid=".$DB->sanitize($fid)." AND\r\n";
                     }
                     elseif( $cid ){ // reverse related
-                        $query_table .= "\r\n" .'inner join '.K_TBL_RELATIONS.' rel on rel.pid = id';
+                        $query_table .= "\r\n" .'inner join '.K_TBL_RELATIONS.' rel on rel.pid = p.id';
                         $sql .= "rel.cid=".$DB->sanitize($cid)." AND rel.fid=".$DB->sanitize($fid)." AND\r\n";
                     }
                     else{ //huh?
@@ -1598,9 +1713,9 @@
                     $mode=0; // convert to the normal 'pages' tag
                 }
 
-                $query_fields = array('id', 'template_id');
-                if( $mode==3 ) $query_fields[] = 'publish_date';
-                $count_query_field = 'id';
+                $query_fields = array('p.id', 'p.template_id');
+                if( $mode==3 ) $query_fields[] = 'p.publish_date';
+                $count_query_field = 'p.id';
 
                 if( $masterpage=='' ){ $masterpage = $PAGE->tpl_name; }
 
@@ -1614,20 +1729,23 @@
 
                 // build the sql where clause using the supplied params.
                 // masterpage
-                $rs = $DB->select( K_TBL_TEMPLATES, array('id', 'gallery'), "name='" . $DB->sanitize( $masterpage ). "'" );
-                if( !count($rs) ) return 'Error: masterpage: "'.$masterpage.'" not found.';
+                $rs = $DB->select( K_TBL_TEMPLATES, array('*'), "name='" . $DB->sanitize( $masterpage ). "'" );
+                if( !count($rs) ){
+                    die( "ERROR: Tag \"".$node->name."\": masterpage '".$FUNCS->cleanXSS($masterpage)."' not found" );
+                }
+                $rec_tpl = $rs[0];
                 $tpl_id = $rs[0]['id'];
                 $tpl_is_gallery = $rs[0]['gallery'];
-                $sql .= "template_id='" . $DB->sanitize( $tpl_id )."'";
+                $sql .= "p.template_id='" . $DB->sanitize( $tpl_id )."'";
 
                 // id?
                 if( $id ){
-                    $sql .= $FUNCS->gen_sql( $id, 'id', 1);
+                    $sql .= $FUNCS->gen_sql( $id, 'p.id', 1);
                 }
 
                 // name?
                 if( $page_name ){
-                    $sql .= $FUNCS->gen_sql( $page_name, 'page_name');
+                    $sql .= $FUNCS->gen_sql( $page_name, 'p.page_name');
                 }
 
                 // folder?
@@ -1682,7 +1800,7 @@
                         $sql .= "(";
                         $sep = "";
                         foreach( $arr_folders as $k=>$v ){
-                            $sql .= $sep . "page_folder_id='" . $DB->sanitize( $v )."'";
+                            $sql .= $sep . "p.page_folder_id='" . $DB->sanitize( $v )."'";
                             $sep = " OR ";
                         }
                         $sql .= ")";
@@ -1690,28 +1808,43 @@
                 }
                 else{
                     if( !$include_subfolders ){
-                        $sql .= " AND page_folder_id='-1'";
+                        $sql .= " AND p.page_folder_id='-1'";
                     }
                 }
 
                 // is_master?
-                if( $is_master ) $sql .= " AND is_master = '1'";
+                if( $is_master ) $sql .= " AND p.is_master = '1'";
 
                 // dates
-                if( $start_on ) $sql .= " AND publish_date >= '".$DB->sanitize( $start_on )."'";
+                if( $start_on ) $sql .= " AND p.publish_date >= '".$DB->sanitize( $start_on )."'";
                 if( $hide_future_entries ){
                     $cur_time = $FUNCS->get_current_desktop_time();
                     $stop_before = $FUNCS->smaller_date( $stop_before, $cur_time );
                 }
                 if( $stop_before ){
-                    $sql .= " AND publish_date < '".$DB->sanitize( $stop_before )."'";
+                    $sql .= " AND p.publish_date < '".$DB->sanitize( $stop_before )."'";
                 }
                 if( $AUTH->user->access_level < K_ACCESS_LEVEL_ADMIN || !$show_unpublished ){
-                    $sql .= " AND NOT publish_date = '0000-00-00 00:00:00'";
+                    $sql .= " AND NOT p.publish_date = '0000-00-00 00:00:00'";
                 }
 
                 // orderby
-                $arr_custom_orderby = array(); // any custom field used as 'order_by' clause
+                // canonical orderby will be prefixed with 'p.' in generated sql
+                // TODO: order by folder_name, folder_title, recent_comment, relation fields
+                $arr_canonical_orderby = array( 'publish_date', 'page_name', 'page_title', 'modification_date', 'comments_count' );
+                if( $tpl_is_gallery ){
+                    $arr_canonical_orderby = array_merge( $arr_canonical_orderby, array('file_name', 'file_ext', 'file_size') );
+                }
+                $arr_acceptable_orderby = array('random');
+                if( $aggregate_by ) $arr_acceptable_orderby[]='k_rel_count';
+
+                // HOOK: alter_valid_orderby
+                $FUNCS->dispatch_event( 'alter_valid_orderby', array(&$arr_acceptable_orderby, &$arr_canonical_orderby, $params, $node, $rec_tpl) );
+
+                $arr_acceptable_orderby = array_merge( $arr_canonical_orderby, $arr_acceptable_orderby );
+
+                $arr_custom_orderby = array(); // custom fields in 'order_by' clause (points to the entry in $arr_orderby and $arr_order below)
+
                 if( $mode==3 ){
                     // for calendar, these two params are always fixed
                     $order = 'asc';
@@ -1722,12 +1855,6 @@
                 for( $i=0; $i<count($arr_orderby); $i++ ){
                     $orderby = $arr_orderby[$i];
                     if( $orderby ){
-                        // TODO: order by folder_name, folder_title, recent_comment
-                        $arr_acceptable_orderby = array( 'publish_date', 'page_name', 'page_title', 'modification_date', 'comments_count', 'random' );
-                        // If gallery, add a few more orderby fields -
-                        if( $tpl_is_gallery ){
-                            $arr_acceptable_orderby = array_merge( $arr_acceptable_orderby, array('file_name', 'file_ext', 'file_size') );
-                        }
                         if( !in_array($orderby, $arr_acceptable_orderby) ){
                             $arr_custom_orderby[$arr_orderby[$i]] = $i;
                         }
@@ -1762,15 +1889,71 @@
                         }
                     }
 
+                    // if 'aggregate_by' specified, set it as a custom relational field
+                    if( $aggregate_by ) $arr_custom_fields[]=array('name'=>$aggregate_by,'op'=>'=','val'=>array(),'is_aggregate'=>1);
+
+                    // HOOK: alter_page_tag_fields
+                    $FUNCS->dispatch_event( 'alter_page_tag_fields', array(&$arr_custom_fields, &$arr_orderby, &$arr_order, &$arr_custom_orderby, $params, $node, $rec_tpl) );
+
+                    $arr_rel_fields = array();
+                    $arr_rel_types = array();
+
+                    // HOOK: alter_relational_types
+                    // modules can add their custom types that store data in relation table
+                    $FUNCS->dispatch_event( 'alter_relational_types', array(&$arr_rel_types, $params, $node, $rec_tpl) );
+
+                    $arr_rel_types = array_merge( array('relation'), $arr_rel_types );
+
                     if( count($arr_custom_fields) || count($arr_custom_orderby) ){
                         // resolve custom field names to ids
-                        $rs_cf = $DB->select( K_TBL_FIELDS, array('id', 'name', 'search_type'), "template_id='" . $DB->sanitize( $tpl_id ). "'" );
+                        $rs_cf = $DB->select( K_TBL_FIELDS, array('*'), "template_id='" . $DB->sanitize( $tpl_id ). "'" );
                         $arr_tables = array();
                         $count = 0;
                         for( $x=0 ; $x<count($arr_custom_fields); $x++ ){
+
+                            if( $arr_custom_fields[$x]['processed'] ) continue; // can be set from hook
+
+                            // is it a 'relation' field with template name ( e.g. 'courses.php::taken' )?
+                            if( strpos($arr_custom_fields[$x]['name'], '::')!==false ){
+                                list( $rel_field_tpl, $rel_field_name ) = array_map( "trim", explode( '::', $arr_custom_fields[$x]['name'] ) );
+                                if( $rel_field_tpl != $masterpage ){
+                                    $arr_rel_fields[$rel_field_tpl][] = array( 'name'=>$rel_field_name, 'op'=>$arr_custom_fields[$x]['op'], 'val'=>$arr_custom_fields[$x]['val'], 'is_aggregate'=>$arr_custom_fields[$x]['is_aggregate'] );
+                                    $arr_custom_fields[$x]['processed'] = 1;
+                                    continue;
+                                }
+                                else{
+                                    $arr_custom_fields[$x]['name'] = $rel_field_name;
+                                }
+                            }
+                            // is it the 'k_rel_count' field that becomes available with 'aggregate_by'?
+                            if( $aggregate_by && $arr_custom_fields[$x]['name']=='k_rel_count' ){
+                                $rel_op = $arr_custom_fields[$x]['op'];
+                                if( $rel_op=='==' ){
+                                    $rel_op='=';
+                                }
+                                elseif( $rel_op=='!==' || $rel_op=='!=' ){
+                                    $rel_op='<>';
+                                }
+                                $rel_val = $arr_custom_fields[$x]['val'][0];
+                                if( $FUNCS->_validate_natural($rel_val) ){
+                                    $having[]="k_rel_count $rel_op $rel_val";
+                                    $count_query_field_as='k_rel_count';
+                                }
+                                $arr_custom_fields[$x]['processed'] = 1;
+                                continue;
+                            }
+
                             for( $i=0; $i<count($rs_cf); $i++ ){
                                 $f = $rs_cf[$i];
                                 if( $f['name']==$arr_custom_fields[$x]['name'] ){
+
+                                    // 'relation' field?
+                                    if( in_array($f['k_type'], $arr_rel_types) ){
+                                        $arr_rel_fields[$masterpage][] = array( 'related_field'=>$f, 'name'=>$f['name'], 'op'=>$arr_custom_fields[$x]['op'], 'val'=>$arr_custom_fields[$x]['val'], 'id'=>$f['id'], 'is_aggregate'=>$arr_custom_fields[$x]['is_aggregate'] );
+                                        $arr_custom_fields[$x]['processed'] = 1;
+                                        continue 2;
+                                    }
+
                                     $arr_custom_fields[$x]['id'] = $f['id'];
                                     $arr_custom_fields[$x]['type'] = $f['search_type'];
                                     $arr_custom_fields[$x]['field_name'] = ( $f['search_type']=='text' ) ? 'search_value' : 'value';
@@ -1798,15 +1981,112 @@
                                 }
                             }
                             if( !array_key_exists('id', $arr_custom_fields[$x]) ){
-                                die("ERROR: Custom Field \"".$arr_custom_fields[$x]['name']."\" does not exist");
+                                die("ERROR: Custom Field \"".$arr_custom_fields[$x]['name']."\" does not exist in '" . $FUNCS->cleanXSS($masterpage) . "'" );
                             }
                         }
+
+                        // resolve relation fields
+                        if( count($arr_rel_fields) ){
+                            foreach( $arr_rel_fields as $rel_field_tpl=>$rel_fields ){// for each masterpage
+
+                                $rel_field_tpl_id = 0;
+                                $rel_count = 0;
+                                foreach( $rel_fields as $rel_field ){ // for each relation field in the masterpage
+
+                                    if( $rel_field['op']!=='=' && $rel_field['op']!=='!=' ){
+                                        die("ERROR: Tag \"".$node->name."\": custom field '".$FUNCS->cleanXSS($rel_field['name'])."' does not support '".$rel_field['op']."' operator");
+                                    }
+
+                                    //  id of the field itself
+                                    if( ( $rel_field_tpl!=$masterpage ) ){
+                                        if( !$rel_field_tpl_id ){
+                                            // get template_id of masterpage
+                                            $rs = $DB->select( K_TBL_TEMPLATES, array('id'), "name='" . $DB->sanitize( $rel_field_tpl ). "'" );
+                                            if( count($rs) ){
+                                                $rel_field_tpl_id = $rs[0]['id'];
+                                            }
+                                            else{
+                                                die("ERROR: Tag \"".$node->name."\": masterpage '".$FUNCS->cleanXSS($rel_field_tpl)."' not found for custom field '". $FUNCS->cleanXSS( $rel_field['name'] )."'" );
+                                            }
+                                        }
+
+                                        // get relation_field_id using template_id
+                                        $rs = $DB->select( K_TBL_FIELDS, array('*'), "template_id='" . $DB->sanitize( $rel_field_tpl_id ). "'".$FUNCS->gen_sql( implode(",", $arr_rel_types), 'k_type' )." AND name='" . $DB->sanitize( $rel_field['name'] ) . "'" );
+
+                                        if( count($rs) ){
+                                            $arr_rel_fields[$rel_field_tpl][$rel_count]['id'] = $rs[0]['id'];
+                                        }
+                                        else{
+                                            die("ERROR: Tag \"".$node->name."\": custom field '".$FUNCS->cleanXSS($rel_field['name'])."' not defined in ".$FUNCS->cleanXSS($rel_field_tpl));
+                                        }
+                                    }
+
+                                    // ids of the field's values
+                                    if( count($rel_field['val']) ){
+                                        // .. check if values are already ids (e.g. 'id(373,372,371)')
+                                        $val1 = trim( $rel_field['val'][0] );
+                                        $val2 = trim( $rel_field['val'][count($rel_field['val'])-1] );
+                                        if( (stripos($val1, 'id(')===0) && (substr($val2, -1)==')') ){
+                                            $val1 = substr( $val1, 3 );
+                                            $arr_rel_fields[$rel_field_tpl][$rel_count]['val'][0] = $val1;
+                                            if( count($rel_field['val'])==1 ) $val2=$val1;
+                                            $val2 = substr( $val2, 0, -1 );
+                                            $arr_rel_fields[$rel_field_tpl][$rel_count]['val'][count($rel_field['val'])-1] = $val2;
+                                        }
+                                        else{
+                                            if( $rel_field_tpl!=$masterpage ){
+                                                // reverse related - the related pages should belong to this very template
+                                            }
+                                            else{
+                                                // get the related template
+                                                $obj_field = new Relation( $rel_field['related_field'], new KError('dummy'), new KError('dummy') );
+                                                $related_template_name = trim( $obj_field->masterpage );
+                                                unset( $obj_field );
+                                                $rs = $DB->select( K_TBL_TEMPLATES, array('id'), "name='" . $DB->sanitize( $related_template_name ). "'" );
+                                                if( count($rs) ){
+                                                    $rel_field_tpl_id = $rs[0]['id'];
+                                                }
+                                                else{
+                                                    die("ERROR: Tag \"".$node->name."\": masterpage '".$FUNCS->cleanXSS($related_template_name)."' not found for related field '". $FUNCS->cleanXSS( $rel_field['name'] )."'" );
+                                                }
+
+                                            }
+
+                                            // convert related page_names to ids (if not 'ANY')
+                                            if( count($rel_field['val'])==1 && trim($rel_field['val'][0])=='ANY' ){
+                                                $arr_rel_fields[$rel_field_tpl][$rel_count]['skip_ids'] = 1;
+                                                $arr_rel_fields[$rel_field_tpl][$rel_count]['val'] = array();
+                                            }
+                                            else{
+                                                $str_names = implode( ",", $rel_field['val'] );
+                                                $rs = $DB->select( K_TBL_PAGES, array('id'), "template_id='" . $DB->sanitize( $rel_field_tpl_id ). "'" . $FUNCS->gen_sql( $str_names, 'page_name' ) );
+                                                $arr_vals = array();
+                                                foreach( $rs as $rec ){
+                                                    $arr_vals[]=$rec['id'];
+                                                }
+                                                $arr_rel_fields[$rel_field_tpl][$rel_count]['val'] = $arr_vals;
+                                            }
+
+                                        }
+                                    }
+                                    $rel_count++;
+                                }
+                            }
+
+                        }
+
                         // resolve custom_fields used as order_by
                         foreach( $arr_custom_orderby as $k=>$v ){
                             $cf_found = 0;
                             for( $i=0; $i<count($rs_cf); $i++ ){
                                 $f = $rs_cf[$i];
                                 if( $f['name']==$k ){
+                                    // 'relation' field?
+                                    if( in_array($f['k_type'], $arr_rel_types) ){
+                                        unset( $arr_orderby[$v] );
+                                        unset( $arr_order[$v] );
+                                        continue 2;
+                                    }
                                     $cf_found = 1;
                                     if( !array_key_exists($f['name'], $arr_tables) ){
                                         $arr_tables[$f['name']]['id'] = $f['id'];
@@ -1817,34 +2097,101 @@
                                     break;
                                 }
                             }
-                            if( !$cf_found ) die("ERROR: Unknown orderby clause \"".$k."\"");
+                            if( !$cf_found ) die("ERROR: Unknown orderby clause \"".$FUNCS->cleanXSS( $k )."\"");
                         }
 
                         // generate sql to query custom fields
-                        $where = ' AND ' ."\r\n" . '(' ."\r\n";
-                        $sep = '';
-                        foreach( $arr_tables as $k=>$tbl ){
-                            $join .= ' inner join '.$tbl['tbl_name'].' '.$tbl['alias'].' on '.$tbl['alias'].'.page_id = id' . "\r\n";
-                            $where .= $sep . $tbl['alias'].'.field_id=' . $DB->sanitize( $tbl['id'] );
-                            $sep = ' AND' . "\r\n";
-                        }
-                        $where .=  "\r\n" . ')' . "\r\n";
+                        if( count($arr_rel_fields) ){
 
-                        if( count($arr_custom_fields) ){
-                            $where .= ' AND ' ."\r\n" . '(' ."\r\n";
-                            $sep = '';
-                            foreach( $arr_custom_fields as $cf ){
-                                if( count($cf['val']) > 1 ) $where .= '(';
-                                $where .= $sep;
-                                $sep2 = '';
-                                foreach( $cf['val'] as $val ){
-                                    $where .= $sep2 . $cf['table_name'].'.'.$cf['field_name'].' '.$cf['op'].' \''.$val.'\'';
-                                    $sep2 = ' OR ';
+                            if( count($arr_rel_fields) > 1 ) $distinct = 1;
+                            $rel_suffix = 1;
+
+                            foreach( $arr_rel_fields as $rel_field_tpl=>$rel_fields ){// for each masterpage
+                                foreach( $rel_fields as $rel_field ){ // for each relation field in the masterpage
+
+                                    if( count($rel_field['val']) > 1 || ($rel_field['skip_ids'] && $rel_field['op']=='=') ) $distinct = 1;
+
+                                    $rel_tbl = 'rel' . $rel_suffix;
+                                    $join_field = ($rel_field_tpl==$masterpage) ? 'pid' : 'cid';
+                                    $where_field = ($rel_field_tpl==$masterpage) ? 'cid' : 'pid';
+
+                                    if( $rel_field['is_aggregate'] ){
+
+                                        $query_fields[]='count(p.id) as k_rel_count';
+                                        $group_by[]='p.id';
+
+                                        foreach( $arr_rel_fields[$rel_field_tpl] as $rfld ){
+                                            if( $rfld['id']==$rel_field['id'] && !$rfld['is_aggregate'] ){
+                                                continue 2; // skip if table already joined
+                                            }
+                                        }
+                                    }
+
+                                    if( $rel_field['op']=='!=' ){// Negation in N:M relation requires special consideration
+                                        $str_ids = $FUNCS->gen_sql( implode(",", $rel_field['val']), "$where_field", 1 );
+                                        if( $str_ids || $rel_field['skip_ids'] ){
+                                            $rs = $DB->select( K_TBL_RELATIONS, array("$join_field as id"), "fid='".$DB->sanitize($rel_field['id'])."'".$str_ids, 1 );
+                                            $arr_vals = array();
+                                            foreach( $rs as $rec ){
+                                                $arr_vals[]=$rec['id'];
+                                            }
+                                            if( count($arr_vals) ){
+                                                $sql .= " \r\n" . 'AND p.id NOT IN(' . implode( ",", $arr_vals ) .')';
+                                            }
+                                        }
+                                    }
+                                    else{
+                                        $str_ids = '';
+                                        if( !$rel_field['is_aggregate'] && !$rel_field['skip_ids'] ){
+                                            $str_ids = $FUNCS->gen_sql( implode(",", $rel_field['val']), "$rel_tbl.$where_field", 1 );
+                                            if( !$str_ids ) $str_ids = " AND $rel_tbl.$where_field=-1";
+                                        }
+
+                                        $query_table .= "\r\n inner join ".K_TBL_RELATIONS." $rel_tbl on $rel_tbl.$join_field = p.id";
+                                        $sql .= " \r\n" . $str_ids . " AND $rel_tbl.fid=".$DB->sanitize($rel_field['id']);
+                                    }
+
+                                    $rel_suffix++;
                                 }
-                                if( count($cf['val']) > 1 ) $where .= ')';
+                            }
+                        }
+
+                        if( count($arr_tables) ){
+                            $where = ' AND ' ."\r\n" . '(' ."\r\n";
+                            $sep = '';
+                            foreach( $arr_tables as $k=>$tbl ){
+                                $join .= ' inner join '.$tbl['tbl_name'].' '.$tbl['alias'].' on '.$tbl['alias'].'.page_id = p.id' . "\r\n";
+                                $where .= $sep . $tbl['alias'].'.field_id=' . $DB->sanitize( $tbl['id'] );
                                 $sep = ' AND' . "\r\n";
                             }
                             $where .=  "\r\n" . ')' . "\r\n";
+                        }
+
+                        if( count($arr_custom_fields) ){
+
+                            // skip processed custom_fields
+                            $arr_tmp = $arr_custom_fields;
+                            $arr_custom_fields = array();
+                            foreach( $arr_tmp as $cf ){
+                                if( $cf['processed'] ) continue;
+                                $arr_custom_fields[] = $cf;
+                            }
+                            if( count($arr_custom_fields) ){
+                                $where .= ' AND ' ."\r\n" . '(' ."\r\n";
+                                $sep = '';
+                                foreach( $arr_custom_fields as $cf ){
+                                    $where .= $sep;
+                                    if( count($cf['val']) > 1 ) $where .= '(';
+                                    $sep2 = '';
+                                    foreach( $cf['val'] as $val ){
+                                        $where .= $sep2 . $cf['table_name'].'.'.$cf['field_name'].' '.$cf['op'].' \''.$val.'\'';
+                                        $sep2 = ' OR ';
+                                    }
+                                    if( count($cf['val']) > 1 ) $where .= ')';
+                                    $sep = ' AND' . "\r\n";
+                                }
+                                $where .=  "\r\n" . ')' . "\r\n";
+                            }
                         }
 
                         // append to original sql
@@ -1857,10 +2204,20 @@
                 $sep = '';
                 for( $i=0; $i<count($arr_orderby); $i++ ){
                     $orderby = $arr_orderby[$i];
+                    if( in_array($orderby, $arr_canonical_orderby) ){ $orderby = 'p.'.$orderby; };
+
                     if( $orderby == 'random' ){
-                        $orderby = 'RAND()';
+                        if( $paginate ){
+                            if(!session_id()) @session_start();
+                            if(empty($_SESSION['k_seed'])) $_SESSION['k_seed'] = rand();
+                            $orderby = 'RAND(' .$_SESSION['k_seed']. ')';
+                        }
+                        else{
+                            $orderby = 'RAND()';
+                        }
                         $PAGE->no_cache=1;
                     }
+
                     $order_sql .= $sep . $DB->sanitize( $orderby );
 
                     $order = $arr_order[$i];
@@ -2013,9 +2370,37 @@
 
             }
             else{
+
+                // HOOK: alter_page_tag_query
+                // called routine should check for $node->name to know which tag is being executed.
+                // rs_tpl (masterpage info) will be filled only for mode 0 (i.e. pages/related_pages/reverse_related_pages tags)
+                $FUNCS->dispatch_event( 'alter_page_tag_query', array(&$distinct, &$count_query_field, &$count_query_field_as, &$query_fields, &$query_table, &$sql, &$group_by, &$having, &$order_sql, &$limit_sql, &$mode, $params, $node, $rec_tpl) );
+
+                $orig_sql = $sql;
+
+                $group_by = array_filter( array_map("trim", $group_by) );
+                if( count($group_by) ){
+                    $group_by = 'GROUP BY ' . implode( ",", $group_by );
+                    $sql .= "\r\n" . $group_by;
+                    $distinct=0;
+                }
+                else{
+                    $group_by = '';
+                }
+
+                $having = array_filter( array_map("trim", $having) );
+                if( count($having) ){
+                    $having = 'HAVING ' . implode( " AND ", $having );
+                    $sql .= "\r\n" . $having;
+                }
+                else{
+                    $having = '';
+                }
+
+
                 // first query for pagination
-                $rs = $DB->select( $query_table, array('count('.$count_query_field.') as cnt'), $sql );
-                $total_rows = $rs[0]['cnt'];
+                $rs = $DB->select( $query_table, array('count('.$count_query_field.') as '.$count_query_field_as), $sql, $distinct );
+                $total_rows = $rs[0][$count_query_field_as];
 
                 // Return if only count asked for
                 if( $count_only ) return $total_rows;
@@ -2030,18 +2415,22 @@
 
                     if( $return_sql==2 ){
                         // return query parts
+                        $CTX->set( 'k_sql_distinct', $distinct ); // distinct
                         $CTX->set( 'k_sql_select', $fields ); // fields
                         $CTX->set( 'k_sql_from', $query_table ); // tables
-                        $CTX->set( 'k_sql_where', $sql ); // where
-                        $CTX->set( 'k_sql_order', $order_sql ); // where
-                        $CTX->set( 'k_sql_limit', $limit_sql ); // where
+                        $CTX->set( 'k_sql_where', $orig_sql ); // where
+                        $CTX->set( 'k_sql_group_by', $group_by ); // group_by
+                        $CTX->set( 'k_sql_having', $having ); // having
+                        $CTX->set( 'k_sql_order', $order_sql ); // order
+                        $CTX->set( 'k_sql_limit', $limit_sql ); // limit
                         foreach( $node->children as $child ){
                             $html .= $child->get_HTML();
                         }
                     }
                     else{
                         // return complete query
-                        $html = 'SELECT ' . $fields . ' FROM ' . $query_table . ' WHERE ' . $sql . ' ORDER BY ' . $order_sql . ' LIMIT ' . $limit_sql ;
+                        $html = ( $distinct ) ? 'SELECT DISTINCT ' : 'SELECT ';
+                        $html .= $fields . ' FROM ' . $query_table . ' WHERE ' . $sql . ' ORDER BY ' . $order_sql . ' LIMIT ' . $limit_sql ;
                     }
 
                     return $html;
@@ -2049,7 +2438,7 @@
                 else{
                     $sql .= ' ORDER BY ' . $order_sql;
                     $sql .= ' LIMIT ' . $limit_sql;
-                    $rs = $DB->select( $query_table, $query_fields, $sql );
+                    $rs = $DB->select( $query_table, $query_fields, $sql, $distinct );
                 }
             }
 
@@ -2079,8 +2468,16 @@
             foreach( $_GET as $qk=>$qv ){
                 if( $qk=='p' || $qk=='f' || $qk=='d' || $qk=='fname'|| $qk=='pname' || $qk=='_nr_' ) continue;
                 if( $qk==$qs_param ) continue; //'pg' or 'comments_pg'
-                $qs .= $sep . $qk . '=' . urlencode($qv);
-                $sep = '&';
+                if( is_array($qv) ){ //checkboxes
+                    foreach( $qv as $qvv ){
+                        $qs .= $sep . $qk . '[]=' . urlencode($qvv);
+                        $sep = '&';
+                    }
+                }
+                else{
+                    $qs .= $sep . $qk . '=' . urlencode($qv);
+                    $sep = '&';
+                }
             }
 
             if( $qs ){
@@ -2132,6 +2529,7 @@
                     }
                     else{ // pages, search, query
                         if( $mode==5  ){ // raw query
+                            $CTX->reset();
                             $rec_vars = array();
                             foreach( $rec as $rec_k=>$rec_v ){
                                 $rec_vars[$rec_k] = $rec_v;
@@ -2147,6 +2545,8 @@
                             }
                             $pg->set_context();
                             $pg->destroy(); // release the memory held by fields
+
+                            if( $aggregate_by ) $CTX->set( 'k_rel_count', $rec['k_rel_count'] );
                         }
 
                         if( $mode==1 ){ // Search
@@ -2207,6 +2607,9 @@
                         $CTX->set( 'k_paginate_link_prev', '' );
                         $CTX->set( 'k_paginate_link_cur', '' );
                     }
+
+                    // HOOK: alter_page_tag_context
+                    $FUNCS->dispatch_event( 'alter_page_tag_context', array($rec, $mode, $params, $node, $rec_tpl) );
 
                     // call the children
                     foreach( $node->children as $child ){
@@ -2558,6 +2961,10 @@ FORM;
                                'selected_id'=>'', /* do */
                               ),
                         $params);
+
+            // HOOK: alter_folders_tag_params
+            $FUNCS->dispatch_event( 'alter_folders_tag_params', array(&$attr, $params, $node, &$list) );
+
             extract( $attr );
 
             $masterpage = trim( $masterpage );
@@ -3814,6 +4221,7 @@ FORM;
                                  'format', 'reload_text',
                                  'allowed_html_tags',
                                  'trust_mode', 'no_js',
+                                 'strip_tags',
                                  );
             $extra = '';
             $name = '';
@@ -3827,7 +4235,12 @@ FORM;
                 }
 
                 if( $is_udf && array_key_exists($attr, $attr_udf) ) continue;
-                $extra .= ' '.$params[$x]['lhs'] . '="' . $params[$x]['rhs'] . '"';
+                if( strlen($params[$x]['lhs']) ){
+                    $extra .= ' '.$params[$x]['lhs'] . '="' . $params[$x]['rhs'] . '"';
+                }
+                else{
+                    $extra .= ' '.$params[$x]['rhs'];
+                }
             }
             if( $is_udf ){
                 foreach( $attr_udf as $k=>$v ){
@@ -3918,7 +4331,8 @@ FORM;
                         'html_before' => $html_before,
                         'html_after' => $html_after,
                         'system' => '0',
-                        'allowed_html_tags' => $allowed_html_tags
+                        'allowed_html_tags' => $allowed_html_tags,
+                        'trust_mode' => $strip_tags ? 0 : 1,
                     );
 
                     if( $is_udf ){
@@ -4002,7 +4416,8 @@ FORM;
                               'charset'=>'',
                               'subject'=>'',
                               'debug'=>'0',
-                              'logfile'=>''
+                              'logfile'=>'',
+                              'html'=>'0'
                               ),
                         $params)
                    );
@@ -4017,9 +4432,10 @@ FORM;
             if( $charset=='' ) $charset=K_CHARSET;
             $debug = ( $debug==1 ) ? 1 : 0;
             $logfile = trim( $logfile );
+            $html = ( $html==1 ) ? 1 : 0;
 
             foreach( $node->children as $child ){
-                $html .= $child->get_HTML();
+                $msg .= $child->get_HTML();
             }
 
             $headers = array();
@@ -4028,10 +4444,16 @@ FORM;
             if( $reply_to ) $headers['Reply-To']=$reply_to;
             if( $return_path ) $headers['Return-Path']=$return_path;
             $headers['MIME-Version']='1.0';
-            $headers['Content-Type']='text/plain; charset='.$charset;
+            if( $html ){
+                $headers['Content-Type']='text/html; charset='.$charset;
+            }
+            else{
+                $headers['Content-Type']='text/plain; charset='.$charset;
 
-            $msg = $FUNCS->unhtmlentities( $html, K_CHARSET ); // resurrecting (decoding) the entities. Shouldn't be required in HTML mails.
-            $msg = strip_tags($msg);
+                $msg = $FUNCS->unhtmlentities( $msg, K_CHARSET ); // resurrecting (decoding) the entities. Shouldn't be required in HTML mails.
+                $msg = strip_tags($msg);
+            }
+
             $rs = $FUNCS->send_mail( $from, $to, $subject, $msg, $headers );
             if( $debug ){
                 $log = "From: $from\r\nTo: $to\r\n";
@@ -4241,7 +4663,7 @@ MAP;
                 $html .= '<input type="hidden" name="cancel_return" value="'.$cancel_url.'"/>';
                 $html .= '<input type="hidden" value="'.$notify_url.'" name="notify_url"/>';
                 $html .= '<input type="image" border="0" alt="Make payments with PayPal - it\'s fast, free and secure!"';
-		$html .= ' name="submit" src="'.$image_src.'"/>';
+                $html .= ' name="submit" src="'.$image_src.'"/>';
                 $html .= '<img width="1" height="1" border="0" src="https://www.paypal.com/en_US/i/scr/pixel.gif" alt=""/>';
                 $html .= '</form>';
 
@@ -4375,7 +4797,9 @@ MAP;
                               'prompt_login'=>'0',
                               'redirect'=>'0',
                               'force_download'=>'0',
-                              'thumbnail'=>'0' /* added for attachments */
+                              'thumbnail'=>'0', /* valid for 'securefile' attachments only */
+                              'cache_for'=>'0', /* -do- */
+                              'count_hits'=>'0', /* -do- */
                               ),
                         $params)
                    );
@@ -4384,10 +4808,12 @@ MAP;
             if( !$link ) return;
             if( !$FUNCS->is_natural($expiry) ) $expiry=0; // In seconds
             if( !$FUNCS->is_natural($access_level) ) $access_level=0;
-            if( !$FUNCS->is_natural($prompt_login) ) $prompt_login=0;
+            $prompt_login = ( $prompt_login==1 ) ? 1 : 0;
             if( !$FUNCS->is_natural($redirect) ) $redirect=0;
             if( !$FUNCS->is_natural($force_download) ) $force_download=0;
             if( !$FUNCS->is_natural($thumbnail) ) $thumbnail=0;
+            if( !$FUNCS->is_natural($cache_for) ) $cache_for=0;
+            $count_hits = ( $count_hits==1 ) ? 1 : 0;
 
             $action = 0;
             if( $redirect ) $action = 1;
@@ -4407,7 +4833,7 @@ MAP;
             }
 
             // Concatenate all params and produce a hash
-            $data = $link . '|' . $key . '|' . $expiry . '|' . $access_level . '|' . $prompt_login . '|' . $action;
+            $data = $link . '|' . $key . '|' . $expiry . '|' . $access_level . '|' . $prompt_login . '|' . $action . '|' . $cache_for . '|' . $count_hits;
             $key = $FUNCS->hash_hmac( $data, $FUNCS->get_secret_key() );
             $hash = $FUNCS->hash_hmac( $data, $key );
 
@@ -4557,7 +4983,7 @@ MAP;
             global $CTX, $FUNCS, $PAGE;
             if( count($node->children) ) {die("ERROR: Tag \"".$node->name."\" is a self closing tag");}
 
-            $rs = $FUNCS->insert_comment();
+            $rs = $FUNCS->insert_comment( $params, $node );
             if( $FUNCS->is_error($rs) ){
                 $CTX->set( 'k_process_comment_error', $rs->err_msg );
                 $CTX->set( 'k_process_comment_success', 0 );
@@ -4673,13 +5099,27 @@ MAP;
             extract( $FUNCS->get_named_vars(
                         array(
                               'url'=>'',
-                              'permanently'=>'0'
+                              'permanently'=>'0',
+                              'no_external'=>'0'
                               ),
                         $params)
                    );
 
             $url = $FUNCS->sanitize_url( trim($url) );
             $permanently = ( $permanently==1 ) ? 1 : 0;
+            $no_external = ( $no_external==1 ) ? 1 : 0;
+
+            if( !strlen($url) ){
+                $url = K_SITE_URL;
+            }
+
+            if( $no_external ){ // don't allow redirects external to the site
+                if( strpos(strtolower($url), 'http')===0 ){
+                    if( strpos($url, K_SITE_URL)!==0 ){
+                        $url = K_SITE_URL;
+                    }
+                }
+            }
 
             ob_get_contents(); // not neccessary but just in case..
             ob_end_clean();
@@ -5314,6 +5754,84 @@ MAP;
             else{
                 return 'ERROR: Can only create thumbnails of images that are found within or below '. $domain_prefix;
             }
+        }
+
+        function validate( $params, $node ){
+            global $FUNCS;
+
+            extract( $FUNCS->get_named_vars(
+                        array(
+                               'value'=>'',
+                               'validator'=>'',
+                               'separator'=>'',
+                               'val_separator'=>'',
+                              ),
+                        $params)
+                   );
+
+            $validator = strtolower( trim($validator) );
+            if( !strlen($validator) ) {die("ERROR: Tag \"".$node->name."\" requires a 'validator' parameter");}
+            $separator = trim( $separator );
+            if( !strlen($separator) ) $separator = '|';
+            $val_separator = trim( $val_separator );
+            if( !strlen($val_separator) ) $val_separator = '=';
+
+            // multiple validators?
+            $arr_validator_elems = array_map( "trim", explode( $separator, $validator ) );
+            foreach( $arr_validator_elems as $validator_elem ){
+                $args = array_map( "trim", explode( $val_separator, $validator_elem ) );
+                $arr_validators[$args[0]] = $args[1];
+            }
+
+            // get down to business..
+            // validator routines in $FUNCS expect a field as param so we create a dummy field.
+            $field_info = array(
+                'id' => -1,
+                'name' => 'dummy',
+                'k_type' => 'text',
+                'data' => $value,
+            );
+            $f = new KFieldForm( $field_info, new stdClass() );
+
+            foreach( $arr_validators as $validator=>$validator_args ){
+                if( array_key_exists($validator, $f->available_validators) ){
+                    $validator_func = $f->available_validators[$validator];
+                }
+                else{
+                    $validator_func = trim( $validator ); // allow user defined validator
+                }
+
+                if( strpos($validator_func, '::')!==false ){
+                    $arr = explode( '::', $validator_func );
+                    if( is_callable(array($arr[0], $arr[1])) ){
+                        $err = call_user_func_array( array($arr[0], $arr[1]), array(&$f, $validator_args) );
+                    }
+                    else{
+                        die( "ERROR: Tag \"".$node->name."\" - Validator function '".$validator_func."' not found" );
+                    }
+                }
+                else{
+                    if( function_exists($validator_func) ) {
+                        $err = call_user_func_array( $validator_func, array(&$f, $validator_args) );
+                    }
+                    else{
+                        die( "ERROR: Tag \"".$node->name."\" - Validator function '".$validator_func."' not found" );
+                    }
+                }
+
+                if( $FUNCS->is_error($err) ){
+                    return '0';
+                }
+            }
+
+            return '1';
+        }
+
+        function random_name( $params, $node ){
+            global $AUTH;
+            if( count($node->children) ) {die("ERROR: Tag \"".$node->name."\" is a self closing tag");}
+
+            return md5( $AUTH->hasher->get_random_bytes(16) );
         }
 
     } //end class KTags

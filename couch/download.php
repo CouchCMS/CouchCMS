@@ -44,10 +44,10 @@
 
     $data = $_GET['auth'];
     $data = str_replace( ' ', '+', $data ); // for some reason, '+' is getting converted to space in $_GET. (happens when urldecode is used on '+')
-    list( $link, $key, $expiry, $access_level, $prompt_login, $action, $hash ) = explode( '|', $data );
+    list( $link, $key, $expiry, $access_level, $prompt_login, $action, $cache_for, $count_hits, $hash ) = explode( '|', $data );
 
     // First of all verify the hash to make sure the data has not been tampered with.
-    $data = $link . '|' . $key . '|' . $expiry . '|' . $access_level . '|' . $prompt_login . '|' . $action;
+    $data = $link . '|' . $key . '|' . $expiry . '|' . $access_level . '|' . $prompt_login . '|' . $action . '|' . $cache_for . '|' . $count_hits;
     $key2 = $FUNCS->hash_hmac( $data, $FUNCS->get_secret_key() );
     $hash2 = $FUNCS->hash_hmac( $data, $key2 );
     if( $hash2 != $hash ) { ob_end_clean(); die; }
@@ -67,7 +67,7 @@
 
     // Check if access level is ok
     if( $access_level ){
-        $AUTH = new KAuth( $access_level, $prompt_login );
+        $AUTH->check_access( $access_level, !$prompt_login );
     }
 
     // All checks ok. Get down with business
@@ -254,8 +254,17 @@
                 $size = ( $is_thumb ) ? @filesize( $path ) : $rs[0]['file_size'];
                 $fname = $rs[0]['file_real_name'];
                 $ext = $rs[0]['file_extension'];
+
+                // update hit count if required
+                if( $count_hits && !$is_thumb ){
+                    $sql = "UPDATE " . K_TBL_ATTACHMENTS . " SET hit_count = hit_count + 1 WHERE attach_id = '" . $DB->sanitize( $link ) . "'";
+                    $DB->_query( $sql );
+                }
             }
             else{
+                header('HTTP/1.1 404 Not Found');
+                header('Status: 404 Not Found');
+                header('Content-Type: text/html; charset='.K_CHARSET );
                 die( 'File not found' );
             }
         }
@@ -270,9 +279,16 @@
 
         ob_end_clean();
         header("Pragma: public");
-        header("Expires: 0");
-        header("Cache-Control: must-revalidate, post-check=0, pre-check=0");
-        header("Cache-Control: private",false);
+        if( $is_attachment && $cache_for && !($expiry || $access_level || $prompt_login ) ){
+            //$cache_for = 60 * 60 * 24 * 3;
+            header("Expires: " . @gmdate("D, d M Y H:i:s", time() + $cache_for) . " GMT");
+            header("Cache-Control: max-age=".$cache_for.", must-revalidate");
+        }
+        else{
+            header("Expires: 0");
+            header("Cache-Control: must-revalidate, post-check=0, pre-check=0");
+            header("Cache-Control: private",false);
+        }
         if( $force_download ){
             header("Content-Description: File Transfer");
             header("Content-Type: application/force-download");
@@ -302,6 +318,9 @@
             exit;
         }
         else{
+            header('HTTP/1.1 404 Not Found');
+            header('Status: 404 Not Found');
+            header('Content-Type: text/html; charset='.K_CHARSET );
             die( 'File not found' );
         }
     }

@@ -1,15 +1,15 @@
 <?php
 
-	if ( !defined('K_COUCH_DIR') ) die(); // cannot be loaded directly
+    if ( !defined('K_COUCH_DIR') ) die(); // cannot be loaded directly
 
     // /////////////////////////////////// Core config values ////////////////////////////////////////////
-	$pp['tpl_cart'] = 'cart.php';
-	$pp['tpl_checkout'] = 'checkout.php';
+    $pp['tpl_cart'] = 'cart.php';
+    $pp['tpl_checkout'] = 'checkout.php';
     $pp['paypal_use_sandbox'] = 0;
-	$pp['paypal_email'] = '';
-	$pp['currency'] = 'USD';
-	$pp['currency_symbol'] = '$';
-	$pp['allow_decimal_qty'] = 0;
+    $pp['paypal_email'] = '';
+    $pp['currency'] = 'USD';
+    $pp['currency_symbol'] = '$';
+    $pp['allow_decimal_qty'] = 0;
 
 
     /////////////////////////////////////// Custom config values ////////////////////////////////////////

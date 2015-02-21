@@ -256,7 +256,7 @@
         function store_posted_changes( $post_val ){
             global $FUNCS;
             if( $this->deleted ) return; // no need to store
-            $orig_data = $this->data;
+            if( is_null($this->orig_data) ) $this->orig_data = $this->data;
 
             if( is_array($post_val) ){
                 $year   = $post_val['year'];
@@ -292,7 +292,7 @@
             $this->data = $post_val;
 
             // modified?
-            $this->modified = ( strcmp( $orig_data, $this->data )==0 )? false : true; // values unchanged
+            $this->modified = ( strcmp( $this->orig_data, $this->data )==0 )? false : true; // values unchanged
         }
 
         function validate(){
@@ -378,4 +378,3 @@
 
     $FUNCS->register_udf( 'datetime', 'KDateTime', 1/*repeatable*/ );
     $FUNCS->register_udform_field( 'datetime', 'KDateTimeForm' );
-

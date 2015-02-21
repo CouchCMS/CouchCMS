@@ -124,7 +124,7 @@
                 $str_prev = $str;
 
                 // replace literal entities
-                $str = html_entity_decode( $str, ENT_QUOTES );
+                $str = html_entity_decode( $str, ENT_QUOTES, K_CHARSET );
 
                 // replace numeric entities
                 $str = preg_replace_callback( '~&#x0{0,8}([0-9A-F]+);?~i',
@@ -493,4 +493,3 @@
     }// end class KHTMLParser
 
     require_once( K_COUCH_DIR.'parser/BBParser.php' );
-

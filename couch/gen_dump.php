@@ -42,7 +42,7 @@
 
     define( 'K_ADMIN', 1 );
 
-    $AUTH = new KAuth( K_ACCESS_LEVEL_ADMIN, 0 );
+    $AUTH->check_access( K_ACCESS_LEVEL_ADMIN, 1 );
 
     $tbls = array();
     $tbls[K_TBL_TEMPLATES] = 'K_TBL_TEMPLATES';
@@ -68,7 +68,7 @@
     /* loop through each core table */
     @set_time_limit( 0 );
     foreach( $tbls as $tbl_name=>$tbl_alias ){
-        echo "\n/* " . $tbl_name . " */\n";
+        echo "\n/* " . $tbl_name . " (";
         $result = mysql_query( 'select * from '. $tbl_name );
         if( !$result ){
             die('Query failed: ' . mysql_error());
@@ -79,14 +79,15 @@
         $meta_fields = array();
         $cnt_fields = mysql_num_fields($result);
         $sep = '';
-        $stmt_pre = '$k_stmts[] = "INSERT INTO ".'.$tbl_alias.'." (';
         while( $i < $cnt_fields ){
             $meta_fields[] = mysql_fetch_field( $result, $i );
-            $stmt_pre .= $sep . $meta_fields[$i]->name;
+            echo $sep . $meta_fields[$i]->name;
             $sep = ', ';
             $i++;
         }
-        $stmt_pre .= ') VALUES (';
+        echo ") */\n";
+        echo '$k_stmt_pre = "INSERT INTO ".'.$tbl_alias.'." VALUES ";'."\n";
+        $stmt_pre = '$k_stmts[] = $k_stmt_pre."(';
 
 
         /* get the column values */
@@ -103,7 +104,7 @@
                     $val = $row[$i];
                 }
                 else{
-                    // sanitize will add slashes to backslash, quote, doubleqoute, newline and return chars.
+                    // Sanitize will add slashes to backslash, quote, doubleqoute, newline and return chars.
                     // We need to slash all of them again for PHP, except the single quote.
                     // Plus slash any dollar char that misleads PHP into thinking it is dealing with a variable.
                     $val = '\'' . str_replace($val_from, $val_to, addslashes($DB->sanitize($row[$i]))) . '\'';

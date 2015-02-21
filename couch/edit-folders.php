@@ -50,6 +50,9 @@
     $PAGE->folders->sort( 1 );
     $PAGE->k_total_folders = $PAGE->folders->get_children_count( 0, array());
 
+    // HOOK: edit_folder
+    $FUNCS->dispatch_event( 'edit_folder', array(&$PAGE) );
+
     if( isset($_GET['act']{0}) ){
 
         $folder_id = ( isset($_GET['id']) && $FUNCS->is_natural($_GET['id']) ) ? (int)$_GET['id'] : null;
@@ -85,12 +88,23 @@
 
                     $_POST['f_k_pid'] = intval( $_POST['f_k_folders'] );
 
-                    for( $x=0; $x<count($folder->fields); $x++ ){
-                        $f = &$folder->fields[$x];
-                        $f->store_posted_changes( $_POST['f_'.$f->name] ); // get posted values into fields
+                    // HOOK: alter_edit_folder_posted_data
+                    $skip = $FUNCS->dispatch_event( 'alter_edit_folder_posted_data', array(&$folder, &$PAGE) );
+
+                    if( !$skip ){
+                        for( $x=0; $x<count($folder->fields); $x++ ){
+                            $f = &$folder->fields[$x];
+                            $f->store_posted_changes( $_POST['f_'.$f->name] ); // get posted values into fields
+                        }
                     }
 
+                    // HOOK: edit_folder_presave
+                    $FUNCS->dispatch_event( 'edit_folder_presave', array(&$folder, &$PAGE) );
+
                     $errors = $folder->save();
+
+                    // HOOK: edit_folder_saved
+                    $FUNCS->dispatch_event( 'edit_folder_saved', array(&$folder, &$PAGE, &$errors) );
 
                     // Redirect
                     if( !$errors ){
@@ -102,6 +116,10 @@
                 }
 
                 // start building content for output
+
+                // HOOK: edit_folder_prerender
+                $FUNCS->dispatch_event( 'edit_folder_prerender', array(&$folder, &$PAGE) );
+
                 ob_start();
                 $err_div = '<div class="error" style="margin-bottom:10px; color:red; display:';
                 if( $errors ){

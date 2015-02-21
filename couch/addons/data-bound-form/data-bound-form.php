@@ -142,8 +142,8 @@
             // if creating a new page and both title and name not set, create a random title
             // This will also create a random name using the title when the page is saved
             if( $_mode=='create' && $_auto_title ){
-                if( trim($pg->fields[1]->get_data())=='' ){ // name
-                    $f = &$pg->fields[0]; // title
+                if( trim($pg->_fields['k_page_name']->get_data())=='' ){ // name
+                    $f = &$pg->_fields['k_page_title']; // title
                     if( trim($f->get_data())=='' ){
                         $f->store_posted_changes( md5($AUTH->hasher->get_random_bytes(16)) );
                     }
@@ -151,7 +151,7 @@
                 }
             }
 
-            $f = &$pg->fields[3]; // k_publish_date
+            $f = &$pg->_fields['k_publish_date']; // k_publish_date
             if( !$f->get_data() ){
                 $f->store_posted_changes( $FUNCS->get_current_desktop_time() );
             }
@@ -168,7 +168,10 @@
                 for( $x=0; $x<count($pg->fields); $x++ ){
                     $f = &$pg->fields[$x];
                     if( $f->err_msg ){
-                        $str_err .= $sep . '<b>' . $f->name . ':</b> ' . $f->err_msg;
+                        if( $node->name=='db_persist_form' ){
+                            $CTX->set( 'k_error_'.$f->name, $f->err_msg );
+                        }
+                        $str_err .= $sep . '<b>' . (($f->label) ? $f->label : $f->name) . ':</b> ' . $f->err_msg;
                         $sep = $form_separator;
                     }
                     unset( $f );
@@ -184,6 +187,7 @@
 
                 // report success
                 $CTX->set( 'k_success', '1' );
+                $CTX->set( 'k_error', '' );
                 if( $_mode=='create' ){
                     $CTX->set( 'k_last_insert_id', $pg->id );
                     $CTX->set( 'k_last_insert_page_name', $pg->page_name );
@@ -302,7 +306,8 @@
                                'masterpage'=>'',
                                'page_name'=>'',
                                'names'=>'', /*name(s) of fields to fetch. Can have negation*/
-                               'skip_system'=>'1'
+                               'skip_system'=>'1',
+                               'skip_deleted'=>'1'
                               ),
                         $params)
                    );
@@ -315,6 +320,7 @@
             $page = trim( $page_name );
             $names = trim( $names );
             $skip_system = ( $skip_system==0 ) ? 0 : 1;
+            $skip_deleted = ( $skip_deleted==0 ) ? 0 : 1;
 
             $rs = $DB->select( K_TBL_TEMPLATES, array('id', 'clonable'), "name='" . $DB->sanitize( $masterpage ). "'" );
             if( !count($rs) ) return;
@@ -335,7 +341,7 @@
                 $count = count( $pg->fields );
                 for( $x=0; $x<$count; $x++ ){
                     $f = &$pg->fields[$x];
-                    if( $skip_system && $f->system ){
+                    if( ($skip_system && $f->system) || ($skip_deleted && $f->deleted) ){
                         unset( $f );
                         continue;
                     }
@@ -376,6 +382,7 @@
                     }
                     $vars['default_data'] = $f->default_data;
                     $vars['required'] = $f->required;
+                    $vars['deleted'] = $f->deleted;
                     $vars['validator'] = $f->validator;
                     $vars['validator_msg'] = $f->validator_msg;
                     $vars['separator'] = $f->k_separator;

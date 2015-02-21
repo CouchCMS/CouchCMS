@@ -105,7 +105,7 @@
             global $FUNCS;
             if( $this->deleted ) return; // no need to store
 
-            $orig_data = $this->data;
+            if( is_null($this->orig_data) ) $this->orig_data = $this->data;
             if( $this->trust_mode==0 ){
                 // if value submitted from front-end form, input is untrusted and so only a limited subset of HTML tags will be allowed
                 $allowed_tags = '<a><br><strong><b><em><i><u><blockquote><pre><code><ul><ol><li><del>';
@@ -114,7 +114,7 @@
             else{
                 $this->data = $FUNCS->cleanXSS( $post_val );
             }
-            $this->modified = ( strcmp( $orig_data, $this->data )==0 )? false : true; // values unchanged
+            $this->modified = ( strcmp( $this->orig_data, $this->data )==0 )? false : true; // values unchanged
         }
 
         function is_empty(){

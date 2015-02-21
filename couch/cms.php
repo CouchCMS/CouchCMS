@@ -198,7 +198,7 @@
             }
             else{
                 $access_level = $PAGE->get_access_level( $inherited );
-                $AUTH = new KAuth( $access_level );
+                $AUTH->check_access( $access_level );
 
                 // set the requested view, if any
                 if( $folder_id ){
@@ -331,6 +331,8 @@
                 }
             }
 
+            // HOOK: alter_final_page_output
+            $FUNCS->dispatch_event( 'alter_final_page_output', array(&$html, &$PAGE, &$k_cache_file, &$redirect_url, &$content_type_header) );
 
             // See if ouput needs to be cached
             if( $k_cache_file && strlen( trim($html) ) && !$PAGE->no_cache ){

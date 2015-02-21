@@ -205,5 +205,3 @@
     } // end class
 
     $KSESSION = new KSession();
-
-

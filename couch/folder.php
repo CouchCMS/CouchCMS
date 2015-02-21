@@ -394,6 +394,9 @@
                     $this->image = $data;
                 }
             }
+
+            // HOOK: folder_loaded
+            $FUNCS->dispatch_event( 'folder_loaded', array(&$this) );
         }
 
         function get_link(){
@@ -431,9 +434,12 @@
         }
 
         function process_delete(){
-            global $PAGE, $DB;
+            global $PAGE, $DB, $FUNCS;
 
             if( $this->name!='_root_' && !$this->processed ){
+
+                // HOOK: folder_predelete
+                $FUNCS->dispatch_event( 'folder_predelete', array(&$this) );
 
                 $rs = $DB->delete( K_TBL_FOLDERS, "id='" . $DB->sanitize( $this->id ). "'" );
                 if( $rs==-1 ) die( "ERROR: Unable to delete field data from K_TBL_FOLDERS" );
@@ -445,6 +451,9 @@
                 $rs2 = $DB->update( K_TBL_PAGES, array('page_folder_id'=>'-1'), "page_folder_id='" . $DB->sanitize( $this->id ). "'" );
                 if( $rs2==-1 ) die( "ERROR: Unable to remove folder from pages" );
 
+                // HOOK: folder_deleted
+                $FUNCS->dispatch_event( 'folder_deleted', array(&$this) );
+
             }
 
             for( $x=0; $x<count($this->children); $x++ ){
@@ -453,7 +462,7 @@
         }
 
         function set_in_context( $page_specific=0){
-            global $CTX;
+            global $CTX, $FUNCS;
 
             if( $page_specific ){
                 $CTX->set( 'k_page_folderid', $this->id );
@@ -483,6 +492,9 @@
                 $CTX->set( 'k_folder_immediate_children', $this->immediate_children );
                 $CTX->set( 'k_folder_totalchildren', $this->total_children );
             }
+
+            // HOOK: alter_folder_set_context
+            $FUNCS->dispatch_event( 'alter_folder_set_context', array(&$this, $page_specific) );
         }
 
         // used to render the admin form
@@ -548,6 +560,9 @@
                 $this->fields[] = new KField( $field_info, new KError()/*dummy*/, $this->fields );
             }
 
+            // HOOK: alter_folder_fields_info
+            $FUNCS->dispatch_event( 'alter_folder_fields_info', array(&$this->fields, &$this) );
+
         }
 
         function save(){
@@ -557,6 +572,11 @@
 
             // serialize access.. lock template
             $DB->update( K_TBL_TEMPLATES, array('description'=>$DB->sanitize( $PAGE->tpl_desc )), "id='" . $DB->sanitize( $PAGE->tpl_id ) . "'" );
+
+            // HOOK: folder_presave
+            // the save process is about to begin.
+            // Field values can be adjusted before subjecting them to the save routine.
+            $FUNCS->dispatch_event( 'folder_presave', array(&$this) );
 
             // Check if name needs to be auto-generated
             $title = trim( $this->fields[0]->get_data() );
@@ -587,12 +607,21 @@
                 $this->fields[3]->store_posted_changes( '0' );
             }
 
+            // HOOK: folder_prevalidate
+            // all fields are ready for validation. Do any last minute tweaking before validation begins.
+            $FUNCS->dispatch_event( 'folder_prevalidate', array(&$this->fields, &$this) );
+
             // Finally validate all fields before persistng changes
             $errors = 0;
             for( $x=0; $x<count($this->fields); $x++ ){
                 $f = &$this->fields[$x];
                 if( !$f->validate() ) $errors++;
             }
+
+            // HOOK: folder_validate
+            // can add some custom validation here if required.
+            $FUNCS->dispatch_event( 'folder_validate', array(&$this->fields, &$errors, &$this) );
+
             if( $errors ){ $DB->rollback(); return $errors; }
 
             $fid = $this->id;
@@ -606,6 +635,9 @@
                        'weight'=>$this->fields[3]->get_data()
                       );
 
+            // HOOK: alter_folder_save
+            $FUNCS->dispatch_event( 'alter_folder_save', array($fid, &$fields, &$this->fields, &$this) );
+
             if( is_null($fid) ){
                 // create
                 $rs = $DB->insert( K_TBL_FOLDERS, $fields );
@@ -613,17 +645,25 @@
                 $rs = $DB->select( K_TBL_FOLDERS, array('*'), "id='" . $DB->sanitize( $DB->last_insert_id ). "'" );
                 if( !count($rs) ) die( "ERROR: Failed to insert record in K_TBL_FOLDERS" );
                 $this->id = $rs[0]['id'];
+
+                $action = 'insert';
             }
             else{
                 // update
                 $rs = $DB->update( K_TBL_FOLDERS, $fields, "id='" . $DB->sanitize( $fid ). "'" );
                 if( $rs==-1 ) die( "ERROR: Unable to save modified folder" );
+
+                $action = 'update';
             }
+
+            // HOOK: folder_saved
+            $FUNCS->dispatch_event( 'folder_saved', array(&$this, $action, &$errors) );
+            if( $errors ){ $DB->rollback(); return $errors; }
 
             $DB->commit();
 
             // Invalidate cache
-            $FUNCS->invalidate_cache();
+            //$FUNCS->invalidate_cache();
 
         }// end save
 
@@ -634,6 +674,9 @@
                 $parent_id = $this->pid;
 
                 $DB->begin();
+
+                // HOOK: folder_predelete
+                $FUNCS->dispatch_event( 'folder_predelete', array(&$this) );
 
                 $rs = $DB->delete( K_TBL_FOLDERS, "id='" . $DB->sanitize( $this->id ). "'" );
                 if( $rs==-1 ) die( "ERROR: Unable to delete field data from K_TBL_FOLDERS" );
@@ -646,6 +689,9 @@
                 // invoked for static folders where deleting a folder moves all pages to -1.
                 $rs = $DB->update( K_TBL_PAGES, array('page_folder_id'=>$parent_id), "page_folder_id='" . $DB->sanitize( $this->id ). "'" );
                 if( $rs==-1 ) die( "ERROR: Unable to move pages to parent folder" );
+
+                // HOOK: folder_deleted
+                $FUNCS->dispatch_event( 'folder_deleted', array(&$this) );
 
                 $DB->commit();
                 $this->id = null;

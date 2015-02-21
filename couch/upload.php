@@ -43,7 +43,7 @@
     require_once( K_COUCH_DIR.'header.php' );
     header( 'Content-Type: text/html; charset='.K_CHARSET );
 
-    $AUTH = new KAuth( K_ACCESS_LEVEL_ADMIN, 0 );
+    $AUTH->check_access( K_ACCESS_LEVEL_ADMIN, 1 );
 
     if( ($_GET['o'] == 'gallery') ){
         require( K_COUCH_DIR. 'includes/plupload/upload.php' ) ;
@@ -51,4 +51,3 @@
     else{
         require( K_COUCH_DIR. 'includes/fileuploader/connector.php' ) ;
     }
-

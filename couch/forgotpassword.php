@@ -41,11 +41,10 @@
     require_once( K_COUCH_DIR.'header.php' );
     header( 'Content-Type: text/html; charset='.K_CHARSET );
 
-    $AUTH = new KAuth();
     if( $AUTH->user->id != -1 ){
-	// if already logged-in, why are you here?
-	header("Location: ".rawurldecode(K_SITE_URL));
-	die;
+        // if already logged-in, why are you here?
+        header("Location: ".rawurldecode(K_SITE_URL));
+        die;
     }
 
     $msg = "";
@@ -76,45 +75,41 @@
 
     ////////////////////////////////////////////////////////////////////////////
     function request_confirmation(){
-        global $FUNCS, $DB;
+        global $FUNCS, $DB, $AUTH;
 
         $val = $FUNCS->cleanXSS( trim($_POST['k_user_name']) );
         if( $val && is_string( $val ) ){
 
-            $user = new KUser( $val );
-
-            if( $user->id==-1 ){
-                $err_msg = $FUNCS->t( 'no_such_user' );
+            $user = $AUTH->reset_key( $val );
+            if( $FUNCS->is_error($user) ){
+                return $user;
             }
-            else{
-                $id = $user->id;
-                $name = $user->name;
-                $to = $user->email;
-                $key = $user->activation_key;
 
-                if( empty($key) ){
-                    $key = $FUNCS->generate_key( 32 );
-                    $rs = $DB->update( K_TBL_USERS, array('activation_key'=>$key), "id='" . $DB->sanitize( $id ). "'" );
-                    if( $rs==-1 ) die( "ERROR: Unable to update K_TBL_USERS" );
-                }
-                // Send confirmation email to the user
-                $subject = $FUNCS->t( 'reset_req_email_subject' );
+            // Send confirmation email to the user
+            $name = $user->name;
+            $to = $user->email;
+            $key = $user->password_reset_key;
+            $hash = $AUTH->get_hash( $name , $key, time() + 86400 /* 24 hrs */ );
+            $reset_link = K_ADMIN_URL . "forgotpassword.php?act=reset&key=" . urlencode( $hash );
 
-                $msg = $FUNCS->t( 'reset_req_email_msg_0' ) . ": \r\n";
-                $msg .= K_SITE_URL . "\r\n";
-                $msg .= $FUNCS->t( 'user_name' ) .': ' . $name . "\r\n\r\n";
-                $msg .= $FUNCS->t( 'reset_req_email_msg_1' ) . "\r\n";
-                $msg .= K_ADMIN_URL . "forgotpassword.php?act=reset&name=" . rawurlencode( $name ) . "&key=".$key ."\r\n";
+            $subject = $FUNCS->t( 'reset_req_email_subject' );
 
-                $site = preg_replace('|^(?:www\.)?(.*)$|', '\\1', $_SERVER['SERVER_NAME']);
-                $from = 'admin@' . $site;
+            $msg = $FUNCS->t( 'reset_req_email_msg_0' ) . ": \r\n";
+            $msg .= K_SITE_URL . "\r\n";
+            $msg .= $FUNCS->t( 'user_name' ) .': ' . $name . "\r\n\r\n";
+            $msg .= $FUNCS->t( 'reset_req_email_msg_1' ) . "\r\n";
+            $msg .= $reset_link ."\r\n";
 
-                $rs = $FUNCS->send_mail( $from, $to, $subject, $msg );
-                if( $rs ){
-                    return;
-                }
-                $err_msg = $FUNCS->t( 'email_failed' );
+            $from = K_EMAIL_FROM;
+
+            $headers = array();
+            $headers['MIME-Version']='1.0';
+            $headers['Content-Type']='text/plain; charset='.K_CHARSET;
+            $rs = $FUNCS->send_mail( $from, $to, $subject, $msg, $headers );
+            if( $rs ){
+                return;
             }
+            $err_msg = $FUNCS->t( 'email_failed' );
 
         }
         else{
@@ -124,21 +119,25 @@
     }
 
     function reset_password(){
-        global $FUNCS, $DB;
+        global $FUNCS, $DB, $AUTH;
 
-        //?act=reset&name=johndoe&key=11uBfS3TTvIbbKq4OWGF2Wqxy58NAdM1
-        $name = $FUNCS->cleanXSS( $_GET['name'] );
-        $key = $FUNCS->cleanXSS( $_GET['key'] );
+        //?act=reset&key=xxxx%7Ch5D8jruI61wwncdEmNxGKbWJMapnb6pI%7C1410647383%7C6274dd9452c643d527e5ff8e995d12ee
+        $data = $_GET['key'];
+        $data = str_replace( ' ', '+', $data );
+        list( $user, $key, $expiry, $hash ) = explode( '|', $data );
 
-        if( !$name || !$FUNCS->is_title_clean($name) ){
+        // check if link has not expired
+        if( time() > $expiry ){
             return $FUNCS->raise_error( $FUNCS->t('invalid_key') );
         }
-        if( !$key || !$FUNCS->is_alphanumeric($key) ){
+
+        // next verify hash to make sure the data has not been tampered with.
+        if( $data !== $AUTH->get_hash($user, $key, $expiry) ){
             return $FUNCS->raise_error( $FUNCS->t('invalid_key') );
         }
 
         // get the user with this activation key
-        $rs = $DB->select( K_TBL_USERS, array('id', 'name', 'email'), "name='" . $DB->sanitize( $name )."' AND activation_key='".$DB->sanitize( $key )."'" );
+        $rs = $DB->select( K_TBL_USERS, array('id', 'name', 'email'), "name='" . $DB->sanitize( $user )."' AND password_reset_key='".$DB->sanitize( $key )."'" );
         if( !count($rs) ){
             return $FUNCS->raise_error( $FUNCS->t('invalid_key') );
         }
@@ -148,12 +147,11 @@
             $to = $rs[0]['email'];
 
             // generate a new password for the user
-            $AUTH = new KAuth( 0 );
             $password = $FUNCS->generate_key( 12 );
             $hash = $AUTH->hasher->HashPassword( $password );
 
             // update record
-            $rs = $DB->update( K_TBL_USERS, array('password'=>$hash, 'activation_key'=>''), "id='" . $DB->sanitize( $id ). "'" );
+            $rs = $DB->update( K_TBL_USERS, array('password'=>$hash, 'password_reset_key'=>''), "id='" . $DB->sanitize( $id ). "'" );
             if( $rs==-1 ) die( "ERROR: Unable to update K_TBL_USERS" );
 
             // send the new password to the user
@@ -165,10 +163,12 @@
             $msg .= $FUNCS->t( 'new_password' ) .': ' . $password . "\r\n\r\n";
             $msg .= $FUNCS->t( 'reset_email_msg_1' ) . "\r\n";
 
-            $site = preg_replace('|^(?:www\.)?(.*)$|', '\\1', $_SERVER['SERVER_NAME']);
-            $from = 'admin@' . $site;
+            $from = K_EMAIL_FROM;
 
-            $rs = $FUNCS->send_mail( $from, $to, $subject, $msg );
+            $headers = array();
+            $headers['MIME-Version']='1.0';
+            $headers['Content-Type']='text/plain; charset='.K_CHARSET;
+            $rs = $FUNCS->send_mail( $from, $to, $subject, $msg, $headers );
             if( !$rs ){
                 return $FUNCS->raise_error( $FUNCS->t( 'email_failed' ) );
             }
@@ -180,7 +180,7 @@
         global $FUNCS;
 
         if( empty($msg) ){
-	    $msg = $FUNCS->t('recovery_prompt');
+            $msg = $FUNCS->t('recovery_prompt');
         }
         $msg_div = '<div class="'.$msg_class.'" style="margin-bottom:10px; display:';
         if( $msg ){

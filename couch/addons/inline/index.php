@@ -9,7 +9,7 @@
     require_once( K_COUCH_DIR.'header.php' );
     header( 'Content-Type: text/html; charset='.K_CHARSET );
 
-    $AUTH = new KAuth( K_ACCESS_LEVEL_ADMIN );
+    $AUTH->check_access( K_ACCESS_LEVEL_ADMIN, 1 );
 
     // at this point we have a logged in user with appropriate priveleges
 
