@@ -36,14 +36,12 @@
     */
 
     ob_start();
-
     if ( !defined('K_COUCH_DIR') ) define( 'K_COUCH_DIR', str_replace( '\\', '/', dirname(realpath(__FILE__) ).'/') );
     require_once( K_COUCH_DIR.'header.php' );
-    header( 'Content-Type: text/html; charset='.K_CHARSET );
+    header( 'Content-Type: text/plain; charset='.K_CHARSET );
 
     define( 'K_ADMIN', 1 );
 
-    $AUTH->check_access( K_ACCESS_LEVEL_ADMIN, 1 );
-
+    if(php_sapi_name() != 'cli') $AUTH->check_access( K_ACCESS_LEVEL_ADMIN, 1 );
 
     echo $FUNCS->generate_rewrite_rules();
