@@ -1302,11 +1302,10 @@
                 array_multisort( $depth, SORT_DESC, SORT_NUMERIC, $pretty_tpl_names, SORT_DESC, SORT_STRING, $rs );
 
                 // Loop once again through the templates, generating rewrite rules for each.
-                $header = '<!doctype html>';
-                $header .= '<html style="background-color:#fff;"><body style="line-height:16px;padding:15px;margin:0;font-family:Menlo,Monaco,Consolas,\'Courier New\',monospace;font-size:12px;">';
+                $header = '';
                 $for_index = '';
                 $body = '';
-                $sep = '<br>';
+                $sep = "\n";
                 foreach( $rs as $key=>$val ){
                     $body .= $sep . '#'. $val['name'] . $sep;
                     if( $val['is_index'] ){
@@ -1361,7 +1360,7 @@
 
                 // Send back the consolidated rules
                 $header .= 'Options +FollowSymlinks -MultiViews' . $sep;
-                $header .= '&lt;IfModule mod_rewrite.c&gt;' . $sep;
+                $header .= '<IfModule mod_rewrite.c>' . $sep;
                 $header .= 'RewriteEngine On' . $sep;
                 $header .= $sep;
                 $header .= '#If your website is installed in a subfolder, change the line below to reflect the path to the subfolder.' . $sep;
@@ -1386,8 +1385,7 @@
                 $header .= 'RewriteCond %{REQUEST_FILENAME} -f' . $sep;
                 $header .= 'RewriteRule . - [L]' . $sep;
 
-                $footer = '&lt;/IfModule&gt;';
-                $footer .= '</body></html>';
+                $footer = '</IfModule>';
 
                 return $header . $body . $footer;
             }
