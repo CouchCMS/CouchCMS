@@ -4511,7 +4511,6 @@ FORM;
         function google_map( $params, $node ){
             global $CTX, $FUNCS, $PAGE;
             if( count($node->children) ) {die("ERROR: Tag \"".$node->name."\" is a self closing tag");}
-            if( $PAGE->google_map ){ return; } // Only one instance permitted
 
             $custom_attr = array( 'name', 'id', 'address',
                                  'longitude', 'latitude', 'zoom', 'message',
@@ -4532,18 +4531,20 @@ FORM;
             }
             if( !$id ){ $id = $name; }
 
+            $zoom = intval( $zoom );
+            if( !$zoom ) $zoom=14;
+
             if( $longitude && $latitude ){
-                $func = "display_by_coordinates( new GLatLng(parseFloat(lat),parseFloat(lng)), zoom, message )";
+                $func = "display_by_coordinates( new google.maps.LatLng(parseFloat($latitude), parseFloat($longitude)), $zoom, \"$message\" );";
             }
             elseif( $address ){
-                $func = "display_by_address( address, zoom, message );";
+                $func = "display_by_address( \"$address\", $zoom, \"$message\" );";
             }
             else{
                 die("ERROR: Tag \"".$node->name."\" needs either an 'address' attribute or both 'longitude' and 'latitude' attributes");
             }
+            if( !K_GOOGLE_KEY ){ die("ERROR: Tag \"".$node->name."\" requires a valid Google API key set in config.php"); }
 
-            $zoom = intval( $zoom );
-            if( !$zoom ) $zoom=14;
             $width = intval( $width );
             if( !$width ) $width=400;
             $height = intval( $height );
@@ -4551,54 +4552,42 @@ FORM;
             $key = K_GOOGLE_KEY;
             $style= $FUNCS->set_style( $style, $width, $height );
 
-            // render
-            $html = <<<MAP
-<script type="text/javascript" language="javascript">
-        address = '$address';
-        lat = '$latitude';
-        lng = '$longitude';
-        message = '$message';
-        zoom  = $zoom;
-        googleKey = '$key';
-        document.write('<script src="http://www.google.com/jsapi?key='+googleKey+'" type="text/javascript"><\/script>');
-</script>
-<script type="text/javascript">
-    google.load("maps", "2"); //api to load & version
-    google.setOnLoadCallback(
-        function(){
-            var map = new google.maps.Map2(document.getElementById("$id"));
+            $html = "";
+            if($PAGE->google_map == 0){
+              $html .= "<script src=\"https://maps.googleapis.com/maps/api/js?v=3&key=$key\"></script>";
+            }
 
-MAP;
-            $html .= $func;
+            // render
             $html .= <<<MAP
+<script type="text/javascript" language="javascript">
+
+    google.maps.event.addDomListener(window, 'load',
+        function(){
+
+            var map = new google.maps.Map(document.getElementById("$id"));
+
+            $func
 
             function display_by_coordinates(latlng, zoom, html){
-                map.setCenter(latlng, zoom);
 
-                // add zoom and navigation buttons
-                map.addControl(new GSmallMapControl());
-
-                // add 'map type' (map, satelite or hybrid) selection buttons
-                map.addControl(new GMapTypeControl());
-
+                map.setCenter(latlng);
+                map.setZoom(zoom);
                 mark(latlng, html, 1);
             }
 
             function display_by_address( addr, zoom, msg ){
-                // Use GClientGeocoder to get coordinates of the address
-                var gc = new GClientGeocoder();
+                // Use Geocoder to get coordinates of the address
+                var gc = new google.maps.Geocoder();
                 if( gc ) {
                     if( !msg ) { msg = addr; }
 
-                    gc.getLocations( addr,
-                        function( response ){
-                            if( !response || response.Status.code != 200 ){
+                    gc.geocode( { 'address': addr },
+                        function( response, status ){
+                            if( !response || status != google.maps.GeocoderStatus.OK ){
                                 alert( "Sorry, we were unable to geocode that address" );
                             }
                             else{
-                                place = response.Placemark[0];
-                                latlng = new GLatLng( place.Point.coordinates[1], place.Point.coordinates[0] );
-                                //msg = place.address;
+                                latlng = response[0].geometry.location;
                                 display_by_coordinates( latlng, zoom, msg );
                             }
                         }
@@ -4607,16 +4596,15 @@ MAP;
             }
 
             function mark( latlng, msg, open ){
-                var marker = new GMarker( latlng );
-                map.addOverlay( marker );
-
+                var marker = new google.maps.Marker( { position: latlng, map: map } );
+                var infowindow = new google.maps.InfoWindow( { content: msg } );
                 if( msg ){
                     if( open ){
-                        marker.openInfoWindowHtml( msg );
+                        infowindow.open(map, marker);
                     }
 
-                    GEvent.addListener( marker, "click", function(){
-                        map.openInfoWindowHtml( latlng, msg );
+                    google.maps.event.addListener( marker, "click", function(){
+                        infowindow.open(map, marker);
                     } );
                 }
             }
