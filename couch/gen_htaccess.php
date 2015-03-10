@@ -39,7 +39,8 @@
 
     if ( !defined('K_COUCH_DIR') ) define( 'K_COUCH_DIR', str_replace( '\\', '/', dirname(realpath(__FILE__) ).'/') );
     require_once( K_COUCH_DIR.'header.php' );
-    header( 'Content-Type: text/html; charset='.K_CHARSET );
+    header( 'Content-Type: text/plain; charset='.K_CHARSET );
+    header( 'Content-Disposition: inline; filename=.htaccess' );
 
     define( 'K_ADMIN', 1 );
 
