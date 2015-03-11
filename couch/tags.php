@@ -4923,18 +4923,18 @@ MAP;
 
             $var_span = 'v' . $FUNCS->generate_key( 15 );
             $var_output = 'v' . $FUNCS->generate_key( 15 );
-            $o = "<span id='".$var_span."'>".$msg."</span>";
-            $o .= "<script type=\"text/javascript\">\r\n";
-            $o .= "//<![CDATA[\r\n";
-            $o .= 'var '.$var_email.'=[';
+            $o = '<span id="'.$var_span.'">'.$msg.'</span>';
+            $o .= "<script>\r\n";
+            $o .= "(function() {\r\n";
+            $o .= 'var '.$var_email.' = [';
             for( $x=0, $len=count($email), $sep=''; $x<$len; $x++ ){
-                $val = ( mt_rand(0, 1) )? sprintf( "x%x", $email[$x] ) : $email[$x];
+                $val = ( mt_rand(0, 1) ) ? sprintf( "x%x", $email[$x] ) : $email[$x];
                 $o .= $sep.'"'.$val.'"';
                 $sep = ',';
             }
             $o .= '];';
             $o .= "\r\n";
-            $o .= 'var '.$var_title.'=[';
+            $o .= 'var '.$var_title.' = [';
             for( $x=0, $len=count($title), $sep=''; $x<$len; $x++ ){
                 $val = ( mt_rand(0, 1) )? sprintf( "x%x", $title[$x] ) : $title[$x];
                 $o .= $sep.'"'.$val.'"';
@@ -4942,13 +4942,13 @@ MAP;
             }
             $o .= '];';
             $o .= "\r\n";
-            $o .= 'var '.$var_output.'="<a hr"+"ef=\"";' . "\r\n";
-            $o .= "for (i=0; i<".$var_email.".length; i++) ".$var_output."+='&#'+".$var_email."[i]+';';\r\n";
-            $o .= $var_output."+='\" >';\r\n";
-            $o .= "for (i=0; i<".$var_title.".length; i++) ".$var_output."+='&#'+".$var_title."[i]+';';\r\n";
-            $o .= $var_output."+='</a>';\r\n";
-            $o .= "document.getElementById( '".$var_span."' ).innerHTML = ".$var_output.";\r\n";
-            $o .= "//]]\r\n";
+            $o .= 'var '.$var_output.' = "<a hr" + "ef=\"";' . "\r\n";
+            $o .= "for (var i = 0; i < ".$var_email.".length; i++) ".$var_output." += '&#' + ".$var_email."[i] + ';';\r\n";
+            $o .= $var_output." += '\">';\r\n";
+            $o .= "for (var i = 0; i < ".$var_title.".length; i++) ".$var_output." += '&#' + ".$var_title."[i] + ';';\r\n";
+            $o .= $var_output." += '</a>';\r\n";
+            $o .= "document.getElementById('".$var_span."').innerHTML = ".$var_output.";\r\n";
+            $o .= "})();\r\n";
             $o .= "</script>";
 
             return $o;
