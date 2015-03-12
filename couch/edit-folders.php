@@ -243,7 +243,7 @@
         $_p['module'] = 'pages';
         $_p['tpl_name'] = $PAGE->tpl_name;
         $_p['title'] = ucwords( $FUNCS->t('folders') ) . ' (<i>' . (($PAGE->tpl_title)?$PAGE->tpl_title:$PAGE->tpl_name) . '</i>)';
-        $_p['link'] =  K_ADMIN_URL . K_ADMIN_PAGE . '?o=folders&tpl='.$PAGE->tpl_id;
+        $_p['link'] = K_ADMIN_URL . K_ADMIN_PAGE . '?o=folders&tpl='.$PAGE->tpl_id;
         $_p['buttons'] = '<div id="create_new"><a class="button" href="'.K_ADMIN_URL . K_ADMIN_PAGE.'?o=folders&act=create&tpl='.$tpl_id.'&nonce='.$FUNCS->create_nonce( 'create_folder' ).'" title="'.$FUNCS->t('add_new_folder').'"><span>'.$FUNCS->t('add_new').'</span></a></div>';
         $_p['subtitle'] = $FUNCS->t('list');
         $_p['show_advanced'] = 0;
@@ -304,7 +304,7 @@
                 <?php
                 $CTX->push( '__ROOT__' );
                 $html = '';
-                $param =  new stdClass;
+                $param = new stdClass;
                 $param->_from = $first_record_on_page;
                 $param->_to = $last_record_on_page;
                 $param->_total = $total_records_on_page;
@@ -367,7 +367,7 @@
         return $html;
     }
 
-    function _k_visitor2(  &$folder, &$html, &$param ){
+    function _k_visitor2( &$folder, &$html, &$param ){
         global $CTX, $PAGE, $FUNCS;
 
         $cur = $param->_counter;
@@ -411,7 +411,7 @@
             <?php
                 $avail = 60;
                 if( $len_pad+strlen($f->title) > $avail ){
-                    $abbr_title = ( ($len_pad<$avail) ? substr($f->title, 0, $avail-$len_pad) : substr($pad, 0, $len_pad-$avail) ). '...';
+                    $abbr_title = ( ($len_pad<$avail) ? substr($f->title, 0, $avail-$len_pad) : substr($pad, 0, $len_pad-$avail) ). '&hellip;';
                 }
                 else{
                     $abbr_title = $f->title;

@@ -493,7 +493,7 @@ class CKEditor
 			/**
 			 * realpath - Returns canonicalized absolute pathname
 			 */
-			$realPath = realpath( './' ) ;
+			$realPath = realpath( './' );
 		}
 
 		/**

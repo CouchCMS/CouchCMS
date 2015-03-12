@@ -42,7 +42,7 @@
     //require_once( K_COUCH_DIR.'header.php' );
 
 
-    require( K_COUCH_DIR. 'includes/securimage/securimage.php' ) ;
+    require( K_COUCH_DIR. 'includes/securimage/securimage.php' );
     class securimage_ex extends securimage{
         var $captcha_num;
         function securimage_ex(){
@@ -66,4 +66,3 @@
         $img->ttf_file = K_COUCH_DIR. 'includes/securimage/elephant.ttf';
         $img->show();
     }
-

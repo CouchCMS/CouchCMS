@@ -36,7 +36,7 @@
     */
 
     if( defined('E_STRICT') ){
-    	error_reporting(E_ALL & ~(E_NOTICE | E_STRICT)); // Report all errors except notices and strict standard warnings
+        error_reporting(E_ALL & ~(E_NOTICE | E_STRICT)); // Report all errors except notices and strict standard warnings
     }
     else{
         error_reporting(E_ALL & ~E_NOTICE); // Report all errors except notices
@@ -71,7 +71,7 @@
     }
 
     // Check if a cached version of the requested page may be used
-    if ( !K_SITE_OFFLINE && !defined('K_ADMIN')  && K_USE_CACHE && $_SERVER['REQUEST_METHOD']!='POST' ){
+    if ( !K_SITE_OFFLINE && !defined('K_ADMIN') && K_USE_CACHE && $_SERVER['REQUEST_METHOD']!='POST' ){
 
         $auth = 0; $no_cache = 0;
         foreach( $_COOKIE as $k=>$v ){
@@ -190,16 +190,16 @@
         die( 'MySQL extension missing from your host\'s PHP installation' );
     }
 
-    if ( !defined('K_SITE_DIR') ) define( 'K_SITE_DIR', dirname( K_COUCH_DIR ) . '/');
+    if ( !defined('K_SITE_DIR') ) define( 'K_SITE_DIR', dirname( K_COUCH_DIR ) . '/' );
 
     //unset($_SERVER['DOCUMENT_ROOT']); //testing
     if ( !defined('K_SITE_URL') ){
         $url = 'http';
         $port = '';
         if( isset($_SERVER['HTTPS']) && $_SERVER['HTTPS']=='on' ){
-            $url .=  's';
+            $url .= 's';
         }
-        $url .=  '://';
+        $url .= '://';
         if( $_SERVER['SERVER_PORT']!='80' && $_SERVER['SERVER_PORT']!='443' ){
             $port = ':' . $_SERVER['SERVER_PORT'];
         }
@@ -261,7 +261,7 @@
 
         $url .= $_SERVER['HTTP_HOST'];
         if( strpos($_SERVER['HTTP_HOST'], ':')===false ) $url .= $port;
-        $url .=  $subdomain;
+        $url .= $subdomain;
 
         define( 'K_SITE_URL', $url );
     }
@@ -530,7 +530,7 @@
     }
 
     // set paths for uploaded images
-    global $Config ;
+    global $Config;
 
     if( defined('K_UPLOAD_DIR') ){
         $k_upload_dir = K_UPLOAD_DIR;

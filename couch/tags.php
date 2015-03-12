@@ -121,7 +121,7 @@
             $varname = $params[0]['lhs'];
             if( $varname ){
                 $scope = strtolower( trim($params[1]['rhs']) );
-                if( $scope != '' && ($scope!='parent' && $scope!='global' &&  $scope!='local') ){
+                if( $scope != '' && ($scope!='parent' && $scope!='global' && $scope!='local') ){
                     die("ERROR: Tag \"".$node->name."\" has unknown scope " . $scope);
                 }
 
@@ -176,7 +176,7 @@
             $scope = strtolower( $scope );
 
             if( $varname ){
-                if( $scope != '' && ($scope!='parent' && $scope!='global' &&  $scope!='local') ){
+                if( $scope != '' && ($scope!='parent' && $scope!='global' && $scope!='local') ){
                     die("ERROR: Tag \"".$node->name."\" has unknown scope " . $scope);
                 }
 
@@ -234,7 +234,7 @@
                         $data = $rs[0]['value'];
 
                         if( !strlen($data) ){
-                            $data =  $default_data;
+                            $data = $default_data;
                         }
 
                         if( $type!='text' ){
@@ -394,7 +394,7 @@
                     }
                 }
 
-                if( $html  ){
+                if( $html ){
                     $parser = new KParser( $html, $node->line_num, 0, '', $node->ID );
                     return $parser->get_HTML();
                 }
@@ -419,7 +419,7 @@
             // sanitize params
             $debug = trim( $debug );
             if( defined('K_SNIPPETS_DIR') ){ // always defined relative to the site
-                $base_snippets_dir = K_SITE_DIR . K_SNIPPETS_DIR ;
+                $base_snippets_dir = K_SITE_DIR . K_SNIPPETS_DIR;
             }
             else{
                 $base_snippets_dir = K_COUCH_DIR . 'snippets';
@@ -566,7 +566,7 @@
             if( !$debug ){
                 if( $chosen_file ){
                     $html = @file_get_contents( $folder . '/' . $chosen_file );
-                    if( $html  ){
+                    if( $html ){
                         $parser = new KParser( $html, $node->line_num, 0, '', $node->ID );
                         return $parser->get_HTML();
                     }
@@ -585,7 +585,7 @@
                 }
                 $html .= '</ul><b>';
                 if( $chosen_file ){
-                    $html .= 'Chosen file: ' . $chosen_file ;
+                    $html .= 'Chosen file: ' . $chosen_file;
                 }
                 else{
                     $html .= 'No suitable file found';
@@ -936,7 +936,7 @@
 
             $count = is_numeric( $count ) ? intval( $count ) : 0;
             $startcount = is_numeric( $startcount ) ? intval( $startcount ) : 0;
-            $end =  $startcount + $count;
+            $end = $startcount + $count;
             $safety = 0;
 
             $children = $node->children;
@@ -1377,7 +1377,7 @@
 
                                   );
                     if( $is_udf && count($attr_udf) ){
-                        $fields['custom_params'] =  $FUNCS->serialize($attr_udf);
+                        $fields['custom_params'] = $FUNCS->serialize($attr_udf);
                     }
 
                     // HOOK: alter_field_insert
@@ -1944,7 +1944,7 @@
                         $rs_cf = $DB->select( K_TBL_FIELDS, array('*'), "template_id='" . $DB->sanitize( $tpl_id ). "'" );
                         $arr_tables = array();
                         $count = 0;
-                        for( $x=0 ; $x<count($arr_custom_fields); $x++ ){
+                        for( $x=0; $x<count($arr_custom_fields); $x++ ){
 
                             if( $arr_custom_fields[$x]['processed'] ) continue; // can be set from hook
 
@@ -1998,7 +1998,7 @@
                                             if( $arr_custom_fields[$x]['op']=='=' ) $arr_custom_fields[$x]['op'] = 'LIKE';
                                             else $arr_custom_fields[$x]['op'] = 'NOT LIKE';
                                             for( $c=0; $c<count($arr_custom_fields[$x]['val']); $c++ ){
-                                                $arr_custom_fields[$x]['val'][$c] =  "%" . $arr_custom_fields[$x]['val'][$c] . "%";
+                                                $arr_custom_fields[$x]['val'][$c] = "%" . $arr_custom_fields[$x]['val'][$c] . "%";
                                             }
                                         }
                                     }
@@ -2199,7 +2199,7 @@
                                 $where .= $sep . $tbl['alias'].'.field_id=' . $DB->sanitize( $tbl['id'] );
                                 $sep = ' AND' . "\r\n";
                             }
-                            $where .=  "\r\n" . ')' . "\r\n";
+                            $where .= "\r\n" . ')' . "\r\n";
                         }
 
                         if( count($arr_custom_fields) ){
@@ -2225,7 +2225,7 @@
                                     if( count($cf['val']) > 1 ) $where .= ')';
                                     $sep = ' AND' . "\r\n";
                                 }
-                                $where .=  "\r\n" . ')' . "\r\n";
+                                $where .= "\r\n" . ')' . "\r\n";
                             }
                         }
 
@@ -2465,7 +2465,7 @@
                     else{
                         // return complete query
                         $html = ( $distinct ) ? 'SELECT DISTINCT ' : 'SELECT ';
-                        $html .= $fields . ' FROM ' . $query_table . ' WHERE ' . $sql . ' ORDER BY ' . $order_sql . ' LIMIT ' . $limit_sql ;
+                        $html .= $fields . ' FROM ' . $query_table . ' WHERE ' . $sql . ' ORDER BY ' . $order_sql . ' LIMIT ' . $limit_sql;
                     }
 
                     return $html;
@@ -2569,7 +2569,7 @@
                         $CTX->set( 'k_comment_link', K_SITE_URL . $parent_link . "?comment=" . $rec['id'] );
                     }
                     else{ // pages, search, query
-                        if( $mode==5  ){ // raw query
+                        if( $mode==5 ){ // raw query
                             $CTX->reset();
                             $rec_vars = array();
                             foreach( $rec as $rec_k=>$rec_v ){
@@ -2750,9 +2750,9 @@
             $charset = K_CHARSET;
             $html = <<<FORM
             <form id="k_search_form" method="get" action="$processor" accept-charset="$charset">
-                    <p><input type="text" class="search_field" name="s" id="s" value="$text" onfocus="if (document.forms['k_search_form'].s.value === '$msg') document.forms['k_search_form'].s.value=''" onblur="if (document.forms['k_search_form'].s.value == '') document.forms['k_search_form'].s.value='$msg'" />
-                    <input type="submit" class="search_button" value="Search" /></p>
-                    <input type="hidden" name="nc" value="1" />
+                <p><input type="text" class="search_field" name="s" id="s" value="$text" onfocus="if (document.forms['k_search_form'].s.value === '$msg') document.forms['k_search_form'].s.value=''" onblur="if (document.forms['k_search_form'].s.value == '') document.forms['k_search_form'].s.value='$msg'" />
+                <input type="submit" class="search_button" value="Search" /></p>
+                <input type="hidden" name="nc" value="1" />
             </form>
 FORM;
             return $html;
@@ -2764,7 +2764,7 @@ FORM;
             extract( $FUNCS->get_named_vars(
                         array( 'count'=>'',
                                'ignore'=>'',
-                               'trail'=>'...'
+                               'trail'=>'&hellip;'
                               ),
                         $params) );
 
@@ -2796,7 +2796,7 @@ FORM;
             extract( $FUNCS->get_named_vars(
                         array( 'count'=>'',
                               'allow'=>'',
-                              'trail'=>'...',
+                              'trail'=>'&hellip;',
                               'truncate_chars'=>'0'
                              ),
                         $params) );
@@ -3051,7 +3051,7 @@ FORM;
             // root takes precedence over childof
             if( $root!='' ){
                 $f = &$folders->find( $root );
-                if( !$f  ) return;
+                if( !$f ) return;
                 unset( $folders );
                 $folders = new KFolder( array('id'=>'-1', 'name'=>'_root_', 'pid'=>'-1'), $tpl_name, new KError('dummy') );
                 $folders->set_sort( $orderby, $order );
@@ -3155,7 +3155,7 @@ FORM;
             $show_count = $CTX->get( 'k_show_folder_count', 1 );
 
             if( $CTX->get('k_level_start', 1) ){
-                $class = ( $folder->id==-1 )? 'root' : 'children';
+                $class = ( $folder->id==-1 ) ? 'root' : 'children';
                 $html .= '<ul class="'.$class.'">';
             }
             elseif( $CTX->get('k_element_start', 1) ){
@@ -3480,7 +3480,7 @@ FORM;
             // root takes precedence over childof
             if( $root!='' ){
                 $f = &$tree->find( $root );
-                if( !$f  ) return;
+                if( !$f ) return;
                 unset( $tree );
                 $tree = new KNestedPage( array('id'=>'-1', 'name'=>'_root_', 'pid'=>'-1'), $tpl_name, new KError()/*dummy*/ );
                 $tree->set_sort( $orderby, $order );
@@ -3589,7 +3589,7 @@ FORM;
         function _nested_pages_visitor( &$item, &$html, &$node ){
             global $CTX;
 
-            if(  $node->_paginate ){
+            if( $node->_paginate ){
                 $cur = $node->_counter;
 
                 // set pagination variables
@@ -3692,6 +3692,7 @@ FORM;
             return $html;
 
         }
+
         // callback auxillary function
         function _nested_pages_visitor_menu( &$item, &$html, &$node ){
             global $CTX;
@@ -3872,7 +3873,7 @@ FORM;
                 }
                 if( $charset ){
                     if( function_exists('iconv') ){
-                        $val =  @iconv( $charset, 'UTF-8', $val );
+                        $val = @iconv( $charset, 'UTF-8', $val );
                     }
                 }
 
@@ -4212,18 +4213,18 @@ FORM;
             $html .= $sub_html;
 
             // decoupled this hidden field from the submit button to accomodate 'button' html tag and other ways of submission
-            $html .=  '<input type="hidden" name="k_hid_'.$name.'"  id="k_hid_'.$name.'" value="'.$name.'" />';
+            $html .= '<input type="hidden" name="k_hid_'.$name.'" id="k_hid_'.$name.'" value="'.$name.'" />';
 
             // add csrf token if any
             if( $nonce ){
-                $html .=  '<input type="hidden" name="k_nonce"  id="k_nonce" value="'.$FUNCS->create_nonce( $nonce ).'" />';
+                $html .= '<input type="hidden" name="k_nonce" id="k_nonce" value="'.$FUNCS->create_nonce( $nonce ).'" />';
             }
 
             // if method is 'get', make it uncacheable
             if( $method=='get' ){
                 $html .= '<input type="hidden" name="nc" value="1" />';
             }
-            $html .=  '</form>';
+            $html .= '</form>';
             return $html;
 
         }
@@ -4296,7 +4297,7 @@ FORM;
             }
             if( !$id ){ $id = $name; }
 
-            if( $type== 'captcha' ){
+            if( $type == 'captcha' ){
                 if( !$width ) $width=140;
                 if( !$format ) $format='t-i-r'; //textbox, image, reload
             }
@@ -4936,7 +4937,7 @@ MAP;
             $o .= "\r\n";
             $o .= 'var '.$var_title.' = [';
             for( $x=0, $len=count($title), $sep=''; $x<$len; $x++ ){
-                $val = ( mt_rand(0, 1) )? sprintf( "x%x", $title[$x] ) : $title[$x];
+                $val = ( mt_rand(0, 1) ) ? sprintf( "x%x", $title[$x] ) : $title[$x];
                 $o .= $sep.'"'.$val.'"';
                 $sep = ',';
             }
@@ -5014,7 +5015,7 @@ MAP;
 
                 foreach( $arr_items as $item ){
                     $vars = array();
-                    $vars['k_crumb_type'] = $item['crumb_type']; // one of these 4: 'next', 'prev', 'ellipses' or 'page'
+                    $vars['k_crumb_type'] = $item['crumb_type']; // one of these 4: 'next', 'prev', 'ellipsis' or 'page'
                     $vars['k_crumb_link'] = $item['link'];
                     $vars['k_crumb_text'] = $item['text'];
                     $vars['k_crumb_disabled'] = $item['disabled']; // pertinent for only 'next' and 'prev'
@@ -5602,7 +5603,7 @@ MAP;
                 $html = sprintf( '%.2f MB',($bytes/(1024*1024)) );
             }
             else{
-                $html = sprintf( '%.2f Gb',($bytes/(1024*1024*1024)) );
+                $html = sprintf( '%.2f GB',($bytes/(1024*1024*1024)) );
             }
 
             return $html;
@@ -5808,7 +5809,7 @@ MAP;
             // Make sure the source image lies within our upload image folder
             $domain_prefix = $Config['k_append_url'] . $Config['UserFilesPath'] . 'image/';
             if( strpos($src, $domain_prefix)===0 ){ // process image only if local
-                $orig_src =  $src;
+                $orig_src = $src;
                 $src = substr( $src, strlen($domain_prefix) );
                 if( $src ){
                     $src = $Config['UserFilesAbsolutePath'] . 'image/' . $src;

@@ -304,7 +304,7 @@
                                         $c_input_id = 'f_'. $this->name .'-'. $row_id .'-'. $c->name;
                                         $html = '<td class="editable"><div style="position:relative;">';
                                         $html .= $c->_render( $c_input_name, $c_input_id );
-                                        if( $c->deleted && $AUTH->user->access_level >= K_ACCESS_LEVEL_SUPER_ADMIN  && defined('K_ADMIN') ){
+                                        if( $c->deleted && $AUTH->user->access_level >= K_ACCESS_LEVEL_SUPER_ADMIN && defined('K_ADMIN') ){
                                             $html .= '<div class="k_cell_deleted">&nbsp;</div>';
                                             if( $x==0 ) $arr_deleted_html[] = $c->_html;
                                         }

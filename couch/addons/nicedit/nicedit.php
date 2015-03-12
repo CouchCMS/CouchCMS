@@ -44,7 +44,8 @@
             if( $AUTH->user->access_level < K_ACCESS_LEVEL_SUPER_ADMIN ) return;
 
             $attr = $FUNCS->get_named_vars(
-                array(  'buttons'=>'',
+                array(
+                    'buttons'=>'',
                     'maxheight'=>'0',
                   ),
                 $params
@@ -114,7 +115,7 @@
             else{
                 $this->data = $FUNCS->cleanXSS( $post_val );
             }
-            $this->modified = ( strcmp( $this->orig_data, $this->data )==0 )? false : true; // values unchanged
+            $this->modified = ( strcmp( $this->orig_data, $this->data )==0 ) ? false : true; // values unchanged
         }
 
         function is_empty(){
@@ -122,7 +123,7 @@
             return ( strlen($data) ) ? false : true;
         }
 
-        function _render( $input_name, $input_id, $extra1='', $extra2='', $dynamic_insertion=0  ){
+        function _render( $input_name, $input_id, $extra1='', $extra2='', $dynamic_insertion=0 ){
             global $FUNCS, $CTX;
 
             /*
@@ -132,11 +133,11 @@
                $subdomain = substr( $path, strlen(K_SITE_DIR) );
             }
             if( !defined('NICEDIT_URL') ) define( 'NICEDIT_URL', K_SITE_URL . $subdomain );
-            $FUNCS->load_js( NICEDIT_URL . 'nicEdit.js?kver=' . time() );
+            $FUNCS->load_js( NICEDIT_URL . 'nicedit.js?kver=' . time() );
             */
 
             define( 'NICEDIT_URL', K_ADMIN_URL . 'addons/nicedit/' );
-            $FUNCS->load_js( NICEDIT_URL . 'nicEdit.js?v=2' );
+            $FUNCS->load_js( NICEDIT_URL . 'nicedit.js?v=2' );
             $style = ( $this->height ) ? 'height:'.$this->height.'px; ' : '';
             $style .= ( $this->width ) ? 'width:'.$this->width.'px; ' : 'width:99%; ';
             $html .= '<textarea id="' . $input_id . '" name="'. $input_name .'" '.$rtl.' rows="12" cols="79" style="'.$style.'" '.$extra.'>'. htmlspecialchars( $this->get_data(), ENT_QUOTES, K_CHARSET ) .'</textarea>';
@@ -153,7 +154,7 @@
                 try{
                     window.addEvent('domready',
                         function(){
-                        var ed = new nicEditor({iconsPath : '<?php echo NICEDIT_URL; ?>nicEditorIcons.gif?v=2', buttonList : <?php echo $this->buttons; ?><?php if($this->maxheight){echo(', maxHeight : '.$this->maxheight);}?>}).panelInstance('<?php echo $input_id ?>');
+                        var ed = new nicEditor({iconsPath : '<?php echo NICEDIT_URL; ?>nicEditorIcons.gif?v=2', buttonList : <?php echo $this->buttons; ?><?php if($this->maxheight){echo ', maxHeight : '.$this->maxheight;}?>}).panelInstance('<?php echo $input_id; ?>');
 
                         $('btn_submit').addEvent("my_submit", function(event){
                            var el = nicEditors.findEditor('<?php echo $input_id ?>');
@@ -184,7 +185,7 @@
                 <img src="<?php echo NICEDIT_URL; ?>blank.gif" alt="" id="<?php echo $input_id ?>_dummyimg" onload="
                     el=$('<?php echo $input_id ?>_dummyimg');
                     if(!el.get('idx')){
-                    var ed = new nicEditor({iconsPath : '<?php echo NICEDIT_URL; ?>nicEditorIcons.gif?v=2', buttonList : <?php echo $this->buttons; ?><?php if($this->maxheight){echo(', maxHeight : '.$this->maxheight);}?>}).panelInstance('<?php echo $input_id ?>');
+                    var ed = new nicEditor({iconsPath : '<?php echo NICEDIT_URL; ?>nicEditorIcons.gif?v=2', buttonList : <?php echo $this->buttons; ?><?php if($this->maxheight){echo ', maxHeight : '.$this->maxheight;}?>}).panelInstance('<?php echo $input_id; ?>');
 
                     $('btn_submit').addEvent('my_submit', function(event){
                        var el = nicEditors.findEditor('<?php echo $input_id ?>');

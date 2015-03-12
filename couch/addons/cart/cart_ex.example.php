@@ -157,7 +157,7 @@
             if( $this->current_action_success ){
                 switch( $this->current_action ){
                     case PP_ACTION_ADD_ITEM:
-                        $flash_message =  '<p class="success">' . $this->get_config( 'msg_add_success' ) . '</p>';
+                        $flash_message = '<p class="success">' . $this->get_config( 'msg_add_success' ) . '</p>';
                         break;
                     case PP_ACTION_UPDATE_ITEMS:
                         $flash_message = '<p class="notice">' . $this->get_config( 'msg_update_success' ) . '</p>';

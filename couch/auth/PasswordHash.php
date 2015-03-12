@@ -257,5 +257,3 @@ class PasswordHash {
 		return $hash === $stored_hash;
 	}
 }
-
-?>

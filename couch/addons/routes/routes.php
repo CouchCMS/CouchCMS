@@ -410,7 +410,7 @@
                     else{
                         unset( $this->routes[$PAGE->tpl_name] );
                     }
-                    $cache_value =  base64_encode( serialize($this->routes) );
+                    $cache_value = base64_encode( serialize($this->routes) );
                     $FUNCS->set_setting( $this->cache_key, $cache_value );
                 }
 
@@ -424,7 +424,7 @@
             $tpl_name = $rec['name'];
             if( isset($this->routes[$tpl_name]) ){
                 unset( $this->routes[$tpl_name] );
-                $cache_value =  base64_encode( serialize($this->routes) );
+                $cache_value = base64_encode( serialize($this->routes) );
                 $FUNCS->set_setting( $this->cache_key, $cache_value );
             }
         }

@@ -639,7 +639,3 @@
     // Send message
     return $email->send();
   }
-
-
-
-?>

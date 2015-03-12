@@ -69,8 +69,8 @@
                 $PAGE->delete( 1 );
 
                 $qs = '?o=drafts';
-                if( $tpl_id  ) $qs .= '&tpl=' . $tpl_id;
-                if( $parent_id  ) $qs .= '&pid=' . $parent_id;
+                if( $tpl_id ) $qs .= '&tpl=' . $tpl_id;
+                if( $parent_id ) $qs .= '&pid=' . $parent_id;
                 if( $pgn_pno>1 ) $qs .= '&pg=' . $pgn_pno;
                 header("Location: ".K_ADMIN_URL . K_ADMIN_PAGE. $qs);
                 exit;
@@ -141,10 +141,10 @@
         $tables = K_TBL_PAGES.' p left outer join '.K_TBL_PAGES.' p2 on p.parent_id = p2.id';
         $tables .= ' left outer join '.K_TBL_TEMPLATES.' t on p.template_id = t.id';
         $sql = "p.parent_id>0";
-        if( $tpl_id  ){
+        if( $tpl_id ){
             $sql .= " AND t.id = '" . $DB->sanitize( $tpl_id )."'";
         }
-        if( $parent_id  ){
+        if( $parent_id ){
             $sql .= " AND p2.id = '" . $DB->sanitize( $parent_id )."'";
         }
         $sql .= " ORDER BY p.template_id, p.parent_id, p.modification_date desc";
@@ -163,8 +163,8 @@
         // paginator
         $adjacents = 2;
         $targetpage = K_ADMIN_URL . K_ADMIN_PAGE . '?o=drafts';
-        if( $tpl_id  ) $targetpage .= '&tpl=' . $tpl_id;
-        if( $parent_id  ) $targetpage .= '&pid=' . $parent_id;
+        if( $tpl_id ) $targetpage .= '&tpl=' . $tpl_id;
+        if( $parent_id ) $targetpage .= '&pid=' . $parent_id;
         $pagestring = "&pg=";
         $prev_text = '&#171; ' . $FUNCS->t('prev');
         $next_text = $FUNCS->t('next') . ' &#187;';
@@ -191,7 +191,7 @@
         if( count($rs3) ){
             foreach( $rs3 as $t ){
                 $abbr_title = $t['title'] ? $t['title'] : $t['name'];
-                $abbr_title = (strlen($abbr_title)>30) ? substr($abbr_title, 0, 30) . '...' : $abbr_title;
+                $abbr_title = (strlen($abbr_title)>30) ? substr($abbr_title, 0, 30) . '&hellip;' : $abbr_title;
                 $t_selected = ($t['id']==$tpl_id) ? ' SELECTED=1 ' : '';
                 //$str .= '<option value="'.$t['id'].'" '.$t_selected.'>'.$abbr_title.' ('.$t['cnt'].')</option>';
                 $str .= '<option value="'.$t['id'].'" '.$t_selected.'>'.$abbr_title.'</option>'; // count seemed confusing
@@ -222,7 +222,7 @@
             if( $parent_id ){
                 // No more drafts for this parent. Go to template listing..
                 $qs = '?o=drafts';
-                if( $tpl_id  ) $qs .= '&tpl=' . $tpl_id;
+                if( $tpl_id ) $qs .= '&tpl=' . $tpl_id;
                 header("Location: ".K_ADMIN_URL . K_ADMIN_PAGE. $qs);
                 exit;
             }
@@ -266,7 +266,7 @@
                 else{
                     $abbr_title = '<font color="red">'.$FUNCS->t('original_deleted').' (id: '.$p['parent_id'].')</font>';
                 }
-                $abbr_title = (strlen($abbr_title)>60) ? substr($abbr_title, 0, 60) . '...' : $abbr_title;
+                $abbr_title = (strlen($abbr_title)>60) ? substr($abbr_title, 0, 60) . '&hellip;' : $abbr_title;
                 $str .= '<a href="'.K_ADMIN_URL . K_ADMIN_PAGE.'?act=edit&tpl='. $p['template_id'] .'&p='. $p['id'] .'&nonce='.$nonce.'">'. $abbr_title .'</a>';
                 $str .= '</td>';
 
@@ -274,7 +274,7 @@
                 $str .= '<td class="folder'.$last_row.'">';
                 if( $p['tpl_clonable'] ){
                     $abbr_title = $p['tpl_title'] ? $p['tpl_title'] : $p['tpl_name'];
-                    $str .= (strlen($abbr_title)>30) ? substr($abbr_title, 0, 30) . '...' : $abbr_title;
+                    $str .= (strlen($abbr_title)>30) ? substr($abbr_title, 0, 30) . '&hellip;' : $abbr_title;
                 }
                 else{
                     $str .= '&nbsp;';
@@ -294,8 +294,8 @@
                     $confirm_prompt = "onclick='if( confirm(\"".$FUNCS->t('confirm_delete_draft')."\") ) { return true; } return false;'";
                     $qs = '?o=drafts&act=delete';
                     $qs .= '&p='. $p['id'] .'&nonce='.$nonce;
-                    if( $tpl_id  ) $qs .= '&tpl=' . $tpl_id;
-                    if( $parent_id  ) $qs .= '&pid=' . $parent_id;
+                    if( $tpl_id ) $qs .= '&tpl=' . $tpl_id;
+                    if( $parent_id ) $qs .= '&pid=' . $parent_id;
                     if( $pgn_pno>1 ) $qs .= '&pg=' . $pgn_pno;
                     //if( isset($_GET['pg']) ) $qs .= '&pg=' . $_GET['pg'];
                     $str .= '<a href="'.K_ADMIN_URL . K_ADMIN_PAGE.$qs.'" '.$confirm_prompt.'><img src="'.K_ADMIN_URL.'theme/images/page_white_delete.gif" title="'.$FUNCS->t('delete').'"/></a>';

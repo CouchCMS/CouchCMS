@@ -130,7 +130,7 @@
                                     To see this page you must logout and login with sufficient privileges.';
 
     // Password recovery
-    $t['recovery_prompt'] = 'Please submit your username or email address<br/>
+    $t['recovery_prompt'] = 'Please submit your username or email address.<br/>
                             You\'ll receive your password by email.';
     $t['name_or_email'] = 'Your Username or E-mail';
     $t['submit'] = 'Submit';
@@ -140,13 +140,13 @@
     $t['reset_req_email_msg_0'] = 'A request was received to reset your password for the following site and username';
     $t['reset_req_email_msg_1'] = 'To confirm that the request was made by you please visit the following address, otherwise just ignore this email.';
     $t['email_failed'] = 'E-Mail could not be sent.';
-    $t['reset_req_email_confirm'] = 'A confirmation email has been sent to you<br/>
+    $t['reset_req_email_confirm'] = 'A confirmation email has been sent to you.<br/>
                                     Please check your email.';
     $t['invalid_key'] = 'Invalid key';
     $t['reset_email_subject'] = 'Your new password';
     $t['reset_email_msg_0'] = 'Your password has been reset for the following site and username';
     $t['reset_email_msg_1'] = 'Once logged in you can change your password.';
-    $t['reset_email_confirm'] = 'Your password has been reset<br/>
+    $t['reset_email_confirm'] = 'Your password has been reset.<br/>
                                 Please check your email for the new password.';
 
     // Maintenance Mode
@@ -231,7 +231,7 @@
     // Addendum to Version 1.2.5 /////////////////////////////////////
     // Gallery
     $t['bulk_upload'] = 'Upload';
-    $t['folder_empty'] = 'Folder empty. Please use the upload button above to add images.';
+    $t['folder_empty'] = 'This folder is empty. Please use the upload button above to add images.';
     $t['root'] = 'Root';
     $t['item'] = 'image'; // Single
     $t['items'] = 'images'; // Multiple

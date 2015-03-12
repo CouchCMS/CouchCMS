@@ -51,5 +51,3 @@
 
     // authenticate if you can :)
     $AUTH = new KAuth( K_ACCESS_LEVEL_ADMIN );
-
-

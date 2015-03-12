@@ -3,13 +3,13 @@
     if ( !defined('K_COUCH_DIR') ) die(); // cannot be loaded directly
 
     // 0.
-    // Set the follwing to 1 to put your site in maintenance mode.
+    // Set the following to 1 to put your site in maintenance mode.
     // In this mode only admins will be able to access the site while the visitors will be
     // shown the 'Site undergoing maintenance' message.
     define( 'K_SITE_OFFLINE', 0 );
 
     // 1.
-    // If neccesary, define the full URL of your site including the subdomain, if any.
+    // If necessary, define the full URL of your site including the subdomain, if any.
     // V.IMP: Don't forget the trailing slash!
     //define( 'K_SITE_URL', 'http://www.test.com/subfolder1/subfolder2/mysite/' );
 
@@ -47,17 +47,17 @@
     // Database password
     define( 'K_DB_PASSWORD', 'database_password' );
     // 7.
-    // MySQL hostname (it will usually be 'localhost' )
+    // MySQL hostname (it will usually be 'localhost')
     define( 'K_DB_HOST', 'localhost' );
     // 7b.
     // Needed only if multiple instances of this CMS are to be installed in the same database
-    // (please use only alphanumeric characters or underscore (NO hyphen) )
+    // (please use only alphanumeric characters or underscore (NO hyphen))
     define( 'K_DB_TABLES_PREFIX', '' );
 
     // 8.
     // Set the following to '1' if you wish to enable Pretty URLS.
     // After enabling it, use gen_htaccess.php to generate an .htaccess file and place it in the root folder of your site.
-    define( 'K_PRETTY_URLS', 0);
+    define( 'K_PRETTY_URLS', 0 );
 
     // 9.
     // If set, CMS will cache generated pages and serve them if possible.
@@ -115,7 +115,7 @@
     define( 'K_PAYPAL_EMAIL', 'seller_1272492192_biz@gmail.com' );
     // 19.
     // A three letter code for the currency you do your business in.
-    // Some valid values are: AUD(Australian Dollar), CAD(Canadian Dollar), EUR(Euro),
+    // Some valid values are: AUD (Australian Dollar), CAD (Canadian Dollar), EUR (Euro),
     // GBP (Pound Sterling), JPY (Japanese Yen) and USD (U.S. Dollar).
     // Please check PayPal to find yours.
     define( 'K_PAYPAL_CURRENCY', 'USD' );
@@ -128,7 +128,7 @@
 
     // 21.
     // Minimum time interval required between two comments posted by the same user (in seconds).
-    // Prevents comment flooding. A setting of 5 minutes (300 seconds ) is recommended.
+    // Prevents comment flooding. A setting of 5 minutes (300 seconds) is recommended.
     define( 'K_COMMENTS_INTERVAL', 5 * 60 );
 
     // 22.
@@ -137,7 +137,7 @@
     define( 'K_ADMIN_LANG', 'EN' );
 
     // 23.
-    // Uncomment the following line if you wish to format self-closing HTML tags the old way e.g. as <BR> instead of <BR />
+    // Uncomment the following line if you wish to format self-closing HTML tags the old way e.g. as <br> instead of <br/>
     //define( 'K_HTML4_SELFCLOSING_TAGS', 1 );
 
     // 24.

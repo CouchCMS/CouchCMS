@@ -60,7 +60,7 @@
                                  'mid', 'mov', 'mp3', 'mp4', 'mpc', 'mpeg', 'mpg', 'ods', 'odt', 'pdf', 'png', 'ppt', 'pxd', 'qt',
                                  'ram', 'rar', 'rm', 'rmi', 'rmvb', 'rtf', 'sdc', 'sitd', 'swf', 'sxc', 'sxw', 'tar', 'tgz', 'tif',
                                  'tiff', 'txt', 'vsd', 'wav', 'wma', 'wmv', 'xls', 'xml', 'zip'
-                                ) ;
+                                );
             $default_max_size = 512; // in KB
             $default_max_width = 2048;
             $default_max_height = 2048;
@@ -245,7 +245,7 @@
             }
 
             // modified?
-            $this->modified = ( $this->orig_data['file_id'] == $this->data['file_id']  ) ? false : true;
+            $this->modified = ( $this->orig_data['file_id'] == $this->data['file_id'] ) ? false : true;
 
         }
 
@@ -314,7 +314,7 @@
         function _process_upload( $input_name ){
             global $FUNCS, $DB, $AUTH, $Config;
 
-            $file = $_FILES[$input_name] ;
+            $file = $_FILES[$input_name];
             if( !is_uploaded_file($file['tmp_name']) ){
 
                 // Check for POST errors in uploading
@@ -365,7 +365,7 @@
             $file_size = $file['size'];
 
             // validate file extension
-            $allowed_ext =  explode( ',', $this->allowed_ext );
+            $allowed_ext = explode( ',', $this->allowed_ext );
             if( $file_ext=='' || !in_array($file_ext, $allowed_ext) ){
                 return $FUNCS->raise_error( 'File extension not allowed' );
             }
@@ -402,7 +402,7 @@
                 }
             }
             $oldumask = umask( 0 );
-            @chmod( $dest_file_path, 0777 ) ;
+            @chmod( $dest_file_path, 0777 );
             umask( $oldumask );
 
             // Some further checks on the uploaded file before truly accepting it
@@ -428,7 +428,7 @@
                     // ..make sure it does not contain any HTML
                     $fp = @fopen( $dest_file_path, 'rb' );
                     if( $fp !== false ){
-                        $content =  trim( strtolower(fread($fp, 1024)) );
+                        $content = trim( strtolower(fread($fp, 1024)) );
                         fclose( $fp );
                         if( $content ){
                             $forbidden_tags = array( 'body', 'head', 'html', 'img', 'pre', 'script', 'table', 'title', 'plaintext', 'a href' );
@@ -456,7 +456,7 @@
                                 )
                             );
             if( $rs!=1 ) return $FUNCS->raise_error( "Failed to insert record in K_TBL_ATTACHMENTS" );
-            $id =  $DB->last_insert_id;
+            $id = $DB->last_insert_id;
 
             // if upload was an image, see if it requires some processing
             // We are doing this after adding an entry into the database because this processing

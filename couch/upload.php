@@ -46,8 +46,8 @@
     $AUTH->check_access( K_ACCESS_LEVEL_ADMIN, 1 );
 
     if( ($_GET['o'] == 'gallery') ){
-        require( K_COUCH_DIR. 'includes/plupload/upload.php' ) ;
+        require( K_COUCH_DIR. 'includes/plupload/upload.php' );
     }
     else{
-        require( K_COUCH_DIR. 'includes/fileuploader/connector.php' ) ;
+        require( K_COUCH_DIR. 'includes/fileuploader/connector.php' );
     }

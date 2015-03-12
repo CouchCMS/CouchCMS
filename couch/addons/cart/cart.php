@@ -687,7 +687,7 @@
                               ),
                         $params)
                    );
-            if( $shipping_address!=1 &&  $shipping_address!=2 ) $shipping_address=0;
+            if( $shipping_address!=1 && $shipping_address!=2 ) $shipping_address=0;
             if( $calc_shipping_at_paypal!=1 ) $calc_shipping_at_paypal=0;
             $logo = trim( $logo );
             $return_url = trim( $return_url );
@@ -1063,7 +1063,7 @@
             $html = '';
             switch( $node->name ){
                 case 'pp_count_items':
-                    $html =  $CART->count_items;
+                    $html = $CART->count_items;
                     break;
                 case 'pp_count_unique_items':
                     $html = count( $CART->items );

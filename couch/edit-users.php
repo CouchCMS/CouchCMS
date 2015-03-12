@@ -175,7 +175,7 @@
         $_p = array();
         $_p['module'] = 'users';
         $_p['title'] = ucwords( $FUNCS->t('users') );
-        $_p['link'] =  K_ADMIN_URL . K_ADMIN_PAGE . '?o=users';
+        $_p['link'] = K_ADMIN_URL . K_ADMIN_PAGE . '?o=users';
         $_p['buttons'] = '<div id="create_new"><a class="button" href="'.K_ADMIN_URL . K_ADMIN_PAGE.'?o=users&act=create&nonce='.$FUNCS->create_nonce( 'create_user' ).'" title="'.$FUNCS->t('add_new_user').'"><span>'.$FUNCS->t('add_new').'</span></a></div>';
         $_p['subtitle'] = $FUNCS->t('list');
         $_p['show_advanced'] = 0;

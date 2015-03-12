@@ -148,7 +148,7 @@
             $month .= '<option></option>';
             for( $xx=1; $xx<=12; $xx++ ){
                 $month .= "<option value=\"".$xx."\"";
-                $month .= ( $xx==$mm )? 'selected="selected"' : '';
+                $month .= ( $xx==$mm ) ? ' selected="selected"' : '';
                 $month .= ">".$arrMonths[$xx-1]."</option>";
             }
             $month .= "</select>";
@@ -165,13 +165,13 @@
             $sep = '<span class="dt_element dt_sep">' . $this->fields_separator . '</span>';
             switch( $this->format ){
                 case 'dmy':
-                    $html =  $day . $sep . $month . $sep . $year;
+                    $html = $day . $sep . $month . $sep . $year;
                     break;
                 case 'ymd':
-                    $html =  $year . $sep . $month . $sep . $day;
+                    $html = $year . $sep . $month . $sep . $day;
                     break;
                 case 'mdy':
-                    $html =  $month . $sep . $day . $sep . $year;
+                    $html = $month . $sep . $day . $sep . $year;
             }
 
             // Append time?
@@ -195,14 +195,14 @@
                     }
                     for( $xx=1; $xx<=12; $xx++ ){
                         $hour .= "<option value=\"".$xx."\"";
-                        $hour .= ( $xx==$h )? 'selected="selected"' : '';
+                        $hour .= ( $xx==$h ) ? ' selected="selected"' : '';
                         $hour .= ">".sprintf('%02d', $xx)."</option>";
                     }
                 }
                 else{
                     for( $xx=0; $xx<24; $xx++ ){
                         $hour .= "<option value=\"".$xx."\"";
-                        $hour .= ( $xx==$h )? 'selected="selected"' : '';
+                        $hour .= ( $xx==$h ) ? ' selected="selected"' : '';
                         $hour .= ">".sprintf('%02d', $xx)."</option>";
                     }
                 }
@@ -214,7 +214,7 @@
                 for( $xx=0; $xx<60; $xx++ ){
                     if( !($xx%$step) ){
                         $min .= "<option value=\"".$xx."\"";
-                        $min .= ( $xx==$m )? 'selected="selected"' : '';
+                        $min .= ( $xx==$m ) ? ' selected="selected"' : '';
                         $min .= ">".sprintf('%02d', $xx)."</option>";
                     }
                 }
@@ -227,22 +227,22 @@
                 $hour .= '</span>';
                 $min .= '</span>';
 
-                $html .=  '<span class="dt_element dt_sep">@</span>' . $hour . '<span class="dt_element dt_sep">:</span>' . $min;
+                $html .= '<span class="dt_element dt_sep">@</span>' . $hour . '<span class="dt_element dt_sep">:</span>' . $min;
 
                 if( $this->am_pm ){
                     $am_pm = "<span class=\"dt_element dt_am_pm\"><select id=\"".$input_id."_am_pm\" name=\"".$input_name."[am_pm]\" >\n";
                     foreach( array('am', 'pm') as $xx ){
                         $am_pm .= "<option value=\"".$xx."\"";
-                        $am_pm .= ( $xx==$a )? 'selected="selected"' : '';
+                        $am_pm .= ( $xx==$a ) ? ' selected="selected"' : '';
                         $am_pm .= ">".strtoupper($xx)."</option>";
                     }
                     $am_pm .= "</select>";
                     $am_pm .= "</span>";
-                    $html .=  $am_pm;
+                    $html  .= $am_pm;
                 }
             }
-            $html .=  '<span class="dt_break"></span>';
-            $html =  '<span class="dt_container">'.$html.'</span>';
+            $html .= '<span class="dt_break"></span>';
+            $html  = '<span class="dt_container">'.$html.'</span>';
 
             return $html;
         }
@@ -292,7 +292,7 @@
             $this->data = $post_val;
 
             // modified?
-            $this->modified = ( strcmp( $this->orig_data, $this->data )==0 )? false : true; // values unchanged
+            $this->modified = ( strcmp( $this->orig_data, $this->data )==0 ) ? false : true; // values unchanged
         }
 
         function validate(){

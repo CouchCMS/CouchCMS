@@ -349,10 +349,10 @@
                 ),
                 $params)
             );
-            $user =  trim( $user );
-            $processor =  trim( $processor );
+            $user = trim( $user );
+            $processor = trim( $processor );
 
-            $tpl = ( $processor )? $processor : $this->registration_tpl;
+            $tpl = ( $processor ) ? $processor : $this->registration_tpl;
             if( !strlen($tpl) ) return;
 
             $link = '';
@@ -443,7 +443,7 @@
                 ),
                 $params)
             );
-            $username =  trim( $username );
+            $username = trim( $username );
             $send_mail = ( $send_mail==0 ) ? 0 : 1;
 
             $res = $this->_forgot_password( $username, $send_mail );
@@ -627,10 +627,10 @@
                 ),
                 $params)
             );
-            $username =  trim( $username );
-            $password =  trim( $password );
-            $remember =  trim( $remember );
-            $redirect =  trim( $redirect );
+            $username = trim( $username );
+            $password = trim( $password );
+            $remember = trim( $remember );
+            $redirect = trim( $redirect );
             if( !strlen($redirect) ) $redirect='2'; // default expects a querystring param named 'redirect'
 
             $res = $AUTH->login( $username, $password, $remember );
@@ -676,7 +676,7 @@
                     $params)
                 );
                 $nonce = trim( $nonce );
-                $redirect =  trim( $redirect );
+                $redirect = trim( $redirect );
                 if( !strlen($redirect) ) $redirect='2'; // default expects a querystring param named 'redirect'
 
                 $AUTH->logout( $nonce );
@@ -711,7 +711,7 @@
                 ),
                 $params)
             );
-            $redirect =  trim( $redirect );
+            $redirect = trim( $redirect );
 
             if( $node->name=='login_link' ){
                 $link = $FUNCS->get_login_link( $redirect );

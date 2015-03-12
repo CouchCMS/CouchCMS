@@ -94,7 +94,7 @@
         }
 
         // Show in admin panel
-        function _render( $input_name, $input_id, $extra1='', $extra2='', $dynamic_insertion=0  ){
+        function _render( $input_name, $input_id, $extra1='', $extra2='', $dynamic_insertion=0 ){
             global $FUNCS;
 
             if( $this->no_gui ){
@@ -625,7 +625,7 @@
         }
 
         // Show in admin panel
-        function _render( $input_name, $input_id, $extra1='', $extra2='', $dynamic_insertion=0  ){
+        function _render( $input_name, $input_id, $extra1='', $extra2='', $dynamic_insertion=0 ){
             global $FUNCS, $DB;
 
             // get template_id of reverse related masterpage

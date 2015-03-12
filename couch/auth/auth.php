@@ -290,7 +290,7 @@
             $err_div .= '</div>';
 
             ?>
-                <?php echo( $FUNCS->login_header() ); ?>
+                <?php echo $FUNCS->login_header(); ?>
 
                     <?php echo $err_div ?>
                     <form name="frm_login" action="" method="post">
@@ -309,7 +309,7 @@
                         <?php echo '<a href="'.K_ADMIN_URL.'forgotpassword.php">'.$FUNCS->t('forgot_password').'</a>'; ?>
                     </p>
 
-                <?php echo( $FUNCS->login_footer() ); ?>
+                <?php echo $FUNCS->login_footer(); ?>
             <?php
             die();
         }
@@ -322,13 +322,13 @@
             $logout_link = $FUNCS->get_logout_link();
             $logout_link = '<a href="'.$logout_link.'">'.$FUNCS->t('logout').'</a>';
             ?>
-            <?php echo( $FUNCS->login_header() ); ?>
+            <?php echo $FUNCS->login_header(); ?>
                 <div class='wrapper'>
                     <h1 style="margin: 0 0 10px 0; padding: 0pt; font-size: 20px;"><?php echo $FUNCS->t('access_denied'); ?></h1>
                     <p><?php echo $FUNCS->t('insufficient_privileges'); ?></p>
                     <?php echo $logout_link; ?>
                 </div>
-            <?php echo( $FUNCS->login_footer() ); ?>
+            <?php echo $FUNCS->login_footer(); ?>
             <?php
             die();
         }
@@ -361,7 +361,7 @@
 
         }
 
-        function get_hash( $user, $value, $expiry  ){
+        function get_hash( $user, $value, $expiry ){
             global $FUNCS;
 
             $data = $user . '|' . $value . '|' . $expiry;

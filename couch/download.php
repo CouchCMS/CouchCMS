@@ -331,7 +331,7 @@
         if( strpos($link, K_SITE_URL)===0 ){
             // ..convert link to local path.
             $link = str_replace( K_SITE_URL, '', $link );
-            $site_dir =  realpath( K_SITE_DIR ) . '/';
+            $site_dir = realpath( K_SITE_DIR ) . '/';
             $site_dir = str_replace( '\\', '/', $site_dir );
             $link = $site_dir . $link;
         }

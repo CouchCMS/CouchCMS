@@ -200,7 +200,7 @@
 
                         if( file_exists($filepath) ){
                             $html = @file_get_contents($filepath);
-                            if( strlen($html)  ){
+                            if( strlen($html) ){
                                 $parser = new KParser( $html );
                                 $this->$dyn_param = $parser->get_HTML();
                             }
@@ -316,7 +316,7 @@
             else{
                 $this->data = ($this->k_type=='textarea' && $this->no_xss_check) ? $post_val : $FUNCS->cleanXSS( $post_val );
             }
-            $this->modified = ( strcmp( $this->orig_data, $this->data )==0 )? false : true; // values unchanged
+            $this->modified = ( strcmp( $this->orig_data, $this->data )==0 ) ? false : true; // values unchanged
         }
 
         // Meant to be overridden by custom fields to store raw data picked from database into the field object.
@@ -339,7 +339,7 @@
 
             if( !$this->data ){
                 // make sure it is not numeric 0
-                $data = ( is_numeric($this->data) )? (string)$this->data : $this->default_data;
+                $data = ( is_numeric($this->data) ) ? (string)$this->data : $this->default_data;
             }
             else{
                 $data = $this->data;
@@ -668,7 +668,7 @@
                 }
                 $this->page->CKEditor->textareaAttributes = array("style" => "visibility:hidden", "id" => $input_id, "cols" => 80, "rows" => 15);
 
-//$config['baseHref'] = K_SITE_URL;
+                //$config['baseHref'] = K_SITE_URL;
                 // RTL
                 if( $rtl ) $config['contentsLangDirection'] = 'rtl';
 
@@ -725,7 +725,7 @@
                         '/',
                         array( 'Styles', 'Format', 'Font', 'FontSize' ),
                         array( 'TextColor', 'BGColor' ),
-                        array( 'ShowBlocks', 'Preview', 'Maximize', '-', 'Source'  )
+                        array( 'ShowBlocks', 'Preview', 'Maximize', '-', 'Source' )
                     );
                 }
                 elseif( $toolbar == 'basic' ){
@@ -734,7 +734,7 @@
                         array( 'Format' ),
                         array( 'NumberedList', 'BulletedList', 'Blockquote', 'Link', 'Unlink' ),
                         array( 'Undo', 'Redo', 'RemoveFormat' ),
-                        array( 'Preview', 'Maximize', '-', 'Source'  )
+                        array( 'Preview', 'Maximize', '-', 'Source' )
                     );
                 }
                 elseif( $toolbar == 'custom' ){
@@ -774,7 +774,7 @@
                         array( 'Cut', 'Copy', 'Paste', 'PasteText', 'PasteFromWord' ),
                         array( 'Image', 'Flash', 'Table', 'HorizontalRule', 'Smiley', 'SpecialChar', 'PageBreak' ),
                         array( 'Link', 'Unlink', 'Anchor' ),
-                        array( 'ShowBlocks', 'Preview', 'Maximize', '-', 'Source'  )
+                        array( 'ShowBlocks', 'Preview', 'Maximize', '-', 'Source' )
                     );
                 }
 
@@ -916,7 +916,7 @@
                             $html .= '<input type="'.$input_type.'" name="'.$input_name.'" id="'.$input_id . $count.'" value="';
                             if( $this->k_type=='radio' ){
                                 $html .= $opt_val.'" '.$extra .' ';
-                                if( $selected=='' && $count == 0  ){
+                                if( $selected=='' && $count == 0 ){
                                     $html .= 'checked="checked"'; // if no button selected select the first one (RFC1866)
                                 }
                                 else{
@@ -930,7 +930,7 @@
                             }
 
                             $html .= '/>' . $opt;
-                            $html .= ( $this->html_after )? $this->html_after : '</label>';
+                            $html .= ( $this->html_after ) ? $this->html_after : '</label>';
                         }
                         $count++;
                     }
@@ -981,7 +981,7 @@
             else{
                 $this->data = ($this->k_type=='textarea' && $this->no_xss_check) ? $post_val : $FUNCS->cleanXSS( $post_val, 0, $this->allowed_html_tags );
             }
-            $this->modified = ( strcmp( $this->orig_data, $this->data )==0 )? false : true; // values unchanged
+            $this->modified = ( strcmp( $this->orig_data, $this->data )==0 ) ? false : true; // values unchanged
         }
 
         function _render( $input_name, $input_id, $extra='' ){
@@ -991,7 +991,7 @@
             if( $this->k_type=='text' || $this->k_type=='password' || $this->k_type=='submit' || $this->k_type=='hidden' ){
                 $html = '<input type="'.$this->k_type.'" name="'.$input_name.'"  id="'.$input_id.'" value="'.htmlspecialchars( $value, ENT_QUOTES, K_CHARSET ).'" '.$extra.'/>';
             }
-            elseif(  $this->k_type=='textarea' ){
+            elseif( $this->k_type=='textarea' ){
                 $html = '<textarea  name="'.$input_name.'"  id="'.$input_id.'" '.$extra.'>'.htmlspecialchars( $value, ENT_QUOTES, K_CHARSET ).'</textarea>';
             }
             elseif( $this->k_type=='radio' || $this->k_type=='checkbox' || $this->k_type=='dropdown' ){
@@ -1144,7 +1144,7 @@
             }
 
             $this->data = $FUNCS->cleanXSS( $post_val );
-            $this->modified = ( strcmp( $this->orig_data, $this->data )==0 )? false : true; // values unchanged
+            $this->modified = ( strcmp( $this->orig_data, $this->data )==0 ) ? false : true; // values unchanged
         }
 
         function get_data_to_save(){
@@ -1206,7 +1206,7 @@
                     $link = K_SITE_URL . $this->page->tpl_name;
                     if( !is_null($page_id) ) $link .= '?p=' . $page_id;
                     echo '<a class="button" href="'. $link .'" target="_blank" onclick="this.blur();"><span>';
-                    if( $draft_of ) echo( $FUNCS->t('preview') ); else echo( $FUNCS->t('view') );
+                    if( $draft_of ) echo $FUNCS->t('preview'); else echo $FUNCS->t('view');
                     echo '</span></a>';
                 }
                 ?>
@@ -1292,7 +1292,7 @@
 
             if( is_null($this->orig_data) ) $this->orig_data = $this->data;
             $this->data = $FUNCS->cleanXSS( $post_val );
-            $this->modified = ( strcmp( $this->orig_data, $this->data )==0 )? false : true; // values unchanged
+            $this->modified = ( strcmp( $this->orig_data, $this->data )==0 ) ? false : true; // values unchanged
         }
 
         // Output to front-end.
@@ -1306,7 +1306,7 @@
 
             if( !$this->data ){
                 // make sure it is not numeric 0
-                $data = ( is_numeric($this->data) )? (string)$this->data : $this->default_data;
+                $data = ( is_numeric($this->data) ) ? (string)$this->data : $this->default_data;
             }
             else{
                 $data = $this->data;
@@ -1419,7 +1419,7 @@
 
             if( is_null($this->orig_data) ) $this->orig_data = $this->data;
             $this->data = $FUNCS->cleanXSS( $post_val );
-            $this->modified = ( strcmp( $this->orig_data, $this->data )==0 )? false : true; // values unchanged
+            $this->modified = ( strcmp( $this->orig_data, $this->data )==0 ) ? false : true; // values unchanged
         }
 
         // Render input field

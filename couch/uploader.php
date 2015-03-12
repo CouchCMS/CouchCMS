@@ -188,14 +188,14 @@
 
 		// get our existing uploader into action
 		define( 'K_GALLERY_UPLOAD', 1 );
-		require_once( K_COUCH_DIR. 'includes/fileuploader/connector.php' ) ;
+		require_once( K_COUCH_DIR. 'includes/fileuploader/connector.php' );
 
 		$_GET['Type'] = 'Image';
 		// create destination folder if required
 		$fn = trim( implode('/', array_map(array($FUNCS,'get_clean_url'), explode('/', $fn))), '/' );
 		$fpath = $Config['UserFilesAbsolutePath'] . 'image/';
 		$fpath .= ( $fn ) ? $fn . '/' : '';
-		$res = CreateServerFolder( $fpath ) ;
+		$res = CreateServerFolder( $fpath );
 		if( $res ) die( $res );
 		// move the file
 		global $_K_IMAGE; // will contain either full url of the uploaded image or error
@@ -227,7 +227,7 @@
 			return $FUNCS->raise_error( $pg->err_msg );
 	    }
 	    // fill fields
-	    $f =  &$pg->_fields['k_page_title']; // title
+	    $f = &$pg->_fields['k_page_title']; // title
 	    $f->store_posted_changes( $page_title );
 	    unset( $f );
 	    $f = &$pg->_fields['k_page_folder_id']; // folder
@@ -279,6 +279,3 @@
 	    unset( $pg );
 	    return $page_id;
 	}
-
-
-?>

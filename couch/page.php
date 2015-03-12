@@ -228,7 +228,7 @@
             $this->tpl_dynamic_folders = $rec['dynamic_folders'];
             $this->tpl_nested_pages = $rec['nested_pages'];
             if( !$this->tpl_is_clonable ) $this->tpl_nested_pages = 0;
-            $this->tpl_gallery =  $rec['gallery'];
+            $this->tpl_gallery = $rec['gallery'];
             if( !$this->tpl_is_clonable ) $this->tpl_gallery = 0;
             if( $this->tpl_gallery ) $this->tpl_nested_pages = 0;
 
@@ -466,7 +466,7 @@
                 $FUNCS->dispatch_event( 'alter_system_fields_info', array(&$arr_sys_fields, &$this) );
 
                 // merge system fields to the head of custom fields
-                $this->fields = array_merge( $arr_sys_fields, $this->fields  );
+                $this->fields = array_merge( $arr_sys_fields, $this->fields );
 
                 // make fields accessible by names
                 for( $x=0; $x<count($this->fields); $x++ ){
@@ -556,7 +556,7 @@
                                     if( $chopped_url_1===false || !$chopped_url_1['path'] ) continue;
                                     if( strpos($chopped_url_0, $chopped_url_1['path']) === 0 ){
 
-                                        $masquerade_this_uri = substr( $chopped_url_0, strlen($chopped_url_1['path']) ) ;
+                                        $masquerade_this_uri = substr( $chopped_url_0, strlen($chopped_url_1['path']) );
                                         if( $masquerade_this_uri ){
                                             $chopped_url_0 = @parse_url( $masquerade_this_uri );
                                             if( $chopped_url_0!==false ){
@@ -1203,14 +1203,14 @@
                     if( $v['type']=='text' ){
                         $data_table = K_TBL_DATA_TEXT;
                         if( isset($v['search_data']) ){ // presence of this signifies it is a udf
-                            $arr_custom_update['search_value'] = ( $v['not_searchable']==1 )? '' : $FUNCS->strip_tags( $v['search_data'] );
+                            $arr_custom_update['search_value'] = ( $v['not_searchable']==1 ) ? '' : $FUNCS->strip_tags( $v['search_data'] );
                         }
                         else{ // core types
                             if( $v['strip_domain'] && substr($v['data'], 0, 1)==':' ){
                                 $arr_custom_update['search_value'] = substr( $v['data'], 1 ); //..or should the entire path be stripped?
                             }
                             else{
-                                $arr_custom_update['search_value'] = ( $v['not_searchable']==1 )? '' : $FUNCS->strip_tags( $v['data'] ); //TODO: strip shortcodes
+                                $arr_custom_update['search_value'] = ( $v['not_searchable']==1 ) ? '' : $FUNCS->strip_tags( $v['data'] ); //TODO: strip shortcodes
                             }
                         }
                     }
@@ -1285,7 +1285,7 @@
                                                   )
                              );
             if( $rs!=1 ) return $FUNCS->raise_error( "Failed to insert record in K_TBL_PAGES" );
-            $page_id =  $DB->last_insert_id;
+            $page_id = $DB->last_insert_id;
 
             $res = $this->_create_fields( $page_id, $title );
             if( $FUNCS->is_error($res) ) return $res;
@@ -1313,7 +1313,7 @@
                                                   )
                              );
             if( $rs!=1 ){ $DB->rollback();  return $FUNCS->raise_error( "Failed to insert record in K_TBL_PAGES for draft" ); }
-            $page_id =  $DB->last_insert_id;
+            $page_id = $DB->last_insert_id;
 
             $res = $this->_create_fields( $page_id, $this->page_title, 1 );
             if( $FUNCS->is_error($res) ){ $DB->rollback();  return $res; }
@@ -1621,7 +1621,7 @@
 
             $tree = $FUNCS->get_nested_pages( $this->tpl_id, $this->tpl_name, $this->tpl_access_level, 'weightx', 'asc', 1 /*force refresh*/ );
             if( $parent_page_id != -1 ){
-                $nested_parent_page =  $tree->find_by_id( $parent_page_id );
+                $nested_parent_page = $tree->find_by_id( $parent_page_id );
             }
             else{
                 $nested_parent_page = $tree;

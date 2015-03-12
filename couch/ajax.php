@@ -100,13 +100,11 @@
                                         }
                                     }
                                     else{
-                                        echo 'No GD image library installed';
-                                        die();
+                                        die( 'No GD image library installed' );
                                     }
 
                                     // Job done. Exit.
-                                    echo 'OK';
-                                    die();
+                                    die( 'OK' );
                                 }
                                 unset( $f );
                             }
@@ -117,7 +115,6 @@
                     unset( $tb );
                 }
 
-                //$response = '<img src="'.K_ADMIN_URL . 'theme/images/ok.jpg">';
                 $response = 'OK';
             }
         }
@@ -172,8 +169,7 @@
                     // wrap up
                     $DB->commit( 1 );
                     $FUNCS->invalidate_cache();
-                    echo 'OK';
-                    die();
+                    die( 'OK' );
                 }
                 else{
                     die( 'Template not found' );
@@ -226,8 +222,7 @@
                     // wrap up
                     $DB->commit( 1 );
                     $FUNCS->invalidate_cache();
-                    echo 'OK';
-                    die();
+                    die( 'OK' );
                 }
                 else{
                     die( 'Field not found' );

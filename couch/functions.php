@@ -486,7 +486,7 @@
 
             // Augment the incomplete set returned by PHP4 with the left out HTML4 entities.
             // http://en.wikipedia.org/wiki/List_of_XML_and_HTML_character_entity_references
-            $arr_HTML4_entities =  array(
+            $arr_HTML4_entities = array(
                                 $this->code2utf(338) => "&OElig;",
                                 $this->code2utf(339) => "&oelig;",
                                 $this->code2utf(352) => "&Scaron;",
@@ -853,9 +853,9 @@
         function get_url(){
             $url = 'http';
             if( isset($_SERVER['HTTPS']) && $_SERVER['HTTPS']=='on' ){
-                $url .=  's';
+                $url .= 's';
             }
-            $url .=  '://';
+            $url .= '://';
             $url .= $_SERVER['HTTP_HOST'];
             if( $_SERVER['SERVER_PORT']!='80' && $_SERVER['SERVER_PORT']!='443' ){
                 $port = ':' . $_SERVER['SERVER_PORT'];
@@ -1025,7 +1025,7 @@
             if( count($rs) ){
                 foreach( $rs as $rec ){
                     $html .= "<option value=\"".$rec['k_level']."\"";
-                    $html .= ( $rec['k_level']==$selected_level )? 'selected="selected"' : '';
+                    $html .= ( $rec['k_level']==$selected_level ) ? ' selected="selected"' : '';
                     $html .= ">".$this->t($rec['name'])."</option>";
                 }
             }
@@ -1060,7 +1060,7 @@
             $month = "<select id=\"f_k_month\" name=\"f_k_month\" >\n";
             foreach( $arrMonths as $k=>$v ){
                 $month .= "<option value=\"".$k."\"";
-                $month .= ( $k==$mm )? 'selected="selected"' : '';
+                $month .= ( $k==$mm ) ? ' selected="selected"' : '';
                 $month .= ">".$v."</option>";
             }
             $month .= "</select>";
@@ -1069,7 +1069,7 @@
             $min = '<input type="text" id="f_k_min" name="f_k_min" value="' . $m . '" size="2" maxlength="2" autocomplete="off" />';
             $sec = '<input type="hidden" id="f_k_sec" name="f_k_sec" value="' . $s . '" size="2" maxlength="2" autocomplete="off" />';
 
-            $date =  $month . $day . ', ' . $year . ' @ ' . $hour . ' : ' . $min . $sec;
+            $date = $month . $day . ', ' . $year . ' @ ' . $hour . ' : ' . $min . $sec;
             return $date;
         }
 
@@ -1171,7 +1171,7 @@
             global $AUTH;
 
             $link = '';
-            $redirect =  trim( $redirect );
+            $redirect = trim( $redirect );
 
 
             // HOOK: get_login_link
@@ -1194,7 +1194,7 @@
             global $AUTH;
 
             $link = '';
-            $redirect =  trim( $redirect );
+            $redirect = trim( $redirect );
 
             // HOOK: get_logout_link
             $this->dispatch_event( 'get_logout_link', array(&$link, &$redirect) );
@@ -1220,13 +1220,13 @@
             if( $day ) $day = sprintf( "%02d", $day );
             if( K_PRETTY_URLS ){
                 $link = $this->get_pretty_template_link( $template_name ) . $year. '/';
-                if( $month ) $link .=  $month . '/';
-                if( $day ) $link .=  $day . '/';
+                if( $month ) $link .= $month . '/';
+                if( $day ) $link .= $day . '/';
             }
             else{
                 $link = $template_name . '?d=' . $year;
-                if( $month ) $link .=  $month;
-                if( $day ) $link .=  $day;
+                if( $month ) $link .= $month;
+                if( $day ) $link .= $day;
             }
             return $link;
         }
@@ -1492,7 +1492,7 @@
                 $key  = str_pad($key, $b, chr(0x00));
                 $ipad = str_pad('', $b, chr(0x36));
                 $opad = str_pad('', $b, chr(0x5c));
-                $k_ipad = $key ^ $ipad ;
+                $k_ipad = $key ^ $ipad;
                 $k_opad = $key ^ $opad;
                 return md5($k_opad  . pack("H*",md5($k_ipad . $data)));
 
@@ -1747,7 +1747,7 @@
         // 1, 2, 3 etc.
         function is_non_zero_natural( $str ){
             if( !$this->is_natural($str) ) return 0;
-            return ( $str == 0 )? 0 : 1;
+            return ( $str == 0 ) ? 0 : 1;
         }
 
         // static helper validation routines for fields
@@ -1829,7 +1829,7 @@
             if( KFuncs::is_natural($min) ){
                 $func = function_exists('mb_strlen') ? 'mb_strlen' : 'strlen';
                 if( $func($val) < $min ){
-                    return KFuncs::raise_error( "Cannot be less than ".$min." chars" );
+                    return KFuncs::raise_error( "Cannot be less than ".$min." characters" );
                 }
             }
         }
@@ -1841,7 +1841,7 @@
             if( KFuncs::is_natural($min) ){
                 $func = function_exists('mb_strlen') ? 'mb_strlen' : 'strlen';
                 if( $func($val) > $min ){
-                    return KFuncs::raise_error( "Cannot be more than ".$min." chars" );
+                    return KFuncs::raise_error( "Cannot be more than ".$min." characters" );
                 }
             }
         }
@@ -1853,7 +1853,7 @@
             if( KFuncs::is_natural($min) ){
                 $func = function_exists('mb_strlen') ? 'mb_strlen' : 'strlen';
                 if( $func($val) != $min ){
-                    return KFuncs::raise_error( "Not equal to ".$min." chars" );
+                    return KFuncs::raise_error( "Not equal to ".$min." characters" );
                 }
             }
         }
@@ -1988,7 +1988,7 @@
             $to_table = ( $new_type=='text' ) ? K_TBL_DATA_TEXT : K_TBL_DATA_NUMERIC;
 
             $arr_from_fields = array( 'page_id', 'field_id', 'value' );
-            if( $old_type  == 'integer' ){
+            if( $old_type == 'integer' ){
                 $arr_from_fields[] = 'TRUNCATE(value,0) as value';
             }
             else{
@@ -2230,7 +2230,7 @@ OUT;
                                     $pagination .= "<a href=\"" . $targetpage . $pagestring . $counter . "\">$counter</a>";
                                 }
                             }
-                            $pagination .= "<span class=\"elipses\">...</span>";
+                            $pagination .= "<span class=\"ellipsis\">&hellip;</span>";
                             $pagination .= "<a href=\"" . $targetpage . $pagestring . $lpm1 . "\">$lpm1</a>";
                             $pagination .= "<a href=\"" . $targetpage . $pagestring . $lastpage . "\">$lastpage</a>";
                         }
@@ -2238,7 +2238,7 @@ OUT;
                         elseif( $lastpage - ($adjacents * 2) > $page && $page > ($adjacents * 2) ){
                                 $pagination .= "<a href=\"" . $targetpage . $pagestring . "1\">1</a>";
                                 $pagination .= "<a href=\"" . $targetpage . $pagestring . "2\">2</a>";
-                                $pagination .= "<span class=\"elipses\">...</span>";
+                                $pagination .= "<span class=\"ellipsis\">&hellip;</span>";
                                 for( $counter = $page - $adjacents; $counter <= $page + $adjacents; $counter++ ){
                                     if( $counter == $page ){
                                         $pagination .= "<span class=\"page_current\">$counter</span>";
@@ -2247,7 +2247,7 @@ OUT;
                                         $pagination .= "<a href=\"" . $targetpage . $pagestring . $counter . "\">$counter</a>";
                                     }
                                 }
-                                $pagination .= "<span class=\"elipses\">...</span>";
+                                $pagination .= "<span class=\"ellipsis\">&hellip;</span>";
                                 $pagination .= "<a href=\"" . $targetpage . $pagestring . $lpm1 . "\">$lpm1</a>";
                                 $pagination .= "<a href=\"" . $targetpage . $pagestring . $lastpage . "\">$lastpage</a>";
                         }
@@ -2255,7 +2255,7 @@ OUT;
                         else{
                                 $pagination .= "<a href=\"" . $targetpage . $pagestring . "1\">1</a>";
                                 $pagination .= "<a href=\"" . $targetpage . $pagestring . "2\">2</a>";
-                                $pagination .= "<span class=\"elipses\">...</span>";
+                                $pagination .= "<span class=\"ellipsis\">&hellip;</span>";
                                 for( $counter = $lastpage - (1 + ($adjacents * 3)); $counter <= $lastpage; $counter++ ){
                                     if( $counter == $page ){
                                         $pagination .= "<span class=\"page_current\">$counter</span>";
@@ -2330,7 +2330,7 @@ OUT;
                                     $pagination[] = array( 'crumb_type'=>'page', 'link'=>$targetpage . $pagestring . $counter, 'text'=>$counter, 'disabled'=>'0', 'current'=>'0' );
                                 }
                             }
-                            $pagination[] = array( 'crumb_type'=>'ellipses', 'link'=>'', 'text'=>'...', 'disabled'=>'0', 'current'=>'0' );
+                            $pagination[] = array( 'crumb_type'=>'ellipsis', 'link'=>'', 'text'=>'&hellip;', 'disabled'=>'0', 'current'=>'0' );
                             $pagination[] = array( 'crumb_type'=>'page', 'link'=>$targetpage . $pagestring . $lpm1, 'text'=>$lpm1, 'disabled'=>'0', 'current'=>'0' );
                             $pagination[] = array( 'crumb_type'=>'page', 'link'=>$targetpage . $pagestring . $lastpage, 'text'=>$lastpage, 'disabled'=>'0', 'current'=>'0' );
                         }
@@ -2338,7 +2338,7 @@ OUT;
                         elseif( $lastpage - ($adjacents * 2) > $page && $page > ($adjacents * 2) ){
                                 $pagination[] = array( 'crumb_type'=>'page', 'link'=>$targetpage . $pagestring . '1', 'text'=>'1', 'disabled'=>'0', 'current'=>'0' );
                                 $pagination[] = array( 'crumb_type'=>'page', 'link'=>$targetpage . $pagestring . '2', 'text'=>'2', 'disabled'=>'0', 'current'=>'0' );
-                                $pagination[] = array( 'crumb_type'=>'ellipses', 'link'=>'', 'text'=>'...', 'disabled'=>'0', 'current'=>'0' );
+                                $pagination[] = array( 'crumb_type'=>'ellipsis', 'link'=>'', 'text'=>'&hellip;', 'disabled'=>'0', 'current'=>'0' );
                                 for( $counter = $page - $adjacents; $counter <= $page + $adjacents; $counter++ ){
                                     if( $counter == $page ){
                                         $pagination[] = array( 'crumb_type'=>'page', 'link'=>$targetpage . $pagestring . $counter, 'text'=>$counter, 'disabled'=>'0', 'current'=>'1' );
@@ -2347,7 +2347,7 @@ OUT;
                                         $pagination[] = array( 'crumb_type'=>'page', 'link'=>$targetpage . $pagestring . $counter, 'text'=>$counter, 'disabled'=>'0', 'current'=>'0' );
                                     }
                                 }
-                                $pagination[] = array( 'crumb_type'=>'ellipses', 'link'=>'', 'text'=>'...', 'disabled'=>'0', 'current'=>'0' );
+                                $pagination[] = array( 'crumb_type'=>'ellipsis', 'link'=>'', 'text'=>'&hellip;', 'disabled'=>'0', 'current'=>'0' );
                                 $pagination[] = array( 'crumb_type'=>'page', 'link'=>$targetpage . $pagestring . $lpm1, 'text'=>$lpm1, 'disabled'=>'0', 'current'=>'0' );
                                 $pagination[] = array( 'crumb_type'=>'page', 'link'=>$targetpage . $pagestring . $lastpage, 'text'=>$lastpage, 'disabled'=>'0', 'current'=>'0' );
                         }
@@ -2355,7 +2355,7 @@ OUT;
                         else{
                                 $pagination[] = array( 'crumb_type'=>'page', 'link'=>$targetpage . $pagestring . '1', 'text'=>'1', 'disabled'=>'0', 'current'=>'0' );
                                 $pagination[] = array( 'crumb_type'=>'page', 'link'=>$targetpage . $pagestring . '2', 'text'=>'2', 'disabled'=>'0', 'current'=>'0' );
-                                $pagination[] = array( 'crumb_type'=>'ellipses', 'link'=>'', 'text'=>'...', 'disabled'=>'0', 'current'=>'0' );
+                                $pagination[] = array( 'crumb_type'=>'ellipsis', 'link'=>'', 'text'=>'&hellip;', 'disabled'=>'0', 'current'=>'0' );
                                 for( $counter = $lastpage - (1 + ($adjacents * 3)); $counter <= $lastpage; $counter++ ){
                                     if( $counter == $page ){
                                         $pagination[] = array( 'crumb_type'=>'page', 'link'=>$targetpage . $pagestring . $counter, 'text'=>$counter, 'disabled'=>'0', 'current'=>'1' );
@@ -2544,7 +2544,7 @@ OUT;
                     // if everything ok, go for it
                     $rs = $DB->insert( K_TBL_COMMENTS, $arr_insert );
                     if( $rs!=1 ){ $DB->rollback();  return $this->raise_error( "Failed to insert record in K_TBL_COMMENTS" );}
-                    $comment_id =  $DB->last_insert_id;
+                    $comment_id = $DB->last_insert_id;
 
                     // HOOK: comment_inserted
                     $err_msg = $this->dispatch_event( 'comment_inserted', array($comment_id, $arr_insert, &$approved, $params, $node) );
@@ -2632,7 +2632,7 @@ OUT;
                 if( $neg ) $sep .= "NOT";
                 $sep .= "(";
                 foreach( $arr_elems as $elem ){
-                    if( $elem  ){
+                    if( $elem ){
                         $sql .= $sep . $field_name."='" . $DB->sanitize( $elem )."'";
                         $sep = " OR ";
                     }
@@ -2732,7 +2732,7 @@ OUT;
             }
         }
 
-        function register_udf( $fieldtype, $handler_class, $repeatable=0, $searchable=1  ){ //'searchable' or not applies only to text types (numerics are always non_searchable)
+        function register_udf( $fieldtype, $handler_class, $repeatable=0, $searchable=1 ){ //'searchable' or not applies only to text types (numerics are always non_searchable)
             if( !is_string( $handler_class ) || !($handler_class=trim($handler_class)) ){
                 ob_end_clean();
                 die("ERROR function register_field(): Please provide the name of a valid class");
@@ -2763,7 +2763,7 @@ OUT;
             $this->udfs[$fieldtype] = array( 'handler'=>$handler_class, 'searchable'=>$searchable, 'repeatable'=>$repeatable );
         }
 
-        function register_udform_field( $fieldtype, $handler_class  ){
+        function register_udform_field( $fieldtype, $handler_class ){
             if( !is_string( $handler_class ) || !($handler_class=trim($handler_class)) ){
                 ob_end_clean();
                 die("ERROR function register_udform_field(): Please provide the name of a valid class");
@@ -2991,7 +2991,7 @@ OUT;
                 curl_exec( $ch );
                 $info = curl_getinfo($ch);
                 if( curl_errno($ch) ){
-                    echo( "cURL Error: <br> Error Code: {". curl_errno($ch) . "}<br> Error Message: {". curl_error($ch) ."}<br>" );
+                    echo "cURL Error: <br> Error Code: {". curl_errno($ch) . "}<br> Error Message: {". curl_error($ch) ."}<br>";
                 }
                 else{
 

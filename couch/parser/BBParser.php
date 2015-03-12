@@ -256,7 +256,7 @@
 
                 }
                 if( $this->state != K_STATE_TEXT ){
-                    // echo( "Parsing ended in an invalid state" );
+                    // echo "Parsing ended in an invalid state";
                 }
                 if( count($this->stack) ){
                     // Unclosed tags.. move children to root.

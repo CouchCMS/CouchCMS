@@ -192,7 +192,7 @@
         }
         $msg_div .= '</div>';
         ?>
-        <?php echo( $FUNCS->login_header() ); ?>
+        <?php echo $FUNCS->login_header(); ?>
 
             <?php echo $msg_div ?>
             <?php if(!$msgonly ){ ?>
@@ -205,7 +205,7 @@
             </form>
             <?php } ?>
 
-        <?php echo( $FUNCS->login_footer() ); ?>
+        <?php echo $FUNCS->login_footer(); ?>
         <?php
     }
 ?>

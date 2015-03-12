@@ -57,13 +57,13 @@
             $html = $FUNCS->file_get_contents( K_SITE_URL . '503.php' );
         }
         if( !$html ){
-            echo( $FUNCS->login_header() );
+            echo $FUNCS->login_header();
             ?>
             <div class="notice" style="margin-bottom:10px;">
                 <?php echo $FUNCS->t('back_soon'); ?>
             </div>
             <?php
-            echo( $FUNCS->login_footer() );
+            echo $FUNCS->login_footer();
         }
         else{
             echo $html;
@@ -103,14 +103,14 @@
                 if( isset($_GET['comment']) && $FUNCS->is_non_zero_natural($_GET['comment']) ){
                     $rs = $DB->select( K_TBL_COMMENTS, array('page_id', 'date', 'approved'), "id='" . $DB->sanitize( intval($_GET['comment']) )."'" );
                     if( count($rs) ){
-                        $comment_id =  intval( $_GET['comment'] );
+                        $comment_id = intval( $_GET['comment'] );
                         $comment_date = $rs[0]['date'];
                         $_GET['p'] = $rs[0]['page_id'];
                     }
                 }
 
                 if( isset($_GET['p']) && $FUNCS->is_non_zero_natural($_GET['p']) ){
-                    $page_id =  (int)$_GET['p'];
+                    $page_id = (int)$_GET['p'];
                 }
                 else if( isset($_GET['f']) && $FUNCS->is_non_zero_natural($_GET['f']) ){
                     $folder_id = (int)$_GET['f'];
@@ -171,7 +171,7 @@
             // for folder view and archive view, page_id would be null,
             // causing the default page to be loaded.
             //
-            $CTX->folder_info = (!is_null($folder_name)) ? $folder_name : (!is_null($folder_id) ? (int)$folder_id : null) ; // added for 404 on non-existent folders
+            $CTX->folder_info = (!is_null($folder_name)) ? $folder_name : (!is_null($folder_id) ? (int)$folder_id : null); // added for 404 on non-existent folders
             if( !is_null($page_name) ){
                 $PAGE = new KWebpage( null, null, $page_name );
             }

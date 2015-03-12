@@ -110,7 +110,7 @@
             // gather static values provided as parameters of this tag
             $fields = array();
             foreach( $params as $param ){
-                $pname =  strtolower( trim($param['lhs']) );
+                $pname = strtolower( trim($param['lhs']) );
                 if( array_key_exists($pname, $arr_known_params) ) continue;
                 $fields[$pname]=$param['rhs'];
             }

@@ -165,7 +165,7 @@
             $fields = array();
             $arr_known_params = array( 'k_page_name', 'k_publish_date' );
             foreach( $params as $param ){
-                $pname =  strtolower( trim($param['lhs']) );
+                $pname = strtolower( trim($param['lhs']) );
                 if( in_array($pname, $arr_known_params) ) continue;
                 $fields[$pname]=$param['rhs'];
             }

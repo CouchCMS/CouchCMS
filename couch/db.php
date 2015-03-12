@@ -143,7 +143,6 @@
         }
 
         function raw_select( $sql ){
-
             $this->_query( $sql );
 
             $rows = array();

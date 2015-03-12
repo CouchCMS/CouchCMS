@@ -57,7 +57,7 @@
                             $html = $f->get_data( 1 );
                         }
                         else{
-                            $html =  '<font color="red"><i>('.$f->err_msg.')</i></font>';
+                            $html = '<font color="red"><i>('.$f->err_msg.')</i></font>';
                         }
                         ob_end_clean();
                         echo $html;

@@ -112,7 +112,7 @@
                         </div>
 
                         <?php
-                            $checked = ( $comment->approved ) ? 'checked="checked"' : '';
+                            $checked = ( $comment->approved ) ? ' checked="checked"' : '';
                          ?>
                         <div id="comments-open" style="margin-top:10px; display:block">
                             <label><b><?php echo $FUNCS->t('status'); ?>:</b></label><br>
@@ -169,7 +169,7 @@
                 $_p = array();
                 $_p['module'] = 'comments';
                 $_p['title'] = ucwords( $FUNCS->t('comments') );
-                $_p['link'] =  K_ADMIN_URL . K_ADMIN_PAGE . '?o=comments';
+                $_p['link'] = K_ADMIN_URL . K_ADMIN_PAGE . '?o=comments';
                 $_p['subtitle'] = $FUNCS->t('edit');
                 $_p['show_advanced'] = 1;
                 $_p['content'] = $html;
@@ -242,7 +242,7 @@
         $_p = array();
         $_p['module'] = 'comments';
         $_p['title'] = ucwords( $FUNCS->t('comments') );
-        $_p['link'] =  K_ADMIN_URL . K_ADMIN_PAGE . '?o=comments';
+        $_p['link'] = K_ADMIN_URL . K_ADMIN_PAGE . '?o=comments';
         $_p['subtitle'] = $FUNCS->t('list');
         $_p['show_advanced'] = 0;
         $_p['content'] = $html;

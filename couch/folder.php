@@ -746,7 +746,7 @@
 
             $avail = 30;
             if( $len_pad+strlen($f_title) > $avail ){
-                $abbr_title = ( ($len_pad<$avail) ? substr($f_title, 0, $avail-$len_pad) : substr($pad, 0, $len_pad-$avail) ). '...';
+                $abbr_title = ( ($len_pad<$avail) ? substr($f_title, 0, $avail-$len_pad) : substr($pad, 0, $len_pad-$avail) ). '&hellip;';
             }
             else{
                 $abbr_title = $f_title;
@@ -1101,7 +1101,7 @@
                     // plain nested pages.
                     if( $PAGE->tpl_nested_pages && $PAGE->tpl_id==$this->template_id && $PAGE->is_master==0 ){
                         if( $PAGE->id==$this->id ){ // same page as this
-                            $is_current =  array( $this );
+                            $is_current = array( $this );
                         }
                     }
                 }
@@ -1111,7 +1111,7 @@
                 }
             }
 
-            $this->is_current = ( $is_current )? 1 : 0;
+            $this->is_current = ( $is_current ) ? 1 : 0;
             if( $this->name=='_root_' && $is_current ){
                 $this->crumbs = $is_current;
             }
@@ -1121,7 +1121,7 @@
 
         // Sets children counts taking into consideration 'show_in_menu', 'level' and 'exclude'.
         // Called from 'nested_pages' and 'menu' tags at each of their invocation.
-        function set_dynamic_count( $depth, $exclude, $exclude_if_not_in_menu=1, $pos=0, $level=0  ){
+        function set_dynamic_count( $depth, $exclude, $exclude_if_not_in_menu=1, $pos=0, $level=0 ){
             if( $depth!=0 && $level+1>$depth ) // depth 0 is unlimited
                 return 0;
 
@@ -1141,7 +1141,7 @@
 
                     if( is_null($first_child) ) $first_child = $x;
                     $last_child = $x;
-                    $this->total_children_ex += intval( $this->children[$x]->set_dynamic_count( $depth, $exclude, $exclude_if_not_in_menu, $total, $level+1  ) );
+                    $this->total_children_ex += intval( $this->children[$x]->set_dynamic_count( $depth, $exclude, $exclude_if_not_in_menu, $total, $level+1 ) );
                     $total++;
                 }
             }
@@ -1215,7 +1215,7 @@
                 }
 
                 // get links
-                if(  ($this->template_id==$rs[0]['id']) && ($is_home || $is_archive || $is_folder) ) return; // no edit links for self template
+                if( ($this->template_id==$rs[0]['id']) && ($is_home || $is_archive || $is_folder) ) return; // no edit links for self template
 
                 if( $is_home || $is_archive ){
                     // links to list & add
@@ -1270,7 +1270,7 @@
             $html .= '<option value="'. $p_id .'" '.$p_selected.'>';
             $avail = 100;
             if( $len_pad+strlen($p_title) > $avail ){
-                $abbr_title = ( ($len_pad<$avail) ? substr($p_title, 0, $avail-$len_pad) : substr($pad, 0, $len_pad-$avail) ). '...';
+                $abbr_title = ( ($len_pad<$avail) ? substr($p_title, 0, $avail-$len_pad) : substr($pad, 0, $len_pad-$avail) ). '&hellip;';
             }
             else{
                 $abbr_title = $p_title;

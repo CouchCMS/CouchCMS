@@ -1,6 +1,7 @@
 1.4 - (2013/10/15)
 ------------------
 
+- Added On Page Editing module
 - Added support for KCFinder as a new file manager
 - Added Front-end submission module introducing several new tags:
   * `db_persist_form`, `db_persist`, `db_delete`, `db_begin_trans`, `db_commit_trans`, `db_rollback_trans`, `db_fields`, `create_nonce`, `validate_nonce`, `check_nonce`, `check_spam`, and `show_securefile`
@@ -67,7 +68,7 @@
   * This feature can also double up as a menu-maker
 
 - Added `random` as an acceptable value for the `orderby` parameter of the `pages` tag
-- Added a paramater to the `excerpt` tag that makes it truncate the input based on characters instead of whole words
+- Added a parameter to the `excerpt` tag that makes it truncate the input based on characters instead of whole words
 
 
 1.1.1 - (2011/05/30)
@@ -87,7 +88,7 @@
 - Enhanced security by now allowing the `index.php` file within the `couch` folder to be renamed
   * This will allow only users knowing the new file name to access the admin panel
 
-- Fixed the error that occured when the `send_mail` tag was used more than once in a template
+- Fixed the error that occurred when the `send_mail` tag was used more than once in a template
 - Fixed the bug where the parser was stripping off all backslash characters that had a single quote following them
 - Fixed the bug that was causing the captcha in forms to not appear
 - Increased the length of the field storing names of templates to allow names up to 256 characters in length

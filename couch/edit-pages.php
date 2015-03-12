@@ -95,7 +95,7 @@
             }
             else{ // continue with default logic
 
-                $show_advanced_settings =  1;
+                $show_advanced_settings = 1;
 
                 // If non-clonable and physical template missing
                 if( !$PAGE->tpl_is_clonable && !file_exists(K_SITE_DIR . $PAGE->tpl_name) ){
@@ -186,7 +186,7 @@
                 if( isset($_POST['op']) && $_POST['op']=='save' ){
 
                     // map proxy fields to their cardinal system counterparts
-                    if(  $_POST['f_publish_status'] ){
+                    if( $_POST['f_publish_status'] ){
                         $_POST['f_k_publish_date'] = $FUNCS->sanitize_posted_date();
                     }
                     else{
@@ -201,7 +201,7 @@
                         if( isset($_POST['f_menu_text']) ) $_POST['f_k_menu_text'] = $_POST['f_menu_text'];
                         $_POST['f_k_is_pointer'] = ( isset($_POST['f_is_pointer']) ) ? '1' : '0';
                         $_POST['f_k_open_external'] = ( isset($_POST['f_open_external']) ) ? '1' : '0';
-                        $_POST['f_k_masquerades'] = (  $_POST['f_masquerades'] ) ? '1' : '0';
+                        $_POST['f_k_masquerades'] = ( $_POST['f_masquerades'] ) ? '1' : '0';
                         $_POST['f_k_strict_matching'] = ( isset($_POST['f_strict_matching']) ) ? '0' : '1';
                     }
 
@@ -424,7 +424,7 @@
 
                             <?php if( $draft_of ){ ?>
                             <div class="notice" style="margin-bottom:10px;">
-                                <strong><?php echo( $FUNCS->t('draft_caps').': ' ); ?></strong>
+                                <strong><?php echo $FUNCS->t('draft_caps').': '; ?></strong>
                                 <?php
                                 // Template link
                                 $tpl_name = $PAGE->tpl_title ? $PAGE->tpl_title : $PAGE->tpl_name;
@@ -441,11 +441,11 @@
                                     if( $parent_of_draft ){
                                         $nonce = $FUNCS->create_nonce( 'edit_page_'.$draft_of );
                                         $abbr_title = $parent_of_draft_title;
-                                        $abbr_title = (strlen($abbr_title)>90) ? substr($abbr_title, 0, 90) . '...' : $abbr_title;
+                                        $abbr_title = (strlen($abbr_title)>90) ? substr($abbr_title, 0, 90) . '&hellip;' : $abbr_title;
                                         echo '<a href="'.K_ADMIN_URL . K_ADMIN_PAGE.'?act=edit&tpl='. $PAGE->tpl_id .'&p='. $draft_of .'&nonce='.$nonce.'" title="'.$parent_of_draft_title.'"> / '. $abbr_title .'</a>';
                                     }
                                     else{
-                                        echo( ' / <font color="red">'.$FUNCS->t('original_deleted').'</font>' );
+                                        echo ' / <font color="red">'.$FUNCS->t('original_deleted').'</font>';
                                     }
                                 }
                                 ?>
@@ -491,7 +491,7 @@
                                 $link = K_SITE_URL . $PAGE->tpl_name;
                                 if( !is_null($page_id) ) $link .= '?p=' . $page_id;
                                 echo '<a class="button" href="'. $link .'" target="_blank" onclick="this.blur();"><span>';
-                                if( $draft_of ) echo( $FUNCS->t('preview') ); else echo( $FUNCS->t('view') );
+                                if( $draft_of ) echo $FUNCS->t('preview'); else echo $FUNCS->t('view');
                                 echo '</span></a>';
                             }
                             ?>
@@ -755,7 +755,7 @@
                     if( !$p0 )  die( 'ERROR: Page '.$page_id.' not found' );
 
                     if( $p0->pid != -1 ){
-                        $parent_page =  $tree->find_by_id( $p0->pid );
+                        $parent_page = $tree->find_by_id( $p0->pid );
                     }
                     else{
                         $parent_page = $tree;
@@ -809,7 +809,7 @@
                         $_p['title'] = $rs[0]['title'] ? $rs[0]['title'] : $rs[0]['name'];
                         $_p['link'] = ( $rs[0]['clonable'] ) ? K_ADMIN_URL . K_ADMIN_PAGE . '?act=list&tpl=' . $rs[0]['id'] : '';
                         if( $cid && $rid && $rs[0]['clonable'] ) $_p['link'] .= '&cid='.$cid.'&rid='.$rid;
-                        if( file_exists(K_SITE_DIR . $rs[0]['name'])  ){
+                        if( file_exists(K_SITE_DIR . $rs[0]['name']) ){
                             if( $AUTH->user->access_level >= $rs[0]['access_level'] ){
                                 if( $rs[0]['gallery'] ){ // Gallery
                                     $fid = ( isset($_GET['fid']) && $FUNCS->is_non_zero_natural( $_GET['fid'] ) ) ? (int)$_GET['fid'] : 0;
@@ -909,7 +909,7 @@
         }
 
         // proceed with the default logic
-        $name =  $tpl['title'] ? $tpl['title'] : $tpl['name'];
+        $name = $tpl['title'] ? $tpl['title'] : $tpl['name'];
         $limit = 15;
         $pgn_pno = 1;
         if( isset($_GET['pg']) && $FUNCS->is_non_zero_natural( $_GET['pg'] ) ){
@@ -958,9 +958,9 @@
                 if( count($rs3) ){ $thumb_field=$rs3[0]['id']; }
             }
 
-            $tables = K_TBL_PAGES.' p left outer join '.K_TBL_FOLDERS.' f on p.page_folder_id =  f.id';
+            $tables = K_TBL_PAGES.' p left outer join '.K_TBL_FOLDERS.' f on p.page_folder_id = f.id';
             $tables .= ' inner join '.K_TBL_TEMPLATES.' t on t.id = p.template_id';
-            if(  $thumb_field ){
+            if( $thumb_field ){
                 $tables .= ' inner join '.K_TBL_DATA_TEXT.' d on p.id = d.page_id';
             }
             if( $cid && $rid ){
@@ -969,7 +969,7 @@
 
             $sql = "p.template_id='" . $DB->sanitize( $tpl['id'] ). "'";
             $sql .= " AND p.parent_id=0";
-            if(  $thumb_field ){
+            if( $thumb_field ){
                 $sql .= " AND d.field_id='".$DB->sanitize( $thumb_field )."'";
             }
             if( $cid && $rid ){
@@ -1005,7 +1005,7 @@
             if( $pgn_pno>$total_pages && $total_pages>0 ) $pgn_pno=$total_pages;
             $limit_sql = sprintf( " LIMIT %d, %d", ($pgn_pno - 1) * $limit, $limit );
             $arr_fields = array('p.*', 'f.title', 'f.access_level as flevel', 't.access_level as tlevel');
-            if(  $thumb_field ){ $arr_fields[]='d.value as thumb'; }
+            if( $thumb_field ){ $arr_fields[]='d.value as thumb'; }
             $rs2 = $DB->select( $tables, $arr_fields, $sql . $limit_sql );
             $count = count($rs2);
 
@@ -1071,7 +1071,7 @@
             $str .= '</div>';
 
             if( $tpl['gallery'] ){
-                $showing_related = ( $cid && $rid )? 1 : 0;
+                $showing_related = ( $cid && $rid ) ? 1 : 0;
 
                 $str .= '<div id="gallery" class="group-wrapper listing">';
 
@@ -1134,7 +1134,7 @@
                         else{
                             $thumb_img = K_ADMIN_URL.'theme/images/exclaim.gif';
                         }
-                        $abbr_title = (strlen($p['page_title'])>20) ? substr($p['page_title'], 0, 20) . '...' : $p['page_title'];
+                        $abbr_title = (strlen($p['page_title'])>20) ? substr($p['page_title'], 0, 20) . '&hellip;' : $p['page_title'];
                         $update_link = K_ADMIN_URL . K_ADMIN_PAGE . '?act=edit&tpl='. $tpl['id'] .'&p='. $p['id'];
                         if( $showing_related ) $update_link .= '&cid='.$cid.'&rid='.$rid;
                         $update_link .= '&nonce='.$FUNCS->create_nonce( 'edit_page_'.$p['id'] );
@@ -1158,7 +1158,7 @@
                             $str .= '<a href="'.K_ADMIN_URL . K_ADMIN_PAGE.$qs.'" '.$confirm_prompt.'><img src="'.K_ADMIN_URL.'theme/images/page_white_delete.gif" title="'.$FUNCS->t('delete').'"/></a>';
                         }
                         if( $count_drafts ){
-                            $a_title = ( $count_drafts > 1 )? ' '.$FUNCS->t('drafts') : ' '.$FUNCS->t('draft');
+                            $a_title = ( $count_drafts > 1 ) ? ' '.$FUNCS->t('drafts') : ' '.$FUNCS->t('draft');
                             $str .= '<a title="'.$count_drafts.$a_title.'" href="'.K_ADMIN_URL . K_ADMIN_PAGE.'?o=drafts&tpl='.$tpl['id'].'&pid='.$p['id'].'"><img src="'. K_ADMIN_URL. 'theme/images/page_white_stack.gif"></a>';
                         }
                         $str .= '<a href="'.$update_link.'"><img title="'.$FUNCS->t('edit').'" src="'.K_ADMIN_URL.'theme/images/page_white_edit.gif" /></a>';
@@ -1174,10 +1174,10 @@
                         }
                         $str .= '</div>';
                         $file_size = $p['file_size'];
-                        if( !$file_size ) $file_size = 0 ;
+                        if( !$file_size ) $file_size = 0;
                         if( $file_size > 0 ){
-                            $file_size = round( $file_size / 1024 ) ;
-                            if ( $file_size < 1 ) $file_size = 1 ;
+                            $file_size = round( $file_size / 1024 );
+                            if ( $file_size < 1 ) $file_size = 1;
                         }
                         $str .= '<div class="size">'.$file_size.' KB</div>';
                         $str .= '</div>';
@@ -1240,7 +1240,7 @@
                         $edit_link = K_ADMIN_URL . K_ADMIN_PAGE.'?act=edit&tpl='. $tpl['id'] .'&p='. $p['id'];
                         if( $cid && $rid ) $edit_link .= '&cid='.$cid.'&rid='.$rid;
                         $edit_link .= '&nonce='.$nonce;
-                        $abbr_title = (strlen($p['page_title'])>48) ? substr($p['page_title'], 0, 48) . '...' : $p['page_title'];
+                        $abbr_title = (strlen($p['page_title'])>48) ? substr($p['page_title'], 0, 48) . '&hellip;' : $p['page_title'];
                         $str .= '<a href="'.$edit_link.'" title="'.$p['page_title'].'">'. $abbr_title .'</a>';
                         if( $p['is_master'] && $AUTH->user->access_level >= K_ACCESS_LEVEL_SUPER_ADMIN ) $str .= '</i>';
                         $str .= '</td>';
@@ -1248,12 +1248,12 @@
                         // drafts & comments
                         $str .= '<td class="comments-count'.$last_row.'">';
                         if( $count_drafts ){
-                            $a_title = ( $count_drafts > 1 )? ' '.$FUNCS->t('drafts') : ' '.$FUNCS->t('draft');
+                            $a_title = ( $count_drafts > 1 ) ? ' '.$FUNCS->t('drafts') : ' '.$FUNCS->t('draft');
                             $str .= '<span class="drafts-count"><a title="'.$count_drafts.$a_title.'" href="'.K_ADMIN_URL . K_ADMIN_PAGE.'?o=drafts&tpl='.$tpl['id'].'&pid='.$p['id'].'">'.$count_drafts.'<img src="'. K_ADMIN_URL. 'theme/images/page_white_stack.gif"></a></span>';
                         }
 
                         if( $p['comments_count'] ){
-                            $a_title = ( $p['comments_count'] > 1 )? ' '.$FUNCS->t('comments') : ' '.$FUNCS->t('comment');
+                            $a_title = ( $p['comments_count'] > 1 ) ? ' '.$FUNCS->t('comments') : ' '.$FUNCS->t('comment');
                             $str .= '<span class="comments-count"><a title="'.$p['comments_count'].$a_title.'" href="'.K_ADMIN_URL . K_ADMIN_PAGE.'?o=comments&page_id='.$p['id'].'">'.$p['comments_count'].'<img src="'. K_ADMIN_URL. 'theme/images/comments.gif"></a></span>';
                         }
 
@@ -1402,7 +1402,7 @@
         // output rows
         $CTX->push( '__ROOT__' );
         $html = '';
-        $param =  new stdClass;
+        $param = new stdClass;
         $param->_from = $first_record_on_page;
         $param->_to = $last_record_on_page;
         $param->_total = $total_records_on_page;
@@ -1454,7 +1454,7 @@
         return $str;
     }
 
-    function _k_visitor2(  &$page, &$html, &$param ){
+    function _k_visitor2( &$page, &$html, &$param ){
         global $CTX, $FUNCS;
 
         $cur = $param->_counter;
@@ -1503,7 +1503,7 @@
                 <?php
                     $avail = 60;
                     if( $len_pad+strlen($f->title) > $avail ){
-                        $abbr_title = ( ($len_pad<$avail) ? substr($f->title, 0, $avail-$len_pad) : substr($pad, 0, $len_pad-$avail) ). '...';
+                        $abbr_title = ( ($len_pad<$avail) ? substr($f->title, 0, $avail-$len_pad) : substr($pad, 0, $len_pad-$avail) ). '&hellip;';
                     }
                     else{
                         $abbr_title = $f->title;
@@ -1527,12 +1527,12 @@
             <td class="comments-count <?php echo $tr_class; ?>">
                 <?php
                 if( $f->drafts_count ){
-                    $a_title = ( $f->drafts_count > 1 )? ' '.$FUNCS->t('drafts') : ' '.$FUNCS->t('draft');
+                    $a_title = ( $f->drafts_count > 1 ) ? ' '.$FUNCS->t('drafts') : ' '.$FUNCS->t('draft');
                     echo '<span class="drafts-count"><a title="'.$f->drafts_count.$a_title.'" href="'.K_ADMIN_URL . K_ADMIN_PAGE.'?o=drafts&tpl='.$f->template_id.'&pid='.$f->id.'">'.$f->drafts_count.'<img src="'. K_ADMIN_URL. 'theme/images/page_white_stack.gif"></a></span>';
                 }
 
                 if( $f->comments_count ){
-                    $a_title = ( $f->comments_count > 1 )? ' '.$FUNCS->t('comments') : ' '.$FUNCS->t('comment');
+                    $a_title = ( $f->comments_count > 1 ) ? ' '.$FUNCS->t('comments') : ' '.$FUNCS->t('comment');
                     echo '<span class="comments-count"><a title="'.$f->comments_count.$a_title.'" href="'.K_ADMIN_URL . K_ADMIN_PAGE.'?o=comments&page_id='.$f->id.'">'.$f->comments_count.'<img src="'. K_ADMIN_URL. 'theme/images/comments.gif"></a></span>';
                 }
 
@@ -1637,7 +1637,7 @@
             <?php if( $nested_pages ): ?>
             function k_updown( id, dir ){
                 new Request.HTML({
-                    url: '<?php echo(K_ADMIN_URL . K_ADMIN_PAGE . '?act=list&tpl='.$tpl_id); ?><?php if(isset($_GET['pg']) && $FUNCS->is_non_zero_natural( $_GET['pg'])) echo('&pg='.$_GET['pg']); ?>',
+                    url: '<?php echo K_ADMIN_URL . K_ADMIN_PAGE . '?act=list&tpl='.$tpl_id; ?><?php if(isset($_GET['pg']) && $FUNCS->is_non_zero_natural( $_GET['pg'])) echo '&pg='.$_GET['pg']; ?>',
                     method: 'post',
                     data: {
                         k_updown: 1,

@@ -344,7 +344,7 @@
                         else{
                             // after search in installed modules..
                             ob_end_clean();
-                            die( 'ERROR! Unknown tag: "'. $this->name . '"'  );
+                            die( 'ERROR! Unknown tag: "'. $this->name . '"' );
                         }
                     }
                     break;
@@ -376,15 +376,15 @@
                     $sep = '';
                     foreach( $this->attributes as $attr ){
                         $name = isset($attr['name'])?$attr['name']:'unnamed';
-                        $html .=  $sep . $name . ' ' . $attr['op'] . ' ';
+                        $html .= $sep . $name . ' ' . $attr['op'] . ' ';
                         if( $attr['value_type'] != K_VAL_TYPE_SPECIAL ){
-                            $html .=  htmlentities($attr['value'])  ;
+                            $html .= htmlentities($attr['value']);
                             ($attr['value_type']=='literal') ? $type='literal' : $type='variable';
                             $html .= ' ['. $type . ']';
                         }
                         else{
                             $node = &$attr['value'];
-                            $html .=  '<br>' . $node->get_info( $level+1 );
+                            $html .= '<br>' . $node->get_info( $level+1 );
                             $html .= ' [special]';
                         }
                         $sep = ', ';
@@ -530,7 +530,7 @@
                                     $starts = $this->pos+1;
                                     $this->state = K_STATE_ATTR_NAME;
                                 }
-                                elseif( ($c=='>') ||  ($c=='/' && $this->str{$this->pos+1}=='>') ){
+                                elseif( ($c=='>') || ($c=='/' && $this->str{$this->pos+1}=='>') ){
                                     $tag_name = substr( $this->str, $starts, $this->pos-$starts );
                                     if( $c=='>') $this->pos--;
                                     $this->state = K_STATE_TAG_OPEN;
@@ -586,7 +586,7 @@
                                     $this->pos--;
                                     $this->state = K_STATE_ATTR_OP;
                                 }
-                                elseif( ($c=='>') ||  ($c=='/' && $this->str{$this->pos+1}=='>') ){
+                                elseif( ($c=='>') || ($c=='/' && $this->str{$this->pos+1}=='>') ){
                                     if( isset($attr) && in_array($attr['op'], $this->logical_ops) ){
                                         $this->raise_error( "ATTRIB_NAME: Orphan \"".$attr['op'] ."\"", $this->line_num, $this->pos );
                                     }
@@ -621,7 +621,7 @@
                                 $starts = $this->pos+1;
                                 $this->state = K_STATE_ATTR_VAL;
                             }
-                            elseif( ($c=='>') ||  ($c=='/' && $this->str{$this->pos+1}=='>') ){
+                            elseif( ($c=='>') || ($c=='/' && $this->str{$this->pos+1}=='>') ){
                                 if( $c=='>') $this->pos--;
                                 $this->state = K_STATE_TAG_OPEN;
                             }
@@ -680,7 +680,7 @@
                             else{
                                 if( !$quote_type ){
                                     if( !$this->is_valid_for_label($c) ){
-                                        if( ($c=='>') ||  ($c=='/' && $this->str{$this->pos+1}=='>') ){
+                                        if( ($c=='>') || ($c=='/' && $this->str{$this->pos+1}=='>') ){
                                             $attr['value'] = substr( $this->str, $starts, $this->pos-$starts );
                                             $attr['value_type'] = K_VAL_TYPE_VARIABLE;
                                             if( $c=='>') $this->pos--;
@@ -757,7 +757,7 @@
                                 $attr['op']=$c;
                                 $starts++;
                             }
-                            elseif( ($c=='>') ||  ($c=='/' && $this->str{$this->pos+1}=='>') ){
+                            elseif( ($c=='>') || ($c=='/' && $this->str{$this->pos+1}=='>') ){
                                 if( $c=='>') $this->pos--;
                                 $this->state = K_STATE_TAG_OPEN;
                             }
@@ -807,7 +807,7 @@
             if( (!is_array($cache_value)) || ($last_mod > $cache_value['last_mod']) ){
                 $html = $this->get_HTML();
 
-                $cache_value =  base64_encode( serialize(array('last_mod'=>$last_mod, 'data'=>$this->DOM)) );
+                $cache_value = base64_encode( serialize(array('last_mod'=>$last_mod, 'data'=>$this->DOM)) );
                 $FUNCS->set_setting( $cache_key, $cache_value );
             }
             else{

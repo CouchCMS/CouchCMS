@@ -531,14 +531,13 @@
             @mysql_query( "ROLLBACK" );
         }
 
-        //
         $CTX->set( 'k_install_error', $err );
     }
 
     ob_start();
     ////////////////////////////
     ?>
-    <?php echo( $FUNCS->login_header() ); ?>
+    <?php echo $FUNCS->login_header(); ?>
     <cms:capture into='my_form'>
 	<cms:form name="frm_login" action="" method="post" anchor="0" onSubmit="this.k_install.disabled=true; return true;">
 	    <cms:if k_success >
@@ -599,7 +598,7 @@
 	<cms:show my_form />
     </cms:if>
 
-    <?php echo( $FUNCS->login_footer() ); ?>
+    <?php echo $FUNCS->login_footer(); ?>
     <?php
     ///////////////////////////
     $html = ob_get_contents();
