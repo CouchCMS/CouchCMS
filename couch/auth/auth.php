@@ -217,19 +217,19 @@
             $cookie = $this->create_cookie( $username, $cookie_expiry );
             if( version_compare(phpversion(), '5.2.0', '>=') ) {
                 if( $remember ){
-                    setcookie($this->cookie_name, $cookie, $cookie_expiry, $this->cookie_path, null, null, true);
+                    setcookie( $this->cookie_name, $cookie, $cookie_expiry, $this->cookie_path, null, K_HTTPS ? true : null, true );
                 }
                 else{
-                    setcookie($this->cookie_name, $cookie, 0, $this->cookie_path, null, null, true);
+                    setcookie( $this->cookie_name, $cookie, 0, $this->cookie_path, null, K_HTTPS ? true : null, true );
                 }
             }
             else{
                 if( $remember ){
                     $date = gmstrftime("%a, %d-%b-%Y %H:%M:%S", $cookie_expiry ) .' GMT';
-                    header("Set-Cookie: ".rawurlencode($this->cookie_name)."=".rawurlencode($cookie)."; expires=$date; path=$this->cookie_path; httpOnly");
+                    header( "Set-Cookie: ".rawurlencode($this->cookie_name)."=".rawurlencode($cookie)."; expires=$date; path=$this->cookie_path; httpOnly".(K_HTTPS ? "; Secure" : "") );
                 }
                 else{
-                    header("Set-Cookie: ".rawurlencode($this->cookie_name)."=".rawurlencode($cookie)."; path=$this->cookie_path; httpOnly");
+                    header( "Set-Cookie: ".rawurlencode($this->cookie_name)."=".rawurlencode($cookie)."; path=$this->cookie_path; httpOnly".(K_HTTPS ? "; Secure" : "") );
                 }
             }
         }
@@ -246,10 +246,10 @@
 
         function delete_cookie(){
             if( version_compare(phpversion(), '5.2.0', '>=') ) {
-                setcookie( $this->cookie_name, ' ', time() - (3600 * 24 * 365), $this->cookie_path, null, null, true );
+                setcookie( $this->cookie_name, ' ', time() - (3600 * 24 * 365), $this->cookie_path, null, K_HTTPS ? true : null, true );
             }
             else{
-                setcookie( $this->cookie_name, ' ', time() - (3600 * 24 * 365), $this->cookie_path, null, null );
+                setcookie( $this->cookie_name, ' ', time() - (3600 * 24 * 365), $this->cookie_path, null, K_HTTPS ? true : null );
             }
         }
 
@@ -259,7 +259,7 @@
             // sanity checks
             $dest = $FUNCS->sanitize_url( trim($dest) );
             if( !strlen($dest) ){
-                $dest = ( $this->user->access_level < K_ACCESS_LEVEL_ADMIN ) ? K_SITE_URL : K_ADMIN_URL . K_ADMIN_PAGE;;
+                $dest = ( $this->user->access_level < K_ACCESS_LEVEL_ADMIN ) ? K_SITE_URL : K_ADMIN_URL . K_ADMIN_PAGE;
             }
             elseif( strpos(strtolower($dest), 'http')===0 ){
                 if( strpos($dest, K_SITE_URL)!==0 ){ // we don't allow redirects external to our site
@@ -277,7 +277,7 @@
 
             ob_end_clean();
             header( 'Content-Type: text/html; charset='.K_CHARSET );
-            setcookie( 'couchcms_testcookie', 'CouchCMS test cookie', 0, $this->cookie_path, null);
+            setcookie( 'couchcms_testcookie', 'CouchCMS test cookie', 0, $this->cookie_path, null, K_HTTPS ? true : null );
 
             $err_div = '<div class="error" style="margin-bottom:10px; display:';
             if( $FUNCS->is_error($res) ){

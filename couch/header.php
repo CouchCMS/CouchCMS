@@ -191,15 +191,16 @@
     }
 
     if ( !defined('K_SITE_DIR') ) define( 'K_SITE_DIR', dirname( K_COUCH_DIR ) . '/' );
+    if ( !defined('K_HTTPS') ) define( 'K_HTTPS', (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS']=='on') ? 1 : 0 );
 
     //unset($_SERVER['DOCUMENT_ROOT']); //testing
     if ( !defined('K_SITE_URL') ){
         $url = 'http';
-        $port = '';
-        if( isset($_SERVER['HTTPS']) && $_SERVER['HTTPS']=='on' ){
+        if( K_HTTPS ){
             $url .= 's';
         }
         $url .= '://';
+        $port = '';
         if( $_SERVER['SERVER_PORT']!='80' && $_SERVER['SERVER_PORT']!='443' ){
             $port = ':' . $_SERVER['SERVER_PORT'];
         }

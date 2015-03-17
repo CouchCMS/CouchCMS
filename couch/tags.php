@@ -5634,10 +5634,10 @@ MAP;
             if( $expire != 0 ) $expire = time() + $expire;
 
             if( version_compare(phpversion(), '5.2.0', '>=') ) {
-                setcookie($name, $value, $expire, $AUTH->cookie_path, null, null, true);
+                setcookie( $name, $value, $expire, $AUTH->cookie_path, null, K_HTTPS ? true : null, true );
             }
             else{
-                header("Set-Cookie: ".rawurlencode($name)."=".rawurlencode($value)."; path=$AUTH->cookie_path; httpOnly");
+                header( "Set-Cookie: ".rawurlencode($name)."=".rawurlencode($value)."; path=$AUTH->cookie_path; httpOnly".(K_HTTPS ? "; Secure" : "") );
             }
         }
 
@@ -5676,10 +5676,10 @@ MAP;
             $name = trim( $name );
 
             if( version_compare(phpversion(), '5.2.0', '>=') ) {
-                setcookie( $name, ' ', time() - (3600 * 24 * 365), $AUTH->cookie_path, null, null, true );
+                setcookie( $name, ' ', time() - (3600 * 24 * 365), $AUTH->cookie_path, null, K_HTTPS ? true : null, true );
             }
             else{
-                setcookie( $name, ' ', time() - (3600 * 24 * 365), $AUTH->cookie_path, null, null );
+                setcookie( $name, ' ', time() - (3600 * 24 * 365), $AUTH->cookie_path, null, K_HTTPS ? true : null );
             }
         }
 

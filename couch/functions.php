@@ -852,11 +852,12 @@
 
         function get_url(){
             $url = 'http';
-            if( isset($_SERVER['HTTPS']) && $_SERVER['HTTPS']=='on' ){
+            if( K_HTTPS ){
                 $url .= 's';
             }
             $url .= '://';
             $url .= $_SERVER['HTTP_HOST'];
+            $port = '';
             if( $_SERVER['SERVER_PORT']!='80' && $_SERVER['SERVER_PORT']!='443' ){
                 $port = ':' . $_SERVER['SERVER_PORT'];
             }
@@ -2649,13 +2650,14 @@ OUT;
 
         function get_gravatar( $email='', $size=48, $default='' ){
             $size = $this->is_natural( $size ) ? intval( $size ) : 48;
+            $url = K_HTTPS ? 'https://secure.' : 'http://www.';
 
             if( !$default ){
-                $default = "http://www.gravatar.com/avatar/" . md5( 'unknown@gravatar.com' ) . "?size=" . $size;
+                $default = $url . "gravatar.com/avatar/" . md5( 'unknown@gravatar.com' ) . "?size=" . $size;
             }
 
             if( $email ){
-                $grav_url = "http://www.gravatar.com/avatar/" . md5( strtolower($email) ) .
+                $grav_url = $url . "gravatar.com/avatar/" . md5( strtolower($email) ) .
                 "?default=" . urlencode( $default ) .
                 "&size=" . $size;
 

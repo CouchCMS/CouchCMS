@@ -727,7 +727,7 @@
         function add_test_login_cookie( &$html, &$PAGE ){
             if( strlen($this->login_tpl) && $PAGE->tpl_name==$this->login_tpl ){
                 global $AUTH;
-                setcookie( 'couchcms_testcookie', 'CouchCMS test cookie', 0, $AUTH->cookie_path, null);
+                setcookie( 'couchcms_testcookie', 'CouchCMS test cookie', 0, $AUTH->cookie_path, null, K_HTTPS ? true : null );
             }
         }
 
