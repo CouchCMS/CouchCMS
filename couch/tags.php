@@ -5053,7 +5053,8 @@ MAP;
                         array(
                               'email'=>'',
                               'size'=>'',
-                              'default'=>''
+                              'default'=>'',
+                              'link_only'=>'0'
                               ),
                         $params)
                    );
@@ -5061,8 +5062,9 @@ MAP;
             $email = trim( $email );
             $size = trim( $size );
             $default = trim( $default );
+            $link_only = ( $link_only==0 ) ? 0 : 1;
 
-            return $FUNCS->get_gravatar( $email, $size, $default );
+            return $FUNCS->get_gravatar( $email, $size, $default, $link_only );
         }
 
         function content_type( $params, $node ){

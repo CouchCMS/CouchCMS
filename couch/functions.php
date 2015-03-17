@@ -2648,7 +2648,7 @@ OUT;
             return (bool)$this->is_natural( $str );
         }
 
-        function get_gravatar( $email='', $size=48, $default='' ){
+        function get_gravatar( $email='', $size=48, $default='', $link_only=0 ){
             $size = $this->is_natural( $size ) ? intval( $size ) : 48;
             $url = K_HTTPS ? 'https://secure.' : 'http://www.';
 
@@ -2660,14 +2660,13 @@ OUT;
                 $grav_url = $url . "gravatar.com/avatar/" . md5( strtolower($email) ) .
                 "?default=" . urlencode( $default ) .
                 "&size=" . $size;
-
-                $html = '<img src="' . $grav_url . '" class="gravatar" height="' . $size . '" width="' . $size . '" />';
             }
             else{
-                $html = '<img src="' . $default . '" class="gravatar gravatar-default" height="' . $size . '" width="' . $size . '" />';
+                $grav_url = $default;
             }
+            $html = '<img class="gravatar' . ($email ? '' : ' gravatar-default') . '" height="' . $size . '" src="' . $grav_url . '" width="' . $size . '"/>';
 
-            return $html;
+            return $link_only ? $grav_url : $html;
         }
 
         function t( $key ){
