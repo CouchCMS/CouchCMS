@@ -582,7 +582,7 @@
     </cms:capture>
 
     <cms:if form_validated >
-	<cms:php> k_install("<cms:show acct_name/>", "<cms:show acct_pwd/>", "<cms:show acct_email/>"); </cms:php>
+	<cms:php> global $CTX; k_install( $CTX->get('acct_name'), $CTX->get('acct_pwd'), $CTX->get('acct_email') ); </cms:php>
 	<cms:if k_install_error >
 	    <div class="error">
 		<h3>Installation failed!</h3>
