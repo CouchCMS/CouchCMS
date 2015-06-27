@@ -245,9 +245,22 @@
         }
 
         function get_clean_url( $title ){
+            global $FUNCS;
+
             $title = strip_tags( $title ); // remove html tags
             $title = preg_replace('/%([0-9a-fA-F][0-9a-fA-F])/', '', $title); // remove encoded octets
             $title = preg_replace('/&.+?;/', '', $title); // remove html_entities
+
+            // HOOK: transliterate_clean_url
+            // give plugins the first shot at transliterating non-latin characters
+            $FUNCS->dispatch_event( 'transliterate_clean_url', array(&$title) );
+
+            // next try transliterator_transliterate(), if available
+            if( function_exists('transliterator_transliterate') ){
+                $title = @transliterator_transliterate( 'Any-Latin; Latin-ASCII; Lower()', $title );
+            }
+
+            // finally the original pruning
             $title = $this->remove_accents( $title );
             $title = str_replace( '/', '-', $title );
             $title = preg_replace( '/[^0-9a-zA-Z-_ \.]/', '', $title );
