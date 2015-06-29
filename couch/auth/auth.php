@@ -170,7 +170,7 @@
 
             // ensure no more than 3 failed login attempts within 20 seconds
             if( ($user->failed_logins >= 3) && ($user->last_failed > $max_lockout) ){
-                return $FUNCS->raise_error( $FUNCS->t['invalid_credentials'] );
+                return $FUNCS->raise_error( $FUNCS->t('invalid_credentials') );
             }
 
             if( $user->disabled ){
