@@ -216,12 +216,7 @@
             $cookie_expiry = time() + (3600 * 24 * $days_valid);
             $cookie = $this->create_cookie( $username, $cookie_expiry );
             if( version_compare(phpversion(), '5.2.0', '>=') ) {
-                if( $remember ){
-                    setcookie( $this->cookie_name, $cookie, $cookie_expiry, $this->cookie_path, null, K_HTTPS ? true : null, true );
-                }
-                else{
-                    setcookie( $this->cookie_name, $cookie, 0, $this->cookie_path, null, K_HTTPS ? true : null, true );
-                }
+                setcookie( $this->cookie_name, $cookie, $cookie_expiry, $this->cookie_path, null, K_HTTPS ? true : null, true );
             }
             else{
                 if( $remember ){
