@@ -5907,5 +5907,12 @@ MAP;
 
             return md5( $AUTH->hasher->get_random_bytes(16) );
         }
+        
+        function is_ajax( $params, $node ){
+            if( !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH'])=='xmlhttprequest' ){
+                return '1';
+            }
+            return '0';
+        }
 
     } //end class KTags
