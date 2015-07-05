@@ -5578,7 +5578,7 @@ MAP;
             if( !is_numeric($decimal_precision) ) $decimal_precision = 2;
             $decimal_character = trim( $decimal_character );
 
-            $html = number_format( $number, $decimal_precision, $decimal_character, $thousands_separator );
+            $html = number_format( (float)$number, $decimal_precision, $decimal_character, $thousands_separator );
 
             return $html;
         }
