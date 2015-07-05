@@ -1025,7 +1025,7 @@
                 $CTX->set( 'k_user_access_level', 0 );
             }
 
-            // HOOK: alter_folder_set_context
+            // HOOK: alter_user_set_context
             $this->dispatch_event( 'alter_user_set_context' );
         }
 
@@ -1655,13 +1655,14 @@
             return $this->encrypt( $text, $hash_key );
         }
 
-        function get_setting( $key ){
+        function get_setting( $key, $default=null ){
             global $DB;
 
             $rs = $DB->select( K_TBL_SETTINGS, array('*'), "k_key='" . $DB->sanitize( $key ). "'" );
             if( count($rs) ){
                 return $rs[0]['k_value'];
             }
+            return $default;
         }
 
         function set_setting( $key, $value ){
