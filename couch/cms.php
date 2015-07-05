@@ -356,8 +356,10 @@
                         }
 
                     }
-                    fwrite( $handle, serialize( $pg ) );
-                    fclose( $handle );
+                    @flock( $handle, LOCK_EX );
+                    @fwrite( $handle, serialize( $pg ) );
+                    @flock( $handle, LOCK_UN );
+                    @fclose( $handle );
                 }
             }
 
