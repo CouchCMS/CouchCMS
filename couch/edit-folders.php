@@ -162,7 +162,7 @@
                 ?>
 
                     <input type="hidden" name="op" value="save" />
-                    <a class="button" id="btn_submit" href="#" onclick="this.style.cursor='wait'; $('frm_edit_folder').submit(); return false;"><span><?php echo $FUNCS->t('save'); ?></span></a>
+                    <a class="button" id="btn_submit" href="#" onclick="this.style.cursor='wait'; this.fireEvent('my_submit'); window.onbeforeunload=null; $('frm_edit_folder').submit(); return false;"><span><?php echo $FUNCS->t('save'); ?></span></a>
                 </div>
             </form>
 
@@ -178,6 +178,7 @@
 
                     TB_remove();
                 }
+                <?php $k_form_id='frm_edit_folder'; require_once( K_COUCH_DIR.'theme/prompt_unsaved.php' );?>
                 //]]>
             </script>
             <?php

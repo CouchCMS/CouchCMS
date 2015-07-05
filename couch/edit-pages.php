@@ -484,7 +484,7 @@
                             <input type="hidden" name="op" value="save" />
                             <?php /* ?><input class="button" type="submit" value="<?php echo ("Save" ); ?>" /><?php */ ?>
                             <?php if( $level <= $AUTH->user->access_level ){ ?>
-                            <a class="button" id="btn_submit" href="#" onclick="this.style.cursor='wait'; this.fireEvent('my_submit'); $('frm_edit_page').submit(); return false;"><span><?php echo $FUNCS->t('save'); ?></span></a>
+                            <a class="button" id="btn_submit" href="#" onclick="this.style.cursor='wait'; this.fireEvent('my_submit'); window.onbeforeunload=null; $('frm_edit_page').submit(); return false;"><span><?php echo $FUNCS->t('save'); ?></span></a>
                             <?php } ?>
                             <?php
                             if( $_GET['act'] == 'edit' ){
@@ -621,6 +621,7 @@
                                 ).send();
                             }
                         }
+                        <?php $k_form_id='frm_edit_page'; require_once( K_COUCH_DIR.'theme/prompt_unsaved.php' );?>
                         //]]>
                     </script>
                 <?php

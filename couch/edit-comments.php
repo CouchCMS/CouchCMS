@@ -131,7 +131,7 @@
                     }
                     ?>
                     <input type="hidden" name="op" value="save" />
-                    <a class="button" id="btn_submit" href="#" onclick="this.style.cursor='wait'; $('frm_edit_comment').submit(); return false;"><span><?php echo $FUNCS->t('save'); ?></span></a>
+                    <a class="button" id="btn_submit" href="#" onclick="this.style.cursor='wait'; window.onbeforeunload=null; $('frm_edit_comment').submit(); return false;"><span><?php echo $FUNCS->t('save'); ?></span></a>
                     <a class="button" href="<?php echo $comment->get_link(); ?>" target="_blank" onclick="this.blur();"><span><?php echo $FUNCS->t('view'); ?></span></a>
                     </div>
                 </form>
@@ -160,6 +160,7 @@
                             del[x].setStyle('height', del[x].offsetParent.offsetHeight);
                         }
                     });
+                    <?php $k_form_id='frm_edit_comment'; require_once( K_COUCH_DIR.'theme/prompt_unsaved.php' );?>
                     //]]>
                 </script>
                 <?php

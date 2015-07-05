@@ -119,9 +119,15 @@
                         </div>
 
                         <input type="hidden" name="op" value="save" />
-                        <a class="button" id="btn_submit" href="#" onclick="this.style.cursor='wait'; $('frm_edit_user').submit(); return false;"><span><?php echo $FUNCS->t('save'); ?></span></a>
+                        <a class="button" id="btn_submit" href="#" onclick="this.style.cursor='wait'; this.fireEvent('my_submit'); window.onbeforeunload=null; $('frm_edit_user').submit(); return false;"><span><?php echo $FUNCS->t('save'); ?></span></a>
                     </div>
                 </form>
+                
+                <script type="text/javascript">
+                    //<![CDATA[
+                    <?php $k_form_id='frm_edit_user'; require_once( K_COUCH_DIR.'theme/prompt_unsaved.php' );?>
+                    //]]>
+                </script>
                 <?php
 
                 $html = ob_get_contents();
