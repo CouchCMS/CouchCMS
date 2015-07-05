@@ -1937,6 +1937,7 @@
                 $vars['k_page_creation_date'] = $this->creation_date;
                 $vars['k_page_modification_date'] = $this->modification_date;
                 $vars['k_page_draft_of'] = $this->parent_id;
+                $vars['k_page_id'] = $this->id;
             }
 
             // for all
