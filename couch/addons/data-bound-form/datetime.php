@@ -267,6 +267,16 @@
                 $sec    = $post_val['sec'];
                 $am_pm  = $post_val['am_pm'];
             }
+            elseif( strlen(trim($post_val)) ){
+                $post_val = trim( $post_val );
+                
+                $year   = substr( $post_val, 0, 4 );
+                $month  = substr( $post_val, 5, 2 );
+                $day    = substr( $post_val, 8, 2 );
+                $hour   = substr( $post_val, 11, 2 );
+                $min    = substr( $post_val, 14, 2 );
+                $sec    = substr( $post_val, 17, 2 );
+            }
 
             // check if empty date submitted
             if( !strlen($year) && !strlen($month) && !strlen($day) && !strlen($hour) && !strlen($min) && !strlen($sec) ){
