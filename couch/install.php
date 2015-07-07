@@ -137,6 +137,7 @@
       _html             text COMMENT 'Internal',
       dynamic           text,
       custom_params     text,
+      searchable        int(1) DEFAULT '1',
       PRIMARY KEY (id)
     ) ENGINE = InnoDB CHARACTER SET utf8 COLLATE utf8_general_ci;";
 

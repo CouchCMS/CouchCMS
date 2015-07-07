@@ -1113,6 +1113,7 @@
                                             $arr_custom_fields[$tb->id]['data'] = $tb->data;
                                             $arr_custom_fields[$tb->id]['type'] = $tb->search_type;
                                             $arr_custom_fields[$tb->id]['strip_domain'] = 1;
+                                            $arr_custom_fields[$tb->id]['not_searchable'] = 1;
                                         }
                                     }
                                     else{
@@ -1168,11 +1169,13 @@
                             }
                             $arr_custom_fields[$f->id]['type'] = $f->search_type;
                             if( $f->udf ){
-                                $arr_custom_fields[$f->id]['not_searchable'] = !$FUNCS->udfs[$f->k_type]['searchable'];
+                                if( !$FUNCS->udfs[$f->k_type]['searchable'] || !$f->searchable ){
+                                    $arr_custom_fields[$f->id]['not_searchable'] = 1;
+                                }
                                 $arr_custom_fields[$f->id]['search_data'] = $f->get_search_data();
                             }
                             else{ // core types
-                                if( ($f->k_type=='textarea' && $f->no_xss_check) || $f->k_type=='password' ){
+                                if( ($f->k_type=='textarea' && $f->no_xss_check) || $f->k_type=='password' || !$f->searchable){
                                     $arr_custom_fields[$f->id]['not_searchable'] = 1; // code & password exempt ..
                                 }
                             }
@@ -1207,7 +1210,7 @@
                         }
                         else{ // core types
                             if( $v['strip_domain'] && substr($v['data'], 0, 1)==':' ){
-                                $arr_custom_update['search_value'] = substr( $v['data'], 1 ); //..or should the entire path be stripped?
+                                $arr_custom_update['search_value'] = ( $v['not_searchable']==1 ) ? '' : substr( $v['data'], 1 ); //..or should the entire path be stripped?
                             }
                             else{
                                 $arr_custom_update['search_value'] = ( $v['not_searchable']==1 ) ? '' : $FUNCS->strip_tags( $v['data'] ); //TODO: strip shortcodes
@@ -1226,8 +1229,8 @@
             }
 
             if( $refresh_fulltext ){
-                // get the consolidated text data for this page (only from 'textarea', 'richtext' and 'text' editable regions)
-                // TODO: skip fields that do not want their data to be shown in fulltext search result
+                // get the consolidated text data for this page (only from 'textarea', 'richtext' and 'text' core editable regions and udfs if searchable)
+                // skip fields that do not want their data to be shown in fulltext search result
                 $full_text = '';
                 $rs = $DB->select( K_TBL_DATA_TEXT . ' dt, ' . K_TBL_FIELDS . ' f ', array('field_id', 'f.k_type as field_type', 'search_value'), "dt.page_id='" . $DB->sanitize( $this->id ). "' AND dt.field_id=f.id" );
                 if( count($rs) ){

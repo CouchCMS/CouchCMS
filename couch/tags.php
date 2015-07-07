@@ -1044,6 +1044,7 @@
                 'type'=>'textarea',
                 'hidden'=>'0',
                 'search_type'=>'',
+                'searchable'=>'1',
                 'order'=>'0',
                 'required'=>'0',
                 'validator'=>'',
@@ -1164,6 +1165,7 @@
             $attr['body_class'] = trim( $attr['body_class'] );
             $attr['disable_uploader'] = abs( (int)$attr['disable_uploader'] );
             $attr['dynamic'] = trim( $attr['dynamic'] );
+            $attr['searchable'] = abs( (int)$attr['searchable'] );
 
             // Save a backup of all the parameters used to create this field.
             $tag = '<cms:editable';
@@ -5907,7 +5909,7 @@ MAP;
 
             return md5( $AUTH->hasher->get_random_bytes(16) );
         }
-        
+
         function is_ajax( $params, $node ){
             if( !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH'])=='xmlhttprequest' ){
                 return '1';

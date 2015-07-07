@@ -50,8 +50,8 @@
 
     if( !defined('K_COUCH_DIR') ) die(); // cannot be loaded directly
 
-    define( 'K_COUCH_VERSION', '1.4.5RC2' ); // Changes with every release
-    define( 'K_COUCH_BUILD', '20141202' ); // YYYYMMDD - do -
+    define( 'K_COUCH_VERSION', '1.4.5' ); // Changes with every release
+    define( 'K_COUCH_BUILD', '20150707' ); // YYYYMMDD - do -
 
     if( file_exists(K_COUCH_DIR.'config.php') ){
         require_once( K_COUCH_DIR.'config.php' );
@@ -508,6 +508,11 @@
                 $DB->_query( $_sql );
 
                 $_sql = "ALTER TABLE `".K_TBL_USERS."` MODIFY `name` varchar(255) NOT NULL;";
+                $DB->_query( $_sql );
+            }
+            // upgrade to 1.4.5
+            if( version_compare("1.4.5", $_ver, ">") ){
+                $_sql = "ALTER TABLE `".K_TBL_FIELDS."` ADD `searchable` int(1) DEFAULT '1';";
                 $DB->_query( $_sql );
             }
 

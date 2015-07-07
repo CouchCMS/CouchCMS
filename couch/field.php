@@ -80,6 +80,7 @@
         var $disable_uploader;
         var $dynamic;
         var $custom_params;
+        var $searchable;
 
 
         var $page;
