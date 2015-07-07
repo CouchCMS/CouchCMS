@@ -42,7 +42,7 @@
 
     define( 'K_ADMIN', 1 );
 
-    $AUTH->check_access( K_ACCESS_LEVEL_ADMIN, 1 );
+    if( $AUTH->user->access_level < K_ACCESS_LEVEL_ADMIN ) die( '<h3>Please login as admin.</h3>' );
 
     $tbls = array();
     $tbls[K_TBL_TEMPLATES] = 'K_TBL_TEMPLATES';

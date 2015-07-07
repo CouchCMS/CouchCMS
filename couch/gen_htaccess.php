@@ -44,7 +44,7 @@
 
     define( 'K_ADMIN', 1 );
 
-    $AUTH->check_access( K_ACCESS_LEVEL_ADMIN, 1 );
+    if( $AUTH->user->access_level < K_ACCESS_LEVEL_ADMIN ) die( 'Please login as admin.' );
 
 
     echo $FUNCS->generate_rewrite_rules();
