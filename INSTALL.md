@@ -22,7 +22,7 @@ It can be localized to German, French, Spanish, or Dutch by changing the followi
 define( 'K_ADMIN_LANG', 'EN' );
 ```
 
-All these locales have their respective language files (`DE.php`, `FR.php`, etc&hellip;) present in the `couch/lang/` folder.
+All these locales have their respective language files (`DE.php`, `FR.php`, etc...) present in the `couch/lang/` folder.
 For locales other than these, any of these files can be renamed and modified to create the locale that suits you.
 
 
@@ -34,5 +34,5 @@ CKEditor (used with `richtext` type editable regions) can also be localized to G
 config.language = 'en';
 ```
 
-All these locales have their respective language files (`de.js`, `fr.js`, etc&hellip;) present in the `couch/includes/ckeditor/lang/` folder.
+All these locales have their respective language files (`de.js`, `fr.js`, etc...) present in the `couch/includes/ckeditor/lang/` folder.
 For locales other than these, you can download the corresponding language file from http://www.couchcms.com/ckeditor_431_lang.zip

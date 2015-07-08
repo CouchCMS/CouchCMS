@@ -3,8 +3,8 @@ Upgrading
 
 For upgrading from a previous version of CouchCMS to version 1.4.5:
 
-1. Unzip `couchcms-1.4.5RC2.zip` to your local system.
-  * Within the `couchcms-1.4.5RC2` folder thus extracted will be found a folder named `couch`.
+1. Unzip `couchcms-1.4.5.zip` to your local system.
+  * Within the `couchcms-1.4.5` folder thus extracted will be found a folder named `couch`.
   * From within this `couch` folder:
     1. Delete the `snippets` and `uploads` folders.
     2. Delete the `config.example.php` file.
@@ -16,10 +16,10 @@ For upgrading from a previous version of CouchCMS to version 1.4.5:
 
 4. If you already have a commercial license for your website, append the following line to your site's `couch/config.php` file:
 
- ```PHP
+```PHP
 define( 'K_PAID_LICENSE', 1 );
 ```
 
----
+--------------------------------
 
 **IMPORTANT:** If you have chosen as a security measure to rename the `index.php` file to something else, do make sure to delete your existing renamed `index.php` and then rename the new `index.php` to your name of choice.

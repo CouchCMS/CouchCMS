@@ -1,3 +1,24 @@
+1.4.5 - (2015/07/07)
+------------------
+
+- Added Extended Entities module
+- Added events and hooks
+- Added Custom Routes module introducing several new tags:
+  * `route`, `route_constraints`, `route_validators`, `match_route`, and `route_link`
+
+- Added two new tags:
+  * `else_if` and `validate`
+
+- Added `searchable` parameter for editable regions
+- Added `link_only` parameter for `gravatar` tag
+- Added `html` parameter for `send_mail` tag
+- Made `pages` tag relation-aware
+- Added transliteration of titles
+- Added prompt for unsaved changes in admin panel
+- Improved HTTPS support
+- Fixed miscellaneous bugs
+
+
 1.4 - (2013/10/15)
 ------------------
 
