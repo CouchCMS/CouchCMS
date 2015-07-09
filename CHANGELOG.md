@@ -6,16 +6,18 @@
 - Added Custom Routes module introducing several new tags:
   * `route`, `route_constraints`, `route_validators`, `match_route`, and `route_link`
 
-- Added two new tags:
-  * `else_if` and `validate`
+- Added three new tags:
+  * `else_if`, `is_ajax`, and `validate`
 
 - Added `searchable` parameter for editable regions
 - Added `link_only` parameter for `gravatar` tag
 - Added `html` parameter for `send_mail` tag
 - Made `pages` tag relation-aware
+- Updated Google Maps API to v3
 - Added transliteration of titles
 - Added prompt for unsaved changes in admin panel
 - Improved HTTPS support
+- Dropped support for PHP 4
 - Fixed miscellaneous bugs
 
 
