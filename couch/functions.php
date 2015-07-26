@@ -257,7 +257,8 @@
 
             // next try transliterator_transliterate(), if available
             if( function_exists('transliterator_transliterate') ){
-                $title = @transliterator_transliterate( 'Any-Latin; Latin-ASCII; Lower()', $title );
+                $trans_title = @transliterator_transliterate( 'Any-Latin; Latin-ASCII; Lower()', $title );
+                if( $trans_title!==FALSE ){ $title = $trans_title; }
             }
 
             // finally the original pruning
