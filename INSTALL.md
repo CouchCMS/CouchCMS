@@ -1,16 +1,16 @@
 Requirements
 ------------
-Please see http://www.couchcms.com/docs/requirements.html
+Please see http://docs.couchcms.com/requirements.html
 
 
 Installation
 ------------
-Please see http://www.couchcms.com/docs/tutorials/portfolio-site/building-a-real-world-site.html
+Please see http://docs.couchcms.com/tutorials/portfolio-site/building-a-real-world-site.html
 
 
 Rebranding
 ----------
-Please see http://www.couchcms.com/white-label.html
+Please see http://docs.couchcms.com/miscellaneous/white-label.html
 
 
 Localizing the Admin Panel

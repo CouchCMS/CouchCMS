@@ -84,10 +84,10 @@
 ------------------
 
 - Fixed all reported bugs since version 1.1.1
-- Added the ability to create Shortcodes (http://www.couchcms.com/docs/miscellaneous/shortcodes.html)
+- Added the ability to create Shortcodes (http://docs.couchcms.com/miscellaneous/shortcodes.html)
   * This is the first of several steps meant to open up Couch's architecture to allow extenting it with external code
 
-- Added support for Nested Pages (http://www.couchcms.com/docs/concepts/nested-pages-aka-menu-maker.html)
+- Added support for Nested Pages (http://docs.couchcms.com/concepts/nested-pages-aka-menu-maker.html)
   * This feature can also double up as a menu-maker
 
 - Added `random` as an acceptable value for the `orderby` parameter of the `pages` tag
