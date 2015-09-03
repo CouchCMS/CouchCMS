@@ -1374,7 +1374,7 @@
                 }
 
                 // Send back the consolidated rules
-                $header .= 'Options +FollowSymlinks -MultiViews' . $sep;
+                $header .= 'Options +SymLinksIfOwnerMatch -MultiViews' . $sep;
                 $header .= '<IfModule mod_rewrite.c>' . $sep;
                 $header .= 'RewriteEngine On' . $sep;
                 $header .= $sep;
