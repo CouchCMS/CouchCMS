@@ -17,7 +17,7 @@
     $t['add_new_user'] = 'Ajouter un nouvel utilisateur';
     $t['view'] = 'Voir';
     $t['list'] = 'Liste';
-    $t['edit'] = 'Editer';
+    $t['edit'] = 'Éditer';
     $t['delete'] = 'Supprimer';
     $t['delete_selected'] = 'Supprimer sélection';
     $t['advanced_settings'] = 'Réglages avancés';
@@ -40,8 +40,8 @@
     $t['no_pages_found'] = 'Aucune page trouvée';
     $t['published'] = 'Publiée';
     $t['unpublished'] = 'Non publiée';
-    $t['confirm_delete_page'] = 'Etes-vous sûr de vouloir supprimer la page'; // No question mark please
-    $t['confirm_delete_selected_pages'] = 'Etes-vous sûr de vouloir supprimer les pages sélectionnées ?';
+    $t['confirm_delete_page'] = 'Êtes-vous sûr de vouloir supprimer la page'; // No question mark please
+    $t['confirm_delete_selected_pages'] = 'Êtes-vous sûr de vouloir supprimer les pages sélectionnées ?';
     $t['remove_template'] = 'Supprimer gabarit';
     $t['template_missing'] = 'Gabarit manquant';
     $t['prev'] = 'Préc.'; // Pagination button
@@ -82,7 +82,7 @@
     $t['field_not_found'] = 'Champ non trouvé!';
     $t['delete_permanently'] = 'Supprimer définitivement ?';
     $t['view_code'] = 'Voir Code';
-    $t['confirm_delete_field'] = 'Etes-vous sûr de vouloir supprimer définitivement ce champ ?';
+    $t['confirm_delete_field'] = 'Êtes-vous sûr de vouloir supprimer définitivement ce champ ?';
     $t['save'] = 'Enregistrer';
 
     // Comments
@@ -92,8 +92,8 @@
     $t['approve'] = 'Approuver';
     $t['approved'] = 'Approuvé';
     $t['select-deselect'] = 'Sélectionner/Désélectionner Tous';
-    $t['confirm_delete_comment'] = 'Etes-vous sûr de vouloir supprimer ce commentaire ?';
-    $t['confirm_delete_selected_comments'] = 'Etes-vous sûr de vouloir supprimer les commentaires sélectionnés ?';
+    $t['confirm_delete_comment'] = 'Êtes-vous sûr de vouloir supprimer ce commentaire ?';
+    $t['confirm_delete_selected_comments'] = 'Êtes-vous sûr de vouloir supprimer les commentaires sélectionnés ?';
     $t['bulk_action'] = 'Action groupée avec la sélection';
     $t['apply'] = 'Appliquer';
     $t['submitted_on'] = 'Soumis le';
@@ -105,10 +105,10 @@
     // Users
     $t['user_name_restrictions'] = 'Seulement lettres minuscules, chiffres, trait d\'union et souligné permis';
     $t['display_name'] = 'Nom affiché';
-    $t['role'] = 'Role';
+    $t['role'] = 'Rôle';
     $t['no_users_found'] = 'Aucun utilisateur trouvé';
-    $t['confirm_delete_user'] = 'Etes-vous sûr de vouloir supprimer cet utilisateur'; // No question mark please
-    $t['confirm_delete_selected_users'] = 'Etes-vous sûr de vouloir supprimer les utiisateurs sélectionnés ?';
+    $t['confirm_delete_user'] = 'Êtes-vous sûr de vouloir supprimer cet utilisateur'; // No question mark please
+    $t['confirm_delete_selected_users'] = 'Êtes-vous sûr de vouloir supprimer les utiisateurs sélectionnés ?';
     $t['disabled'] = 'Désactivé';
     $t['new_password'] = 'Nouveau mot de passe';
     $t['new_password_msg'] = 'Si vous voulez changer de mot de passe, saisir le nouveau. Sinon laisser vide.';
@@ -180,13 +180,13 @@
     $t['name_already_exists'] = 'Ce nom existe déjà';
     $t['pages'] = 'Pages';
     $t['none'] = 'Aucun(e)';
-    $t['confirm_delete_folder'] = 'Etes-vous sûr de vouloir supprimer ce dossier'; // No question mark please
-    $t['confirm_delete_selected_folders'] = 'Etes-vous sûr de vouloir supprimer les dossiers sélectionnés ?';
+    $t['confirm_delete_folder'] = 'Êtes-vous sûr de vouloir supprimer ce dossier'; // No question mark please
+    $t['confirm_delete_selected_folders'] = 'Êtes-vous sûr de vouloir supprimer les dossiers sélectionnés ?';
 
     // Drafts
     $t['draft_caps'] = 'BROUILLON'; // Upper case
     $t['draft'] = 'Brouillon';
-    $t['drafts'] = 'Broullons';
+    $t['drafts'] = 'Brouillons';
     $t['create_draft'] = 'Créer brouillon';
     $t['create_draft_msg'] = 'Créer une copie de cette page (après enregistrement des modifications)';
     $t['manage_drafts'] = 'Gérer les brouillons'; // Plural
@@ -198,11 +198,11 @@
     $t['template'] = 'Modèle';
     $t['modified'] = 'Modifié'; // Date of last modification
     $t['preview'] = 'Prévisualisation';
-    $t['confirm_delete_draft'] = 'Etes-vous sûr de vouloir supprimer ce brouillon ?';
-    $t['confirm_delete_selected_drafts'] = 'Etes-vous sûr de vouloir supprimer les brouillons sélectionnés ?';
-    $t['confirm_apply_selected_drafts'] = 'Etes-vous sûr de vouloir appliquer les brouillons sélectionnés?';
+    $t['confirm_delete_draft'] = 'Êtes-vous sûr de vouloir supprimer ce brouillon ?';
+    $t['confirm_delete_selected_drafts'] = 'Êtes-vous sûr de vouloir supprimer les brouillons sélectionnés ?';
+    $t['confirm_apply_selected_drafts'] = 'Êtes-vous sûr de vouloir appliquer les brouillons sélectionnés?';
     $t['view_all_drafts'] = 'Voir tous les brouillons';
-    $t['original_deleted'] = 'ORIGINAL SUPPRIME'; // Upper case
+    $t['original_deleted'] = 'ORIGINAL SUPPRIMÉ'; // Upper case
 
     // Addendum to Version 1.2 /////////////////////////////////////
     // Nested Pages
@@ -216,7 +216,7 @@
     $t['not_shown_in_menu'] = 'Caché dans le menu';
     $t['leave_empty'] = 'Laisser vide pour utiliser le titre de page';
     $t['menu_link'] = 'Menu Lien';
-    $t['link_url'] = 'Cette page pointe vers l\'adresse suivanten';
+    $t['link_url'] = 'Cette page pointe vers l\'adresse suivante';
     $t['link_url_desc'] = 'Peut être laissé vide';
     $t['separate_window'] = 'Ouvrir dans une nouvelle fenêtre';
     $t['pointer_page'] = 'Pointer Page';
