@@ -210,7 +210,7 @@
    $t['not_shown_in_menu'] = 'सूचि में नहीं दिखाया गया है';
    $t['leave_empty'] = 'पृष्ठ शीर्षक का उपयोग करने के लिए खाली छोड़ दो';
    $t['menu_link'] = 'सूचि को जोड़े ';
-   $t['link_url'] = 'This page points to the following location';
+   $t['link_url'] = 'यह पृष्ठ निम्न स्थान की ओर इशारा कर रहा है';
    $t['link_url_desc'] = 'खाली छोड़ा जा सकता है';
    $t['separate_window'] = 'अलग खिड़की में खोलें';
    $t['pointer_page'] = 'सूचक पृष्ठ';   
