@@ -494,10 +494,19 @@ class uploader {
         if (!isset($this->types[$type]))
             return false;
 
+        // blacklist
         $exts = strtolower(text::clearWhitespaces($this->config['deniedExts']));
         if (strlen($exts)) {
             $exts = explode(" ", $exts);
             if (in_array($ext, $exts))
+                return false;
+        }
+
+        // whitelist
+        $exts = strtolower(text::clearWhitespaces($this->config['allowedExts'][$type]));
+        if (strlen($exts)) {
+            $exts = explode(" ", $exts);
+            if (!in_array($ext, $exts))
                 return false;
         }
 
