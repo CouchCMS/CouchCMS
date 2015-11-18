@@ -1958,13 +1958,20 @@
             return $value;
         }
 
-        function sanitize_deep( $value ){
-            $value = is_array( $value ) ?
-                array_map( array($this, 'sanitize_deep'), $value ) :
-                $this->cleanXSS( $value );
+        function sanitize_deep( $arr ){
+            $tmp = array();
 
-            return $value;
+            foreach( $arr as $k=>$v ){
+                $k = $this->cleanXSS( $k );
+                if( is_array($v) ){
+                    $tmp[$k] = $this->sanitize_deep( $v );
+                }
+                else{
+                    $tmp[$k] = $this->cleanXSS( $v );
+                }
+            }
 
+            return $tmp;
         }
 
         function sanitize_url( $url, $default='', $only_local=0 ){
