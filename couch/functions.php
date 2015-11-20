@@ -1967,20 +1967,46 @@
 
         }
 
-        function sanitize_url( $url ){
-            // Only chars permitted to remain unencoded in urls remain
-            $url = preg_replace( array('/</', '/>/', '/"/', '/\x00+/'), array('', '', '', ''), $url );
-            $url = preg_replace( '|[^a-z0-9:#@%/;,\'$()~_?\+-=\\\.&!]|i', '', $url );
+        function sanitize_url( $url, $default='', $only_local=0 ){
+            $url = trim( $url );
+            $default = trim( $default );
 
-            // remove newlines
-            $newlines = array('%0d', '%0D', '%0a', '%0A');
-            $found = true;
-            while( $found == true ){
-                $val_before = $url;
-                for( $i = 0; $i < count($newlines); $i++ ){
-                    $url = str_replace( $newlines[$i], '', $url );
+            if( strlen($url) ){
+                // Only chars permitted to remain unencoded in urls remain
+                $url = preg_replace( array('/</', '/>/', '/"/', '/\x00+/'), array('', '', '', ''), $url );
+                $url = preg_replace( '|[^a-z0-9:#@%/;,\'$()~_?\+-=\\\.&!]|i', '', $url );
+
+                // remove newlines
+                $newlines = array('%0d', '%0D', '%0a', '%0A');
+                $found = true;
+                while( $found == true ){
+                    $val_before = $url;
+                    for( $i = 0; $i < count($newlines); $i++ ){
+                        $url = str_replace( $newlines[$i], '', $url );
+                    }
+                    if( $val_before == $url ){ $found = false; }
                 }
-                if( $val_before == $url ){ $found = false; }
+
+                if( strlen($url) ){
+                    if( $only_local ){ // don't allow redirects external to our site
+                        if( !strlen($default) ) $default=K_SITE_URL;
+
+                        if( strpos($url, '//')!==false ){
+                            if( strpos($url, K_SITE_URL)!==0 ){
+                                $url = $default;
+                            }
+                        }
+                        elseif( strpos($url, '/\\')===0 ){
+                            $url = $default;
+                        }
+                    }
+                }
+                else{
+                    $url = $default;
+                }
+            }
+            else{
+                $url = $default;
             }
 
             return $url;

@@ -5165,21 +5165,11 @@ MAP;
                         $params)
                    );
 
-            $url = $FUNCS->sanitize_url( trim($url) );
             $permanently = ( $permanently==1 ) ? 1 : 0;
             $no_external = ( $no_external==1 ) ? 1 : 0;
 
-            if( !strlen($url) ){
-                $url = K_SITE_URL;
-            }
-
-            if( $no_external ){ // don't allow redirects external to the site
-                if( strpos(strtolower($url), 'http')===0 ){
-                    if( strpos($url, K_SITE_URL)!==0 ){
-                        $url = K_SITE_URL;
-                    }
-                }
-            }
+            $default_dest = K_SITE_URL;
+            $url = $FUNCS->sanitize_url( $url, $default_dest, $no_external  );
 
             ob_get_contents(); // not neccessary but just in case..
             ob_end_clean();

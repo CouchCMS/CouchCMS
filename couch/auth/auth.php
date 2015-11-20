@@ -257,15 +257,8 @@
             global $FUNCS, $DB;
 
             // sanity checks
-            $dest = $FUNCS->sanitize_url( trim($dest) );
-            if( !strlen($dest) ){
-                $dest = ( $this->user->access_level < K_ACCESS_LEVEL_ADMIN ) ? K_SITE_URL : K_ADMIN_URL . K_ADMIN_PAGE;
-            }
-            elseif( strpos(strtolower($dest), 'http')===0 ){
-                if( strpos($dest, K_SITE_URL)!==0 ){ // we don't allow redirects external to our site
-                    $dest = K_SITE_URL;
-                }
-            }
+            $default_dest = ( $this->user->access_level < K_ACCESS_LEVEL_ADMIN ) ? K_SITE_URL : K_ADMIN_URL . K_ADMIN_PAGE;
+            $dest = $FUNCS->sanitize_url( $dest, $default_dest, 1  );
 
             $DB->commit( 1 );
             header( "Location: ".$dest );
