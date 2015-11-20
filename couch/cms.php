@@ -296,42 +296,6 @@
             $content_type_header = 'Content-Type: '.$content_type.';';
             $content_type_header .= ' charset='.K_CHARSET;
 
-            // Add our link to the document (if not commercial license)
-            // Apply only to text/html, text/html-sandboxed, application/xhtml+xml mime-types
-            // application/xml and text/xml can also be used to serve xhtml documents but we'll allow that.
-
-            if( !(K_PAID_LICENSE || K_REMOVE_FOOTER_LINK) ){
-                if( strpos($content_type, 'html')!==false ){
-                    $_cnt = preg_match_all( "/<\/[^\S]*BODY[^\S]*>/is", $html, $matches, PREG_OFFSET_CAPTURE );
-                    if( $_cnt ){
-                        $_split_at = $matches[0][count($matches[0])-1][1];
-                    }
-                    else{
-                        $_cnt = preg_match_all( "/<\/[^\S]*HTML[^\S]*>/is", $html, $matches, PREG_OFFSET_CAPTURE );
-                        if( $_cnt ){
-                            $_split_at = $matches[0][count($matches[0])-1][1];
-                        }
-                    }
-
-                    $_link = "
-                    <div style=\"clear:both; text-align: center; z-index:99999 !important; display:block !important; visibility:visible !important;\">
-                        <div style=\"position:relative; top:0; margin-right:auto;margin-left:auto; z-index:99999; display:block !important; visibility:visible !important;\">
-                        <center><a href=\"http://www.couchcms.com/\" title=\"CouchCMS - Simple Open-Source Content Management\" style=\"display:block !important; visibility:visible !important;\">Powered by CouchCMS</a></center><br />
-                        </div>
-                    </div>
-                    ";
-
-                    if( $_split_at ){
-                        $_pre = substr( $html, 0, $_split_at );
-                        $_post = substr( $html, $_split_at );
-                        $html = $_pre . $_link . $_post;
-                    }
-                    else{
-                        $html .= $_link;
-                    }
-                }
-            }
-
             // HOOK: alter_final_page_output
             $FUNCS->dispatch_event( 'alter_final_page_output', array(&$html, &$PAGE, &$k_cache_file, &$redirect_url, &$content_type_header) );
 
