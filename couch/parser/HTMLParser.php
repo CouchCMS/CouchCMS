@@ -126,6 +126,9 @@
                 // replace literal entities
                 $str = html_entity_decode( $str, ENT_QUOTES, K_CHARSET );
 
+                // replace dangerous HTML5 entities
+                $str = str_ireplace( array('&colon;', '&lpar;', '&rpar;', '&newline;', '&tab;'), array(':', '(', ')', "\n", "\t"), $str );
+
                 // replace numeric entities
                 $str = preg_replace_callback( '~&#x0{0,8}([0-9A-F]+);?~i',
                                                 create_function(
@@ -202,6 +205,7 @@
                  'document.cookie', 'document.write', 'window.location', 'document.location',
                  'datafld', 'dataformatas', 'datasrc', 'binding', 'behavior',
                  'onformchange', 'onforminput', 'formaction', 'oninput', 'dirname', 'pattern', 'mhtml:',
+                 'onhashchange', 'onmessage', 'onoffline', 'ononline', 'onpagehide', 'onpageshow', 'onpopstate', 'onstorage', 'onundo', 'onredo',
                  );
 
             for( $i = 0; $i < count($ra2); $i++ ){
