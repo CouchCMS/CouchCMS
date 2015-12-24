@@ -1,3 +1,12 @@
+1.4.7 - (2015/11/24)
+------------------
+
+- Remove attribution link
+- Fix security issues
+  * http://seclists.org/fulldisclosure/2015/Dec/110
+  * http://seclists.org/fulldisclosure/2015/Dec/111
+
+
 1.4.5 - (2015/07/07)
 ------------------
 
