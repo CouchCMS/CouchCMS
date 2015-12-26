@@ -176,6 +176,7 @@
                     'bgcolor'=>'BGColor',
                     'showblocks'=>'ShowBlocks',
                     'spellchecker'=>'SpellChecker',
+                    'youtube'=>'Youtube',
                     '-'=>'-',
                     '_'=>'-'
                 );

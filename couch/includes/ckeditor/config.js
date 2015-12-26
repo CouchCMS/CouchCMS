@@ -10,6 +10,7 @@ CKEDITOR.editorConfig = function( config )
     // config.uiColor = '#AADC6E';
 
     config.language = 'en';
+    config.extraPlugins = 'youtube';
 
     // Uncomment the following line if your users tend to frequently paste in contents from, say, MS-Word.
     // config.forcePasteAsPlainText = true;

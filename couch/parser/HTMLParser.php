@@ -58,7 +58,9 @@
                                 'mark', 'nav', 'rp', 'rt', 'ruby', 'section', 'summary', 'time', 'wbr'
                                 );
 
-        function KHTMLNode( $type, $name='', $attr='', $text='', $cleanXSS=0, $for_comments=0, $safe_tags=null ){
+        var $not_so_safe_tags = array('iframe'  => array('src' =>  '/^\/\/www\.youtube\.com\/embed\/.*$/'));
+
+        function KHTMLNode( $type, $name='', $attr='', $text='', $cleanXSS=0, $for_comments=0, $safe_tags=null, $not_so_safe_tags=null ){
             global $FUNCS;
 
             if( $name{0}=='/' ){
@@ -75,6 +77,7 @@
             $this->cleanXSS = $cleanXSS;
             $this->for_comments = $for_comments;
             if( is_array($safe_tags) ) $this->safe_tags = $safe_tags;
+            if( is_array($not_so_safe_tags) ) $this->not_so_safe_tags = $not_so_safe_tags;
 
             if( $this->cleanXSS ){
                 if( $type == K_NODE_TYPE_TEXT ){
@@ -85,7 +88,22 @@
                 }
                 elseif( $type == K_NODE_TYPE_CODE ){
                     if( !in_array($name, $this->safe_tags) ){
-                        $this->escape_tag = 1;
+                        if( array_key_exists($name, $this->not_so_safe_tags) ){
+                            while( preg_match('/([^= ]+)=(["\'])(.*?)\2/', $attr[0], $matches, PREG_OFFSET_CAPTURE, $offset) ){
+                                $offset = $matches[3][1];
+                                foreach( $this->not_so_safe_tags[$name] as $tag_key => $tag_pattern ){
+                                    if( strtolower($matches[1][0]) != $tag_key ) continue;
+                                    if( !preg_match($tag_pattern, $matches[3][0]) ){
+                                        $this->escape_tag = 1;
+                                        break;
+                                    }
+                                }
+                                if( $this->escape_tag ) break;
+                            }
+                        }
+                        else {
+                            $this->escape_tag = 1;
+                        }
                     }
 
                     if( strlen($attr[0]) ){

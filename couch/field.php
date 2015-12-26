@@ -166,6 +166,7 @@
             'maximize'=>'Maximize',
             'source'=>'Source',
             'spellchecker'=>'SpellChecker',
+            'youtube'=>'Youtube',
             '-'=>'-',
             '_'=>'-'
         );
@@ -721,7 +722,7 @@
                         array( 'Undo', 'Redo', 'RemoveFormat' ),
                         '/',
                         array( 'Cut', 'Copy', 'Paste', 'PasteText', 'PasteFromWord' ),
-                        array( 'Image', 'Flash', 'Table', 'HorizontalRule', 'Smiley', 'SpecialChar', 'PageBreak' ),
+                        array( 'Image', 'Youtube', 'Flash', 'Table', 'HorizontalRule', 'Smiley', 'SpecialChar', 'PageBreak' ),
                         array( 'Link', 'Unlink', 'Anchor' ),
                         '/',
                         array( 'Styles', 'Format', 'Font', 'FontSize' ),
@@ -773,7 +774,7 @@
                         array( 'Undo', 'Redo', 'RemoveFormat' ),
                         '/',
                         array( 'Cut', 'Copy', 'Paste', 'PasteText', 'PasteFromWord' ),
-                        array( 'Image', 'Flash', 'Table', 'HorizontalRule', 'Smiley', 'SpecialChar', 'PageBreak' ),
+                        array( 'Image', 'Flash', 'Youtube', 'Table', 'HorizontalRule', 'Smiley', 'SpecialChar', 'PageBreak' ),
                         array( 'Link', 'Unlink', 'Anchor' ),
                         array( 'ShowBlocks', 'Preview', 'Maximize', '-', 'Source' )
                     );
