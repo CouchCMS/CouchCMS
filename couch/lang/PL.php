@@ -9,8 +9,8 @@
     $t['view_site'] = 'Zobacz Stronę';
     $t['logout'] = 'Wyloguj';
     $t['javascript_msg'] = 'JavaScript jest wyłączony albo Twoja przeglądarka go nie wspiera.<br/>
-                            Zaktualizuj przeglądarke albo <a title="Enable JavaScript in your browser" href="http://www.google.com/support/bin/answer.py?answer=23852"><b>włącz JavaScript</b></a> aby używać panelu admińskiego.';
-    $t['add_new'] = 'Dodaj Nową';
+                            Zaktualizuj przeglądarke albo <a title="Włącz JavaScript w przeglądarce" href="http://www.google.com/support/bin/answer.py?answer=23852"><b>włącz JavaScript</b></a> aby używać panelu admińskiego.';
+    $t['add_new'] = 'Dodaj';
     $t['add_new_page'] = 'Dodaj nową stronę';
     $t['add_new_user'] = 'Dodaj nowego użytkownika';
     $t['view'] = 'Zobacz';
@@ -28,11 +28,11 @@
     $t['manage_users'] = 'Zarządzaj Użytkownikami';
 
     // List pages
-    $t['view_all_folders'] = 'Zobacz wszystkie foldery';
-    $t['filter'] = 'Filtr';
-    $t['showing'] = 'Showing';
+    $t['view_all_folders'] = 'Zobacz wszystkie katalogi';
+    $t['filter'] = 'Filtruj';
+    $t['showing'] = 'Oglądane';
     $t['title'] = 'Tytuł';
-    $t['folder'] = 'Folder';
+    $t['folder'] = 'Katalog';
     $t['date'] = 'Data';
     $t['actions'] = 'Akcje';
     $t['no_pages_found'] = 'Nie znaleziono stron';
@@ -232,7 +232,7 @@
     // Gallery
     $t['bulk_upload'] = 'Załaduj';
     $t['folder_empty'] = 'Ten katalog jest pusty. Prosimy o użycie przycisku powyżej do wgrania nowych zdjęć.';
-    $t['root'] = 'Korzeń';
+    $t['root'] = 'główny katalog';
     $t['item'] = 'zdjęcie'; // Single
     $t['items'] = 'zdjęcia'; // Multiple
     $t['container'] = 'katalog'; // Single
