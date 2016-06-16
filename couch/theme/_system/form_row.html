@@ -2,9 +2,9 @@
     <cms:show k_field_content />
 <cms:else />
     <div id="<cms:show k_field_wrapper_id />" class="field k_element k_<cms:show k_field_type /> <cms:show k_field_class />" <cms:if k_field_hidden>style="display:none;"</cms:if>>
-        <label id="k_label_<cms:show k_field_input_id />" class="field-label" for="<cms:show k_field_input_id />" >
+        <label id="k_label_<cms:show k_field_input_id />" class="field-label" for="<cms:show k_field_input_id />">
             <cms:if k_user_access_level='10'>
-                <span class="tt" title="<cms:show k_field_name />"><cms:show k_field_label /></span>
+                <span title="<cms:show k_field_name />"><cms:show k_field_label /></span>
             <cms:else />
                 <cms:show k_field_label />
             </cms:if>
