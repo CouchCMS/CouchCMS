@@ -1,0 +1,10 @@
+<div class="gallery-wrap">
+    <div class="gallery-item gallery-folder">
+        <a class="gallery-img-link gallery-img-folder" href="<cms:show k_route_link />&fid=<cms:show k_folder_id />"><cms:show_icon 'folder' /></a>
+        <div class="gallery-misc">
+            <a class="gallery-link" href="<cms:show k_route_link />&fid=<cms:show k_folder_id />" title="<cms:show k_item_label />"><cms:excerpt count='20' truncate_chars='1'><cms:show k_item_label /></cms:excerpt></a><br/>
+            <div class="gallery-txt"><strong><cms:show k_folder_totalchildren /></strong> Folder<cms:if k_folder_totalchildren gt '1'>s</cms:if></div><br/>
+            <div class="gallery-txt"><strong><cms:show k_folder_totalpagecount /></strong> Image<cms:if k_folder_totalpagecount gt '1'>s</cms:if></div>
+        </div>
+    </div>
+</div>

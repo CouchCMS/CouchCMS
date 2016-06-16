@@ -1,0 +1,30 @@
+<cms:if k_field_no_wrapper>
+    <cms:show k_field_content />
+<cms:else />
+    <div id="<cms:show k_field_wrapper_id />" class="field k_element k_<cms:show k_field_type /> <cms:show k_field_class />" <cms:if k_field_hidden>style="display:none;"</cms:if>>
+        <label id="k_label_<cms:show k_field_input_id />" class="field-label" for="<cms:show k_field_input_id />" >
+            <cms:if k_user_access_level='10'>
+                <span class="tt" title="<cms:show k_field_name />"><cms:show k_field_label /></span>
+            <cms:else />
+                <cms:show k_field_label />
+            </cms:if>
+            <cms:if k_field_desc >
+                <span class="desc">(<cms:show k_field_desc />)</span>
+            </cms:if>
+        </label><br/>
+
+        <cms:if k_field_is_deleted && k_user_access_level ge '10'>
+            <cms:render 'form_field_deleted' />
+        </cms:if>
+
+        <cms:show k_field_content />
+
+        <cms:if k_field_err_msg || k_field_is_required>
+            <cms:if k_field_err_msg >
+                <span class="label label-error k_notice" id="k_notice_<cms:show k_field_input_id />"><cms:show k_field_err_msg /></span>
+            <cms:else_if k_field_is_required />
+                <span class="label label-txt k_notice" id="k_notice_<cms:show k_field_input_id />">(<cms:localize 'required' />)</span>
+            </cms:if>
+        </cms:if>
+    </div>
+</cms:if>

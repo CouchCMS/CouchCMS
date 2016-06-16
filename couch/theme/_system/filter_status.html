@@ -1,0 +1,19 @@
+<select name='f_k_status' id='f_k_status'>
+    <option value="" <cms:if k_selected_status='' >SELECTED=1</cms:if> ><cms:localize 'all' /></option>
+    <option value="0" <cms:if k_selected_status='0' >SELECTED=1</cms:if> ><cms:localize 'unapproved' /></option>
+    <option value="1" <cms:if k_selected_status='1' >SELECTED=1</cms:if> ><cms:localize 'approved' /></option>
+</select>
+
+<cms:admin_add_js>
+    $(function(){
+        $('#f_k_status').on( "change", function(){
+            var $this  = $( this );
+            var link = '<cms:show k_filter_link />';
+            var status = $this.val();
+            if( status != -1 ){
+                link += '&status=' + status;
+            }
+            document.location.href = link;
+        });
+    });
+</cms:admin_add_js>

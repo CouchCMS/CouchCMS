@@ -121,7 +121,7 @@
       height            int,
       width             int,
       k_group           varchar(128),
-      collapsed         int(1),
+      collapsed         int(1) DEFAULT '-1',
       assoc_field       varchar(128),
       crop              int(1) DEFAULT '0',
       enforce_max       int(1) DEFAULT '1',
@@ -138,6 +138,7 @@
       dynamic           text,
       custom_params     text,
       searchable        int(1) DEFAULT '1',
+      class             tinytext,
       PRIMARY KEY (id)
     ) ENGINE = InnoDB CHARACTER SET utf8 COLLATE utf8_general_ci;";
 
@@ -199,7 +200,8 @@
       file_ext             varchar(20),
       file_size            int DEFAULT '0',
       file_meta            text,
-      creation_IP varchar(45),
+      creation_IP          varchar(45),
+      k_order            int DEFAULT '0',
 
       PRIMARY KEY (id)
     ) ENGINE = InnoDB CHARACTER SET utf8 COLLATE utf8_general_ci;";
@@ -226,6 +228,11 @@
       gallery          int(1) DEFAULT '0',
       handler          text,
       custom_params    text,
+      type             varchar(255),
+      config_list      text,
+      config_form      text,
+      parent           varchar(255),
+      icon             varchar(255),
       PRIMARY KEY (id)
     ) ENGINE = InnoDB CHARACTER SET utf8 COLLATE utf8_general_ci;";
 
@@ -397,6 +404,12 @@
 
     $k_stmts[] = "CREATE INDEX `".K_TBL_PAGES."_Index20` ON `".K_TBL_PAGES."` (`creation_IP`, `creation_date`);";
 
+    $k_stmts[] = "CREATE INDEX `".K_TBL_PAGES."_index21` ON `".K_TBL_PAGES."` (`template_id`, `k_order`);";
+
+    $k_stmts[] = "CREATE INDEX `".K_TBL_PAGES."_index22` ON `".K_TBL_PAGES."` (`template_id`, `page_folder_id`, `k_order`);";
+
+    $k_stmts[] = "CREATE INDEX `".K_TBL_PAGES."_index23` ON `".K_TBL_PAGES."` (`k_order`);";
+
     $k_stmts[] = "CREATE UNIQUE INDEX ".K_TBL_TEMPLATES."_Index01
       ON ".K_TBL_TEMPLATES."
       (name);";
@@ -540,7 +553,7 @@
     ?>
     <?php echo $FUNCS->login_header(); ?>
     <cms:capture into='my_form'>
-	<cms:form name="frm_login" action="" method="post" anchor="0" onSubmit="this.k_install.disabled=true; return true;">
+	<cms:form name="frm_login" class="simple-form" action="" method="post" anchor="0" onSubmit="this.k_install.disabled=true; return true;">
 	    <cms:if k_success >
 		<cms:set acct_name=frm_name 'global' />
 		<cms:set acct_pwd=frm_password 'global' />
@@ -548,36 +561,49 @@
 		<cms:set form_validated='1' 'global' />
 	    <cms:else />
 		<cms:if k_error >
-		    <div class="error" style="margin-bottom:10px; display:block">
+                    <div class="alert alert-error alert-icon">
+                        <svg class="i"><use xlink:href="<cms:php>echo K_SYSTEM_THEME_URL;</cms:php>assets/open-iconic.svg#circle-x"></use></svg>
 			<cms:each k_error >
 			    <cms:show item /><br>
 			</cms:each>
 		    </div>
 		<cms:else />
-		    <div class="notice" style="margin-bottom:10px; display:block">
+                    <div class="alert alert-notice alert-icon">
+                        <svg class="i"><use xlink:href="<cms:php>echo K_SYSTEM_THEME_URL;</cms:php>assets/open-iconic.svg#warning"></use></svg>
 			Installation required
 		    </div>
 		</cms:if>
-		<p>
-		    <label>Super-Admin Username</label><br>
-		    <cms:input type="text" id="k_user_name" name="name" maxlength="40"
-			       required="1" validator='title_ready|min_len=4'
-			       validator_msg='title_ready=Only Lowercase characters, numerals, hyphen and underscore permitted'
-			       size="20" autofocus="autofocus" />
-		</p>
-		<p>
-		    <label>Password</label><br>
-		    <cms:input type="password" id="k_user_pwd" name="password" required="1" validator='min_len=5' size="20"/>
-		</p>
-		<p>
-		    <label>Repeat Password</label><br>
-		    <cms:input type="password" id="k_user_pwd_repeat" required="1" validator="matches_field=password" name="repeat_password" size="20"/>
-		</p>
-		<p>
-		    <label>E-Mail</label><br>
-		    <cms:input type="text" id="k_user_email" name="email" required='1' validator='email' size="20"/>
-		</p>
-		<cms:input type="submit" name="k_install" value="Install"/>
+
+                <div class="field prepend">
+                    <cms:input type="text" id="k_user_name" name="name" maxlength="40"
+                        required="1" validator='title_ready|min_len=4'
+                        validator_msg='title_ready=Only Lowercase characters, numerals, hyphen and underscore permitted'
+                        autofocus="autofocus" class="text" placeholder="Super-Admin Username" 'required="required"' value=""/>
+                    <svg class="i"><use xlink:href="<cms:php>echo K_SYSTEM_THEME_URL;</cms:php>assets/open-iconic.svg#person"></use></svg>
+                </div>
+
+                <div class="field prepend">
+                    <cms:input type="password" id="k_user_pwd" name="password" required="1" validator='min_len=5'
+                        autocomplete="off" class="text" placeholder="Password" 'required="required"' value="" />
+                    <svg class="i"><use xlink:href="<cms:php>echo K_SYSTEM_THEME_URL;</cms:php>assets/open-iconic.svg#lock-locked"></use></svg>
+                </div>
+
+                <div class="field prepend">
+                    <cms:input type="password" id="k_user_pwd_repeat" name="repeat_password" required="1" validator='matches_field=password'
+                        autocomplete="off" class="text" placeholder="Repeat Password" 'required="required"' value="" />
+                    <svg class="i"><use xlink:href="<cms:php>echo K_SYSTEM_THEME_URL;</cms:php>assets/open-iconic.svg#lock-locked"></use></svg>
+                </div>
+
+                <div class="field prepend">
+                    <cms:input type="text" id="k_user_email" name="email" required='1' validator='email'
+                        class="text" placeholder="Email Address" 'required="required"' value=""/>
+                    <svg class="i"><use xlink:href="<cms:php>echo K_SYSTEM_THEME_URL;</cms:php>assets/open-iconic.svg#envelope-closed"></use></svg>
+                </div>
+
+                <div class="simple-btns">
+                    <button class="btn btn-primary" name="k_install" type="submit"><svg class="i"><use xlink:href="<cms:php>echo K_SYSTEM_THEME_URL;</cms:php>assets/open-iconic.svg#check"></use></svg>Install</button>
+                </div>
+
 	    </cms:if>
 	</cms:form>
     </cms:capture>
@@ -585,13 +611,15 @@
     <cms:if form_validated >
 	<cms:php> global $CTX; k_install( $CTX->get('acct_name'), $CTX->get('acct_pwd'), $CTX->get('acct_email') ); </cms:php>
 	<cms:if k_install_error >
-	    <div class="error">
-		<h3>Installation failed!</h3>
+	    <div class="alert alert-error alert-icon single">
+                <svg class="i"><use xlink:href="<cms:php>echo K_SYSTEM_THEME_URL;</cms:php>assets/open-iconic.svg#circle-x"></use></svg>
+		<h2>Installation failed!</h2>
 		<cms:show k_install_error />
 	    </div>
 	<cms:else />
-	    <div class="success">
-		<h3>Installation successful!</h3>
+	    <div class="alert alert-success alert-icon single">
+                <svg class="i"><use xlink:href="<cms:php>echo K_SYSTEM_THEME_URL;</cms:php>assets/open-iconic.svg#circle-check"></use></svg>
+		<h2>Installation successful!</h2>
 		Please <a href="<cms:php> echo K_ADMIN_URL . K_ADMIN_PAGE; </cms:php>"><b>login</b></a> using the information you provided.
 	    </div>
 	</cms:if>

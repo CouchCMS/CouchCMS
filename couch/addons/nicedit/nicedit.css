@@ -1,0 +1,56 @@
+.nicEdit-button,.nicEdit-selectBox,.nicEdit-pane{-moz-box-sizing:content-box;-webkit-box-sizing:content-box;box-sizing:content-box;}
+.nicEdit-wrapper{max-width:100%;}
+.nicEdit-panelContain{border-width:1px 1px 0;border-style:solid;border-color:#c0c0c0;border-radius:3px 3px 0 0;overflow:hidden;background-color:#ececec;}
+.nicEdit-panel{padding:5px 9px 9px;opacity:.75;background-image:-moz-linear-gradient(top, rgba(255,255,255,.025) 0%, rgba(0,0,0,.05) 100%);
+    background-image:-ms-linear-gradient(top, rgba(255,255,255,.025) 0%, rgba(0,0,0,.05) 100%);
+    background-image:-webkit-gradient(linear, left top, left bottom, color-stop(0%, rgba(255,255,255,.025)), color-stop(100%, rgba(0,0,0,.05)));
+    background-image:-webkit-linear-gradient(top, rgba(255,255,255,.025) 0%, rgba(0,0,0,.05) 100%);
+    background-image:linear-gradient(to bottom, rgba(255,255,255,.025) 0%, rgba(0,0,0,.05) 100%);
+    -moz-transition:opacity .15s ease;
+    -webkit-transition:opacity .15s ease;
+    transition:opacity .15s ease;}
+.nicEdit-panel:after,.nicEdit-paneRow:after{content:"";display:block;clear:both;}
+.nicEdit-buttonsEnabled{opacity:1;}
+.nicEdit-buttonContain{display:block;position:relative;float:left;padding:3px 2px;border:1px solid transparent;border-radius:3px;margin-top:4px;color:#444;fill:#444;cursor:default;pointer-events:none;}
+.nicEdit-buttonsEnabled>.nicEdit-buttonContain{pointer-events:auto;}
+.nicEdit-buttonsEnabled>.nicEdit-buttonContain:hover,.nicEdit-buttonsEnabled>.nicEdit-buttonContain.nicEdit-buttonActive{border-color:rgba(0,0,0,.15);text-decoration:none;background-color:rgba(0,0,0,.05);color:#111;fill:#111;box-shadow:0 1px 1px -1px rgba(0,0,0,.25) inset,0 1px 0 rgba(255,255,255,.65);}
+.nicEdit-selectContain+.nicEdit-buttonContain{margin-left:2px;}
+.nicEdit-button{display:block;width:16px;height:16px;pointer-events:none;}
+.nicEdit-buttonsEnabled>.nicEdit-buttonContain,.nicEdit-buttonsEnabled>.nicEdit-selectContain{cursor:pointer;}
+.nicEdit-selectContain{float:left;width:112px;height:24px;margin:4px 2px 0;cursor:default;}
+.nicEdit-buttonContain+.nicEdit-selectContain{margin-left:4px;}
+.nicEdit-selectBox{position:relative;padding:0 4px;border:1px solid #aaa;border-radius:3px;background-color:#fff;}
+.nicEdit-selectControl{position:absolute;float:right;top:9px;right:4px;border-top:5px solid #7d7d7d;border-right:4px solid transparent;border-left:4px solid transparent;}
+.nicEdit-selectTxt{line-height:22px;}
+.nicEdit-selectList{width:110px;border-bottom:1px solid #aaa;overflow:hidden;cursor:pointer;}
+.nicEdit-selectList:last-child{border-bottom:0;}
+.nicEdit-selectListTxt{padding:0 3px;}
+.nicEdit-selectListTxt:hover{background-color:rgba(0,0,0,.05);}
+.nicEdit-selectListTxt>font,.nicEdit-paneTitle-left{display:block;}
+.nicEdit-mainContain{position:relative;border:1px solid #c0c0c0;border-radius:0 0 3px 3px;overflow-x:hidden;overflow-y:auto;
+    -moz-transition:border-color .15s linear,box-shadow .15s linear;
+    -webkit-transition:border-color .15s linear,box-shadow .15s linear;
+    transition:border-color .15s linear,box-shadow .15s linear;}
+.nicEdit-mainContain:hover{border-color:#999;}
+.nicEdit-wrapper.input-hint>.nicEdit-mainContain{border-radius:0;}
+.nicEdit-main{line-height:20px;padding:8px;border:0;border-radius:0 0 2px 2px;outline:none;background-color:#fcfcfc;color:#444;font-size:14px;cursor:text;
+    -moz-transition:background-color .15s linear;
+    -webkit-transition:background-color .15s linear;
+    transition:background-color .15s linear;}
+.nicEdit-wrapper.input-hint>.nicEdit-mainContain>.nicEdit-main{border-radius:0;}
+.nicEdit-mainContain>.nicEdit-main.nicEdit-selected{background-color:#fff;}
+.nicEdit-main>ul,.nicEdit-main>ol{margin:1em 0;}
+.nicEdit-main>blockquote{margin:1em 40px;}
+.nicEdit-main>hr{margin:.5em 0;}
+.nicEdit-paneContain{position:absolute;z-index:5;}
+.nicEdit-pane{position:relative;padding:6px;border:1px solid #aaa;border-radius:3px;margin-top:2px;overflow:hidden;background-color:#fff;}
+.nicEdit-paneClose{position:absolute;top:6px;right:6px;width:14px;height:14px;cursor:pointer;}
+.nicEdit-paneClose>svg{width:14px;height:14px;fill:#ff0000;pointer-events:none;}
+.nicEdit-form{padding:0 2px 2px;}
+.nicEdit-paneTitle{display:block;padding-left:25%;}
+.nicEdit-paneRow{margin-top:6px;}
+.nicEdit-paneRowSubmit{padding-left:25%;}
+.nicEdit-paneRowSubmit>.btn{margin-right:0;}
+.nicEdit-paneLabel{display:block;float:left;width:25%;height:34px;line-height:34px;padding-right:12px;text-align:right;}
+.nicEdit-paneInput,.nicEdit-paneSelect{display:block;float:left;width:75%;}
+.nicEdit-paneTextarea{width:100%;min-height:100px;resize:vertical;}

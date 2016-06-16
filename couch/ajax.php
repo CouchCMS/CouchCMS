@@ -136,20 +136,15 @@
                         die( $msg );
                     }
 
-                    // Confirm no cloned pages exist
-                    if( $rs[0]['clonable'] ){
-                        $rs2 = $DB->select( K_TBL_PAGES, array('*'), "template_id='" . $DB->sanitize( $tpl_id ). "'" );
-                        if( count($rs2) ){
-                            die( 'Template has existing cloned pages' );
-                        }
+                    // Confirm no cloned pages (except the default-page) exist
+                    $rs2 = $DB->select( K_TBL_PAGES, array('*'), "template_id='" . $DB->sanitize( $tpl_id ). "' AND is_master<>'1'" );
+                    if( count($rs2) ){
+                        die( 'Template has existing cloned pages' );
                     }
-                    else{
-                        // delete default page for the template
-                        $PAGE = new KWebpage( $tpl_id, null );
-                        if( $PAGE->error ){
-                            ob_end_clean();
-                            die( 'ERROR: ' . $PAGE->err_msg );
-                        }
+
+                    // delete default page for the template
+                    $PAGE = new KWebpage( $tpl_id, null );
+                    if( !$PAGE->error ){
                         $PAGE->delete();
                     }
 

@@ -93,7 +93,6 @@
                     $default_time = '@current';
                 }
                 else{
-                    $default_time = $FUNCS->make_date( $default_time );
                     if( !KDateTime::_checkdate($default_time) ){
                         die("ERROR: Tag \"datetime\" - Date given in 'default_time' attribute is invalid.");
                     }
@@ -269,7 +268,7 @@
             }
             elseif( strlen(trim($post_val)) ){
                 $post_val = trim( $post_val );
-                
+
                 $year   = substr( $post_val, 0, 4 );
                 $month  = substr( $post_val, 5, 2 );
                 $day    = substr( $post_val, 8, 2 );
@@ -318,7 +317,7 @@
             }
 
             // Validate date
-            if( $this->_checkdate($this->data) ){
+            if( KDateTime::_checkdate($this->data) ){
                 // date is ok. Let parent handle custom validators, if any
                 return parent::validate();
             }
@@ -327,8 +326,9 @@
             return false;
         }
 
-        function _checkdate( $date ){
-            $pattern = '/^(\d{4})-(\d{2})-(\d{2}) ([01][0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9])$/';
+        static function _checkdate( $date, $with_time=0 ){
+            $date = trim( $date );
+            $pattern = ( $with_time ) ? '/^(\d{4})-(\d{2})-(\d{2}) ([01][0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9])$/' : '/^(\d{4})-(\d{2})-(\d{2})( ([01][0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9]))?$/';
             if( preg_match( $pattern, $date, $matches ) ){
                 return checkdate($matches[2], $matches[3], $matches[1]);
             }

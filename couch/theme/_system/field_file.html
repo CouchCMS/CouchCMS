@@ -1,0 +1,68 @@
+<div class="input-group upload-group">
+    <input
+        type="text"
+        name="<cms:show k_field_input_name />"
+        id="<cms:show k_field_input_id />"
+        size="65"
+        value="<cms:show k_field_value />"
+        class="k_file_text input-group-field upload-path"
+        <cms:if k_field_is_deleted>disabled="1"</cms:if>
+        <cms:if k_field_input_width>style="width:<cms:show k_field_input_width />px"</cms:if>
+    >
+
+    <button
+        class="btn popup-iframe"
+        id="<cms:show k_field_input_id />_button"
+        <cms:if k_field_use_kcfinder >
+            data-kc-finder="<cms:show k_field_input_id />"
+            href="<cms:show k_admin_link />includes/kcfinder/browse.php?nonce=<cms:create_nonce 'kc_finder' />&type=file"
+        <cms:else />
+            href="<cms:show k_admin_link />includes/fileuploader/browser/browser.html?Type=File&KField=<cms:show k_field_input_id />"
+        </cms:if>
+        href="<cms:show my_href />"
+        type="button"
+    >
+        <cms:show_icon 'cloud-upload' />
+        <cms:localize 'browse_server' />
+    </button>
+
+    <cms:if k_field_dynamic_insertion>
+        <img src="<cms:show k_system_theme_link />assets/blank.gif" alt="" id="<cms:show k_field_input_id />_dummyimg" onload="
+            var el=$('#<cms:show k_field_input_id />_button');
+            if(!el.attr('idx')){
+                <cms:if k_field_use_kcfinder >
+                    COUCH.bindPopupIframe( el , COUCH.browseKCFinderOpen,  COUCH.browseKCFinderClose );
+                <cms:else />
+                    COUCH.bindPopupIframe( el );
+                </cms:if>
+            }
+        " />
+    </cms:if>
+</div>
+
+<cms:if k_add_browse_js>
+    <cms:admin_add_js>
+        $( function(){
+            COUCH.bindPopupImage( COUCH.el.$content.find( ".popup-img" ) );
+
+            <cms:if k_field_use_kcfinder >
+                COUCH.bindPopupIframe( COUCH.el.$content.find( ".upload-group>.popup-iframe" ), COUCH.browseKCFinderOpen,  COUCH.browseKCFinderClose );
+            <cms:else />
+                COUCH.bindPopupIframe( COUCH.el.$content.find( ".upload-group>.popup-iframe" ) );
+            </cms:if>
+        });
+
+        <cms:if "<cms:not k_field_use_kcfinder />" >
+            function k_browse_result( id, fileurl ){
+                $('#' + id).val( fileurl );
+                try{
+                    $("#" + id + "_preview").attr( "href", fileurl );
+                    $("#" + id + "_img_preview").attr( "src", fileurl );
+                }
+                catch( e ){}
+
+                $.magnificPopup.close();
+            }
+        </cms:if>
+    </cms:admin_add_js>
+</cms:if>

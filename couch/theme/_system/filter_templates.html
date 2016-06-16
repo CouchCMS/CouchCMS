@@ -1,0 +1,15 @@
+<cms:show k_templates_dropdown />
+
+<cms:admin_add_js>
+    $(function(){
+        $('#f_k_templates').on( "change", function(){
+            var $this  = $( this );
+            var link = '<cms:show k_filter_link />';
+            var tpl = $this.val();
+            if( tpl != -1 ){
+                link += '&tpl=' + tpl;
+            }
+            document.location.href = link;
+        });
+    });
+</cms:admin_add_js>

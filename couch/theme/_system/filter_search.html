@@ -1,0 +1,29 @@
+<cms:if k_list_is_searchable>
+    <div class="search-field">
+        <input class="text" id="f_k_search" name="f_k_search" placeholder="<cms:show k_search_msg />" type="text" value="<cms:show k_search_text />"/>
+        <button class="btn-txt" id="btn_search_submit" type="submit" href="<cms:show k_filter_link />" onclick="this.style.cursor='wait'; return false;"><cms:show_icon 'magnifying-glass' /></button>
+    </div>
+
+    <cms:admin_add_js>
+        $(function(){
+            $('#btn_search_submit').on('click', function(e){
+                var $this  = $( this );
+                var link = $this.attr( 'href' );
+                var str_search = $('#f_k_search').val();
+                if( str_search!='' ){
+                    link += '&s=' + encodeURIComponent( str_search );
+                }
+
+                document.location.href = link;
+            });
+
+            $('#f_k_search').on('keypress', function(e){
+                var key = e.which;
+                if( key == 13 ){  // enter key
+                    $('#btn_search_submit').click();
+                    return false;
+                }
+            });
+        });
+    </cms:admin_add_js>
+</cms:if>

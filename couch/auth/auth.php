@@ -272,57 +272,21 @@
             header( 'Content-Type: text/html; charset='.K_CHARSET );
             setcookie( 'couchcms_testcookie', 'CouchCMS test cookie', 0, $this->cookie_path, null, K_HTTPS ? true : null );
 
-            $err_div = '<div class="error" style="margin-bottom:10px; display:';
-            if( $FUNCS->is_error($res) ){
-                $err_div .= "block\">";
-                $err_div .= $res->err_msg;
-            }
-            else{
-                $err_div .= "none\">&nbsp;";
-            }
-            $err_div .= '</div>';
+            $html = $FUNCS->render( 'login', $res );
+            echo $html;
 
-            ?>
-                <?php echo $FUNCS->login_header(); ?>
-
-                    <?php echo $err_div ?>
-                    <form name="frm_login" action="" method="post">
-                        <p>
-                            <label><?php echo $FUNCS->t('user_name'); ?></label><br>
-                            <input type="text"  id="k_user_name" name="k_user_name" size="20" autofocus="autofocus" />
-                        </p>
-                        <p>
-                            <label><?php echo $FUNCS->t('password'); ?></label><br>
-                            <input type="password" id="k_user_pwd" name="k_user_pwd" size="20"/>
-                        </p>
-                        <input type="hidden" name="k_cookie_test" value="1" />
-                        <input type="submit" name="k_login" value="<?php echo $FUNCS->t('login'); ?>"/>
-                    </form>
-                    <p>
-                        <?php echo '<a href="'.K_ADMIN_URL.'forgotpassword.php">'.$FUNCS->t('forgot_password').'</a>'; ?>
-                    </p>
-
-                <?php echo $FUNCS->login_footer(); ?>
-            <?php
             die();
         }
 
         function show_insufficient_privileges(){
             global $FUNCS;
 
-            $ret = ob_end_clean();
+            ob_end_clean();
             header( 'Content-Type: text/html; charset='.K_CHARSET );
-            $logout_link = $FUNCS->get_logout_link();
-            $logout_link = '<a href="'.$logout_link.'">'.$FUNCS->t('logout').'</a>';
-            ?>
-            <?php echo $FUNCS->login_header(); ?>
-                <div class='wrapper'>
-                    <h1 style="margin: 0 0 10px 0; padding: 0pt; font-size: 20px;"><?php echo $FUNCS->t('access_denied'); ?></h1>
-                    <p><?php echo $FUNCS->t('insufficient_privileges'); ?></p>
-                    <?php echo $logout_link; ?>
-                </div>
-            <?php echo $FUNCS->login_footer(); ?>
-            <?php
+
+            $html = $FUNCS->render( 'insufficient_privileges' );
+            echo $html;
+
             die();
         }
 

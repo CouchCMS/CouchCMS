@@ -40,6 +40,16 @@ browser.initFiles = function() {
     $('.file').mouseout(function() {
         _.unselect();
     });
+
+    if ( ("ontouchstart" in window) || ("onmsgesturechange" in window) )
+    {
+        $('.file').bind('doubletap', function(e) {
+            _.unselect();
+            browser.returnFile($(this));
+            e.preventDefault();
+        });
+    }
+
     $.each(this.shows, function(i, val) {
         var display = (_.kuki.get('show' + val) == 'off')
             ? 'none' : 'block';

@@ -33,7 +33,7 @@
             unset( $t );
 
             $this->users_tpl = $this->t['users_tpl'];
-            $this->login_tpl = $this->t['login_tpl'];
+            $this->login_tpl = ( K_SITE_OFFLINE ) ? '' : $this->t['login_tpl'];
             $this->lost_password_tpl = $this->t['lost_password_tpl'];
             $this->registration_tpl = $this->t['registration_tpl'];
         }
@@ -208,7 +208,7 @@
                 </cms:editable>
                 </cms:ignore>
                 <cms:editable label='Extended-User ID' name='extended_user_id' search_type='integer' type='text'>0</cms:editable>
-                <cms:editable label='Extended-User Email' name='extended_user_email' type='text' />
+                <cms:editable label='Extended-User Email' name='extended_user_email' type='text' searchable='0' />
                 <cms:editable label='New Password' name='extended_user_password' type='dummy_password' />
                 <cms:editable label='Repeat New Password' name='extended_user_password_repeat' type='dummy_password' />
                 ";

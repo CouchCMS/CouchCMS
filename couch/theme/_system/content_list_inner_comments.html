@@ -1,0 +1,27 @@
+<cms:ignore>
+<div class="select_all">
+    <label>
+        <cms:render 'list_checkbox' for_header='1' />
+        <strong><cms:localize 'select-deselect' /></strong>
+    </label>&nbsp;
+</div>
+</cms:ignore>
+
+<cms:comments
+    masterpage       = k_template_name
+    page_id          = k_selected_pageids
+    approved         = k_selected_status
+    order            = k_selected_order
+    paginate         = '1'
+    limit            = k_selected_limit
+    show_unpublished = '1'
+    base_link        = k_route_link
+    token            = k_cur_token
+>
+
+    <cms:render 'comment_item' />
+
+    <cms:if k_paginated_bottom >
+        <cms:set my_paginator="<cms:render 'paginator' />" 'parent' />
+    </cms:if>
+</cms:comments>

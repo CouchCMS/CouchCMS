@@ -1,0 +1,32 @@
+<cms:show_error heading="<cms:localize 'template_missing' />">
+    <cms:if k_user_access_level='10' && k_has_pages>
+        <i>(<cms:show k_template_removal_msg />)</i>
+    </cms:if>
+</cms:show_error>
+
+<cms:if k_user_access_level='10' && k_has_pages='0'>
+    <div class='field'>
+        <a class="btn"
+            href="javascript:k_delete_template('<cms:show k_template_id />', '<cms:create_nonce "delete_tpl_<cms:show k_template_id />" />')"
+            <cms:show_icon 'trash' /><cms:localize 'remove_template' />
+        </a>
+    </div>
+
+    <cms:admin_add_js>
+        function k_delete_template( tpl, nonce ){
+            var qs = 'ajax.php?act=delete-tpl&tpl='+tpl+'&nonce='+encodeURIComponent( nonce );
+
+            $.ajax({
+                dataType: "text",
+                url:      qs
+            }).done(function( data ) {
+                if( data === "OK" ){
+                    document.location.href = "<cms:show k_admin_link /><cms:show k_admin_page />";
+                }
+                else{
+                    alert( data );
+                }
+            });
+        }
+    </cms:admin_add_js>
+</cms:if>

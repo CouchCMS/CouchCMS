@@ -1,0 +1,39 @@
+<cms:show_error heading="<cms:localize 'columns_missing' />">
+    <a class="btn" href="javascript:k_delete_column(<cms:show k_field_id />, '<cms:create_nonce "delete_column_<cms:show k_field_id />" />')">
+        <cms:show_icon 'trash' /><cms:localize 'delete_permanently' />
+    </a>
+    <span class="btn-or">or</span>
+    <a class="btn popup-inline" href="#k_columns_deleted_<cms:show k_field_id />"><cms:show_icon 'code' /><cms:localize 'view_code' /></a>
+</cms:show_error>
+
+<div class="popup-blank popup-code mfp-hide" id="k_columns_deleted_<cms:show k_field_id />">
+    <div class="popup-code-content">
+        <pre><cms:show k_deleted_html /></pre>
+    </div>
+</div>
+
+<cms:if k_add_js_for_repeatable_column_deleted>
+    <cms:admin_add_js>
+        $(function(){
+            COUCH.bindPopupInline( COUCH.el.$content.find( ".popup-inline" ) );
+        });
+
+        function k_delete_column( fid, nonce ){
+            if( confirm('<cms:localize 'confirm_delete_columns' />') ){
+                var qs = 'ajax.php?act=delete-columns&fid='+fid+'&nonce='+encodeURIComponent( nonce );
+
+                $.ajax({
+                    dataType: "text",
+                    url:      qs
+                }).done(function( data ) {
+                    if( data === "OK" ){
+                        window.location.reload( true );
+                    }
+                    else{
+                        alert( data );
+                    }
+                });
+            }
+        }
+    </cms:admin_add_js>
+</cms:if>

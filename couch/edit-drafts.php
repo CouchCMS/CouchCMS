@@ -1,376 +1,342 @@
 <?php
-    /*
-    The contents of this file are subject to the Common Public Attribution License
-    Version 1.0 (the "License"); you may not use this file except in compliance with
-    the License. You may obtain a copy of the License at
-    http://www.couchcms.com/cpal.html. The License is based on the Mozilla
-    Public License Version 1.1 but Sections 14 and 15 have been added to cover use
-    of software over a computer network and provide for limited attribution for the
-    Original Developer. In addition, Exhibit A has been modified to be consistent with
-    Exhibit B.
-
-    Software distributed under the License is distributed on an "AS IS" basis, WITHOUT
-    WARRANTY OF ANY KIND, either express or implied. See the License for the
-    specific language governing rights and limitations under the License.
-
-    The Original Code is the CouchCMS project.
-
-    The Original Developer is the Initial Developer.
-
-    The Initial Developer of the Original Code is Kamran Kashif (kksidd@couchcms.com).
-    All portions of the code written by Initial Developer are Copyright (c) 2009, 2010
-    the Initial Developer. All Rights Reserved.
-
-    Contributor(s):
-
-    Alternatively, the contents of this file may be used under the terms of the
-    CouchCMS Commercial License (the CCCL), in which case the provisions of
-    the CCCL are applicable instead of those above.
-
-    If you wish to allow use of your version of this file only under the terms of the
-    CCCL and not to allow others to use your version of this file under the CPAL, indicate
-    your decision by deleting the provisions above and replace them with the notice
-    and other provisions required by the CCCL. If you do not delete the provisions
-    above, a recipient may use your version of this file under either the CPAL or the
-    CCCL.
-    */
-
     if ( !defined('K_ADMIN') ) die(); // cannot be loaded directly
 
-    if( isset($_GET['tpl']) && $FUNCS->is_non_zero_natural( $_GET['tpl'] ) ){
-        $tpl_id = (int)$_GET['tpl'];
-    }
-    if( isset($_GET['pid']) && $FUNCS->is_non_zero_natural( $_GET['pid'] ) ){
-        $parent_id = (int)$_GET['pid']; // show drafts only of a particular parent.
-    }
-    if( isset($_GET['p']) && $FUNCS->is_non_zero_natural( $_GET['p'] ) ){
-        $page_id = (int)$_GET['p'];
-    }
-    $pgn_pno = 1;
-    if( isset($_GET['pg']) && $FUNCS->is_non_zero_natural( $_GET['pg'] ) ){
-        $pgn_pno = (int)$_GET['pg'];
-    }
+    require_once( K_COUCH_DIR.'edit-pages.php' );
 
-    if( isset($_GET['act']{0}) ){
-        if( $_GET['act'] == 'delete' ){
-            if( $page_id ){
-                $_tpl_id = $tpl_id;
-                if( !$_tpl_id ){
-                    $rs = $DB->select( K_TBL_PAGES, array('template_id'), "id = '" . $DB->sanitize( $page_id )."'" );
-                    $_tpl_id = $rs[0]['template_id'];
-                }
-                $FUNCS->validate_nonce( 'delete_page_' . $page_id );
-                $PAGE = new KWebpage( $_tpl_id, $page_id );
-                if( $PAGE->error ){
-                    ob_end_clean();
-                    die( 'ERROR in deletion: ' . $PAGE->err_msg );
-                }
+    class KDraftsAdmin extends KPagesAdmin{
 
-                $PAGE->delete( 1 );
+        function KDraftsAdmin(){
+            global $FUNCS;
 
-                $qs = '?o=drafts';
-                if( $tpl_id ) $qs .= '&tpl=' . $tpl_id;
-                if( $parent_id ) $qs .= '&pid=' . $parent_id;
-                if( $pgn_pno>1 ) $qs .= '&pg=' . $pgn_pno;
-                header("Location: ".K_ADMIN_URL . K_ADMIN_PAGE. $qs);
-                exit;
-            }
+            parent::KPagesAdmin();
+            $FUNCS->add_event_listener( 'alter_render_vars_content_list_inner', array($this, '_alter_render_vars') );
+            $FUNCS->add_event_listener( 'alter_pages_form_fields', array($this, '_hide_system_fields') );
         }
-    }
-    else{
-        // Any drafts marked for deletion?
-        if( isset($_POST['bulk-action']) ){
-            if( isset($_POST['draft-id']) ){
-                $FUNCS->validate_nonce( 'bulk_action_draft' );
 
-                foreach( $_POST['draft-id'] as $v ){
+        /////// 1. 'list' action ////////////////////////////////////////////////////
+        function list_action(){
+            return KBaseAdmin::list_action(); // Calling grandparent statically! Not a bug: https://bugs.php.net/bug.php?id=42016
+        }
+
+        function render_list(){
+            return KBaseAdmin::render_list();
+        }
+
+        function define_list_title(){
+            global $FUNCS, $PAGE, $CTX;
+
+            $text = $FUNCS->t('drafts');
+            $link = $FUNCS->generate_route( 'drafts', 'list_view' );
+            $icon = '';
+            $FUNCS->set_admin_title( $text, $link, $icon );
+
+            // subtitle
+            $subtitle = $FUNCS->t('list');
+            $icon = 'file';
+            $FUNCS->set_admin_subtitle( $subtitle, $icon );
+        }
+
+        function define_list_fields(){
+            return KBaseAdmin::define_list_fields();
+        }
+
+        function _default_list_toolbar_actions(){
+            $arr_buttons = array();
+
+            return $arr_buttons;
+        }
+
+        function _default_list_filter_actions(){
+            global $FUNCS;
+            $arr_filters = array();
+
+            $arr_filters['filter_templates'] =
+                array(
+                    'render'=>'filter_templates',
+                    'weight'=>10,
+                );
+
+
+            $arr_filters['filter_parent'] =
+                array(
+                    'render'=>'filter_parent',
+                    'no_wrapper'=>1, // has no form gui
+                    'weight'=>20,
+                );
+
+            return $arr_filters;
+        }
+
+        function _default_list_batch_actions(){
+            global $FUNCS;
+            $arr_actions = array();
+
+            $arr_actions['batch_delete'] =
+                array(
+                    'title'=>$FUNCS->t( 'delete' ),
+                    'confirmation_msg'=>$FUNCS->t( 'confirm_delete_selected_drafts' ),
+                    'weight'=>10,
+                    'listener'=>array( 'pages_list_bulk_action', array($this, _delete_handler) ),
+                );
+
+            $arr_actions['batch_update_original'] =
+                array(
+                    'title'=>$FUNCS->t( 'update_original' ),
+                    'confirmation_msg'=>$FUNCS->t( 'confirm_apply_selected_drafts' ),
+                    'weight'=>20,
+                    'listener'=>array( 'pages_list_bulk_action', array($this, _update_handler) ),
+                );
+
+
+            return $arr_actions;
+        }
+
+        function _default_list_fields(){
+            global $FUNCS;
+            $arr_fields = array();
+
+            $arr_fields['k_selector_checkbox'] =
+                array(
+                    'header_class'=>'checkbox',
+                    'header'=>"<cms:render 'list_checkbox' for_header='1' />",
+                    'weight'=>'-10',
+                    'class'=>'checkbox',
+                    'content'=>"<cms:render 'list_checkbox' />",
+                );
+
+            $arr_fields['page_title'] =
+                array(
+                    'weight'=>'0',
+                    'header'=>$FUNCS->t('original_page'),
+                    'class'=>'title align_bottom',
+                    'content'=>"<cms:render 'list_title' />",
+                );
+
+            $arr_fields['k_page_foldertitle'] =
+                array(
+                    'weight'=>'20',
+                    'header'=>$FUNCS->t('template'),
+                    'class'=>'folder',
+                    'content'=>"<cms:render 'list_template' />",
+                );
+
+            $arr_fields['k_page_date'] =
+                array(
+                    'weight'=>'30',
+                    'header'=>$FUNCS->t('modified'),
+                    'content'=>"<cms:render 'list_mod_date' />",
+                    'class'=>'date drafts',
+                );
+
+            $arr_fields['k_actions'] =
+                array(
+                    'weight'=>'50',
+                    'header'=>$FUNCS->t('actions'),
+                    'class'=>'actions',
+                    'content'=>"<cms:render 'row_actions' />",
+                );
+
+            return $arr_fields;
+        }
+
+        function _set_list_sort( $order='' ){
+            global $FUNCS;
+
+            $order = trim( $order );
+            if( $order=='' ){  $order = 'desc'; }
+
+            $FUNCS->set_admin_list_default_sort( '', $order );
+        }
+
+        // event handlers
+        function _delete_handler( $action ){
+            global $FUNCS, $DB, $PAGE;
+
+            if( $action=='batch_delete' && isset($_POST['page-id']) ){
+                foreach( $_POST['page-id'] as $v ){
                     if( $FUNCS->is_non_zero_natural($v) ){
                         $draft_id = intval( $v );
-                        if( !$tpl_id ){
-                            $rs = $DB->select( K_TBL_PAGES, array('template_id'), "id = '" . $DB->sanitize( $draft_id )."'" );
-                            $_tpl_id = $rs[0]['template_id'];
-                        }
-                        else{
-                            $_tpl_id = $tpl_id;
-                        }
 
-                        $PAGE = new KWebpage( $_tpl_id, $draft_id );
-                        if( $PAGE->error ){
+                        $rs = $DB->select( K_TBL_PAGES, array('template_id'), "id = '" . $DB->sanitize( $draft_id )."'" );
+                        $_tpl_id = $rs[0]['template_id'];
+
+                        $pg = new KWebpage( $_tpl_id, $draft_id );
+                        if( $pg->error ){
                             ob_end_clean();
-                            die( 'ERROR in deletion: ' . $PAGE->err_msg );
+                            die( 'ERROR in batch delete: ' . $pg->err_msg );
                         }
 
-                        // execute action
-                        if( $_POST['bulk-action']=='delete' ){
-                            $PAGE->delete( 1 );
-                        }
-                        elseif( $_POST['bulk-action']=='apply' ){
-                            $DB->begin();
-                            $res = $PAGE->update_parent();
-                            if( $FUNCS->is_error($res) ){
-                                ob_end_clean();
-                                die( $res->err_msg );
-                            }
-                            $PAGE->delete( 1 );
-                            $DB->commit( 1 );
-                        }
+                        $pg->delete( 1 );
                     }
                 }
             }
         }
 
-        // list all available drafts
-        $_p = array();
-        $_p['module'] = 'drafts';
-        $_p['title'] = $FUNCS->t('drafts');
-        $_p['link'] = K_ADMIN_URL . K_ADMIN_PAGE . '?o=drafts';
-        $_p['subtitle'] = $FUNCS->t('list');
-        $_p['content'] = k_admin_list_drafts();
-        $FUNCS->render_admin_page_ex( $_p );
-    }
+        function _update_handler( $action ){
+            global $FUNCS, $DB, $PAGE;
 
+            if( $action=='update_original' ){
+                $DB->begin();
 
-    // Lists available drafts (can be constrained by template and parent psge)
-    function k_admin_list_drafts(){
-        global $DB, $AUTH, $FUNCS, $TAGS, $CTX;
-        global $pgn_pno, $tpl_id, $parent_id;
+                $res = $PAGE->update_parent();
+                if( $FUNCS->is_error($res) ){
+                    ob_end_clean();
+                    die( $res->err_msg );
+                }
 
-        $limit = 15;
+                // the draft can be deleted now
+                $PAGE->delete( 1 );
+                $DB->commit( 1 );
 
-        // formulate query
-        $tables = K_TBL_PAGES.' p left outer join '.K_TBL_PAGES.' p2 on p.parent_id = p2.id';
-        $tables .= ' left outer join '.K_TBL_TEMPLATES.' t on p.template_id = t.id';
-        $sql = "p.parent_id>0";
-        if( $tpl_id ){
-            $sql .= " AND t.id = '" . $DB->sanitize( $tpl_id )."'";
-        }
-        if( $parent_id ){
-            $sql .= " AND p2.id = '" . $DB->sanitize( $parent_id )."'";
-        }
-        $sql .= " ORDER BY p.template_id, p.parent_id, p.modification_date desc";
+                $FUNCS->invalidate_cache();
 
-        // first query for pagination
-        $rs = $DB->select( $tables, array('count(p.id) as cnt'), $sql );
-        $total_rows = $rs[0]['cnt'];
-        $total_pages = ceil( $total_rows/$limit );
+                // redirect to the original page
+                $tpl_name = $PAGE->tpl_name;
+                $page_id = $PAGE->parent_id;
+                $edit_link = $FUNCS->generate_route( $tpl_name, 'edit_view', array('nonce'=>$FUNCS->create_nonce('edit_page_'.$page_id), 'id'=>$page_id) );
 
-        // actual query
-        if( $pgn_pno>$total_pages && $total_pages>0 ) $pgn_pno=$total_pages;
-        $limit_sql = sprintf( " LIMIT %d, %d", ($pgn_pno - 1) * $limit, $limit );
-        $rs2 = $DB->select( $tables, array('p.*', 'p2.page_name as parent_name', 'p2.page_title as parent_title', 't.clonable as tpl_clonable', 't.title as tpl_title', 't.name as tpl_name'), $sql . $limit_sql );
-        $count = count($rs2);
-
-        // paginator
-        $adjacents = 2;
-        $targetpage = K_ADMIN_URL . K_ADMIN_PAGE . '?o=drafts';
-        if( $tpl_id ) $targetpage .= '&tpl=' . $tpl_id;
-        if( $parent_id ) $targetpage .= '&pid=' . $parent_id;
-        $pagestring = "&pg=";
-        $prev_text = '&#171; ' . $FUNCS->t('prev');
-        $next_text = $FUNCS->t('next') . ' &#187;';
-        $simple = 0;
-
-        // record counts
-        $total_records_on_page = ( $count<$limit ) ? $count : $limit;
-        if( $total_records_on_page > 0 ){
-            $first_record_on_page = ($limit * ($pgn_pno - 1)) + 1;
-            $last_record_on_page = $first_record_on_page + $total_records_on_page - 1;
-        }
-        else{
-            $first_record_on_page = $last_record_on_page = 0;
-        }
-
-        $str .= '<form name="frm_list_drafts" id="frm_list_drafts" action="" method="post">';
-        $str .= '<div class="wrap-paginator">';
-
-        // List of templates with drafts available
-        $str .= '<div class="bulk-actions">';
-        $rs3 = $DB->select( K_TBL_PAGES . ' p inner join ' . K_TBL_TEMPLATES . ' t on p.template_id = t.id', array('t.id', 't.name', 't.title', 'count(t.name) as cnt'), 'p.parent_id>0 GROUP BY t.name ORDER BY t.name asc' );
-        $str .= '<select id="f_k_templates" name="f_k_templates">';
-        $str .= '<option value="-1" >-- '.$FUNCS->t('view_all_drafts').' --</option>';
-        if( count($rs3) ){
-            foreach( $rs3 as $t ){
-                $abbr_title = $t['title'] ? $t['title'] : $t['name'];
-                $abbr_title = (strlen($abbr_title)>30) ? substr($abbr_title, 0, 30) . '&hellip;' : $abbr_title;
-                $t_selected = ($t['id']==$tpl_id) ? ' SELECTED=1 ' : '';
-                //$str .= '<option value="'.$t['id'].'" '.$t_selected.'>'.$abbr_title.' ('.$t['cnt'].')</option>';
-                $str .= '<option value="'.$t['id'].'" '.$t_selected.'>'.$abbr_title.'</option>'; // count seemed confusing
-            }
-        }
-        $str .= '</select>';
-        $link = K_ADMIN_URL . K_ADMIN_PAGE . '?o=drafts';
-        $str .= '<a class="button" id="btn_template_submit" href="'.$link.'" onclick="this.style.cursor=\'wait\'; return false;"><span>'.$FUNCS->t('filter').'</span></a>';
-        $str .= '</div>';
-
-        if( $total_rows > $limit ){
-            $str_paginator = $FUNCS->getPaginationString( $pgn_pno, $total_rows, $limit, $adjacents, $targetpage, $pagestring, $prev_text, $next_text, $simple );
-            $str_paginator .= "<div class='record-count'>".$FUNCS->t('showing')." $first_record_on_page-$last_record_on_page / $total_rows</div>";
-            $str .= $str_paginator;
-        }
-        $str .= '</div>';
-
-        $str .= '<div class="group-wrapper listing">';
-        $str .= '<table class="listing clear" cellspacing="0" cellpadding="0">';
-        $str .= '<thead>';
-        $str .= '<th class="checkbox"><input type="checkbox" name="check-all" onClick="$$(\'.draft-selector\').set(\'checked\', this.checked);" /></th>';
-        $str .= '<th>'.$FUNCS->t('original_page').'</th>';
-        $str .= '<th>'.$FUNCS->t('template').'</th>';
-        $str .= '<th>'.$FUNCS->t('modified').'</th>';
-        $str .= '<th>'.$FUNCS->t('actions').'</th>';
-        $str .= '</thead>';
-        if( !$count ){
-            if( $parent_id ){
-                // No more drafts for this parent. Go to template listing..
-                $qs = '?o=drafts';
-                if( $tpl_id ) $qs .= '&tpl=' . $tpl_id;
-                header("Location: ".K_ADMIN_URL . K_ADMIN_PAGE. $qs);
+                header( "Location: ".$edit_link );
                 exit;
             }
-            elseif( $tpl_id ){
-                // No more drafts for this template. Go to main listing..
-                $qs = '?o=drafts';
-                header("Location: ".K_ADMIN_URL . K_ADMIN_PAGE. $qs);
-                exit;
-            }
-            else{
-                $str .= '<tr><td colspan="6" class="last_row" style="text-align:center">'.$FUNCS->t('no_drafts_found').'</td></tr>';
-            }
-        }
-        else{
-            for( $x=0; $x<$count; $x++ ){
-                $p = $rs2[$x];
+            elseif( $action=='batch_update_original' && isset($_POST['page-id']) ){
 
-                // calculate effective access level
-                // ignoring for now
+                foreach( $_POST['page-id'] as $v ){
+                    if( $FUNCS->is_non_zero_natural($v) ){
+                        $draft_id = intval( $v );
 
+                        $rs = $DB->select( K_TBL_PAGES, array('template_id'), "id = '" . $DB->sanitize( $draft_id )."'" );
+                        $_tpl_id = $rs[0]['template_id'];
 
-                $str .= '<tr>';
-                if( $x>=$count-1 ) $last_row = " last_row";
+                        $pg = new KWebpage( $_tpl_id, $draft_id );
+                        if( $pg->error ){
+                            ob_end_clean();
+                            die( 'ERROR in batch update: ' . $pg->err_msg );
+                        }
 
-                // checkbox
-                $str .= '<td class="checkbox'.$last_row.'">';
-                $str .= '<input type="checkbox" value="'.$p['id'].'" class="draft-selector" name="draft-id[]"/>';
-                $str .= '</td>';
-
-                // parent page's name and link to draft
-                $str .= '<td class="name'.$last_row.'">';
-                $nonce = $FUNCS->create_nonce( 'edit_page_'.$p['id'] );
-                if( $p['parent_name'] ){
-                    if( !$p['tpl_clonable'] ){
-                        $abbr_title = $p['tpl_title'] ? $p['tpl_title'] : $p['tpl_name'];
-                    }
-                    else{
-                        $abbr_title = $p['parent_title'];
+                        $DB->begin();
+                        $res = $pg->update_parent();
+                        if( $FUNCS->is_error($res) ){
+                            ob_end_clean();
+                            die( $res->err_msg );
+                        }
+                        $pg->delete( 1 );
+                        $DB->commit( 1 );
                     }
                 }
-                else{
-                    $abbr_title = '<font color="red">'.$FUNCS->t('original_deleted').' (id: '.$p['parent_id'].')</font>';
-                }
-                $abbr_title = (strlen($abbr_title)>60) ? substr($abbr_title, 0, 60) . '&hellip;' : $abbr_title;
-                $str .= '<a href="'.K_ADMIN_URL . K_ADMIN_PAGE.'?act=edit&tpl='. $p['template_id'] .'&p='. $p['id'] .'&nonce='.$nonce.'">'. $abbr_title .'</a>';
-                $str .= '</td>';
-
-                // template
-                $str .= '<td class="folder'.$last_row.'">';
-                if( $p['tpl_clonable'] ){
-                    $abbr_title = $p['tpl_title'] ? $p['tpl_title'] : $p['tpl_name'];
-                    $str .= (strlen($abbr_title)>30) ? substr($abbr_title, 0, 30) . '&hellip;' : $abbr_title;
-                }
-                else{
-                    $str .= '&nbsp;';
-                }
-                $str .= '</td>';
-
-                // last modification date
-                $str .= '<td class="date drafts'.$last_row.'">';
-                $str .= date("M jS Y @ H:i", strtotime($p['modification_date']));
-                $str .= '</td>';
-
-                // actions
-                $str .= '<td class="actions'.$last_row.'">';
-                $str .= '<a href="'.K_ADMIN_URL . K_ADMIN_PAGE.'?act=edit&tpl='. $p['template_id'] .'&p='. $p['id'] .'&nonce='.$nonce.'"><img src="'.K_ADMIN_URL.'theme/images/page_white_edit.gif"  title="'.$FUNCS->t('edit').'"/></a>';
-                //if( $access_level <= $AUTH->user->access_level ){
-                    $nonce = $FUNCS->create_nonce( 'delete_page_'.$p['id'] );
-                    $confirm_prompt = "onclick='if( confirm(\"".$FUNCS->t('confirm_delete_draft')."\") ) { return true; } return false;'";
-                    $qs = '?o=drafts&act=delete';
-                    $qs .= '&p='. $p['id'] .'&nonce='.$nonce;
-                    if( $tpl_id ) $qs .= '&tpl=' . $tpl_id;
-                    if( $parent_id ) $qs .= '&pid=' . $parent_id;
-                    if( $pgn_pno>1 ) $qs .= '&pg=' . $pgn_pno;
-                    //if( isset($_GET['pg']) ) $qs .= '&pg=' . $_GET['pg'];
-                    $str .= '<a href="'.K_ADMIN_URL . K_ADMIN_PAGE.$qs.'" '.$confirm_prompt.'><img src="'.K_ADMIN_URL.'theme/images/page_white_delete.gif" title="'.$FUNCS->t('delete').'"/></a>';
-                //}
-                $str .= '<a href="'. K_SITE_URL . $p['tpl_name'] .'?p='. $p['id'] .'" target="_blank" title="'.$FUNCS->t('preview').'"><img src="'.K_ADMIN_URL.'theme/images/magnifier.gif"/></a>';
-
-                $str .= '</td>';
-                $str .= '</tr>';
             }
         }
-        $str .= '</table>';
-        $str .= '</div>';
 
-        $str .= '<div class="wrap-paginator">';
-        if( $count ){
-            $str .= '<div class="bulk-actions">';
-            $str .= '<select name="bulk-action" id="bulk-action">';
-            $str .= '<option value="-" selected="selected">'. $FUNCS->t('bulk_action') .'</option>';
-            $str .= '<option value="delete">'. $FUNCS->t('delete') .'</option>';
-            $str .= '<option value="apply">'. $FUNCS->t('update_original') .'</option>';
-            $str .= '</select>';
-            $str .= '<a class="button" id="btn_bulk_submit" href="#"><span>'. $FUNCS->t('apply') .'</span></a>';
-            $str .= '<input type="hidden" id="nonce" name="nonce" value="'. $FUNCS->create_nonce( 'bulk_action_draft' ) .'" />';
-            $str .= '</div>';
+        function _alter_render_vars( &$templates, $render ){
+            global $CTX, $FUNCS, $DB;
+
+            if( $render=='content_list_inner' ){
+
+                // set template to use for render
+                $templates[] = 'content_list_inner_drafts';
+
+                // formulate SQL for cms:query within the template
+                $tpl_id = $CTX->get( 'k_selected_templateid' );
+                $parent_id = $CTX->get( 'k_selected_parentid' );
+
+                $fields = 'p.*, p2.page_name as parent_name, p2.page_title as parent_title, t.clonable as tpl_clonable, t.title as tpl_title, t.name as tpl_name, t.access_level as tpl_access_level';
+                $tables = K_TBL_PAGES.' p left outer join '.K_TBL_PAGES.' p2 on p.parent_id = p2.id left outer join '.K_TBL_TEMPLATES.' t on p.template_id = t.id';
+                $where = "p.parent_id>0";
+                if( $tpl_id ){
+                    $where .= " AND t.id = '" . $DB->sanitize( $tpl_id )."'";
+                }
+                if( $parent_id ){
+                    $where .= " AND p2.id = '" . $DB->sanitize( $parent_id )."'";
+                }
+                $orderby .= "p.template_id, p.parent_id, p.modification_date desc";
+
+                $sql = 'SELECT ' . $fields . ' FROM ' . $tables . ' WHERE ' . $where . ' ORDER BY ' . $orderby;
+
+                $CTX->set( 'k_selected_query', $sql );
+            }
         }
-        $str .= $str_paginator;
-        $str .= '</div>';
-        $str .= '</form>';
 
-        // Associated JavaScript
-        ob_start();
-        ?>
-        <script type="text/javascript">
-            //<![CDATA[
-            window.addEvent('domready', function(){
-                if( $('btn_template_submit') ){
-                    $('btn_template_submit').addEvent('click', function(e){
-                        var link = this.href
-                        var tpl = $('f_k_templates').value;
-                        if( tpl != -1 ){
-                            link += '&tpl=' + tpl;
-                        }
-                        document.location.href = link;
-                    });
+        function _hide_system_fields( &$fields ){
+            global $PAGE;
+
+            foreach( $fields as $k=>$v ){
+                if( array_key_exists($k, $PAGE->_fields) && $PAGE->_fields[$k]->system ){
+                    if( !($k=='k_page_title' /*|| $k=='k_draft_button'*/) ){
+                        $fields[$k]['hide'] = 1;
+                    }
                 }
-            });
+            }
+            $x=10;
+        }
 
-            window.addEvent('domready', function(){
-                if( $('btn_bulk_submit') ){
-                    $('btn_bulk_submit').addEvent('click', function(e){
-                        var col = $$('.draft-selector');
-                        for( var x=0; x<col.length; x++ ){
-                            if( col[x].checked ){
-                                if($('bulk-action').value=='delete'){
-                                    var msg = '<?php echo $FUNCS->t('confirm_delete_selected_drafts'); ?>';
-                                }
-                                else{
-                                    var msg = '<?php echo $FUNCS->t('confirm_apply_selected_drafts'); ?>';
-                                }
-                                if( confirm(msg) ){
-                                    $$('body').setStyle('cursor', 'wait');
-                                    $('frm_list_drafts').submit();
-                                }
-                                return false;
-                            }
-                        }
-                        return false;
-                        });
-                }
-            });
-            //]]>
-        </script>
-        <?php
-        $str .= ob_get_contents();
-        ob_end_clean();
+        /////// 2. 'form' action  ////////////////////////////////////////////////////
+        function define_form_title(){
+            global $FUNCS;
 
-        return $str;
-    }
+            $text = $FUNCS->t('drafts');
+            $link = $FUNCS->generate_route( 'drafts', 'list_view' );
+            $icon = '';
+            $FUNCS->set_admin_title( $text, $link, $icon );
+
+            // subtitle
+            $subtitle = $FUNCS->t('edit');
+            $FUNCS->set_admin_subtitle( $subtitle );
+        }
+
+        function _default_form_toolbar_actions(){
+            $arr_buttons = array();
+
+            return $arr_buttons;
+        }
+
+        function _default_form_filter_actions(){
+            global $FUNCS;
+            $arr_filters = array();
+
+            $arr_filters['filter_parent'] =
+                array(
+                    'render'=>'filter_parent',
+                    'no_wrapper'=>1, // has no form gui
+                    'weight'=>10,
+                );
+
+            return $arr_filters;
+        }
+
+        function _set_advanced_setting_fields( &$arr_fields ){
+            global $FUNCS;
+
+            // add 'Update original' button
+            $arr_fields[ 'k_draft_button' ] = array(
+                'no_wrapper'=>'1',
+                'content'=>"<cms:render 'draft_button' mode='update' />",
+                'group'=> '_advanced_settings_',
+                'order'=>0,
+                'listener'=>array( 'pages_form_custom_action', array($this, _update_handler) ),
+            );
+
+        }
+
+        // common
+        // route filters
+        static function resolve_draft( $route ){
+            global $FUNCS, $PAGE, $CTX;
+
+            $nonce = $route->resolved_values['nonce'];
+            $tpl_id = $route->resolved_values['tpl_id'];
+            $draft_id = $route->resolved_values['id'];
+
+            $FUNCS->validate_nonce( 'edit_draft_' . $tpl_id . ',' . $draft_id, $nonce );
+
+            // set page object
+            $PAGE = new KWebpage( $tpl_id, $draft_id );
+            if( $PAGE->error ){
+                return $FUNCS->raise_error( ROUTE_NOT_FOUND );
+            }
+            if( !$PAGE->parent_id ){
+                return $FUNCS->raise_error( 'Not a draft' );
+            }
+
+            $PAGE->set_context();
+        }
+
+    } // end class KDraftsAdmin

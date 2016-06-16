@@ -365,12 +365,23 @@
         function embed( $params, $node ){
             global $CTX;
 
-            // if( count($node->children) ) {die("ERROR: Tag \"".$node->name."\" is a self closing tag");} //do_shortcodes also masquerdes as embed
-
             $act = strtolower( trim($params[0]['lhs']) );
             $snippet = $params[0]['rhs'];
             if( $snippet ){
-                // set any passed params into Context (not very useful, I now think, since embed does not have a context of its own)
+
+                // if cms:embed used as a tag-pair, add context to it
+                if( count($node->children) && $node->name=='embed' ){ //do_shortcodes also masquerdes as embed
+                    $CTX->push( '__embed__' );
+                    $has_context = 1;
+
+                    foreach( $node->children as $child ){
+                        $_content .= $child->get_HTML();
+                    }
+
+                    $CTX->set( 'k_content', $_content );
+                }
+
+                // set any passed params into Context
                 for( $x=1; $x<count($params); $x++ ){
                     if( $params[$x]['op']=='=' && $params[$x]['lhs']) $CTX->set( $params[$x]['lhs'], $params[$x]['rhs'] );
                 }
@@ -390,14 +401,23 @@
                     $filepath = $base_snippets_dir . ltrim( trim($snippet), '/\\' );
                     $html = @file_get_contents( $filepath );
                     if( $html===FALSE ){
+                        if( $has_context ) $CTX->pop();
                         return 'Error embedding file: ' . htmlspecialchars( $filepath );
                     }
                 }
 
                 if( $html ){
                     $parser = new KParser( $html, $node->line_num, 0, '', $node->ID );
-                    return $parser->get_HTML();
+                    if( $act!='code' && K_CACHE_OPCODES ){
+                        $html = $parser->get_cached_HTML( $filepath );
+                    }
+                    else{
+                        $html = $parser->get_HTML();
+                    }
                 }
+                if( $has_context ) $CTX->pop();
+
+                return $html;
             }
         }
 
@@ -804,14 +824,14 @@
 
             if( $CTX->get('k_is_page') ){/* Cloned page */
                 $nonce = $FUNCS->create_nonce( 'edit_page_'.$CTX->get('k_page_id') );
-                $link = K_ADMIN_URL . K_ADMIN_PAGE . '?act=edit&tpl='. $CTX->get('k_template_id') .'&p='. $CTX->get('k_page_id') .'&nonce='.$nonce;
+                $link = K_ADMIN_URL . K_ADMIN_PAGE . '?o='. $CTX->get('k_template_name') .'&q=edit/'. $nonce .'/' . $CTX->get('k_page_id');
             }
             elseif( $CTX->get('k_is_list_page') ){ /* Non-clonable page */
                 $nonce = $FUNCS->create_nonce( 'edit_page_'.$CTX->get('k_template_id') );
-                $link = K_ADMIN_URL . K_ADMIN_PAGE . '?act=edit&tpl=' . $CTX->get('k_template_id') .'&nonce='.$nonce;
+                $link = K_ADMIN_URL . K_ADMIN_PAGE . '?o='. $CTX->get('k_template_name') .'&q=edit/'. $nonce .'/';
             }
             else{ /* List view */
-                $link = K_ADMIN_URL . K_ADMIN_PAGE . '?act=list&tpl=' . $PAGE->tpl_id;
+                $link = K_ADMIN_URL . K_ADMIN_PAGE . '?o='. $CTX->get('k_template_name') .'&q=list';
             }
 
             return $link;
@@ -1075,6 +1095,7 @@
                 'body_class'=>'',
                 'disable_uploader'=>'0',
                 'dynamic'=>'',
+                'class'=>'',
 
                 /* used only by repeatable */
                 'col_width'=>'',
@@ -1147,7 +1168,8 @@
             $attr['height'] = abs( (int)$attr['height'] );
             $attr['width'] = abs( (int)$attr['width'] );
             $attr['group'] = trim($attr['group']);
-            $attr['collapsed'] = abs( (int)$attr['collapsed'] );
+            $attr['collapsed'] = trim( $attr['collapsed'] );
+            if( $attr['collapsed']!='1' && $attr['collapsed']!='0' ) $attr['collapsed']='-1';
             $attr['assoc_field'] = trim( $attr['assoc_field'] );
             $attr['crop'] = abs( (int)$attr['crop'] );
             $attr['enforce_max'] = trim( $attr['enforce_max'] );
@@ -1166,6 +1188,7 @@
             $attr['disable_uploader'] = abs( (int)$attr['disable_uploader'] );
             $attr['dynamic'] = trim( $attr['dynamic'] );
             $attr['searchable'] = abs( (int)$attr['searchable'] );
+            $attr['class'] = trim( $attr['class'] );
 
             // Save a backup of all the parameters used to create this field.
             $tag = '<cms:editable';
@@ -1204,6 +1227,25 @@
                 }
             }
 
+            // if type 'group' used as a tag-pair, find all immediate child editable regions and set this as their parent
+            if( $type=='group' && count($node->children) ){
+                for( $x=0; $x<count($node->children); $x++ ){
+                    $child = &$node->children[$x];
+
+                    if( $child->type==K_NODE_TYPE_CODE && ($child->name=='editable' || $child->name=='repeatable') ){
+                        $arr_tmp = array();
+                        foreach( $child->attributes as $child_attr ){
+                            if( $child_attr['name']!='group' ){
+                                $arr_tmp[] = $child_attr;
+                            }
+                        }
+                        $arr_tmp[] = array( name=>'group', op=>'=', quote_type=>"'", value=>$name, value_type=>K_VAL_TYPE_LITERAL);
+                        $child->attributes = $arr_tmp;
+                    }
+                    unset( $child );
+                }
+            }
+
             foreach( $node->children as $child ){
                 $html .= $child->get_HTML();
             }
@@ -1216,7 +1258,7 @@
                         $orig_field_type = $field->k_type;
 
                         // Check if any core attribute has been modified
-                        $modified = array();
+                        $modified = $prev_value = $prev_udf_values = array();
                         foreach( $attr as $k=>$v ){
                             if( $k=='desc' || $k=='type' || $k=='order' || $k=='group' || $k=='separator') $k = 'k_'.$k; //MySQL has problems with these names
                             if( $field->$k != trim($v) ){
@@ -1232,7 +1274,6 @@
 
                         // Check if any udf attribute has been modified
                         if( $is_udf ){
-                            $prev_udf_values = array();
                             foreach( $attr_udf as $k=>$v ){
                                 $v = trim( $v );
                                 if( $field->$k != $v ){
@@ -1246,6 +1287,7 @@
                         }
                         // Check if the default text (if any) has changed
                         if( $field->default_data != $html ){
+                            $prev_value['default_data'] = $field->default_data;
                             $modified['default_data'] = $field->default_data = $html;
                         }
                         // Check if deleted field has been recreated
@@ -1254,13 +1296,13 @@
                         }
 
                         // HOOK: alter_editable_modifications
-                        $FUNCS->dispatch_event( 'alter_editable_modifications', array(&$modified, $field, $params, $node) );
+                        $FUNCS->dispatch_event( 'alter_editable_modifications', array(&$modified, &$prev_value, &$prev_udf_values, $field, $params, $node) );
 
                         if( count($modified) ){
                             $DB->begin();
 
                             // HOOK: alter_field_update
-                            $FUNCS->dispatch_event( 'alter_field_update', array(&$modified, $field, $params, $node) );
+                            $FUNCS->dispatch_event( 'alter_field_update', array(&$modified, &$prev_value, &$prev_udf_values, $field, $params, $node) );
 
                             if( array_key_exists('custom_params', $modified) ){
                                 // Call udf to do something for 'update_schema' event
@@ -1309,7 +1351,7 @@
                             if( $rs==-1 ) die( "ERROR: Unable to save modified editable field" );
 
                             // HOOK: field_updated
-                            $FUNCS->dispatch_event( 'field_updated', array(&$modified, $field, $params, $node) );
+                            $FUNCS->dispatch_event( 'field_updated', array(&$modified, &$prev_value, &$prev_udf_values, $field, $params, $node) );
 
                             $DB->commit();
                         }
@@ -1375,7 +1417,8 @@
                                    'body_class' => $attr['body_class'],
                                    'disable_uploader' => $attr['disable_uploader'],
                                    '_html' => $tag,
-                                   'dynamic' => $attr['dynamic']
+                                   'dynamic' => $attr['dynamic'],
+                                   'class' => $attr['class'],
 
                                   );
                     if( $is_udf && count($attr_udf) ){
@@ -1458,7 +1501,10 @@
                                    'dynamic_folders'=>'0',
                                    'nested_pages'=>'0',
                                    'gallery'=>'0',
-                                   'handler'=>''
+                                   'handler'=>'',
+                                   'type'=>'',
+                                   'parent'=>'',
+                                   'icon'=>'',
                                   );
                 $attr = $FUNCS->get_named_vars(
                             $core_params,
@@ -1489,6 +1535,9 @@
                     $attr['nested_pages'] = 0; // gallery cannot work with nested-pages
                 }
                 $attr['handler'] = strtolower( trim($attr['handler']) );
+                $attr['type'] = strtolower( trim($attr['type']) );
+                $attr['parent'] = trim($attr['parent'] );
+                $attr['icon'] = trim($attr['icon'] );
 
                 // HOOK: add_template_params
                 // give modules a chance to add their custom params
@@ -1659,6 +1708,7 @@
 
                                'keywords'=>'', /* search tag */
                                'page_id'=>'', /* comments tag */
+                               'approved'=>null, /* -do- */
                                'pid'=>'', /* related_pages tag */
                                'cid'=>'', /* reverse_related_pages tag */
                                'fid'=>'', /* related_pages, reverse_related_pages tag */
@@ -1675,16 +1725,18 @@
                                'aggregate_by'=>'',    /* the relation field to aggregate for count */
 
                                'base_link'=>'', /* replaces the default $PAGE->link used for paginator crumb links */
+                               'token'=>'',
                               ),
                         $params);
 
             // HOOK: alter_page_tag_params
-            $FUNCS->dispatch_event( 'alter_page_tag_params', array(&$attr, $params, $node, &$mode) );
+            $FUNCS->dispatch_event( 'alter_page_tag_params', array(&$attr, $params, $node, &$mode, $token) );
 
             extract( $attr );
 
             // sanitize params
             $masterpage = trim( $masterpage );
+            $id = trim( $id );
             $page_name = trim( $page_name );
             $page_title = trim( $page_title );
             $limit = $FUNCS->is_non_zero_natural( $limit ) ? intval( $limit ) : 1000; //Practically unlimited.
@@ -1703,6 +1755,7 @@
             $show_unpublished = ( $show_unpublished==1 ) ? 1 : 0;
             $aggregate_by = trim( $aggregate_by );
             $base_link = trim( $base_link );
+            $token = trim( $token );
 
             $qs_param = trim( $qs_param );
             if( $qs_param=='' ){
@@ -1771,7 +1824,7 @@
                 $sql .= "p.template_id='" . $DB->sanitize( $tpl_id )."'";
 
                 // id?
-                if( $id ){
+                if( strlen($id) ){
                     $sql .= $FUNCS->gen_sql( $id, 'p.id', 1);
                 }
 
@@ -1861,9 +1914,10 @@
                 if( $stop_before ){
                     $sql .= " AND p.publish_date < '".$DB->sanitize( $stop_before )."'";
                 }
-                if( $AUTH->user->access_level < K_ACCESS_LEVEL_ADMIN || !$show_unpublished ){
+                if( /*$AUTH->user->access_level < K_ACCESS_LEVEL_ADMIN ||*/ !$show_unpublished ){
                     $sql .= " AND NOT p.publish_date = '0000-00-00 00:00:00'";
                 }
+                $sql .= " AND p.parent_id=0"; //skip drafts
 
                 // orderby
                 // canonical orderby will be prefixed with 'p.' in generated sql
@@ -1872,11 +1926,11 @@
                 if( $tpl_is_gallery ){
                     $arr_canonical_orderby = array_merge( $arr_canonical_orderby, array('file_name', 'file_ext', 'file_size') );
                 }
-                $arr_acceptable_orderby = array('random');
+                $arr_acceptable_orderby = array('random', 'weight');
                 if( $aggregate_by ) $arr_acceptable_orderby[]='k_rel_count';
 
                 // HOOK: alter_valid_orderby
-                $FUNCS->dispatch_event( 'alter_valid_orderby', array(&$arr_acceptable_orderby, &$arr_canonical_orderby, $params, $node, $rec_tpl) );
+                $FUNCS->dispatch_event( 'alter_valid_orderby', array(&$arr_acceptable_orderby, &$arr_canonical_orderby, $params, $node, $rec_tpl, $token) );
 
                 $arr_acceptable_orderby = array_merge( $arr_canonical_orderby, $arr_acceptable_orderby );
 
@@ -1930,14 +1984,14 @@
                     if( $aggregate_by ) $arr_custom_fields[]=array('name'=>$aggregate_by,'op'=>'=','val'=>array(),'is_aggregate'=>1);
 
                     // HOOK: alter_page_tag_fields
-                    $FUNCS->dispatch_event( 'alter_page_tag_fields', array(&$arr_custom_fields, &$arr_orderby, &$arr_order, &$arr_custom_orderby, $params, $node, $rec_tpl) );
+                    $FUNCS->dispatch_event( 'alter_page_tag_fields', array(&$arr_custom_fields, &$arr_orderby, &$arr_order, &$arr_custom_orderby, $params, $node, $rec_tpl, $token) );
 
                     $arr_rel_fields = array();
                     $arr_rel_types = array();
 
                     // HOOK: alter_relational_types
                     // modules can add their custom types that store data in relation table
-                    $FUNCS->dispatch_event( 'alter_relational_types', array(&$arr_rel_types, $params, $node, $rec_tpl) );
+                    $FUNCS->dispatch_event( 'alter_relational_types', array(&$arr_rel_types, $params, $node, $rec_tpl, $token) );
 
                     $arr_rel_types = array_merge( array('relation'), $arr_rel_types );
 
@@ -2241,9 +2295,10 @@
                 $sep = '';
                 for( $i=0; $i<count($arr_orderby); $i++ ){
                     $orderby = $arr_orderby[$i];
-                    if( in_array($orderby, $arr_canonical_orderby) ){ $orderby = 'p.'.$orderby; };
 
-                    if( $orderby == 'random' ){
+                    if( in_array($orderby, $arr_canonical_orderby) ){ $orderby = 'p.'.$orderby; }
+                    elseif( $orderby == 'weight' ){ $orderby = 'p.k_order'; }
+                    elseif( $orderby == 'random' ){
                         if( $paginate ){
                             if(!session_id()) @session_start();
                             if(empty($_SESSION['k_seed'])) $_SESSION['k_seed'] = rand();
@@ -2253,6 +2308,9 @@
                             $orderby = 'RAND()';
                         }
                         $PAGE->no_cache=1;
+                    }
+                    else{
+                        $FUNCS->dispatch_event( 'set_orderby_clause', array(&$orderby, $params, $node, $rec_tpl, $token) );
                     }
 
                     $order_sql .= $sep . $DB->sanitize( $orderby );
@@ -2307,7 +2365,18 @@
                 $query_table .= "\n inner join ".K_TBL_PAGES." cp on cp.id=cc.page_id";
                 $query_fields = array('cp.page_title, cp.page_name, ct.name tpl_name, ct.clonable, cc.*');
                 $count_query_field = 'cc.id';
-                $sql = "cc.approved=1";
+                if( is_null($approved) ){
+                    $sql = "cc.approved=1"; // backward compatibility - if 'approved' parameter missing, assume only approved comments to be fetched
+                }
+                else{
+                    $approved = trim( $approved );
+                    if( $approved==='0' || $approved==='1' ){
+                        $sql = "cc.approved='".intval($approved)."'";
+                    }
+                    else{
+                        $sql = "1=1";
+                    }
+                }
 
                 // comments of which template(s)?
                 if( $masterpage ){
@@ -2323,7 +2392,9 @@
                     //$query_table .= "\n inner join couch_pages cp on cp.id=cc.page_id";
                     $sql .= $FUNCS->gen_sql( $page_name, 'cp.page_name');
                 }
-                $sql .= " AND NOT cp.publish_date = '0000-00-00 00:00:00'";
+                if( /*$AUTH->user->access_level < K_ACCESS_LEVEL_ADMIN ||*/ !$show_unpublished ){
+                    $sql .= " AND NOT cp.publish_date = '0000-00-00 00:00:00'";
+                }
 
                 // Order?
                 $order = strtolower( trim($order) );
@@ -2411,7 +2482,7 @@
                 // HOOK: alter_page_tag_query
                 // called routine should check for $node->name to know which tag is being executed.
                 // rs_tpl (masterpage info) will be filled only for mode 0 (i.e. pages/related_pages/reverse_related_pages tags)
-                $FUNCS->dispatch_event( 'alter_page_tag_query', array(&$distinct, &$count_query_field, &$count_query_field_as, &$query_fields, &$query_table, &$sql, &$group_by, &$having, &$order_sql, &$limit_sql, &$mode, $params, $node, $rec_tpl) );
+                $FUNCS->dispatch_event( 'alter_page_tag_query', array(&$distinct, &$count_query_field, &$count_query_field_as, &$query_fields, &$query_table, &$sql, &$group_by, &$having, &$order_sql, &$limit_sql, &$mode, $params, $node, $rec_tpl, $token) );
 
                 $orig_sql = $sql;
 
@@ -2434,9 +2505,16 @@
                     $having = '';
                 }
 
+                // HOOK: alter_page_tag_query_ex
+                $FUNCS->dispatch_event( 'alter_page_tag_query_ex', array(&$distinct, &$count_query_field, &$count_query_field_as, &$query_fields, &$query_table, &$orig_sql, &$sql, &$group_by, &$having, &$order_sql, &$limit_sql, &$mode, $params, $node, $rec_tpl, $token) );
 
                 // first query for pagination
-                $rs = $DB->select( $query_table, array('count('.$count_query_field.') as '.$count_query_field_as), $sql, $distinct );
+                if( $distinct ){
+                    $rs = $DB->select( $query_table, array('count(DISTINCT '.$count_query_field.') as '.$count_query_field_as), $sql );
+                }
+                else{
+                    $rs = $DB->select( $query_table, array('count('.$count_query_field.') as '.$count_query_field_as), $sql );
+                }
                 $total_rows = $rs[0][$count_query_field_as];
 
                 // Return if only count asked for
@@ -2502,31 +2580,7 @@
             $page_link = ( strlen($base_link) ) ?  $base_link : K_SITE_URL . $PAGE->link;
 
             // append querystring params, if any
-            $sep = '';
-            // HOOK: skip_qs_params_in_paginator
-            $skip_qs = array();
-            $FUNCS->dispatch_event( 'skip_qs_params_in_paginator', array(&$skip_qs) );
-            foreach( $_GET as $qk=>$qv ){
-                if( $qk=='p' || $qk=='f' || $qk=='d' || $qk=='fname'|| $qk=='pname' || $qk=='_nr_' ) continue;
-                if( $qk==$qs_param ) continue; //'pg' or 'comments_pg'
-                if( in_array($qk, $skip_qs) ) continue;
-
-                if( is_array($qv) ){ //checkboxes
-                    foreach( $qv as $qvv ){
-                        $qs .= $sep . $qk . '[]=' . urlencode($qvv);
-                        $sep = '&';
-                    }
-                }
-                else{
-                    $qs .= $sep . $qk . '=' . urlencode($qv);
-                    $sep = '&';
-                }
-            }
-
-            if( $qs ){
-                $page_link .= ( strpos($page_link, '?')===false ) ? '?' : '&';
-                $page_link .= $qs;
-            }
+            $page_link = $FUNCS->get_qs_link( $page_link, array($qs_param) );
 
             if( $total_rows > $limit ){
                 $paginated = 1;
@@ -2563,9 +2617,11 @@
                         $CTX->set( 'k_comment_author', $rec['name'] );
                         $CTX->set( 'k_comment_author_email', $rec['email'] );
                         $CTX->set( 'k_comment_author_website', $rec['link'] );
+                        $CTX->set( 'k_comment_author_ip_addr', $rec['ip_addr'] );
                         $CTX->set( 'k_comment_date', $rec['date'] );
                         $CTX->set( 'k_comment', $rec['data'] );
                         $CTX->set( 'k_comment_anchor', "comment-" . $rec['id'] ); //anchor name
+                        $CTX->set( 'k_comment_approved', ( $rec['approved'] ) ? '1' : '0' );
 
                         $parent_link = ( K_PRETTY_URLS ) ? $FUNCS->get_pretty_template_link( $rec['tpl_name'] ) : $rec['tpl_name'];
                         $CTX->set( 'k_comment_link', K_SITE_URL . $parent_link . "?comment=" . $rec['id'] );
@@ -2652,7 +2708,7 @@
                     }
 
                     // HOOK: alter_page_tag_context
-                    $FUNCS->dispatch_event( 'alter_page_tag_context', array($rec, $mode, $params, $node, $rec_tpl) );
+                    $FUNCS->dispatch_event( 'alter_page_tag_context', array($rec, $mode, $params, $node, $rec_tpl, $token) );
 
                     // call the children
                     foreach( $node->children as $child ){
@@ -2699,7 +2755,7 @@
             $keywords = strip_tags( $keywords );
             $orig_keywords = $keywords;
             $keywords = str_replace( array(",", "+", "-", "(", ")"), ' ', $keywords );
-            $keywords = implode (' ', array_map("trim", explode(' ', $keywords)) );
+            $keywords = implode (' ', array_filter(array_map("trim", explode(' ', $keywords))) );
             if( !strlen($keywords) ) return;
 
             // delegate to 'pages' tag
@@ -2804,45 +2860,49 @@ FORM;
                         $params) );
 
             $count = $FUNCS->is_non_zero_natural( $count ) ? intval( $count ) : 50;
-            if( $allow!='' ){
-                $allow = explode( ",", $allow );
-                $allow = array_map( "trim", $allow );
-            }
+
             $allowed_tags = '';
-            if( is_array($allow) ){
-                foreach( $allow as $tag ){
-                    if( $tag!='') $allowed_tags .= '<'.$tag.'>';
+            $truncate_chars = ( intval($truncate_chars)==1 ) ? 1 : 0;
+            if( !$truncate_chars ){ // $allowed_tags have to be ignored for chars
+                if( $allow!='' ){
+                    $allow = explode( ",", $allow );
+                    $allow = array_map( "trim", $allow );
+                }
+                if( is_array($allow) ){
+                    foreach( $allow as $tag ){
+                        if( $tag!='') $allowed_tags .= '<'.$tag.'>';
+                    }
                 }
             }
-            $truncate_chars = ( intval($truncate_chars)==1 ) ? 1 : 0;
 
             // call the children
             foreach( $node->children as $child ){
                 $html .= $child->get_HTML();
             }
 
+            $str_utf = strip_tags( $html, $allowed_tags );
+
+            // Replace all '&nbsp;' occurances with spaces
+            $str_utf = str_replace( "&nbsp;", " ", $str_utf );
+
+            // Coalese multiple 'white-space characters' (space, tabs, linebreaks etc.) into single spaces
+            $str_utf = preg_replace( "/\s+/m", " ", $str_utf );
+
+            // Trim off leading and trailing spaces
+            $str_utf = trim( $str_utf );
+
             if( $truncate_chars ){
-                $str_utf = strip_tags( $html ); // $allowed_tags have to be ignored for chars
-
-                // Replace all '&nbsp;' occurances with spaces
-                $str_utf = str_replace( "&nbsp;", " ", $str_utf );
-
-                // Coalese multiple 'white-space characters' (space, tabs, linebreaks etc.) into single spaces
-                $str_utf = preg_replace( "/\s+/m", " ", $str_utf );
-
-                // Trim off leading and trailing spaces
-                $str_utf = trim( $str_utf );
-
                 $html = $FUNCS->excerpt( $str_utf, $count, $trail );
             }
             else{ // truncate whole words (default)
-                $arr = explode( ' ', strip_tags($html, $allowed_tags), $count+1 );
+                $arr = explode( ' ', $str_utf, $count+1 );
                 if( count($arr) > $count ){
                     $sep = $trail;
                     $arr = array_slice( $arr, 0, -1 );
                 }
                 $html = implode( ' ', $arr );
             }
+
             return $html . $sep;
         }
 
@@ -3002,7 +3062,14 @@ FORM;
                                'id'=>'', /* do */
                                'name'=>'', /* do */
                                'selected_id'=>'', /* do */
-                              ),
+
+                               'paginate'=>0,
+                               'limit'=>'',
+                               'offset'=>'0',
+                               'startcount'=>'',
+                               'qs_param'=>'', /* custom var in querystring that denotes paginated page */
+                               'base_link'=>'', /* replaces the default $PAGE->link used for paginator crumb links */
+                            ),
                         $params);
 
             // HOOK: alter_folders_tag_params
@@ -3030,6 +3097,16 @@ FORM;
             $name = trim( $name );
             if( !$name ) $name = $id;
             $selected_id = trim( $selected_id );
+
+            $paginate = ( $list ) ? 0 : ( ( $paginate==1 && $hierarchical ) ? 1 : 0 );
+            if( $paginate ) $extended_info = 0;
+            $limit = $FUNCS->is_non_zero_natural( $limit ) ? intval( $limit ) : 1000; //Practically unlimited.
+            $offset = $FUNCS->is_natural( $offset ) ? intval( $offset ) : 0;
+            $startcount = $FUNCS->is_int( $startcount ) ? intval( $startcount ) : 1;
+            $startcount--;
+            $qs_param = trim( $qs_param );
+            if( $qs_param=='' ){ $qs_param = 'pg'; }
+            $base_link = trim( $base_link );
 
             // see if masterpage exists
             if( $masterpage=='' ){
@@ -3072,7 +3149,81 @@ FORM;
                 unset( $f );
             }
 
-            $CTX->set( 'k_total_folders', $folders->get_children_count( $depth, $exclude ) );
+            $CTX->set( 'k_total_folders', $folders->set_dynamic_count( $depth, $exclude ) );
+
+            // pagination.. goes into normal 'pages' listing mode
+            if( $paginate ){
+                $pgn_pno = 1;
+
+                if( isset($_GET[$qs_param]) && $FUNCS->is_non_zero_natural( $_GET[$qs_param] ) ){
+                    $pgn_pno = (int)$_GET[$qs_param];
+                }
+
+                $total_rows = $folders->total_children_ex - $offset;
+                if( $total_rows < 1 ){
+                    // find and execute 'no_results' tag
+                    $html = '';
+                    foreach( $node->children as $child ){
+                        if( $child->type == K_NODE_TYPE_CODE && $child->name == 'no_results' ){
+                            // call the children of no_results
+                            foreach( $child->children as $grand_child ){
+                                $html .= $grand_child->get_HTML();
+                            }
+                            break;
+                        }
+                    }
+                    return $html;
+                }
+
+                $total_pages = ceil( $total_rows/$limit );
+                if( $pgn_pno>$total_pages && $total_pages>0 ) $pgn_pno=$total_pages;
+
+                $first_record_on_page = ($limit * ($pgn_pno - 1)) + 1 + $offset;
+                $last_record_on_page = $first_record_on_page + $limit - 1;
+                if( $last_record_on_page > ($total_rows + $offset) ) $last_record_on_page = $total_rows + $offset;
+                $total_records_on_page = $last_record_on_page - ( $first_record_on_page-1 );
+
+                // calculate the required links
+                $page_link = ( strlen($base_link) ) ?  $base_link : K_SITE_URL . $PAGE->link;
+                $page_link = $FUNCS->get_qs_link( $page_link, array($qs_param) );
+
+                if( $total_rows > $limit ){
+                    $paginated = 1;
+                    $sep = ( strpos($page_link, '?')===false ) ? '?' : '&';
+
+                    // 'Prev' link
+                    if( $pgn_pno > 1 ){
+                        if( $pgn_pno==2 ){
+                            $pgn_prev_link = $page_link;
+                        }
+                        else{
+                            $pgn_prev_link = sprintf( "%s%s%s=%d", $page_link, $sep, $qs_param, $pgn_pno-1 );
+                        }
+                    }
+                    // 'Next' link
+                    if( $pgn_pno < $total_pages ){
+                        $pgn_next_link = sprintf( "%s%s%s=%d", $page_link, $sep, $qs_param, $pgn_pno+1 );
+                    }
+                }
+
+                // pass data on to callback function to be set in context
+                $node->_paginate = 1;
+                $node->_total_records = $total_rows;
+                $node->_from = $first_record_on_page;
+                $node->_to = $last_record_on_page;
+                $node->_total = $total_records_on_page;
+                $node->_offset = $offset;
+                $node->_startcount = $startcount;
+                $node->_total_pages = $total_pages;
+                $node->_current_page = $pgn_pno;
+                $node->_paginate_limit = $limit;
+                $node->_counter = 0;
+                $node->_page_link = $page_link;
+                $node->_qs_param = $qs_param;
+                $node->_paginated = $paginated;
+                $node->_pgn_next_link = $pgn_next_link;
+                $node->_pgn_prev_link = $pgn_prev_link;
+            }
 
             $html = '';
             if( $hierarchical ){
@@ -3080,7 +3231,7 @@ FORM;
                 $CTX->set( 'k_show_folder_count', $show_count );
                 $CTX->set( 'k_show_extended_info', $extended_info );
                 if( $selected_id && $list ) $node=$selected_id;
-                $folders->visit( array($this, $visitor), $html, $node, $depth, $extended_info, $exclude );
+                $folders->visit( array($this, $visitor), $html, $node, $depth, $extended_info, $exclude, 0, 0, 0, $paginate );
                 $CTX->set( 'k_show_extended_info', $extended_info );
                 $CTX->set( 'k_show_folder_count', 0 );
             }
@@ -3143,11 +3294,58 @@ FORM;
         // callback auxillary function
         function _folders_visitor( &$folder, &$html, &$node ){
             global $CTX;
-            //$extended_info = $CTX->get( 'k_show_extended_info', 1 );
-            //if( !$extended_info && !$CTX->get('k_folder', 1) ) return;
+
+            if( $node->_paginate ){
+                $this->_set_pagination_context( $node );
+            }
 
             foreach( $node->children as $child ){
                 $html .= $child->get_HTML();
+            }
+        }
+
+        function _set_pagination_context( &$node ){
+            global $CTX;
+
+            $cur = $node->_counter;
+
+            // set pagination variables
+            $x = $cur - ($node->_paginate_limit * ($node->_current_page -  1)) - $node->_offset;
+            $CTX->set( 'k_count', $x + $node->_startcount );
+            $CTX->set( 'k_record_from', ($node->_from - $node->_offset) + $node->_startcount );
+            $CTX->set( 'k_current_record', ($cur - $node->_offset) + $node->_startcount );
+            $CTX->set( 'k_record_to', ($node->_to - $node->_offset) + $node->_startcount );
+            $CTX->set( 'k_total_pages', $node->_total_pages );
+
+            // set vars for 'paginator tag'
+            $CTX->set( 'k_current_page', $node->_current_page );
+            $CTX->set( 'k_total_records', $node->_total_records );
+            $CTX->set( 'k_paginate_limit', $node->_paginate_limit );
+            if( $x==1 ){
+                $CTX->set( 'k_paginated_top', 1 );
+            }
+            else{
+                $CTX->set( 'k_paginated_top', 0 );
+            }
+
+            if( $x==$node->_total ){
+                $CTX->set( 'k_paginated_bottom', 1 );
+            }
+            else{
+                $CTX->set( 'k_paginated_bottom', 0 );
+            }
+
+            if( ($x==1 || $x==$node->_total) && $node->_paginated ){
+                $CTX->set( 'k_paginator_required', 1 );
+                $CTX->set( 'k_page_being_paginated', $node->_page_link );
+                $CTX->set( 'k_qs_param', $node->_qs_param );
+                $CTX->set( 'k_paginate_link_next', $node->_pgn_next_link );
+                $CTX->set( 'k_paginate_link_prev', $node->_pgn_prev_link );
+            }
+            else{
+                $CTX->set( 'k_paginator_required', 0 );
+                $CTX->set( 'k_paginate_link_next', '' );
+                $CTX->set( 'k_paginate_link_prev', '' );
             }
         }
 
@@ -3262,17 +3460,20 @@ FORM;
             extract( $FUNCS->get_named_vars(
                         array(
                               'folder'=>'',
-                              'masterpage'=>''
+                              'masterpage'=>'',
+                              'skip_child'=>'0',
                               ),
                         $params)
                    );
+
+            $skip_child = ( $skip_child==1 ) ? 1 : 0;
 
             // see if masterpage exists
             if( $masterpage=='' ){
                 $folders = &$PAGE->folders;
             }
             else{
-                $rs = $DB->select( K_TBL_TEMPLATES, array('*'), "name='" . $DB->sanitize( $masterpage ). "'" ); //SANITIZE!
+                $rs = $DB->select( K_TBL_TEMPLATES, array('*'), "name='" . $DB->sanitize( $masterpage ). "'" );
                 if( !count($rs) ) return;
                 $tpl_id = $rs[0]['id'];
                 $tpl_name = $rs[0]['name'];
@@ -3283,8 +3484,10 @@ FORM;
 
             $arr = $folders->get_parents( $folder );
             if( is_array($arr) ){
-                for( $x=count($arr)-1; $x>=0; $x-- ){
+                $level = 0;
+                for( $x=count($arr)-1; $x>=$skip_child; $x-- ){
                     $arr[$x]->set_in_context();
+                    $CTX->set( 'k_level', $level++ );
 
                     foreach( $node->children as $child ){
                         $html .= $child->get_HTML();
@@ -3372,7 +3575,10 @@ FORM;
                                'paginate'=>0,
                                'limit'=>'',
                                'offset'=>'0',
-                               'startcount'=>''
+                               'startcount'=>'',
+                               'qs_param'=>'', /* custom var in querystring that denotes paginated page */
+                               'base_link'=>'', /* replaces the default $PAGE->link used for paginator crumb links */
+                               'ignore_active_status'=>'0',
                               ),
                         $params);
             extract( $attr );
@@ -3391,7 +3597,7 @@ FORM;
             $extended_info = ( $extended_info==1 ) ? 1 : 0;
             if( $variation==1 ) $extended_info = 1; // always 1 with 'menu'
             $ignore_show_in_menu = ( $ignore_show_in_menu==1 ) ? 1 : 0;
-            $ignore_active_status = 0; // unpublished pages will always be ignored
+            $ignore_active_status = ( $ignore_active_status==1 ) ? 1 : 0; // show unpublished pages or not
             $include_custom_fields = ( $variation ) ? 0 : ( ( $include_custom_fields==1 ) ? 1 : 0 );
             $paginate = ( $variation ) ? 0 : ( ( $paginate==1 ) ? 1 : 0 );
             if( $paginate ) $extended_info = 0;
@@ -3399,6 +3605,9 @@ FORM;
             $offset = $FUNCS->is_natural( $offset ) ? intval( $offset ) : 0;
             $startcount = $FUNCS->is_int( $startcount ) ? intval( $startcount ) : 1;
             $startcount--;
+            $qs_param = trim( $qs_param );
+            if( $qs_param=='' ){ $qs_param = 'pg'; }
+            $base_link = trim( $base_link );
 
             // see if masterpage exists
             if( $masterpage=='' ){
@@ -3502,11 +3711,10 @@ FORM;
                 unset( $f );
             }
 
-            $tree->set_dynamic_count( $depth, $exclude, !$ignore_show_in_menu );
+            $tree->set_dynamic_count( $depth, $exclude, !$ignore_show_in_menu, $ignore_active_status );
 
             // pagination.. goes into normal 'pages' listing mode
             if( $paginate ){
-                $qs_param = 'pg';
                 $pgn_pno = 1;
                 if( $paginate ){
                     if( isset($_GET[$qs_param]) && $FUNCS->is_non_zero_natural( $_GET[$qs_param] ) ){
@@ -3515,7 +3723,21 @@ FORM;
                 }
 
                 $total_rows = $tree->total_children_ex - $offset;
-                if( $total_rows < 1 ) return;
+                if( $total_rows < 1 ){
+                    // find and execute 'no_results' tag
+                    $html = '';
+                    foreach( $node->children as $child ){
+                        if( $child->type == K_NODE_TYPE_CODE && $child->name == 'no_results' ){
+                            // call the children of no_results
+                            foreach( $child->children as $grand_child ){
+                                $html .= $grand_child->get_HTML();
+                            }
+                            break;
+                        }
+                    }
+                    return $html;
+                }
+
                 $total_pages = ceil( $total_rows/$limit );
                 if( $pgn_pno>$total_pages && $total_pages>0 ) $pgn_pno=$total_pages;
 
@@ -3525,18 +3747,8 @@ FORM;
                 $total_records_on_page = $last_record_on_page - ( $first_record_on_page-1 );
 
                 // calculate the required links
-                $page_link = K_SITE_URL . $PAGE->link;
-                $sep = '';
-                foreach( $_GET as $qk=>$qv ){
-                    if( $qk=='p' || $qk=='f' || $qk=='d' || $qk=='fname'|| $qk=='pname' || $qk=='_nr_' ) continue;
-                    if( $qk==$qs_param ) continue;
-                    $qs .= $sep . $qk . '=' . urlencode($qv);
-                    $sep = '&';
-                }
-                if( $qs ){
-                    $page_link .= ( strpos($page_link, '?')===false ) ? '?' : '&';
-                    $page_link .= $qs;
-                }
+                $page_link = ( strlen($base_link) ) ?  $base_link : K_SITE_URL . $PAGE->link;
+                $page_link = $FUNCS->get_qs_link( $page_link, array($qs_param) );
 
                 if( $total_rows > $limit ){
                     $paginated = 1;
@@ -3577,66 +3789,33 @@ FORM;
             }
 
             $html = '';
-            $visitor = ( !$variation ) ? '_nested_pages_visitor' : '_nested_pages_visitor_menu';
+            if( isset($node->__visitor__) ){
+                $visitor = $node->__visitor__;
+            }
+            else{
+                $visitor = ( !$variation ) ? '_nested_pages_visitor' : '_nested_pages_visitor_menu';
+                $visitor = array($this, $visitor);
+            }
             $CTX->set( 'k_show_extended_info', $extended_info );
             if( !$variation ){
                 $node->_include_custom_fields = $include_custom_fields;
             }
-            $tree->visit( array($this, $visitor), $html, $node, $depth, $extended_info, $exclude, 0, !$ignore_show_in_menu, !$ignore_active_status, $paginate );
+            $tree->visit( $visitor, $html, $node, $depth, $extended_info, $exclude, 0, !$ignore_show_in_menu, !$ignore_active_status, $paginate );
 
             return $html;
 
         }
+
         // callback auxillary function
         function _nested_pages_visitor( &$item, &$html, &$node ){
             global $CTX;
 
             if( $node->_paginate ){
-                $cur = $node->_counter;
-
-                // set pagination variables
-                $x = $cur - ($node->_paginate_limit * ($node->_current_page -  1)) - $node->_offset;
-                $CTX->set( 'k_count', $x + $node->_startcount );
-                $CTX->set( 'k_record_from', ($node->_from - $node->_offset) + $node->_startcount );
-                $CTX->set( 'k_current_record', ($cur - $node->_offset) + $node->_startcount );
-                $CTX->set( 'k_record_to', ($node->_to - $node->_offset) + $node->_startcount );
-                $CTX->set( 'k_total_pages', $node->_total_pages );
-
-                // set vars for 'paginator tag'
-                $CTX->set( 'k_current_page', $node->_current_page );
-                $CTX->set( 'k_total_records', $node->_total_records );
-                $CTX->set( 'k_paginate_limit', $node->_paginate_limit );
-                if( $x==1 ){
-                    $CTX->set( 'k_paginated_top', 1 );
-                }
-                else{
-                    $CTX->set( 'k_paginated_top', 0 );
-                }
-
-                if( $x==$node->_total ){
-                    $CTX->set( 'k_paginated_bottom', 1 );
-                }
-                else{
-                    $CTX->set( 'k_paginated_bottom', 0 );
-                }
-
-                if( ($x==1 || $x==$node->_total) && $node->_paginated ){
-                    $CTX->set( 'k_paginator_required', 1 );
-                    $CTX->set( 'k_page_being_paginated', $node->_page_link );
-                    $CTX->set( 'k_qs_param', $node->_qs_param );
-                    $CTX->set( 'k_paginate_link_next', $node->_pgn_next_link );
-                    $CTX->set( 'k_paginate_link_prev', $node->_pgn_prev_link );
-                }
-                else{
-                    $CTX->set( 'k_paginator_required', 0 );
-                    $CTX->set( 'k_paginate_link_next', '' );
-                    $CTX->set( 'k_paginate_link_prev', '' );
-                }
-
+                $this->_set_pagination_context( $node );
             }
 
             $extended_info = $CTX->get( 'k_show_extended_info', 1 );
-            if( !$extended_info ) $item->set_in_context(); //if extended_info set, the calling 'visit' function will have set the item in context.
+            //if( !$extended_info ) $item->set_in_context(); //if extended_info set, the calling 'visit' function will have set the item in context.
 
             if( $node->_include_custom_fields ){
                 $ok = ( $extended_info ) ? $CTX->get('k_element_start', 1) : $CTX->get('k_folder', 1);
@@ -3688,8 +3867,14 @@ FORM;
             $extra['list_type'] = $list_type;
             $node->extra = $extra;
 
-            // delegate to 'nested_pages'
-            $html = $this->nested_pages( $params, $node, 1 );
+            if( $node->name=='menu' ){
+                // delegate to 'nested_pages'
+                $html = $this->nested_pages( $params, $node, 1 );
+            }
+            else{
+                // delegate to 'admin_menuitems'
+                $html = $this->admin_menuitems( $params, $node, 1 );
+            }
 
             return $html;
 
@@ -3735,6 +3920,75 @@ FORM;
             elseif( $CTX->get('k_level_end', 1) ){
                 $html .= '</'.$extra['list_type'].'>';
             }
+        }
+
+        function parent_nested_pages( $params, $node ){
+            global $CTX, $FUNCS, $PAGE, $DB;
+
+            extract( $FUNCS->get_named_vars(
+                        array(
+                              'page_name'=>'',
+                              'masterpage'=>'',
+                              'orderby'=>'', /* name, title, id, weight */
+                              'order'=>'',
+                              'include_custom_fields'=>'0',
+                              'skip_child'=>'1',
+                              ),
+                        $params)
+                   );
+
+            $page_name = trim( $page_name );
+            if( $page_name=='' ) return;
+
+            $orderby = strtolower( trim($orderby) );
+            if( !in_array($orderby, array('name', 'title', 'id', 'weight')) ) $orderby ='weight';
+            if( $orderby =='weight' ) $orderby ='weightx';
+            $order = strtolower( trim($order) );
+            if( $order!='desc' && $order!='asc' ) $order = 'asc';
+            $include_custom_fields = ( $include_custom_fields==1 ) ? 1 : 0;
+            $skip_child = ( $skip_child==0 ) ? 0 : 1;
+
+            // see if masterpage exists
+            $masterpage = trim( $masterpage );
+            if( $masterpage=='' ){
+                if( !$PAGE->tpl_nested_pages ){ return; }
+                $tree = &$FUNCS->get_nested_pages( $PAGE->tpl_id, $PAGE->tpl_name, $PAGE->tpl_access_level, $orderby, $order );
+            }
+            else{
+                $rs = $DB->select( K_TBL_TEMPLATES, array('*'), "name='" . $DB->sanitize( $masterpage ). "'" );
+                if( !count($rs) ) return;
+                if( !$rs[0]['nested_pages'] ){ return; }
+                $tpl_id = $rs[0]['id'];
+                $tpl_name = $rs[0]['name'];
+                $tpl_access_level = $rs[0]['access_level'];
+
+                // get the tree of nested pages
+                $tree = &$FUNCS->get_nested_pages( $tpl_id, $tpl_name, $tpl_access_level, $orderby, $order );
+            }
+
+            $arr = $tree->get_parents( $page_name );
+            if( is_array($arr) ){
+                $level = 0;
+                for( $x=count($arr)-1; $x>=$skip_child; $x-- ){
+                    $arr[$x]->set_in_context();
+                    $CTX->set( 'k_level', $level++ );
+
+                    if( $include_custom_fields ){
+                        $pg = new KWebpage( $arr[$x]->template_id, $arr[$x]->id );
+                        if( $pg->error ){
+                            ob_end_clean();
+                            die( 'ERROR: ' . $pg->err_msg );
+                        }
+                        $pg->set_context();
+                    }
+
+                    foreach( $node->children as $child ){
+                        $html .= $child->get_HTML();
+                    }
+                }
+            }
+
+            return $html;
         }
 
         function nested_crumbs( $params, $node ){
@@ -3809,6 +4063,755 @@ FORM;
             return $html;
         }
 
+        function admin_menuitems( $params, $node, $variation=0 ){
+            global $CTX, $FUNCS, $PAGE, $DB;
+
+            $attr = $FUNCS->get_named_vars(
+                        array( 'root'=>'',
+                               'childof'=>'',
+                               'depth'=>'0',
+                               'orderby'=>'', /* name, title, id, weight */
+                               'order'=>'',
+                               'exclude'=>'',
+                               'extended_info'=>'0',
+                               'ignore_show_in_menu'=>'0',
+                              ),
+                        $params);
+            extract( $attr );
+
+            $root = trim( $root );
+            $childof = trim( $childof );
+            $hierarchical = 1; // always 1
+            $depth = $FUNCS->is_natural( $depth ) ? intval( $depth ) : 0;
+            $orderby = strtolower( trim($orderby) );
+            if( !in_array($orderby, array('name', 'title', 'id', 'weight')) ) $orderby ='weight';
+            $order = strtolower( trim($order) );
+            if( $order!='desc' && $order!='asc' ) $order = 'asc';
+            $exclude = ( $exclude ) ? array_map( "trim", explode( ",", $exclude ) ) : array();
+            $extended_info = ( $extended_info==1 ) ? 1 : 0;
+            if( $variation==1 ) $extended_info = 1;
+            $ignore_show_in_menu = ( $ignore_show_in_menu==1 ) ? 1 : 0;
+            $ignore_active_status = 0; // unpublished pages will always be ignored
+            $paginate = 0;
+
+            // get the tree of nested pages
+            $func = ( isset($node->__func_get_tree__) ) ? $node->__func_get_tree__ : 'get_admin_menu';
+            $tree = &$FUNCS->$func( $orderby, $order );
+
+            // mark the active trail in the tree.. also creates the crumbs.
+            $tree->mark_current( !$ignore_show_in_menu );
+
+            // if called from 'admin_breadcrumbs', return crumbs and exit ..
+            if( $variation==2 ){ // crumbs.. only $ignore_show_in_menu is the valid param here
+                return $tree->crumbs;
+            }
+
+            // Check if either 'root' or 'childof' set to special keywords
+            // keywords:
+            // @1, @2 etc. - start from x level parent of the most current item.
+            // @current - start from most current item.
+            // @current-1, @current-2 etc. - start from parent of most current item at x level above it.
+            if( $root || $childof ){ // root takes precedence over childof
+                $special = ( $root ) ? $root : $childof;
+                if( $special{0}=='@' ){
+                    $special = substr( $special, 1 );
+
+                    // find the most current item
+                    for( $x=0; $x<count($tree->crumbs); $x++ ){
+                        $item = $tree->crumbs[$x];
+                        if( $item->most_current ) break;
+                    }
+                    if( $x==count($tree->crumbs) ) return;
+
+                    if( $FUNCS->is_non_zero_natural($special) ){ // 1, 2, etc.
+                        $special = $special - 1;
+
+                        // Find the requested parent at the requested level, if any
+                        if( $special > $x ) return; // cannot go past the current item's level
+                        $item = $tree->crumbs[$special];
+                        ( $root ) ? $root=$item->name : $childof=$item->name;
+                    }
+                    else{
+                        if( $special=='current' ){
+                            ( $root ) ? $root=$item->name : $childof=$item->name;
+                        }
+                        else{
+                            $arr = array_map( "trim", explode('-', $special) );
+                            if( $arr[0]=='current' && $FUNCS->is_non_zero_natural($arr[1]) ){
+                                // Find parent at requested level above the current item
+                                $special = $x - $arr[1];
+                                if( $special < -1 ) return;
+                                if( $special== -1 ){ // _ROOT_
+                                    if( $root ){ return; /* cannot add _ROOT_ to returned array */ } else { $childof=''; }
+                                }
+                                else{
+                                    $item = $tree->crumbs[$special];
+                                    ( $root ) ? $root=$item->name : $childof=$item->name;
+                                }
+                            }
+                            else{
+                                // unknown value given
+                                return;
+                            }
+
+                        }
+                    }
+                }
+            }
+
+            // root takes precedence over childof
+            if( $root!='' ){
+                $f = &$tree->find( $root );
+                if( !$f ) return;
+                unset( $tree );
+                $tree = new KAdminMenuItem( array('id'=>'-1', 'name'=>'_root_'), new KError()/*dummy*/ );
+                $tree->set_sort( $orderby, $order );
+                $tree->add_child( $f );
+                unset( $f );
+            }
+            elseif( $childof!='' ){
+                $f = &$tree->find( $childof );
+                if( !$f || !count($f->children) ) return;
+                unset( $tree );
+                $tree = new KAdminMenuItem( array('id'=>'-1', 'name'=>'_root_'), new KError()/*dummy*/ );
+                $tree->set_sort( $orderby, $order );
+                $count = count($f->children);
+                for( $x=0; $x<$count; $x++ ){
+                    $tree->add_child( $f->children[$x] );
+                }
+                unset( $f );
+            }
+
+            $tree->set_dynamic_count( $depth, $exclude, !$ignore_show_in_menu );
+
+            $html = '';
+            $CTX->set( 'k_show_extended_info', $extended_info );
+            if( $node->name=='admin_menuitems' && $extended_info ) $node->__optimize = 1;
+
+            $visitor = ( isset($node->__visitor__) ) ? $node->__visitor__ : array($this, '_admin_menuitems_visitor');
+            $tree->visit( $visitor, $html, $node, $depth, $extended_info, $exclude, 0, !$ignore_show_in_menu, !$ignore_active_status, $paginate, array($this, '_skip_menu') );
+
+            return $html;
+
+        }
+
+        // A wrapper around 'admin_menuitems' for quick creation of menu
+        function admin_menu( $params, $node ){
+            global $FUNCS;
+
+            extract( $FUNCS->get_named_vars(
+                array(
+                      'callback'=>null,
+                     ),
+                $params) );
+
+            if( !is_null($callback) ){
+                if( !($callback=$FUNCS->is_callable($callback)) ){
+                    die( "ERROR: Tag \"".$node->name."\" - 'callback' is not callable" );
+                }
+            }
+
+            // delegate to cms:menu which will delegate to cms:admin_menuitems
+            $node->__visitor__ = is_null( $callback ) ? array( $this, '_admin_menu_visitor' ) : $callback;
+            $html = $this->menu( $params, $node );
+
+            return $html;
+        }
+
+        // callback auxillary function
+        function _admin_menuitems_visitor( &$item, &$html, &$node ){
+            global $CTX;
+
+            if( $node->__optimize ){ // only when called by cms:admin_menuitems tag with extended_info
+                $block = null;
+
+                // isolate relevant blocks
+                if( !is_array($node->__optimize) ){
+                    $arr_keys = array( 'k_level_start', 'k_element_start', 'k_element_end', 'k_level_end' );
+                    $arr_blocks = array();
+                    foreach( $node->children as $block ){
+                        if( $block->name == 'if' && ($block->attributes[0]['value_type']==K_VAL_TYPE_VARIABLE && in_array($block->attributes[0]['value'], $arr_keys)) ){
+                            $arr_blocks[$block->attributes[0]['value']] = $block;
+                        }
+                    }
+                    $node->__optimize = $arr_blocks;
+                }
+
+                // select the right block to execute
+                if( $CTX->get('k_level_start', 1) ){
+                    if( isset($node->__optimize['k_level_start']) ){
+                        $block = $node->__optimize['k_level_start'];
+                    }
+                }
+                elseif( $CTX->get('k_element_start', 1) ){
+                    if( isset($node->__optimize['k_element_start']) ){
+                        $block = $node->__optimize['k_element_start'];
+                    }
+                }
+                elseif( $CTX->get('k_element_end', 1) ){
+                    if( isset($node->__optimize['k_element_end']) ){
+                        $block = $node->__optimize['k_element_end'];
+                    }
+                    else{
+                        $html .= '</li>'."\r\n";
+                        return;
+                    }
+                }
+                elseif( $CTX->get('k_level_end', 1) ){
+                    if( isset($node->__optimize['k_level_end']) ){
+                        $block = $node->__optimize['k_level_end'];
+                    }
+                    else{
+                        $html .= '</'.$extra['list_type'].'>';
+                        return;
+                    }
+                }
+
+                if( !is_null($block) ){
+                    $html .= $block->get_HTML();
+                }
+            }
+            else{
+                foreach( $node->children as $child ){
+                    $html .= $child->get_HTML();
+                }
+            }
+        }
+
+        // callback auxillary function
+        function _admin_menu_visitor( &$item, &$html, &$node ){
+            global $CTX, $FUNCS;
+
+            // retrieve the extra info passed
+            $extra = $node->extra;
+
+            if( $CTX->get('k_level_start', 1) ){
+                $html .= $FUNCS->render( 'menu_ul', $item, $extra );
+            }
+            elseif( $CTX->get('k_element_start', 1) ){
+                $html .= $FUNCS->render( 'menu_li', $item, $extra );
+            }
+            elseif( $CTX->get('k_element_end', 1) ){
+                $html .= '</li>'."\r\n";
+            }
+            elseif( $CTX->get('k_level_end', 1) ){
+                $html .= '</'.$extra['list_type'].'>';
+            }
+        }
+
+        // callback auxillary function
+        function _skip_menu( &$item ){
+            global $FUNCS;
+
+            if( !is_null($item->access_callback) ){
+                $callback = $FUNCS->is_callable( $item->access_callback );
+                if( !$callback ){
+                    ob_end_clean(); die( "ERROR: skip_menu callback function for menu-item '".$item->name."' is not callable." );
+                }
+                return !call_user_func_array( $callback, array($item, $item->access_callback_params) );
+            }
+        }
+
+        function admin_breadcrumbs( $params, $node ){
+            global $CTX, $FUNCS;
+
+            $attr = $FUNCS->get_named_vars(
+                        array(
+                                'prepend'=>'',
+                                'append'=>''
+                              ),
+                        $params);
+            extract( $attr );
+
+            // delegate to 'admin_menu'
+            $crumbs = $this->admin_menuitems( $params, $node, 2 );
+            if( is_array($crumbs) ){
+                if( count($node->children) ){
+                    $arr_vars = array();
+
+                    if( count($crumbs) ) $html .= $prepend;
+                    for( $x=0; $x<count($crumbs); $x++ ){
+                        $crumb = $crumbs[$x];
+
+                        $arr_vars['k_crumb_id'] = $crumb->id;
+                        $arr_vars['k_crumb_name'] = $crumb->name;
+                        $arr_vars['k_crumb_title'] = $arr_vars['k_crumb_text'] = $crumb->title;
+                        $arr_vars['k_crumb_link'] = $crumb->get_link();
+                        $arr_vars['k_crumb_open_external'] = ( $crumb->href )? '1' : '0';
+                        $arr_vars['k_crumb_is_last'] = ( $x==count($crumbs)-1 ) ? 1 : 0;
+
+                        $CTX->set_all( $arr_vars );
+
+                        foreach( $node->children as $child ){
+                            $html .= $child->get_HTML();
+                        }
+                    }
+                    if( count($crumbs) ) $html .= $append;
+                }
+            }
+            return $html;
+        }
+
+        function admin_sub_menuitems( $params, $node ){
+            global $CTX, $FUNCS;
+
+            // delegate to 'admin_menu'
+            $node->__func_get_tree__ = 'get_admin_submenu';
+            $html = $this->admin_menuitems( $params, $node );
+
+            return $html;
+        }
+
+        function admin_actions( $params, $node ){
+            global $CTX, $FUNCS;
+
+            // delegate to 'admin_menu'
+            $node->__func_get_tree__ = 'get_admin_actions';
+            $html = $this->admin_menuitems( $params, $node );
+
+            return $html;
+        }
+
+        function admin_form_fields( $params, $node ){
+            global $CTX, $FUNCS;
+
+            // delegate to 'admin_menu'
+            $node->__func_get_tree__ = 'get_admin_form_fields';
+            $html = $this->admin_menuitems( $params, $node );
+
+            return $html;
+        }
+
+        function admin_list_fields( $params, $node ){
+            global $CTX, $FUNCS;
+
+            extract( $FUNCS->get_named_vars(
+                    array( 'startcount'=>'',
+                           'headers'=>'0',
+                          ),
+                $params)
+            );
+            $startcount = $FUNCS->is_int( $startcount ) ? intval( $startcount ) : 1;
+            $headers = ( $headers==1 ) ? 1 : 0;
+            if( $headers ){
+                $order = ( $CTX->get('k_selected_order')=='desc') ? 'desc' : 'asc';
+                $filter_link = $FUNCS->get_qs_link($CTX->get('k_route_link'), array('order','orderby'));
+            }
+
+            $items = &$FUNCS->get_admin_list_fields();
+            $total_items = count($items);
+            $arr_vars = array();
+
+            for( $x=0; $x<$total_items; $x++ ){
+                $item = $items[$x];
+
+                $CTX->reset();
+                $arr_vars['k_field_name']           = $item['name'];
+                $arr_vars['k_field_class']          = strlen( $item['class'] ) ? $item['class'] : $item['name'];
+                if( $headers ){
+                    $arr_vars['k_field_sortable']       = $item['sortable'];
+                    $arr_vars['k_field_sortname']       = $item['sort_name'];
+                    $arr_vars['k_field_is_current']     = ( $item['is_current'] ) ? '1' : '0';
+                    if( $item['is_current'] ){
+                        $dir = ( $order=='desc' )? 'asc' : 'desc';
+                    }
+                    else{
+                        $dir = $order;
+                    }
+                    $arr_vars['k_filter_link'] = $filter_link .'&orderby='.$item['sort_name'].'&order='.$dir;
+                    $arr_vars['k_field_content'] = '';
+                    $content_field = 'header';
+                }
+                else{
+                    $arr_vars['k_field_header'] = '';
+                    $content_field = 'content';
+                }
+
+                //$arr_vars['k_field_header'] = $item['header'];
+                //$arr_vars['k_field_content'] = $item['content'];
+                $arr = $item[$content_field];
+                if( is_array($arr) ){
+                    $html2 = '';
+                    foreach( $arr as $child ){
+                        $html2 .= $child->get_HTML();
+                    }
+                    $arr_vars['k_field_'.$content_field] = $html2;
+                }
+                else{
+                    $arr_vars['k_field_'.$content_field] = '';
+                }
+
+                $arr_vars['k_field_is_last'] = ( $x==$total_items-1 ) ? 1 : 0;
+                $arr_vars['k_field_count'] = $x + $startcount;
+                $arr_vars['k_total_fields'] = $total_items;
+
+                $CTX->set_all( $arr_vars );
+
+                // and call the children providing each row's data
+                foreach( $node->children as $child ){
+                    $html .= $child->get_HTML();
+                }
+            }
+
+            return $html;
+        }
+
+        function admin_load_js( $params, $node ){
+            global $FUNCS, $DB, $PAGE, $CTX;
+            if( count($node->children) ) {die("ERROR: Tag \"".$node->name."\" is a self closing tag");}
+
+            extract( $FUNCS->get_named_vars(
+                        array(
+                               'path'=>'',
+                              ),
+                        $params)
+                   );
+
+            $FUNCS->load_js( $path );
+        }
+
+        function admin_add_js( $params, $node ){
+            global $FUNCS;
+
+            foreach( $node->children as $child ){
+                $code .= $child->get_HTML();
+            }
+
+            $FUNCS->add_js( $code );
+        }
+
+        function admin_load_css( $params, $node ){
+            global $FUNCS, $DB, $PAGE, $CTX;
+            if( count($node->children) ) {die("ERROR: Tag \"".$node->name."\" is a self closing tag");}
+
+            extract( $FUNCS->get_named_vars(
+                        array(
+                               'path'=>'',
+                              ),
+                        $params)
+                   );
+
+            $FUNCS->load_css( $path );
+        }
+
+        function admin_add_css( $params, $node ){
+            global $FUNCS;
+
+            foreach( $node->children as $child ){
+                $code .= $child->get_HTML();
+            }
+
+            $FUNCS->add_css( $code );
+        }
+
+        function admin_add_html( $params, $node ){
+            global $FUNCS;
+
+            foreach( $node->children as $child ){
+                $code .= $child->get_HTML();
+            }
+
+            $FUNCS->add_html( $code );
+        }
+
+        function admin_js( $params, $node ){
+            global $FUNCS;
+
+            return $FUNCS->get_js();
+        }
+
+        function admin_js_files( $params, $node ){
+            global $FUNCS, $CTX;
+
+            $html = '';
+            foreach( $FUNCS->scripts as $k=>$v ){
+                $CTX->set( 'k_js_file', $v );
+                foreach( $node->children as $child ){
+                    $html .= $child->get_HTML();
+                }
+            }
+
+            return $html;
+        }
+
+        function admin_css_files( $params, $node ){
+            global $FUNCS, $CTX;
+
+            // load current theme's css file, if present
+            static $done=0;
+            if( !$done ){
+                if( K_THEME_DIR && file_exists(K_THEME_DIR . 'styles.css') ){
+                    $FUNCS->load_css( K_THEME_URL . 'styles.css' );
+                }
+                $done=1;
+            }
+
+            $html = '';
+            foreach( $FUNCS->styles as $k=>$v ){
+                $CTX->set( 'k_css_file', $v );
+                foreach( $node->children as $child ){
+                    $html .= $child->get_HTML();
+                }
+            }
+
+            return $html;
+        }
+
+        function admin_css( $params, $node ){
+            global $FUNCS;
+
+            return $FUNCS->get_css();
+        }
+
+        function admin_html( $params, $node ){
+            global $FUNCS;
+
+            return $FUNCS->get_html();
+        }
+
+        function admin_route_link( $params, $node ){
+            global $FUNCS;
+
+            if( count($node->children) ) {die("ERROR: Tag \"".$node->name."\" is a self closing tag");}
+
+            $attr = $FUNCS->get_named_vars(
+                array(
+                    'name'=>'',
+                    'masterpage'=>'',
+                ),
+                $params
+            );
+            extract( $attr );
+
+            $masterpage = trim( $masterpage );
+            $name = trim( $name );
+
+            $values = array();
+            for( $x=0; $x<count($params); $x++ ){
+                $k = trim( $params[$x]['lhs'] );
+                if( substr($k, 0, 3)=='rt_' ){
+                    $values[substr($k, 3)] = trim( $params[$x]['rhs'] );
+                }
+            }
+
+            $link = $FUNCS->generate_route( $masterpage, $name, $values );
+
+            return $link;
+        }
+
+        function config_list_view( $params, $node ){
+            global $CTX, $FUNCS, $AUTH, $PAGE, $DB;
+            if( $AUTH->user->access_level < K_ACCESS_LEVEL_SUPER_ADMIN ){ return; }
+
+            $attr = $FUNCS->get_named_vars(
+                        array(
+                               'orderby'=>'',
+                               'order'=>'',
+                               'limit'=>'',
+                               'exclude'=>'',
+                               'searchable'=>'0',
+                              ),
+                        $params);
+            extract( $attr );
+
+            $rs = $DB->select( K_TBL_TEMPLATES, array('config_list'), "id='" . $DB->sanitize( $PAGE->tpl_id ). "'" );
+            if( !count($rs) ){ return; }
+            $orig_value = $rs[0]['config_list'];
+
+            // setup objects to be filled by child cms:field, cms:script, cms:style, cms:html tags
+            $arr_config = array( 'arr_fields'=>array(), 'js'=>'', 'css'=>'', 'html'=>'' );
+            $CTX->set_object( '__config', $arr_config );
+
+            // invoke child tags
+            foreach( $node->children as $child ){
+                $child->get_HTML();
+            }
+
+            $arr_config['orderby'] = trim( $orderby );
+            $arr_config['order'] = trim( $order );
+            $arr_config['limit'] = trim( $limit );
+            $arr_config['exclude'] = trim( $exclude );
+            $arr_config['searchable'] = ( $searchable==1 ) ? 1 : 0;
+
+            // if array modified, serialize and save it
+            $modified = array();
+            $modified['config_list'] = base64_encode( serialize($arr_config) );
+            if( $orig_value !== $modified['config_list'] ){
+                $rs = $DB->update( K_TBL_TEMPLATES, $modified, "id='" . $DB->sanitize( $PAGE->tpl_id ). "'" );
+                if( $rs==-1 ) die( "ERROR: Tag: '.$node->name.' Unable to save modified list" );
+            }
+        }
+
+        function config_form_view( $params, $node ){
+            global $CTX, $FUNCS, $AUTH, $PAGE, $DB;
+            if( $AUTH->user->access_level < K_ACCESS_LEVEL_SUPER_ADMIN ){ return; }
+
+            $rs = $DB->select( K_TBL_TEMPLATES, array('config_form'), "id='" . $DB->sanitize( $PAGE->tpl_id ). "'" );
+            if( !count($rs) ){ return; }
+            $orig_value = $rs[0]['config_form'];
+
+            // setup objects to be filled by child cms:field, cms:script, cms:style, cms:html tags, cms:persist
+            $arr_config = array( 'arr_fields'=>array(), 'js'=>'', 'css'=>'', 'html'=>'', 'params'=>'' );
+            $CTX->set_object( '__config', $arr_config );
+
+            // invoke child tags
+            foreach( $node->children as $child ){
+                $child->get_HTML();
+            }
+
+            // if array modified, serialize and save it
+            $modified = array();
+            $modified['config_form'] = base64_encode( serialize($arr_config) );
+            if( $orig_value !== $modified['config_form'] ){
+                $rs = $DB->update( K_TBL_TEMPLATES, $modified, "id='" . $DB->sanitize( $PAGE->tpl_id ). "'" );
+                if( $rs==-1 ) die( "ERROR: Tag: '.$node->name.' Unable to save modified list" );
+            }
+        }
+
+        function field( $params, $node ){ // for use within cms:config_list_view/config_form_view
+            global $CTX, $FUNCS, $AUTH;
+            static $order = -10;
+
+            if( $AUTH->user->access_level < K_ACCESS_LEVEL_SUPER_ADMIN ){ return; }
+
+            // get the 'config' object supplied by 'cms:config_list_view' or 'cms:config_form_view' tag
+            $arr_config = &$CTX->get_object( '__config', 'config_list_view' );
+            if( !is_array($arr_config) ){
+                $arr_config = &$CTX->get_object( '__config', 'config_form_view' );
+                if( !is_array($arr_config) ){ return; }
+                $parent_tag = 'config_form_view';
+            }
+            else{
+                $parent_tag = 'config_list_view';
+            }
+
+            if( $parent_tag == 'config_list_view' ){
+                extract( $FUNCS->get_named_vars(
+                           array(
+                                'name'=>'',
+                                'sortable'=>null,
+                                'sort_name'=>'',
+                                'class'=>null,
+                                'header'=>null,
+                                ),
+                           $params) );
+
+                $name = trim( $name );
+                if( !$name ){ die("ERROR: Tag \"".$node->name."\" needs a 'name' attribute"); }
+
+                // create field info..
+                $field = array();
+                $field['name'] = $name;
+                $field['weight'] = $order;
+                if( !is_null($sortable) ){ $field['sortable'] = $sortable; }
+                if( !is_null($sort_name) ){
+                    $sort_name = trim( $sort_name );
+                    if( $sort_name!='' ) $field['sort_name'] = $sort_name;
+                }
+                if( !is_null($class) ){ $field['class'] = $class; }
+                if( !is_null($header) ){
+                    foreach( $node->attributes as $attr ){
+                        if( $attr['name']=='header' ){
+                            switch( $attr['value_type'] ){
+                                case K_VAL_TYPE_LITERAL:
+                                    $field['header'] = $attr['value'];
+                                    break 2;
+                                case K_VAL_TYPE_VARIABLE:
+                                    $field['header'] = trim( $CTX->get($attr['value']) );
+                                    break 2;
+                                case K_VAL_TYPE_SPECIAL:
+                                    $field['header'] = $attr['value']->children;
+                                    break 2;
+                            }
+                        }
+                    }
+                }
+                if( count($node->children) ){
+                    $field['content'] = $node->children;
+                }
+
+                // ..and add it to the '$arr_config' array
+                $arr_config['arr_fields'][$name] = $field;
+                $order = $order + 10;
+            }
+            else{ // parent_tag is 'config_form_view'
+                $valid_params = array(
+                    'name'=>'',
+                    'label'=>null,
+                    'desc'=>null,
+                    'order'=>null,
+                    'group'=>'',
+                    'class'=>null,
+                    'icon'=>null,
+                    'no_wrapper'=>null,
+                    'skip'=>null,
+                    'hide'=>null,
+                    'required'=>null,
+                    'is_compound'=>null,
+                );
+
+                $valid_params = $FUNCS->get_named_vars( $valid_params, $params);
+
+                $name = $valid_params['name'] = trim( $valid_params['name'] );
+                if( !$name ){ die("ERROR: Tag \"".$node->name."\" needs a 'name' attribute"); }
+                if( trim($valid_params['group'])=='' ){ $valid_params['group']=null; }
+
+                // create field info..
+                $field = array();
+                foreach( $valid_params as $k=>$v ){
+                    if( !is_null($v) ){ $field[$k] = $v; }
+                }
+
+                if( count($node->children) ){
+                    $field['content'] = $node->children;
+                }
+
+                // ..and add it to the '$arr_config' array
+                $arr_config['arr_fields'][$name] = $field;
+            }
+        }
+
+        function script( $params, $node ){ // for use within cms:config_list_view/config_form_view
+            global $CTX, $FUNCS, $AUTH;
+            if( $AUTH->user->access_level < K_ACCESS_LEVEL_SUPER_ADMIN ){ return; }
+
+            // get the 'config' object supplied by 'cms:config_list_view' tag or 'cms:config_form_view' tag
+            $arr_config = &$CTX->get_object( '__config', 'config_list_view' );
+            if( !is_array($arr_config) ){
+                $arr_config = &$CTX->get_object( '__config', 'config_form_view' );
+                if( !is_array($arr_config) ){ return; }
+            }
+
+            if( count($node->children) ){
+                $code = $node->children;
+            }
+
+            $key = ( isset($node->__array_key__) ) ? $node->__array_key__ : 'js';
+            $arr_config[$key] = $code;
+        }
+
+        function style( $params, $node ){ // for use within cms:config_list_view/config_form_view
+            // delegate to 'cms:script'
+            $node->__array_key__ = 'css';
+            $this->script( $params, $node );
+        }
+
+        function html( $params, $node ){ // for use within cms:config_list_view/config_form_view
+            // delegate to 'cms:script'
+            $node->__array_key__ = 'html';
+            $this->script( $params, $node );
+        }
+
+        function persist( $params, $node ){ // for use within config_form_view only
+            global $CTX, $FUNCS, $AUTH;
+            if( $AUTH->user->access_level < K_ACCESS_LEVEL_SUPER_ADMIN ){ return; }
+
+            $arr_config = &$CTX->get_object( '__config', 'config_form_view' );
+            if( !is_array($arr_config) ){ return; }
+
+            $arr_config['params'] = $node->attributes;
+        }
+
         /*
             Note: does not support dates before 1st Jan 1970
 
@@ -3881,6 +4884,33 @@ FORM;
 
                 return $val;
             }
+        }
+
+        // Given a string containing an English date format in 'str', this tag will parse it and return a date in 'Y-m-d H:i:s' format
+        // relative to the date given in the second parameter (usually given in Y-m-d H:i:s' format).
+        function calc_date( $params, $node ){
+            global $CTX, $FUNCS;
+            if( count($node->children) ) {die("ERROR: Tag \"".$node->name."\" is a self closing tag");}
+
+            extract( $FUNCS->get_named_vars(
+                        array(
+                              'str'=>'',
+                              'relative_to'=>'',
+                              ),
+                        $params)
+                   );
+
+            $str = trim( $str );
+            if( $str=='' ) $str = 'now';
+            $relative_to = trim( $relative_to );
+            if( $relative_to=='' ) $relative_to = $FUNCS->get_current_desktop_time();
+
+            $ts_now = @strtotime( $relative_to );
+            $ts_end = @strtotime( $str, $ts_now );
+
+            $date = date( 'Y-m-d H:i:s', $ts_end );
+
+            return $date;
         }
 
         function archives( $params, $node ){
@@ -3982,7 +5012,6 @@ FORM;
             return $html;
         }
 
-        ///////////Contact Form Tags////////////////////////////////////////////
         function form( $params, $node ){
             global $CTX, $FUNCS, $PAGE, $DB;
 
@@ -4022,7 +5051,7 @@ FORM;
                     $charset = trim($params[$x]['rhs']);
                     continue;
                 }
-                elseif( $attr=='masterpage' || $attr=='page_id' || $attr=='mode' ){ // Data-bound form's parameters
+                elseif( $attr=='masterpage' || $attr=='page_id' || $attr=='mode' || $attr=='token' ){ // Data-bound form's parameters
                     $$attr = trim($params[$x]['rhs']);
                     continue;
                 }
@@ -4055,38 +5084,66 @@ FORM;
             $CTX->set( 'k_cur_form_method', $method );
             $CTX->set( 'k_cur_form_separator', $separator ); // cue for any create or update child tag
             $html .= '>';
-            $html = '<a name="'.$name.'"></a>' . $html; //anchor for return
+            if( $anchor ){
+                $html = '<a name="'.$name.'"></a>' . $html; //anchor for return
+            }
+
+            $pg = null;
+            $page_id = ( isset($page_id) && $FUNCS->is_non_zero_natural($page_id) ) ? (int)$page_id : null;
 
             // check if the form is data-bound
             if( $masterpage ){
-                $rs = $DB->select( K_TBL_TEMPLATES, array('id', 'clonable'), "name='" . $DB->sanitize( $masterpage ). "'" );
-                if( !count($rs) ){
-                    die( "ERROR: Tag \"".$node->name."\" - masterpage does not exist" );
-                }
-
                 $mode = strtolower( $mode );
-                if( !($mode=='edit' || $mode=='create') ){
-                    die( "ERROR: Tag \"".$node->name."\" - unknown value for 'mode' parameter (only 'edit' and 'create' supported)" );
-                }
-                if( $mode=='edit' ){
-                    $page_id = ( isset($page_id) && $FUNCS->is_non_zero_natural($page_id) ) ? (int)$page_id : null;
-                    if( $rs[0]['clonable'] && !$page_id ){
-                        die( "ERROR: Tag \"".$node->name."\" - page_id required" );
-                    }
-                }
-                else{
-                    if( !$rs[0]['clonable'] ){
-                        die( "ERROR: Tag \"".$node->name."\" - cannot create page of non-clonable template" );
-                    }
-                    $page_id = -1;
+                if( !($mode=='edit' || $mode=='create' || $mode=='auto') ){
+                    die( "ERROR: Tag \"".$node->name."\" - unknown value for 'mode' parameter (only 'edit', 'create' and 'auto' supported)" );
                 }
 
-                // get the page being bound to and set it in context for the fields to use
-                $tpl_id = $rs[0]['id'];
-                $pg = new KWebpage( $tpl_id, $page_id );
-                if( $pg->error ){
-                    die( "ERROR: Tag \"".$node->name."\" - " . $pg->err_msg );
+                // check if masterpage registered for special consideration
+                if( $FUNCS->is_spl_template( $masterpage ) ){
+                    $pg = $FUNCS->handle_spl_template( $masterpage, array($page_id, '', &$mode) );
+                    if( $FUNCS->is_error($pg) ){
+                        die( "ERROR: Tag \"".$node->name."\" - " . $pg->err_msg );
+                    }
                 }
+                else{ // default processing
+                    $rs = $DB->select( K_TBL_TEMPLATES, array('id', 'clonable'), "name='" . $DB->sanitize( $masterpage ). "'" );
+                    if( !count($rs) ){
+                        die( "ERROR: Tag \"".$node->name."\" - masterpage does not exist" );
+                    }
+
+                    if( $mode=='auto' ){ // will make the form bind to the global $PAGE object
+                        if( $PAGE->tpl_name !== $masterpage ){
+                            die( "ERROR: Tag \"".$node->name."\" - 'masterpage' does not match the current page's template" );
+                        }
+                        $tpl_id = $PAGE->tpl_id;
+                        $pg = &$PAGE;
+                        $mode = ( $pg->id==-1 ) ? 'create' : 'edit';
+                        if( $mode=='create' && !$pg->tpl_is_clonable ){
+                            die( "ERROR: Tag \"".$node->name."\" - cannot create page of non-clonable template" );
+                        }
+                    }
+                    else{
+                        if( $mode=='edit' ){
+                            if( $rs[0]['clonable'] && !$page_id ){
+                                die( "ERROR: Tag \"".$node->name."\" - page_id required" );
+                            }
+                        }
+                        else{
+                            if( !$rs[0]['clonable'] ){
+                                die( "ERROR: Tag \"".$node->name."\" - cannot create page of non-clonable template" );
+                            }
+                            $page_id = -1;
+                        }
+
+                        // get the page being bound to and set it in context for the fields to use
+                        $tpl_id = $rs[0]['id'];
+                        $pg = new KWebpage( $tpl_id, $page_id );
+                        if( $pg->error ){
+                            die( "ERROR: Tag \"".$node->name."\" - " . $pg->err_msg );
+                        }
+                    }
+                }
+
                 $count = count( $pg->fields );
                 for( $x=0; $x<$count; $x++ ){
                     $f = &$pg->fields[$x];
@@ -4094,18 +5151,31 @@ FORM;
                     unset( $f );
                 }
                 $CTX->set_object( 'bound_page', $pg );
+                $CTX->set( 'k_cur_form_mode', $mode );
 
                 // Add CSRF token? (default is yes)
                 $add_security_token = ($add_security_token==='0') ? 0 : 1;
                 if( $add_security_token ){
                     if( $mode=='edit' ){
-                        $obj_id = ( $page_id ) ? $page_id : $tpl_id;
+                        $obj_id = ( $page_id ) ? $page_id : $masterpage;
                         $nonce = 'edit_page_' . $obj_id;
                     }
                     else{
-                        $nonce = 'create_page_' . $tpl_id;
+                        $nonce = 'create_page_' . $masterpage;
                     }
                 }
+            }
+
+            if( $method=='post' ){
+                $submitted = isset($_POST['k_hid_'.$name]);
+            }
+            else{
+                $submitted = isset($_GET['k_hid_'.$name]);
+            }
+
+            if( $submitted && $token ){
+                // HOOK: form_posted_xxx
+                $FUNCS->dispatch_event( 'form_posted_'.$token, array($method, &$pg) );
             }
 
             // call the children (this will create the fields)
@@ -4114,12 +5184,6 @@ FORM;
             }
 
             // validate the fields if form submitted
-            if( $method=='post' ){
-                $submitted = isset($_POST['k_hid_'.$name]);
-            }
-            else{
-                $submitted = isset($_GET['k_hid_'.$name]);
-            }
             if( $submitted ){
                 $CTX->set( 'k_submitted', 1 );
 
@@ -4136,6 +5200,12 @@ FORM;
 
                     // loop through fields to see if any has requested a refresh of form
                     $refresh_form = 0; $refresh_errors = array();
+
+                    if( $token ){
+                        // HOOK: form_alter_posted_data_xxx
+                        $FUNCS->dispatch_event( 'form_alter_posted_data_'.$token, array(&$form, &$refresh_form, &$refresh_errors, &$pg) );
+                    }
+
                     foreach( $form as $k=>$v ){
                         $f = &$form[$k];
                         if( $f->refresh_form ) $refresh_form = 1;
@@ -4147,13 +5217,26 @@ FORM;
                     }
 
                     if( !$refresh_form ){ // process submission as usual
+
+                        if( $token ){
+                            // HOOK: form_prevalidate_xxx
+                            $FUNCS->dispatch_event( 'form_prevalidate_'.$token, array(&$form, &$pg) );
+                        }
+
                         foreach( $form as $k=>$v ){
                             $f = &$form[$k];
-                            if( !$f->validate() ){
-                                $CTX->set( 'k_error_'.$f->name, $f->err_msg );
-                                $errors[] = '<b>' . (($f->label) ? $f->label : $f->name) . ':</b> ' .$f->err_msg;
+                            if( !$f->module ){ // skip bound fields as they will be validated by the owner modules while subsequently saving the page
+                                if( !$f->validate() ){
+                                    $CTX->set( 'k_error_'.$f->name, $f->err_msg );
+                                    $errors[] = '<b>' . (($f->label) ? $f->label : $f->name) . ':</b> ' .$f->err_msg;
+                                }
                             }
                             unset( $f );
+                        }
+
+                        if( $token ){
+                            // HOOK: form_postvalidate_xxx
+                            $FUNCS->dispatch_event( 'form_postvalidate_'.$token, array(&$form, &$errors, &$pg) );
                         }
 
                         $sep = '';
@@ -4164,6 +5247,7 @@ FORM;
                                 $sep = $separator;
                             }
                             $CTX->set( 'k_error', $str_err );
+                            $CTX->set( 'k_error_count', count($errors) );
                         }
                         else{
                             $str_success = '';
@@ -4201,6 +5285,7 @@ FORM;
                                 $sep = $separator;
                             }
                             $CTX->set( 'k_error', $str_err );
+                            $CTX->set( 'k_error_count', count($refresh_errors) );
                         }
                     }
                 }
@@ -4331,7 +5416,6 @@ FORM;
                     for( $x=0; $x<$count; $x++ ){
                         $f = &$pg->fields[$x];
                         if( $f->name==$name ){
-                            $create_field = 0;
 
                             // turn off trusted_mode unless specified otherwise
                             $f->trust_mode = ( $trust_mode==1 ) ? 1 : 0;
@@ -4745,6 +5829,7 @@ MAP;
             }
             $header .= "Host: " . $host . "\r\n";
             $header .= "Connection: close\r\n";
+            $header .= "User-Agent: abc-company-name\r\n";
             $header .= "Content-Length: " . strlen($req) . "\r\n\r\n";
             if( $debug ) $FUNCS->log( $header, $logfile );
 
@@ -5147,8 +6232,17 @@ MAP;
         }
 
         function not_empty( $params, $node ){
+            global $FUNCS;
+
             if( count($node->children) ) {die("ERROR: Tag \"".$node->name."\" is a self closing tag");}
-            return strlen( trim(strip_tags($params[0]['rhs'])) ) ? 1 : 0;
+            return $FUNCS->strlen( trim(strip_tags($params[0]['rhs'])) ) ? 1 : 0;
+        }
+
+        function strlen( $params, $node ){
+            global $FUNCS;
+
+            if( count($node->children) ) {die("ERROR: Tag \"".$node->name."\" is a self closing tag");}
+            return $FUNCS->strlen( trim($params[0]['rhs']) );
         }
 
         // Expects a full URL to redirect to (querystring should be urlencoded)
@@ -5726,6 +6820,76 @@ MAP;
             return $FUNCS->t( $term );
         }
 
+        function translate_icon( $params, $node ){ // translate icon name to current theme's icon-set
+            global $FUNCS;
+            extract( $FUNCS->get_named_vars(
+                        array(
+                               'name'=>''
+                              ),
+                        $params)
+                   );
+            $name = trim( $name );
+
+            if( count($node->children) ) {die("ERROR: Tag \"".$node->name."\" is a self closing tag");}
+            return $FUNCS->ti( $name );
+        }
+
+        function show_icon( $params, $node ){ // show rendered icon
+            global $FUNCS;
+            extract( $FUNCS->get_named_vars(
+                        array(
+                               'name'=>''
+                              ),
+                        $params)
+                   );
+            $name = trim( $name );
+
+            if( count($node->children) ) {die("ERROR: Tag \"".$node->name."\" is a self closing tag");}
+            return $FUNCS->get_icon( $name );
+        }
+
+        function show_info( $params, $node ){
+            global $FUNCS;
+            extract( $FUNCS->get_named_vars(
+                        array('heading'=>''),
+                        $params)
+                   );
+            $heading = trim( $heading );
+
+            $content = '';
+            foreach( $node->children as $child ){
+                $content .= $child->get_HTML();
+            }
+
+            // alert type
+            if( $node->name=='show_success' ){
+                $type = 'success';
+            }
+            elseif($node->name=='show_error' ){
+                $type = 'error';
+            }
+            elseif($node->name=='show_warning' ){
+                $type = 'warning';
+            }
+            else{
+                $type = 'info';
+            }
+
+            return $FUNCS->show_alert( $heading, $content, $type );
+        }
+
+        function show_success( $params, $node ){
+            return $this->show_info( $params, $node ); // delegate to 'cms:show_info' tag
+        }
+
+        function show_error( $params, $node ){
+            return $this->show_info( $params, $node ); // delegate to 'cms:show_info' tag
+        }
+
+        function show_warning( $params, $node ){
+            return $this->show_info( $params, $node ); // delegate to 'cms:show_info' tag
+        }
+
         function do_shortcodes( $params, $node ){
             global $FUNCS, $CTX;
 
@@ -5863,27 +7027,18 @@ MAP;
                 if( array_key_exists($validator, $f->available_validators) ){
                     $validator_func = $f->available_validators[$validator];
                 }
+                elseif( array_key_exists($validator, $FUNCS->validators) ){
+                    $validator_func = $FUNCS->validators[$validator];
+                }
                 else{
                     $validator_func = trim( $validator ); // allow user defined validator
                 }
 
-                if( strpos($validator_func, '::')!==false ){
-                    $arr = explode( '::', $validator_func );
-                    if( is_callable(array($arr[0], $arr[1])) ){
-                        $err = call_user_func_array( array($arr[0], $arr[1]), array(&$f, $validator_args) );
-                    }
-                    else{
-                        die( "ERROR: Tag \"".$node->name."\" - Validator function '".$validator_func."' not found" );
-                    }
+                $validator_func = $FUNCS->is_callable( $validator_func );
+                if( !$validator_func ){
+                    die( "ERROR: Tag \"".$node->name."\" - Validator '".$validator."' not found" );
                 }
-                else{
-                    if( function_exists($validator_func) ) {
-                        $err = call_user_func_array( $validator_func, array(&$f, $validator_args) );
-                    }
-                    else{
-                        die( "ERROR: Tag \"".$node->name."\" - Validator function '".$validator_func."' not found" );
-                    }
-                }
+                $err = call_user_func_array( $validator_func, array(&$f, $validator_args) );
 
                 if( $FUNCS->is_error($err) ){
                     return '0';
@@ -5901,10 +7056,306 @@ MAP;
         }
 
         function is_ajax( $params, $node ){
-            if( !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH'])=='xmlhttprequest' ){
+            global $FUNCS;
+
+            if( $FUNCS->is_ajax() ){
                 return '1';
             }
             return '0';
+        }
+
+        function k_extends( $params, $node ){
+            global $FUNCS, $CTX;
+
+            if( !$node->processed ) return;
+
+            $level = count($CTX->ctx)-1;
+
+            // if not called from another cms:extends, create a scope for storing blocks
+            if( $level<2 || $CTX->ctx[$level-2]['name']!='extends' ){
+                $CTX->ctx[$level]['_obj_'] = array();
+                $is_root = 1;
+            }
+
+            $act = strtolower( trim($params[0]['lhs']) );
+            $snippet = $params[0]['rhs'];
+            if( $snippet ){
+
+                // default is embed 'file' from snippet folder
+                if( $act=='code' ){
+                    $html = $snippet;
+                }
+                else{
+                    if( defined('K_SNIPPETS_DIR') ){ // always defined relative to the site
+                        $base_snippets_dir = K_SITE_DIR . K_SNIPPETS_DIR . '/';
+                    }
+                    else{
+                        $base_snippets_dir = K_COUCH_DIR . 'snippets/';
+                    }
+
+                    $filepath = $base_snippets_dir . ltrim( trim($snippet), '/\\' );
+                    $html = @file_get_contents( $filepath );
+                    if( $html===FALSE ){
+                        if( $has_context ) $CTX->pop();
+                        return 'Error embedding file: ' . htmlspecialchars( $filepath );
+                    }
+                }
+
+                if( $html ){
+                    // set blocks in object scope before parsing the template being inherited
+                    $blocks_set = array();
+                    foreach( $node->children as $block ){
+
+                        $block_params = $FUNCS->resolve_parameters( $block->attributes );
+                        $block_name = trim( $block_params[0]['rhs'] );
+                        if( $block_name=='' ) die( "ERROR: Tag \"block\": requires a 'name' parameter" );
+                        if( in_array($block_name, $blocks_set) ) die( "ERROR: block '$block_name' already defined." );
+
+                        if( $is_root ){
+                            $CTX->ctx[$level]['_obj_'][$block_name] = array( $block );
+                        }
+                        else{
+                            $obj = &$CTX->get_object( $block_name, 'extends', 1 );
+                            if( is_null($obj) ){
+                                $obj = array($block);
+                                $CTX->set_object( $block_name, $obj );
+                            }
+                            else{
+                                $obj[count($obj)-1]->parent_block = $block;
+                                $obj[] = $block;
+                            }
+                            unset( $obj );
+                        }
+                        $blocks_set[] = $block_name;
+                    }
+
+                    // now call parent template
+                    $parser = new KParser( $html );
+                    $html = $parser->get_HTML();
+                }
+
+                return $html;
+            }
+        }
+
+        function block( $params, $node ){
+            global $CTX;
+
+            $block_name = trim( $params[0]['rhs'] );
+            if( $block_name=='' ) die( "ERROR: Tag \"block\": requires a 'name' parameter" );
+
+            // set self in blocks queue
+            $obj = &$CTX->get_object( $block_name, 'extends', 1 );
+            if( is_null($obj) ){
+                $node->final = 1;
+                $obj = array($node);
+                $CTX->set_object( $block_name, $obj, '', 'extends' );
+                $block = $node;
+            }
+            else{
+                if( $obj[count($obj)-1]->ID!=$node->ID ){ // if not already in queue
+                    if( $obj[count($obj)-1]->final ) die( "ERROR: block '$block_name' already defined." );
+
+                    $node->final = 1;
+                    $obj[count($obj)-1]->parent_block = $node;
+                    $obj[] = $node;
+                }
+                $block = $obj[0];
+            }
+            unset( $obj );
+
+            // show the first block in queue..
+            // but before that push the block on stack for any cms:block_parent that might follow
+            $level = count($CTX->ctx)-1;
+            $CTX->ctx[$level]['_obj_'] = array( 'cur_block'=>$block );
+
+            foreach( $block->children as $child ){
+                $html .= $child->get_HTML();
+            }
+            return $html;
+        }
+
+        function block_parent( $params, $node ){
+            global $CTX;
+
+            // find the current block being executed
+            $block = &$CTX->get_object( 'cur_block', 'block', 1 );
+            if( !is_null($block) ){
+                $parent_block = $block->parent_block;
+                if( !is_null($parent_block) ){
+
+                    // show the parent block..
+                    // but before that push the block on stack for any cms:block_parent that might follow
+                    $CTX->push( 'block' );
+                    $level = count($CTX->ctx)-1;
+                    $CTX->ctx[$level]['_obj_'] = array( 'cur_block'=>$parent_block );
+
+                    foreach( $parent_block->children as $child ){
+                        $html .= $child->get_HTML();
+                    }
+
+                    $CTX->pop();
+                }
+            }
+
+            return $html;
+        }
+
+        // aux. tag to list options defined for dropdown, checkbox and radio editable regions
+        function list_options( $params, $node ){
+            global $FUNCS, $CTX;
+
+            $field_type = $CTX->get( 'k_field_type' );
+            if( !in_array($field_type, array('dropdown', 'radio', 'checkbox')) ) return;
+
+            $opt_values = trim( $CTX->get('k_field_opt_values') );
+            $separator = trim( $CTX->get('k_field_separator') );
+            $val_separator = trim( $CTX->get('k_field_val_separator') );
+            if( !strlen($opt_values) || !strlen($separator) || !strlen($val_separator) ) return;
+
+            $selected = $CTX->get( 'k_field_selected_value' );
+
+            if( $field_type=='checkbox' ){
+                //$selected = ( $selected != '' ) ? array_map( "trim", explode( $separator, $selected ) ) : array();
+                $selected = ( $selected != '' ) ? array_map( "trim", preg_split( "/(?<!\\\)\\".$separator."/", $selected ) ) : array();
+                for( $x=0; $x<count($selected); $x++ ){
+                    $selected[$x] = str_replace( '\\'.$separator, $separator, $selected[$x] ); //unescape
+                    // not necessary to escape the selected values but no harm in doing so
+                    $selected[$x] = str_replace( '\\'.$val_separator, $val_separator, $selected[$x] );
+                }
+            }
+
+            // loop through the opt_values
+            $count = $opt_count = 0;
+            $arr_values = array_map( "trim", preg_split( "/(?<!\\\)\\".$separator."/", $opt_values ) );
+            $arr_vars = array();
+
+            foreach( $arr_values as $val ){
+                $opt_is_selected = 0;
+                $arr_vars['k_option_count'] = $opt_count;
+                $arr_vars['k_count'] = $count;
+
+                if( $val!='' ){
+                    $val = str_replace( '\\'.$separator, $separator, $val ); //unescape
+                    $arr_values_args = array_map( "trim", preg_split( "/(?<!\\\)\\".$val_separator."/", $val ) );
+                    $opt = str_replace( '\\'.$val_separator, $val_separator, $arr_values_args[0] ); //unescape
+                    if( isset($arr_values_args[1]) ){
+                        $opt_val = str_replace( '\\'.$val_separator, $val_separator, $arr_values_args[1] ); //unescape
+                    }
+                    else{
+                        $opt_val = $opt;
+                    }
+
+                    if( $field_type=='dropdown' ){
+                        if( $opt_val== $selected ) $opt_is_selected = 1;
+                    }
+                    elseif( $field_type=='radio' ){
+                        if( $selected=='' && $opt_count == 0  ){
+                            $opt_is_selected = 1; // if no button selected select the first one (RFC1866)
+                        }
+                        else{
+                            if( $opt_val == $selected ) $opt_is_selected = 1;
+                        }
+
+                    }
+                    elseif( $field_type=='checkbox' ){
+                        if( in_array($opt_val, $selected) ) $opt_is_selected = 1;
+
+                        // checkbox can have multiple selections.. escape discrete values for output
+                        $opt_val = str_replace( $separator, '\\'.$separator, $opt_val );
+                    }
+
+                    $opt_count++;
+                    $opt_blank = 0;
+                }
+                else{
+                    // empty option
+                    if( $field_type=='dropdown' ){
+                        continue;
+                    }
+                    else{
+                        // for radio and checkbox, this will translate to a new line
+                        $opt = $opt_val = '';
+                        $opt_blank = 1;
+                    }
+                }
+
+                $arr_vars['k_option'] = $opt;
+                $arr_vars['k_option_value'] = $opt_val;
+                $arr_vars['k_option_is_selected'] = $opt_is_selected;
+                $arr_vars['k_option_is_blank'] = $opt_blank;
+
+                $count++;
+
+                // call the children
+                $CTX->set_all( $arr_vars );
+                foreach( $node->children as $child ){
+                    $html .= $child->get_HTML();
+                }
+            }
+
+            return $html;
+        }
+
+        function render( $params, $node ){
+            global $FUNCS, $CTX;
+            static $named_args = array();
+
+            if( count($node->children) ) {die("ERROR: Tag \"".$node->name."\" is a self closing tag");}
+
+            $name = trim( $params[0]['rhs'] );
+            if( !$name || !is_array($FUNCS->renderables[$name]) || !count($FUNCS->renderables[$name]) ){
+                return;
+            }
+            array_shift( $params ); // lop off the $name
+            $args = array();
+
+            if( !array_key_exists($name, $named_args) ){
+                // the first entry defines the function signature
+                $entry = $FUNCS->renderables[$name][0];
+                $callback = ( $entry['template_path'] ) ? $entry['template_ctx_setter'] : $entry['renderable'];
+                if( $FUNCS->is_callable($callback, true /* check syntax_only */) ){
+                    if( $entry['include_file'] ){ require_once( $entry['include_file'] ); }
+
+                    if( is_array($callback) ){
+                        if( is_object($callback[0]) ) $callback[0] = get_class($callback[0]);
+                        $reflection = new ReflectionMethod( $callback[0], $callback[1] );
+                    }
+                    elseif( is_string($callback) ){
+                        $reflection = new ReflectionFunction( $callback );
+                    }
+
+                    if( $reflection ){
+                        $parameters = $reflection->getParameters();
+                        foreach( $parameters as $param ){
+                            $val = ( $param->isDefaultValueAvailable() ) ? $param->getDefaultValue() : '';
+                            $args[$param->name] = $val;
+                        }
+                    }
+                }
+                $named_args[$name] = $args;
+            }
+            else{
+                $args = $named_args[$name];
+            }
+
+            if( count($args) ){
+                $args = array_values( $FUNCS->get_named_vars($args, $params) );
+
+                // resolve values that point to PHP objects (always begin with a '$')
+                for( $x=0; $x<count($args); $x++ ){
+                    if( $args[$x]{0}=='$' ){
+                        $obj = $CTX->get_object( substr($args[$x], 1) );
+                        if( $obj ) $args[$x] = $obj;
+                    }
+                }
+            }
+
+            // delegate to $FUNCS->render()
+            array_unshift( $args, $name );
+            $html = call_user_func_array( array($FUNCS, 'render'), $args );
+
+            return $html;
         }
 
     } //end class KTags

@@ -1,0 +1,29 @@
+<div id="<cms:show k_field_wrapper_id />" class="field k_element">
+    <label for="<cms:show k_field_input_id />"><b><cms:show k_field_label />:</b></label>
+    <br>
+
+    <cms:render 'form_input' name='k_open_external'/>
+    <br />
+    <cms:render 'form_input' name='k_is_pointer'/>
+</div>
+
+<cms:admin_add_js>
+    $( function(){
+        var $createDraft     = $( "#create-draft" ),
+            $editableRegions = $( "#admin_wrapper_custom_fields" ),
+            $pointerPanel    = $( "#admin_wrapper_pointer_fields" ),
+            speed            = 400;
+
+        $( "#f_k_is_pointer" ).change(function() {
+            if ( $( this ).prop( "checked" ) ) {
+                COUCH.slideFadeHide( $editableRegions, speed );
+                COUCH.slideFadeHide( $createDraft,     speed );
+                COUCH.slideFadeShow( $pointerPanel,    speed );
+            } else {
+                COUCH.slideFadeShow( $editableRegions, speed );
+                COUCH.slideFadeShow( $createDraft,     speed );
+                COUCH.slideFadeHide( $pointerPanel,    speed );
+            }
+        });
+    });
+</cms:admin_add_js>

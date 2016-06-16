@@ -1,0 +1,12 @@
+<cms:admin_actions childof='extended'>
+
+    <cms:capture into='my_code'>
+        <cms:if k_action_render>
+            <cms:render k_action_render />
+        <cms:else />
+            <cms:show k_action_html />
+        </cms:if>
+    </cms:capture>
+
+    <cms:show my_code />
+</cms:admin_actions>

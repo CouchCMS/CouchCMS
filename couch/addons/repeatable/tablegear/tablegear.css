@@ -1,11 +1,11 @@
 /* REPEATING REGIONS TABLE - added by Davor, 18 Mar 2012 */
 .tableholder { overflow-x: auto; overflow-y: hidden; padding: 8px 0px 5px; }
-.rr { background: #fff; border-left: 1px solid #d3d3d3; border-top: 1px solid #d3d3d3; -moz-border-radius: 5px; border-radius: 5px; min-width:720px; table-layout: fixed; }
+.rr { background: #fff; border-left: 1px solid #d3d3d3; border-top: 1px solid #d3d3d3; -moz-border-radius: 5px; border-radius: 5px; width:100%; table-layout: fixed; margin-bottom: 15px;}
 .rr tr:nth-child(2n) td { background:#fff }
 .rr th, .rr td { border-bottom: 1px solid #d3d3d3; border-right: 1px solid #d3d3d3 }
-.rr th, .rr thead td  { background: url(th-bg.png) repeat-x 0 0; font-size: 13px; line-height:1; padding:8px 8px 7px }
+.rr th, .rr thead td  { background: url(th-bg.png) repeat-x 0 0; font-size: 13px; line-height:1; padding:8px 8px 7px; text-align: left; }
 .rr tr.odd { background-color: #fff; }
-.rr tr.even { background-color: #F3F9FE; }
+.rr tr.even { background-color: #F3F9FE; } /*#f5f5f5*/
 .rr tr.even td{ background-color: transparent; }
 .rr tr:hover td { background: #FFFFE0 }
 .rr thead tr:hover td { background: url(th-bg.png) repeat-x 0 0; }
@@ -15,7 +15,12 @@
 .rr tr:last-child td:first-child { -moz-border-radius: 5px 0 0 0; border-radius: 5px 0 0 0 }
 .rr tr:last-child td:last-child { -moz-border-radius: 0 0 5px 0; border-radius: 0 0 5px 0 }
 
-.rr td.dg-arrange-table-rows-drag-icon, .rr td.dg-arrange-table-header {  padding:0; margin:0; width: 7px !important; }
+.rr td.dg-arrange-table-rows-drag-icon, .rr th.dg-arrange-table-header {  padding:0; margin:0; width: 7px !important; }
+.rr td.dg-arrange-table-rows-drag-icon{
+    background-image: url('dg-arrange-table-rows.gif') !important;
+	background-repeat: repeat-y !important;
+	cursor: move;
+}
 .rr td.delete { padding:8px 6px 7px; margin:0; width: 16px !important; }
 .rr td.highlite { background-color: #FBE3E4 !important; border-color:#FBC2C4;}
 .rr .editable span.shim{ display: none; }

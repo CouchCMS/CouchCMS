@@ -1,0 +1,10 @@
+<cms:if k_show_banner >
+    <cms:set my_tpl_text="<cms:if k_rel_tpl_title><cms:show k_rel_tpl_title /><cms:else /><cms:show k_rel_tpl_name /></cms:if>" />
+
+    <cms:admin_add_html>
+        <cms:show_info>
+            <strong>Related to: </strong><cms:show my_tpl_text/> /
+            <a href="<cms:show k_rel_page_edit_link />" style="text-decoration:underline"> <cms:show k_rel_page_title /></a>
+        </cms:show_info>
+    </cms:admin_add_html>
+</cms:if>

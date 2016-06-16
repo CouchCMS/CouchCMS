@@ -61,25 +61,33 @@
         var $ctx = array();
         // 'listfolders' and 'dropdownfolders' internally use 'folders' hence need a context
         // 'do_shortcodes' stores self object in $CTX hence needs a scope.
-        var $support_scope = array('__ROOT__', 'test', 'repeat', 'hide', 'each', 'pages', 'folder', 'folders', 'listfolders', 'dropdownfolders', 'parentfolders', 'breadcrumbs', 'archives', 'form', 'paypal_processor', 'search', 'comments', 'query', 'link', 'calendar', 'weeks', 'days', 'entries', 'templates', 'capture', 'do_shortcodes', 'nested_pages', 'nested_crumbs', 'menu', 'exif', 'paginator');
+        var $support_scope = array('__ROOT__', '__embed__', 'test', 'repeat', 'hide', 'each', 'pages', 'folder', 'folders', 'listfolders', 'dropdownfolders', 'parentfolders', 'breadcrumbs', 'archives', 'form', 'paypal_processor', 'search', 'comments', 'query', 'link', 'calendar', 'weeks', 'days', 'entries', 'templates', 'capture', 'do_shortcodes', 'nested_pages', 'parent_nested_pages', 'nested_crumbs', 'menu', 'admin_menuitems', 'admin_menu', 'admin_breadcrumbs', 'admin_actions', 'admin_list_fields', 'admin_form_fields', 'admin_js_files', 'admin_css_files', 'config_list_view', 'config_form_view', 'exif', 'paginator', 'list_options');
         // All tags that 'loop' (i.e. call 'foreach( $node->children as $child )' multiple times.
-        var $support_zebra = array('__ROOT__',  'while', 'repeat', 'each', 'pages', 'folders', 'listfolders', 'dropdownfolders', 'parentfolders', 'archives', 'search', 'comments', 'query', 'weeks', 'days', 'entries', 'templates', 'nested_pages', 'nested_crumbs', 'menu', 'paginator');
+        var $support_zebra = array('__ROOT__', '__embed__', 'while', 'repeat', 'each', 'pages', 'folders', 'listfolders', 'dropdownfolders', 'parentfolders', 'archives', 'search', 'comments', 'query', 'weeks', 'days', 'entries', 'templates', 'nested_pages', 'parent_nested_pages', 'nested_crumbs', 'menu', 'admin_menuitems', 'admin_menu', 'admin_breadcrumbs', 'admin_actions', 'admin_list_fields', 'admin_form_fields', 'admin_js_files', 'admin_css_files', 'paginator', 'list_options');
 
         function KContext(){
 
         }
 
-        function push( $func_name ){
+        function push( $func_name, $no_check=0 ){
             $level = count( $this->ctx );
             $this->ctx[$level] = array();
 
             $this->ctx[$level]['name'] = $func_name;
-            if( $func_name && in_array( $func_name, $this->support_scope) ){
+
+            if( $no_check ){
                 $this->ctx[$level]['_scope_'] = array();
                 $this->ctx[$level]['_obj_'] = array();
-            }
-            if( $func_name && in_array( $func_name, $this->support_zebra) ){
                 $this->ctx[$level]['_zebra_'] = array();
+            }
+            else{
+                if( $func_name && in_array( $func_name, $this->support_scope) ){
+                    $this->ctx[$level]['_scope_'] = array();
+                    $this->ctx[$level]['_obj_'] = array();
+                }
+                if( $func_name && in_array( $func_name, $this->support_zebra) ){
+                    $this->ctx[$level]['_zebra_'] = array();
+                }
             }
         }
 
@@ -183,33 +191,53 @@
 
         // For internal use. Sets an object into the first scoped tag found fanning outwards
         // or directly into the root if 'global' set.
-        function set_object( $objname, &$obj, $scope='' ){
+        function set_object( $objname, &$obj, $scope='', $tagname=null ){
 
             if( $scope=='global' ){
                 $this->ctx[0]['_obj_'][$objname] = &$obj;
-                return;
+                return 1;
             }
 
             for( $x=count($this->ctx)-1; $x>=0; $x-- ){
-                if( isset($this->ctx[$x]['_scope_']) ){
-                    $this->ctx[$x]['_obj_'][$objname] = &$obj;
-                    return;
+                if( !is_null($tagname) ){
+                    if( isset($this->ctx[$x]['_obj_']) && ($this->ctx[$x]['name']==$tagname) ){
+                        $this->ctx[$x]['_obj_'][$objname] = &$obj;
+                        return 1;
+                    }
+                }
+                else{
+                    if( isset($this->ctx[$x]['_obj_']) ){
+                        $this->ctx[$x]['_obj_'][$objname] = &$obj;
+                        return 1;
+                    }
                 }
             }
 
         }
 
         // For internal use. Gets an object from (possibly a specified tag's) scope
-        function &get_object( $objname, $tagname=null ){
+        function &get_object( $objname, $tagname=null, $return_first=0 ){
 
             for( $x=count($this->ctx)-1; $x>=0; $x-- ){
                 if( !is_null($tagname) ){
-                    if( ($this->ctx[$x]['name']==$tagname) && isset($this->ctx[$x]['_scope_']) && isset($this->ctx[$x]['_obj_'][$objname]) ){
-                        return $this->ctx[$x]['_obj_'][$objname];
+                    if( $return_first ){
+                        if( ($this->ctx[$x]['name']==$tagname) && isset($this->ctx[$x]['_obj_']) ){
+                            if( isset($this->ctx[$x]['_obj_'][$objname]) ){
+                                return $this->ctx[$x]['_obj_'][$objname];
+                            }
+                            else{
+                                return null;
+                            }
+                        }
+                    }
+                    else{
+                        if( ($this->ctx[$x]['name']==$tagname) && isset($this->ctx[$x]['_obj_']) && isset($this->ctx[$x]['_obj_'][$objname]) ){
+                            return $this->ctx[$x]['_obj_'][$objname];
+                        }
                     }
                 }
                 else{
-                    if( isset($this->ctx[$x]['_scope_']) && isset($this->ctx[$x]['_obj_'][$objname]) ){
+                    if( isset($this->ctx[$x]['_obj_']) && isset($this->ctx[$x]['_obj_'][$objname]) ){
                         return $this->ctx[$x]['_obj_'][$objname];
                     }
                 }
@@ -229,7 +257,7 @@
             }
 
             for( $x=count($this->ctx)-1; $x>=0; $x-- ){
-                if( isset($this->ctx[$x]['_scope_']) && isset($this->ctx[$x]['_obj_'][$objname]) ){
+                if( isset($this->ctx[$x]['_obj_']) && isset($this->ctx[$x]['_obj_'][$objname]) ){
                     return $this->ctx[$x]['_obj_'][$objname];
                 }
             }
@@ -294,6 +322,12 @@
                         if( $PAGE ){
                             $PAGE->set_context();
                         }
+
+                        $FUNCS->dispatch_event( 'add_render_vars' );
+                        if( K_THEME_NAME ){
+                            $FUNCS->dispatch_event( K_THEME_NAME.'_add_render_vars' );
+                        }
+
                     }
                     else{
                         $CTX->push( '__NESTED_ROOT__' );
@@ -309,7 +343,7 @@
                 case K_NODE_TYPE_CODE:
                     $CTX->push( $this->name );
                     $func = $this->name;
-                    if( $this->name=='if' || $this->name=='else' || $this->name=='while' ) $func = 'k_'.$func;
+                    if( $this->name=='if' || $this->name=='else' || $this->name=='while' || $this->name=='extends' ) $func = 'k_'.$func;
 
                     if( method_exists($TAGS, $func) ){
                         if( !($this->name=='if' || $this->name=='while' || $this->name=='not' || $this->name=='else_if') ){
@@ -503,6 +537,10 @@
                             $processing_cond = false;
                             $brackets_count = 0;
 
+                            // skip the newline immediately following this tag
+                            if( $this->str{$this->pos+1}=="\r" ){ $this->pos++; }
+                            if( $this->str{$this->pos+1}=="\n" ){ $this->pos++; }
+
                             $starts = $this->pos+1;
                             $this->state = K_STATE_TEXT;
                             break;
@@ -516,6 +554,10 @@
                                 unset( $this->curr_node );
                                 $this->curr_node = &$this->stack[count($this->stack)-1];
                                 unset( $this->stack[count($this->stack)-1] );
+
+                                // skip the newline immediately following this tag
+                                if( $this->str{$this->pos+1}=="\r" ){ $this->pos++; }
+                                if( $this->str{$this->pos+1}=="\n" ){ $this->pos++; }
 
                                 $starts = $this->pos+1;
                                 $this->state = K_STATE_TEXT;
@@ -791,32 +833,48 @@
         }
 
         function get_HTML(){
+            global $FUNCS;
+
             $DOM = &$this->get_DOM();
+
+            // HOOK: alter_parsed_dom
+            $FUNCS->dispatch_event( 'alter_parsed_dom', array($DOM) );
+
             return $DOM->get_HTML();
         }
 
         // Caches the parsed DOM
-        function get_cached_HTML( $filepath ){
+        function get_cached_HTML( $filepath, $use_hot_cache=0 ){
             global $FUNCS;
-
-            if( !file_exists($filepath) ) return $this->get_HTML();
+            static $hot_cache = array();
 
             $last_mod = @filemtime( $filepath );
-            $cache_key = md5( 'k_dom_cache_' . $filepath );
-            $cache_value = @unserialize( base64_decode($FUNCS->get_setting($cache_key)) );
-            if( (!is_array($cache_value)) || ($last_mod > $cache_value['last_mod']) ){
-                $html = $this->get_HTML();
+            if( $last_mod===false ){ return $this->get_HTML(); } // !file_exists($filepath)
 
-                $cache_value = base64_encode( serialize(array('last_mod'=>$last_mod, 'data'=>$this->DOM)) );
+            $cache_key = md5( 'k_dom_cache_' . $filepath );
+
+            if( $use_hot_cache && key_exists($cache_key, $hot_cache) ){
+                $cache_value = $hot_cache[$cache_key];
+            }
+            else{
+                $cache_value = @unserialize( base64_decode($FUNCS->get_setting($cache_key)) );
+            }
+
+            if( (!is_array($cache_value)) || ($last_mod > $cache_value['last_mod']) ){
+                $value = array( 'last_mod'=>$last_mod, 'data'=>$this->get_DOM() );
+                $cache_value = base64_encode( serialize($value) );
                 $FUNCS->set_setting( $cache_key, $cache_value );
+
+                if( $use_hot_cache ){ $hot_cache[$cache_key]=$value; }
             }
             else{
                 $this->DOM = $cache_value['data'];
                 $this->parsed = true;
-                $html = $this->get_HTML();
+
+                if( $use_hot_cache && !key_exists($cache_key, $hot_cache) ){ $hot_cache[$cache_key]=$cache_value; }
             }
 
-            return $html;
+            return $this->get_HTML();
         }
 
         function get_info(){

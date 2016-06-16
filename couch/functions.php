@@ -52,8 +52,10 @@
         var $cached_files = array(); // for use of smart_embed tag
         var $cached_nested_pages = array();
         var $cached_pretty_tplnames = array();
+        var $cached_settings = array();
 
         var $_t = array(); // translated strings
+        var $_ti = array(); // translated icon names
         var $shortcodes = array();
         var $admin_list_views = array();
         var $admin_page_views = array();
@@ -62,7 +64,32 @@
         var $udform_fields = array();
         var $scripts = array();
         var $styles = array();
+        var $validators = array();
+        var $filters = array();
         var $repeatable = array();
+        var $renderables = array();
+        var $routes = array();
+        var $spl_templates = array();
+
+        var $admin_menuitems = array();
+        var $admin_menu_tree = null;
+        var $admin_sub_menuitems = array();
+        var $admin_submenu_tree = null;
+        var $admin_actions = array(); /* toolbar, filters, batch, extended, row, page actions */
+        var $admin_actions_tree = null;
+        var $admin_title = array();
+        var $admin_subtitle = array();
+        var $admin_form_fields = array();
+        var $admin_form_fields_tree = null;
+        var $admin_list_fields = array();
+        var $admin_list_default_sort = array( 'orderby'=>'', 'order'=>'' );
+        var $admin_js = '';
+        var $admin_css = '';
+        var $admin_html = '';
+
+        var $current_route = null;
+        var $route_fully_rendered = 0;
+        var $route_content_type = '';
 
         var $_ed;
 
@@ -73,8 +100,11 @@
             define( '_64e16', (_64e4 * _64e4 * _64e4 * _64e4) );
             define( '_64e63', (_64e15 * _64e16 * _64e16 * _64e16) );
             define( '_64e64', (_64e16 * _64e16 * _64e16 * _64e16) );
+            define( 'ROUTE_NOT_FOUND', 1 );
+            define( 'ROUTE_ACCESS_DENIED', 2 );
 
             $this->_ed = new EventDispatcher();
+            $this->add_event_listener( 'alter_parsed_dom', array('KFuncs', '_handle_extends') );
         }
 
         function raise_error( $err_msg ){
@@ -105,7 +135,7 @@
 
             // Next the named variables
             foreach( $from as $param ){
-                if( isset($into[$param['lhs']]) ){
+                if( array_key_exists($param['lhs'], $into) ){
                     $into[$param['lhs']] = $param['rhs'];
                 }
             }
@@ -171,6 +201,28 @@
                 }
             }
             return $s;
+        }
+
+        function _handle_extends( $DOM ){
+            if( count($DOM->children)>1 ){
+                if( $DOM->children[1]->name != 'extends' ) return;
+
+                // manipulate DOM in a way that all sibling cms:block tags get added as children of cms:extends.
+                // All other tags are discarded.
+                $tmp = array_slice( $DOM->children, 0, 2 );
+                $tmp[0]->type = K_NODE_TYPE_TEXT;
+                $tmp[0]->text = '';
+                $tmp[1]->children = array();
+                $tmp_children = array_slice( $DOM->children, 2 );
+                foreach( $tmp_children as $child ){
+                    if( $child->name=='block' ){
+                        $tmp[1]->children[] = $child;
+                    }
+                }
+                $tmp[1]->processed = 1;
+
+                $DOM->children = $tmp;
+            }
         }
 
         function post_process_page(){
@@ -864,6 +916,11 @@
 
         }
 
+        function strlen( $str ){
+            $func = function_exists('mb_strlen') ? 'mb_strlen' : 'strlen';
+            return $func( $str );
+        }
+
         function get_url(){
             $url = 'http';
             if( K_HTTPS ){
@@ -879,7 +936,7 @@
 
             $chopped_url = @parse_url( $_SERVER['REQUEST_URI'] );
             if( $chopped_url===false || !$chopped_url['path'] ) return false;
-            $chopped_url['path'] = trim( preg_replace( '|/index\.php/*?$|', '/', $chopped_url['path']) );
+            $chopped_url['path'] = trim( preg_replace( '|/index\.php/*?$|', '/', urldecode($chopped_url['path'])) );
             if( !$chopped_url['path'] ) return false;
 
             $url .= $chopped_url['path'];
@@ -1001,6 +1058,398 @@
             return $tree;
         }
 
+        function register_admin_menuitem( $params ){
+            if( !defined('K_REGISTER_ROUTES_DONE') || defined('K_REGISTER_MENUITEMS_DONE') ) return;
+            if( !is_array($params) ){ die("ERROR: function register_admin_menuitem() requires an array as parameter"); }
+
+            $params['type']='menu';
+            $this->_register_menuitem( $params, 'admin_menuitems', 'register_admin_menuitem' );
+
+        }
+
+        function register_admin_sub_menuitem( $params ){
+            if( !defined('K_REGISTER_ROUTES_DONE') || defined('K_REGISTER_SUB_MENUITEMS_DONE') ) return;
+            if( !is_array($params) ){ die("ERROR: function register_admin_sub_menuitem() requires an array as parameter"); }
+
+            $params['type']='submenu';
+            $params['is_custom']=1; // always custom
+            $this->_register_menuitem( $params, 'admin_sub_menuitems', 'register_admin_sub_menuitem' );
+
+        }
+
+        function reset_admin_actions( $categories=array() ){
+            $this->admin_actions = array();
+
+            // init the top categories of admin-actions
+            $weight = 0;
+            foreach( $categories as $cat ){
+                $this->add_admin_action( array( 'name'=>$cat,  'weight'=>$weight, ) );
+                $weight += 10;
+            }
+        }
+
+        function add_admin_action( $params, $func_name=null ){
+            if( !defined('K_REGISTER_ROUTES_DONE') || defined('K_ADD_ADMIN_ACTIONS_DONE') ) return;
+            if( !is_array($params) ){ die("ERROR: function add_admin_action() requires an array as parameter"); }
+
+            $func_name = is_null( $func_name ) ? 'add_admin_action' : $func_name;
+            $params['type']='action';
+            if( isset($params['listener']) ){
+                if( is_array($params['listener']) ){
+                    call_user_func_array( array($this, 'add_event_listener'), $params['listener'] );
+                }
+                //unset( $params['listener'] );
+            }
+
+            $this->_register_menuitem( $params, 'admin_actions', $func_name );
+        }
+
+        function add_toolbar_button( $params ){
+            $params['parent']='toolbar';
+            $this->add_admin_action( $params, 'add_toolbar_button' );
+        }
+
+        function add_filter_action( $params ){
+            $params['parent']='filter';
+            $params['is_custom']=1; // always custom
+            $this->add_admin_action( $params, 'add_filter_action' );
+        }
+
+        function add_batch_action( $params ){
+            $params['parent']='batch';
+            $this->add_admin_action( $params, 'add_batch_action' );
+        }
+
+        function add_extended_action( $params ){
+            $params['parent']='extended';
+            $params['is_custom']=1; // always custom
+            $this->add_admin_action( $params, 'add_extended_action' );
+        }
+
+        function add_row_action( $params ){
+            $params['parent']='row';
+            $params['is_custom']=1; // always custom
+            $this->add_admin_action( $params, 'add_row_action' );
+        }
+
+        function add_page_action( $params ){
+            $params['parent']='page';
+            $this->add_admin_action( $params, 'add_page_action' );
+        }
+
+        function add_form_field( $params ){
+            if( defined('K_ADD_FORM_FIELDS_DONE') ) return;
+            if( !is_array($params) ){ die("ERROR: function add_form_field() requires an array as parameter"); }
+
+            $params['type']='field';
+            if( isset($params['listener']) ){
+                if( is_array($params['listener']) ){
+                    call_user_func_array( array($this, 'add_event_listener'), $params['listener'] );
+                }
+                //unset( $params['listener'] );
+            }
+
+            // normalize parameters to match 'menuitem' structure
+            $params['title'] = $params['label'];  unset( $params['label'] );
+            $params['menu_text'] = $params['desc'];  unset( $params['desc'] );
+            $params['weight'] = $params['order'];  unset( $params['order'] );
+            $params['parent'] = $params['group'];  unset( $params['group'] );
+            $params['show_in_menu'] = !($params['skip']);  unset( $params['skip'] );
+
+            $this->_register_menuitem( $params, 'admin_form_fields', 'add_form_field' );
+        }
+
+        // helps registering not only menu-items but also actions and form-fields
+        function _register_menuitem( $params, $array_name, $func_name ){
+            static $id = 0;
+
+            $menuitem = array(
+                'name'=>'',   /* required, unique */
+                'title'=>'',
+                'desc'=>'',
+                'parent'=>'',
+                'is_header'=>0,
+                'icon'=>null,
+                'show_in_menu'=>1,
+                'weight'=>0,
+                'href'=>'',
+                'access_callback'=>null,
+                'access_callback_params'=>null,
+                'is_current_callback'=>null,
+                'route'=>array(),
+
+                'type'=>'', /* menu, action or field */
+                'class'=>'',
+                'target'=>'',
+                'confirmation_msg'=>'',
+                'no_wrapper'=>0,
+                'is_custom'=>0,
+                'html'=>'',
+                'render'=>'',
+
+                'is_compound'=>0,
+                'hide'=>0,
+                'required'=>0,
+                'content'=>'',
+                'obj'=>null,
+            );
+            $menuitem = array_merge( $menuitem, $params );
+
+            // sanitize params
+            $menuitem['id'] = $id++;
+            $menuitem['name'] = trim( $menuitem['name'] );
+            if( !$menuitem['name'] ) {die("ERROR: function $func_name() requires a 'name' attribute");}
+            if( array_key_exists($menuitem['name'], $this->$array_name) ){ ob_end_clean(); die( "ERROR: function $func_name(): '".$menuitem['name']."' already registered" ); }
+            $menuitem['title'] = trim( $menuitem['title'] );
+            if( !strlen($menuitem['title']) )$menuitem['title'] = $menuitem['name'];
+            $menuitem['desc'] = trim( $menuitem['desc'] );
+            $menuitem['parent'] = trim( $menuitem['parent'] );
+            $menuitem['is_header'] = ( $menuitem['is_header']==1 ) ? 1 : 0;
+            $menuitem['show_in_menu'] = ( $menuitem['show_in_menu']==0 ) ? 0 : 1;
+            $menuitem['weight'] = intval( $menuitem['weight'] );
+            $menuitem['href'] = trim( $menuitem['href'] );
+            if( !is_array($menuitem['route']) )$menuitem['route'] = array();
+
+            $menuitem['type'] = trim( $menuitem['type'] );
+            $menuitem['class'] = trim( $menuitem['class'] );
+            $menuitem['target'] = trim( $menuitem['target'] );
+            $menuitem['confirmation_msg'] = trim( $menuitem['confirmation_msg'] );
+            $menuitem['no_wrapper'] = ( $menuitem['no_wrapper']==1 ) ? 1 : 0;
+            $menuitem['is_custom'] = ( $menuitem['is_custom']==1 ) ? 1 : 0;
+            $menuitem['html'] = trim( $menuitem['html'] );
+            $menuitem['render'] = trim( $menuitem['render'] );
+
+            $menuitem['is_compound'] = ( $menuitem['is_compound']==1 ) ? 1 : 0;
+            $menuitem['hide'] = ( $menuitem['hide']==1 ) ? 1 : 0;
+            $menuitem['required'] = ( $menuitem['required']==1 ) ? 1 : 0;
+            if( !is_array($menuitem['content']) ){
+                $menuitem['content'] = trim( $menuitem['content'] );
+            }
+
+            $arr = &$this->$array_name;
+            $arr[$menuitem['name']] = $menuitem;
+        }
+
+        function &get_admin_menu( $orderbyfield='weight', $order='asc', $force=0 ){
+
+            static $done=0;
+            if( !$done ){
+                // gather menuitem definitions
+                $this->dispatch_event( 'register_admin_menuitems' );
+                define( 'K_REGISTER_MENUITEMS_DONE', '1' );
+                $this->dispatch_event( 'alter_admin_menuitems', array(&$this->admin_menuitems) );
+                $done=1;
+            }
+
+            return $this->_get_menu( $this->admin_menuitems, 'admin_menu_tree', 'KAdminMenuItem', $orderbyfield, $order, $force );
+        }
+
+        function &get_admin_submenu( $orderbyfield='weight', $order='asc', $force=0 ){
+
+            static $done=0;
+            if( !$done ){
+                // gather menuitem definitions
+                $this->dispatch_event( 'register_admin_sub_menuitems' );
+                define( 'K_REGISTER_SUB_MENUITEMS_DONE', '1' );
+                $this->dispatch_event( 'alter_admin_sub_menuitems', array(&$this->admin_sub_menuitems) );
+                $done=1;
+            }
+
+            return $this->_get_menu( $this->admin_sub_menuitems, 'admin_submenu_tree', 'KAdminMenuItem', $orderbyfield, $order, $force );
+        }
+
+        function &get_admin_actions( $orderbyfield='weight', $order='asc', $force=0 ){
+            return $this->_get_menu( $this->admin_actions, 'admin_actions_tree', 'KAdminMenuItem', $orderbyfield, $order, $force );
+        }
+
+        function &get_admin_form_fields( $orderbyfield='weight', $order='asc', $force=0 ){
+            static $done=0;
+            if( !$done ){
+                foreach( $this->admin_form_fields as $k=>$v ){
+                    if( !is_array($this->admin_form_fields[$k]['content']) && $this->admin_form_fields[$k]['content'] != '' ){
+                        $parser = new KParser( $this->admin_form_fields[$k]['content'] );
+                        $dom = $parser->get_DOM();
+                        $this->admin_form_fields[$k]['content'] = $dom->children;
+                    }
+                }
+
+                $done=1;
+            }
+
+            return $this->_get_menu( $this->admin_form_fields, 'admin_form_fields_tree', 'KAdminFormField', $orderbyfield, $order, $force );
+        }
+
+        // a variation of the get_folders_tree function above.
+        function &_get_menu( &$rows, $tree_name, $class_name, $orderbyfield, $order, $force ){
+
+            if( !is_null($this->$tree_name) && !$force ){
+                $tree = &$this->$tree_name;
+                if( $tree->cmp_field!=$orderbyfield || $tree->cmp_order!=$order ){
+                    $tree->set_sort( $orderbyfield, $order );
+                    $tree->sort(1);
+                }
+            }
+            else{
+
+                $tree = new $class_name( array('id'=>'-1', 'name'=>'_root_'), new KError()/*dummy*/ );
+                $tree->set_sort( $orderbyfield, $order );
+                $tree->crumbs = null; // will be filled, if required, by calling tags
+
+                $folders = array();
+                foreach( $rows as $r ){
+                    $f = new $class_name( $r, $tree );
+                    $folders[ $f->name ] = &$f;
+                    unset( $f );
+                }
+
+                foreach( $folders as  $f ){
+                    $folder = &$folders[$f->name];
+                    if( isset($folders[$f->parent]) ){
+                        $folders[$f->parent]->add_child( $folder );
+                    }
+                    else{
+                        $tree->add_child( $folder );
+                    }
+                }
+                $tree->sort(1);
+                $tree->set_children_count();
+                $this->$tree_name = &$tree;
+            }
+
+            return $tree;
+        }
+
+        function get_actions( $type ){
+            global $TAGS;
+            static $arr_actions = array();
+
+            $type = trim( $type );
+            if( !$type ) return array();
+
+            if( !is_array($arr_actions[$type]) ){
+                $arr_actions[$type] = array();
+                $tree = &$this->get_admin_actions();
+                $actions = &$tree->find( $type );
+                if( $actions ){
+                    $count = count( $actions->children );
+                    if( $count ){
+                        for( $x=0; $x<$count; $x++ ){
+                            $action = &$actions->children[$x];
+
+                            if( call_user_func_array(array($TAGS, '_skip_menu'), array(&$action)) ) continue; // access check
+                            $arr_actions[$type][] = $action;
+
+                            unset( $action );
+                        }
+                    }
+                }
+            }
+
+            return $arr_actions[$type];
+        }
+
+        function add_list_field( $params ){
+            if( defined('K_ADD_LIST_FIELDS_DONE') ) return;
+            if( !is_array($params) ){ die("ERROR: function add_list_field() requires an array as parameter"); }
+
+            $item = array(
+                'name'=>'', /* unique id */
+                'weight'=>0,
+                'sortable'=>0,
+                'sort_name'=>'',
+                'class'=>'',
+                'content'=>'',
+                'header'=>'',
+            );
+            $item = array_merge( $item, $params );
+
+            // sanitize params
+            $item['name'] = trim( $item['name'] );
+            if( !$item['name'] ) {die("ERROR: function add_list_field() requires a 'name' attribute");}
+            if( array_key_exists($item['name'], $this->admin_list_fields) ){ ob_end_clean(); die( "ERROR: function add_list_field(): '".$item['name']."' already registered" ); }
+            $item['weight'] = KNestedPage::int_to_key( intval($item['weight']) );
+            $item['sortable'] = ( $item['sortable']==1 ) ? 1 : 0;
+            $item['sort_name'] = trim( $item['sort_name'] );
+            if( $item['sort_name']=='' ){ $item['sort_name']=$item['name']; }
+            $item['class'] = trim( $item['class'] );
+            if( !is_array($item['content']) ){
+                $item['content'] = trim( $item['content'] );
+            }
+            if( !is_array($item['header']) ){
+                $item['header'] = trim( $item['header'] );
+            }
+            if( isset($item['listener']) ){
+                if( is_array($item['listener']) ){
+                    call_user_func_array( array($this, 'add_event_listener'), $item['listener'] );
+                }
+                //unset( $item['listener'] );
+            }
+
+            $this->admin_list_fields[$item['name']] = $item;
+        }
+
+        function &get_admin_list_fields(){
+            static $done=0;
+
+            if( !$done ){
+                foreach( $this->admin_list_fields as $k=>$v ){
+
+                    if( $this->admin_list_fields[$k]['content'] === '' ){
+                        $this->admin_list_fields[$k]['content'] = '<cms:show '.$this->admin_list_fields[$k]['name'].' />';
+                    }
+
+                    $arr_fields = array( 'header', 'content' );
+                    foreach( $arr_fields as $f ){
+                        if( !is_array($this->admin_list_fields[$k][$f]) && $this->admin_list_fields[$k][$f] != '' ){
+                            $parser = new KParser( $this->admin_list_fields[$k][$f] );
+                            $dom = $parser->get_DOM();
+                            $this->admin_list_fields[$k][$f] = $dom->children;
+                        }
+                    }
+                }
+
+                $code = "return strcmp(\$a['weight'], \$b['weight']);";
+                usort( $this->admin_list_fields, create_function('$a,$b', $code) );
+                $done = 1;
+            }
+            return $this->admin_list_fields;
+        }
+
+        function set_admin_list_default_sort( $field, $order ){
+            global $CTX;
+
+            $this->dispatch_event( 'alter_admin_list_default_sort', array(&$field, &$order) );
+
+            $field = trim( $field );
+            $order = trim( $order );
+            $this->admin_list_default_sort['orderby'] = $field;
+            $this->admin_list_default_sort['order'] = $order;
+
+            $CTX->set( 'k_selected_orderby', $field, 'global' );
+            $CTX->set( 'k_selected_order', $order, 'global' );
+        }
+
+        function set_admin_list_default_limit( $limit ){
+            global $CTX;
+
+            $this->dispatch_event( 'alter_admin_list_default_limit', array(&$limit) );
+            if( !$this->is_non_zero_natural($limit) ){  $limit = '15'; }
+
+            $CTX->set( 'k_selected_limit', $limit, 'global' );
+        }
+
+        function set_admin_title( $text, $link='', $icon='' ){
+            $this->dispatch_event( 'alter_admin_title', array(&$text, &$link, &$icon) );
+            $this->admin_title = array( 'text'=>trim($text), 'link'=>trim($link), 'icon'=>trim($icon) );
+        }
+
+        function set_admin_subtitle( $text, $icon='' ){
+            global $CTX;
+
+            $this->dispatch_event( 'alter_admin_subtitle', array(&$text, &$icon) );
+            $this->admin_subtitle = array( 'text'=>trim($text), 'icon'=>trim($icon) );
+        }
+
         function set_userinfo_in_context(){
             global $AUTH, $CTX;
 
@@ -1015,10 +1464,12 @@
                 if( $AUTH->user->id != -1 ){
                     $CTX->set( 'k_logged_in', 1 );
                     $CTX->set( 'k_logout_link', $this->get_logout_link() );
+                    $CTX->set( 'k_user_edit_link', K_ADMIN_URL . K_ADMIN_PAGE.'?o=users&q=edit/'.$this->create_nonce( 'edit_page_'.$AUTH->user->id ).'/'.$AUTH->user->id );
                 }
                 else{
                     $CTX->set( 'k_logged_out', 1 );
                     $CTX->set( 'k_login_link', $this->get_login_link() );
+                    $CTX->set( 'k_user_edit_link', '' );
                 }
             }
             else{
@@ -1182,6 +1633,36 @@
             }
         }
 
+        function get_qs_link( $link, $skip_qs=array() ){
+            // HOOK: skip_qs_params_in_paginator
+            $skip_qs2 = array();
+            $this->dispatch_event( 'skip_qs_params_in_paginator', array(&$skip_qs2) );
+            $skip_qs = array_merge( array('p', 'f', 'd', 'fname', 'pname', '_nr_'), $skip_qs, $skip_qs2 );
+
+            $sep = '';
+            foreach( $_GET as $qk=>$qv ){
+                if( in_array($qk, $skip_qs) ) continue;
+
+                if( is_array($qv) ){ //checkboxes
+                    foreach( $qv as $qvv ){
+                        $qs .= $sep . $qk . '[]=' . urlencode($qvv);
+                        $sep = '&';
+                    }
+                }
+                else{
+                    $qs .= $sep . $qk . '=' . urlencode($qv);
+                    $sep = '&';
+                }
+            }
+
+            if( $qs ){
+                $link .= ( strpos($link, '?')===false ) ? '?' : '&';
+                $link .= $qs;
+            }
+
+            return $link;
+        }
+
         function get_login_link( $redirect='' ){
             global $AUTH;
 
@@ -1210,6 +1691,10 @@
 
             $link = '';
             $redirect = trim( $redirect );
+
+            if( $redirect=='' && defined('K_ADMIN') ){
+                $redirect = K_ADMIN_URL . K_ADMIN_PAGE;
+            }
 
             // HOOK: get_logout_link
             $this->dispatch_event( 'get_logout_link', array(&$link, &$redirect) );
@@ -1659,11 +2144,29 @@
         function get_setting( $key, $default=null ){
             global $DB;
 
-            $rs = $DB->select( K_TBL_SETTINGS, array('*'), "k_key='" . $DB->sanitize( $key ). "'" );
-            if( count($rs) ){
-                return $rs[0]['k_value'];
+            if( K_CACHE_SETTINGS ){
+                if( !count($this->cached_settings) ){
+                    $rs = @mysql_query( 'select * from '.K_TBL_SETTINGS, $DB->conn );
+                    if( $rs ){
+                        while( $row = mysql_fetch_row($rs) ) {
+                            $this->cached_settings[$row[0]] = $row[1];
+                        }
+                        mysql_free_result( $rs );
+                    }
+                }
+
+                if( key_exists($key, $this->cached_settings) ){
+                    return $this->cached_settings[$key];
+                }
+                return $default;
             }
-            return $default;
+            else{
+                $rs = $DB->select( K_TBL_SETTINGS, array('*'), "k_key='" . $DB->sanitize( $key ). "'" );
+                if( count($rs) ){
+                    return $rs[0]['k_value'];
+                }
+                return $default;
+            }
         }
 
         function set_setting( $key, $value ){
@@ -1673,11 +2176,14 @@
             if( !count($rs) ){
                 $rs = $DB->insert( K_TBL_SETTINGS, array('k_key'=>$key, 'k_value'=>$value) );
                 if( $rs!=1 ) return KFuncs::raise_error( "Failed to insert record for setting in K_TBL_SETTINGS" );
-                return;
             }
             else{
                 $rs = $DB->update( K_TBL_SETTINGS, array('k_value'=>$value), "k_key='" . $DB->sanitize( $key ). "'" );
                 if( $rs==-1 ) return KFuncs::raise_error( "Unable to update setting in K_TBL_SETTINGS" );
+            }
+
+            if( K_CACHE_SETTINGS ){
+                $this->cached_settings[$key] = $value;
             }
         }
 
@@ -1686,7 +2192,10 @@
 
             $rs = $DB->delete( K_TBL_SETTINGS, "k_key='" . $DB->sanitize( $key ). "'" );
             if( $rs==-1 ) return KFuncs::raise_error( "Unable to remove setting from K_TBL_SETTINGS" );
-            return;
+
+            if( K_CACHE_SETTINGS ){
+                unset( $this->cached_settings[$key] );
+            }
         }
 
         // helper function of send_mail
@@ -1705,6 +2214,12 @@
         }
 
         function send_mail( $from, $to, $subject, $text, $headers="" ){
+
+            // HOOK: alter_send_mail
+            $result = false;
+            $skip = $this->dispatch_event( 'alter_send_mail', array(&$from, &$to, &$subject, &$text, &$headers, &$result) );
+            if( $skip ){ return $result; }
+
             // Source: http://www.anyexample.com/
             if( strtolower(substr(PHP_OS, 0, 3)) === 'win' ){
                 $mail_sep = "\r\n";
@@ -1734,6 +2249,30 @@
             else{
                 return @mail( $to, $subject, $text, 'From: '.$from.$h );
             }
+        }
+
+        function register_validator( $name, $callable ){
+            $name = trim($name);
+            if( !$name ){ ob_end_clean(); die( "ERROR: function register_validator(): Please provide a name to register the validator" ); }
+            if( array_key_exists($name, $this->validators) ){ ob_end_clean(); die( "ERROR: function register_validator(): '$name' already registered" ); }
+
+            $callable = $this->is_callable( $callable, 1 /*syntax only*/ );
+            if( !$callable ){ ob_end_clean(); die( "ERROR: function register_validator(): Please provide a valid callable for the validator '$name'" ); }
+
+            $this->validators[$name] = $callable;
+        }
+
+        function is_callable( $callable, $syntax_only=0 ){
+            if( is_string($callable) ){
+                if( strpos($callable, '::')!==false ){
+                    $callable = explode( '::', $callable );
+                }
+            }
+            elseif( !is_array($callable) ){
+                return false;
+            }
+
+            return ( is_callable($callable, $syntax_only) ) ? $callable : false;
         }
 
         function is_alpha( $str ){
@@ -1908,7 +2447,7 @@
         }
 
         function validate_email( $field ){
-            if( !preg_match("/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,6}$/i", trim($field->get_data())) ){
+            if( !preg_match("/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,10}$/i", trim($field->get_data())) ){
                 return KFuncs::raise_error( "Invalid E-mail" );
             }
         }
@@ -2106,41 +2645,43 @@
             return $style;
         }
 
-        function login_header(){
-            $link = K_ADMIN_URL . 'theme/styles.css?ver='.K_COUCH_BUILD;
+        function login_header(){ // now used only by the install routine
             $login_title = 'CouchCMS';
+            $logo_src = K_SYSTEM_THEME_URL.'includes/admin/images/couch_light.png';
             if( K_PAID_LICENSE ){
                 if( defined('K_LOGO_LIGHT') ){
                     $logo_src = K_ADMIN_URL.'theme/images/'.K_LOGO_LIGHT;
                 }
-                else{
-                    $logo_src = K_ADMIN_URL.'theme/images/couch.gif';
-                }
                 // box title
                 $login_title = $this->t('login_title');
             }
-            else{
-                $logo_src = K_ADMIN_URL.'logo.php';
-            }
 
-            $html = <<<OUT
-            <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-            <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+            $html = '
+            <!doctype html>
+            <html>
             <head>
-                <title>$login_title</title>
-                <script type="text/javascript">try { document.execCommand('BackgroundImageCache', false, true); } catch(e) {}</script>
-                <link rel="stylesheet" href="$link" type="text/css" media="screen" />
+                <meta charset="utf-8"/>
+                <meta content="width=device-width, initial-scale=1, minimal-ui" name="viewport"/>
+                <meta content="IE=edge" http-equiv="X-UA-Compatible"/>
+                <meta content="noindex" name="robots"/>
+                <title>'.$login_title.'</title>
+                <link href="'.K_SYSTEM_THEME_URL.'includes/admin/main.css?v='.K_COUCH_BUILD.'" rel="stylesheet"/>
+                <!--[if lt IE 9]>'.K_SYSTEM_THEME_URL.'includes/ie9.min.js?v='.K_COUCH_BUILD.'"></script><![endif]-->
+                <!--[if lte IE 9]>'.K_SYSTEM_THEME_URL.'includes/matchmedia.min.js?v='.K_COUCH_BUILD.'"></script><![endif]-->
+                <script src="'.K_SYSTEM_THEME_URL.'includes/svg4everybody.min.js?v='.K_COUCH_BUILD.'"></script>
             </head>
-            <body class="login">
-                <div id="login" >
-                    <img src="$logo_src" />
-OUT;
+            <body id="simple-page">
+                <div id="simple-wrap">
+                    <img alt="" id="simple-logo" src="'.$logo_src.'"/>
+                    <div class="simple-box">
+            ';
             return $html;
         }
 
         function login_footer(){
             $html = <<<OUT
-            </div>
+                    </div>
+                </div>
             </body>
             </html>
 OUT;
@@ -2470,7 +3011,7 @@ OUT;
                 }
                 else{
                     // if no ranges selected, output the first few chars
-                    $out[] = substr( $content, 0, K_RANGE_LEN*2 );
+                    $out[] = $this->excerpt( $content, K_RANGE_LEN*2 );
                 }
 
                 // output ranges
@@ -2722,6 +3263,21 @@ OUT;
             return $this->_t[$key];
         }
 
+        function ti( $icon_name ){
+
+            return ( $this->_ti[$icon_name] ) ? $this->_ti[$icon_name] : $icon_name;
+        }
+
+        // return rendered icon
+        function get_icon( $name ){
+            global $FUNCS;
+            static $icons = array();
+
+            $icon = isset( $icons[$name] ) ? $icons[$name] : ( $icons[$name] = $FUNCS->render('icon', $name) );
+
+            return $icon;
+        }
+
         function register_shortcode( $tagname, $handler ){
             $tagname = strtolower(trim($tagname));
             if( strlen($tagname) ){
@@ -2841,17 +3397,57 @@ OUT;
             $this->udform_fields[$fieldtype] = array( 'handler'=>$handler_class );
         }
 
+        function register_spl_template( $name, $handler, $include_file='' ){
+            $name = trim( $name );
+            if( !$name ){ ob_end_clean(); die( "ERROR: function register_spl_template(): Please provide a name" ); }
+            if( array_key_exists($name, $this->spl_templates) ){ ob_end_clean(); die( "ERROR: function register_spl_template(): \"".$name."\" already registered" ); }
+            if( !($handler=$this->is_callable($handler, true /*check syntax_only*/)) ){
+                ob_end_clean(); die( "ERROR: function register_spl_template(): \"".$name."\" - handler function is not callable" );
+            }
+
+            $this->spl_templates[$name] = array( 'handler'=>$handler, 'include_file'=>trim($include_file) );
+        }
+
+        function handle_spl_template( $name, $args ){
+            $name = trim( $name );
+            if( !$name ){ ob_end_clean(); die( "ERROR: function handle_spl_template(): Please provide a name" ); }
+            if( !array_key_exists($name, $this->spl_templates) ){ ob_end_clean(); die( "ERROR: function handle_spl_template(): \"".$name."\" not registered" ); }
+
+            $args[] = $name;
+
+            $entry = $this->spl_templates[$name];
+            if( $entry['include_file'] ){ require_once( $entry['include_file'] ); }
+
+            return call_user_func_array( $entry['handler'], $args );
+        }
+
+        function is_spl_template( $name ){
+            $name = trim( $name );
+            if( !$name ){ return false; }
+
+            return array_key_exists( $name, $this->spl_templates );
+        }
+
         // wrapper functions for event dispatcher
         function dispatch_event( $event_name, $args=array() ){
             return $this->_ed->dispatch( $event_name, $args );
         }
 
         function add_event_listener( $event_name, $listener, $priority = 0 ){
-            $this->_ed->add_listener( $event_name, $listener, $priority );
+            if( $listener=$this->is_callable($listener, true) ){
+                $this->_ed->add_listener( $event_name, $listener, $priority );
+            }
+            else{
+                ob_end_clean(); die( "ERROR: function add_event_listener(): \"".$event_name."\" - listener function is not callable" );
+            }
         }
 
         function remove_event_listener( $event_name, $listener ){
             $this->_ed->remove_listener( $event_name, $listener );
+        }
+
+        function has_event_listener( $event_name, $listener ){
+            return $this->_ed->has_listener( $event_name, $listener );
         }
 
         function has_event_listeners( $event_name = null ){
@@ -2860,6 +3456,442 @@ OUT;
 
         function get_event_listeners( $event_name = null ){
             return $this->_ed->get_listeners( $event_name );
+        }
+
+        // functions for overridable rendering functions
+        function register_render( $name, $params ){
+            if( defined('K_REGISTER_RENDERABLES_DONE') ) return;
+
+            $name = trim($name);
+            if( !$name ){ ob_end_clean(); die( "ERROR: function register_render(): Please provide a name" ); }
+            if( array_key_exists( $name, $this->renderables) ){ ob_end_clean(); die( "ERROR: function register_render(): \"".$name."\" already registered" ); }
+
+            $this->_register_render( $name, $params, 'register_render' );
+        }
+
+        function override_render( $name, $params ){
+            if( !defined('K_REGISTER_RENDERABLES_DONE') || defined('K_OVERRIDING_RENDERABLES_DONE') ) return;
+
+            $name = trim($name);
+            if( !$name ){ ob_end_clean(); die( "ERROR: function override_render(): Please provide a name" ); }
+            if( !array_key_exists( $name, $this->renderables) ) return; // nothing to override
+
+            $this->_register_render( $name, $params, 'override_render' );
+        }
+
+        private function _register_render( $name, $params, $func_name ){
+            if( !is_array($params) ){ ob_end_clean(); die("ERROR: function ".$func_name."(): \"".$name."\" requires an array as second parameter"); }
+
+            $entry = array(
+                'renderable'=>'',           /* name of the renderable function or template. If empty, the registered $name is used */
+                'template_path'=>'',        /* if set, signals that the renderable is a template (as opposed to being a function) */
+                'template_ctx_setter'=>'',  /* for templates, this function may be used to set variables in context */
+                'include_file'=>'',         /* for including renderable function or 'template_ctx_setter' */
+            );
+            foreach( $params as $k=>$v ){
+                if( isset($entry[$k]) ){
+                    $entry[$k] = $v;
+                }
+            }
+
+            // sanitize params
+            if( !$entry['renderable'] ) $entry['renderable'] = $name;
+            $entry['template_path'] = trim( $entry['template_path'] ); // template or function?
+            if( $entry['template_path'] ){ // renderable is a template
+                if( $entry['template_ctx_setter'] && !($entry['template_ctx_setter']=$this->is_callable($entry['template_ctx_setter'], true /* check syntax_only */)) ){
+                    ob_end_clean(); die( "ERROR: function ".$func_name."(): \"".$name."\" - 'template_ctx_setter' is not callable" );
+                }
+            }
+            else{ // renderable is a function
+                if( !($entry['renderable']=$this->is_callable($entry['renderable'], true /* check syntax_only */)) ){
+                    ob_end_clean(); die( "ERROR: function ".$func_name."(): \"".$name."\" - renderable function is not callable" );
+                }
+            }
+            $entry['include_file'] = trim( $entry['include_file'] );
+            if( $func_name=='override_render' && defined('K_THEME_OVERRIDING_RENDERABLES') ){
+                $entry['by_theme'] = true;
+            }
+
+            if( !is_array($this->renderables[$name]) ) $this->renderables[$name] = array();
+            $this->renderables[$name][] = $entry;
+        }
+
+        function render( $name ){
+            global $FUNCS, $CTX;
+
+            if( !is_array($this->renderables[$name]) || !count($this->renderables[$name]) ){
+                return;
+            }
+            $args = func_get_args();
+            array_shift( $args ); // lop off the $name
+
+            $entries = $this->renderables[$name];
+            $count = count( $entries );
+
+            // check the last entry
+            $entry = $entries[$count-1];
+            if( !$entry['template_path'] ){ // renderable is function
+                if( $entry['include_file'] ){ require_once( $entry['include_file'] ); }
+                $html = call_user_func_array( $entry['renderable'], $args );
+            }
+            else{ // renderable is a template
+
+                // loop through all overridden entries to gather possible candidate templates and paths where those templates may be found.
+                // All context setters of overriding entries are also executed in the process.
+
+                // Sequence of code execution -
+                // 0. context-setter of original renderable
+                // 1. hook ('alter_render_vars_{name}')
+                // 2. context-setters of all overriding renderables (if any set by other modules)
+                // 3. theme hook ('{theme-name}_alter_render_vars_{name}')
+                // 4. context-setter of overriding theme renderable (if any set by theme)
+
+                // both context-setters and hooks can add CTX variables and candidate template names.
+                // However, only context-setters (as opposed to hooks) can add paths where the candidate templates will be searched for.
+
+                $paths = array();
+                $candidate_templates = array();
+                $skip_theme_path = 0;
+
+                if( count($CTX->ctx)==0 ){
+                    $CTX->push( '__ROOT__' );
+                    $FUNCS->set_userinfo_in_context();
+                    $FUNCS->dispatch_event( 'add_render_vars' );
+                    if( K_THEME_NAME ){
+                        $FUNCS->dispatch_event( K_THEME_NAME.'_add_render_vars' );
+                    }
+                    $is_ctx_root = '1';
+                }
+
+                $CTX->push( '__render_'.$name.'__', 1 /*no_check*/ ); // prepare context for context-setters
+
+                for( $x=0; $x < $count; $x++ ){
+                    $entry = $entries[$x];
+
+                    if( $x==$count-1 && K_THEME_NAME && $entry['by_theme'] ){
+                        $FUNCS->dispatch_event( K_THEME_NAME.'_alter_render_vars', array(&$candidate_templates, $name, $args) );
+                        $FUNCS->dispatch_event( K_THEME_NAME.'_alter_render_vars_'.$name, array(&$candidate_templates, $name, $args) );
+                        $skip_theme_path = 1;
+                    }
+
+                    if( $entry['template_path'] ){
+                        $paths[] = $entry['template_path'];
+                        $candidate_templates[] = $entry['renderable'];
+
+                        if( $entry['template_ctx_setter']  ){
+                            if( $entry['include_file'] ){ require_once( $entry['include_file'] ); }
+
+                            // context setters have the same function signature as the function implementing the renderable had it not been a template.
+                            // The only difference is that these can also optionally return an array of candidate template names
+                            $ret = call_user_func_array( $entry['template_ctx_setter'], $args );
+                            if( is_array($ret) ){ // add to candidate templates
+                                $candidate_templates =  array_merge( $candidate_templates, $ret );
+                            }
+                        }
+                    }
+
+                    // give other addons a chance to set variables in context and to provide candidate templates
+                    if( $x==0 ){
+                        $FUNCS->dispatch_event( 'alter_render_vars', array(&$candidate_templates, $name, $args) );
+                        $FUNCS->dispatch_event( 'alter_render_vars_'.$name, array(&$candidate_templates, $name, $args) );
+                    }
+                    if( $x==$count-1 && K_THEME_NAME &&!$entry['by_theme'] ){
+                        $FUNCS->dispatch_event( K_THEME_NAME.'_alter_render_vars', array(&$candidate_templates, $name, $args) );
+                        $FUNCS->dispatch_event( K_THEME_NAME.'_alter_render_vars_'.$name, array(&$candidate_templates, $name, $args) );
+                    }
+                }
+
+                // at this point we have a list of candidate templates and the paths to find them in.
+                // Locate the template to render ..
+                $candidates = array();
+                $templates = array_reverse( array_unique(array_filter(array_map("trim", $candidate_templates))) );
+                if( !$skip_theme_path ){ $paths[]=K_THEME_DIR; }
+                $paths = array_unique( array_filter(array_map("trim", array_reverse($paths))) );
+                foreach( $templates as $template ){
+                    foreach( $paths as $path ){
+                        $candidates[] = $path . $template . '.html';
+                    }
+                }
+
+                $selected_template = '';
+                foreach( $candidates as $candidate ){
+                    if( is_file($candidate) ){
+                        $selected_template = $candidate;
+                        break;
+                    }
+                }
+
+                if( !$selected_template ){
+                    $html = "No renderable template found for '$name'";
+                }
+
+                if( !$html ){
+                    $html = @file_get_contents( $selected_template );
+                    if( strlen($html)  ){
+                        $parser = new KParser( $html );
+                        if( K_CACHE_OPCODES ){
+                            $html = $parser->get_cached_HTML( $selected_template, 1 );
+                        }
+                        else{
+                            $html = $parser->get_HTML();
+                        }
+                    }
+                }
+
+                $CTX->pop();
+                if( $is_ctx_root ){ $CTX->pop(); }
+            }
+
+            $FUNCS->dispatch_event( 'alter_render_output_'.$name, array(&$html, $name, $args) );
+
+            return $html;
+        }
+
+        // functions for registering routes used in admin-panel
+        function register_route( $masterpage, $params ){
+            if( defined('K_REGISTER_ROUTES_DONE') ) return;
+
+            $masterpage = trim($masterpage);
+            if( !$masterpage ){ ob_end_clean(); die( "ERROR: function register_route(): Please provide a template-name to register the route for" ); }
+            if( !is_array($this->routes[$masterpage]) ) $this->routes[$masterpage] = array();
+
+            extract( array_merge( array(
+                'name'         => null,
+                'path'         => null,
+                'constraints'  => null,
+                'validators'   => null,
+                'values'       => null,
+                'method'       => null,
+                'secure'       => null,
+                'routable'     => true,
+                'is_match'     => null,
+                'generate'     => null,
+                'filters'      => null,
+                'include_file' => null,
+                'class'        => null,
+                'action'       => null,
+                'access_callback' => null,
+                'access_callback_params' => null,
+                'module'       => null,
+            ), $params) );
+
+            // sanitize params
+            $name = trim( $name );
+            if( !$name ){ ob_end_clean(); die( "ERROR: function register_route(): Please provide a name for the route" ); }
+            if( array_key_exists($name, $this->routes[$masterpage]) ){ ob_end_clean(); die( "ERROR: function register_route(): '$name' already registered for module '$masterpage'" ); }
+            $path = trim( $path );
+
+            $route = new Route( $name, $masterpage, $path, $constraints, $values, $method, $secure, $routable, $is_match, $generate, $filters, $validators, $include_file, $class, $action, $access_callback, $access_callback_params, $module );
+            $this->routes[$masterpage][$name] = $route;
+        }
+
+        // processes the current request
+        function process_route( $masterpage, $path ){
+            global $CTX, $FUNCS;
+
+            // prepare for a fresh rendering of the route
+            $FUNCS->current_route = null;
+            $FUNCS->route_content_type = 'text/html';
+            $FUNCS->route_fully_rendered = 0;
+
+            $masterpage = trim( $masterpage );
+            $path = trim( $path );
+
+            if( $masterpage!='' ){
+
+                $routes = $this->routes[$masterpage];
+                if( is_array($routes) && count($routes) ){
+
+                    $found = 0;
+                    foreach( $routes as $route ){
+                        if( $route->isMatch($path, $_SERVER) ){
+                            $found = 1;
+                            break;
+                        }
+                    }
+
+                    if( $found ){
+
+                        // HOOK: admin_route_found
+                        $FUNCS->dispatch_event( 'admin_route_found', array($route) );
+
+                        // is accessible?
+                        if( !is_null($route->access_callback) ){
+                            $callback = $this->is_callable( $route->access_callback );
+                            if( !$callback ){
+                                ob_end_clean();
+                                die( "ERROR: process_route() route \"".$masterpage."::".$route->name."\" - access_callback function is not callable." );
+                            }
+                            if( !call_user_func_array( $callback, array($route, $route->access_callback_params)) ){
+                                // return permission denied error
+                                return $FUNCS->raise_error( ROUTE_ACCESS_DENIED );
+                            }
+                        }
+
+                        // include file if specified
+                        if( $route->include_file ){ require_once( $route->include_file ); }
+
+                        // execute filters if any (the filters can set $route->resolved_values to, e.g., objects from ids etc.)
+                        $str_filters = $route->filters; // e.g. 'test=1,abc,3 | test2 | test3=xyz'
+
+                        if( strlen($str_filters) ){
+                            $arr_filters = array_filter( array_map("trim", preg_split( "/(?<!\\\)\\|/", $str_filters )) ); // split on unescaped '|'
+
+                            foreach( $arr_filters as $filter ){
+                                $filter = str_replace( '\\|', '|', $filter );
+
+                                // filter has arguments? e.g. 'test=1,2,3'
+                                $arr_args = array_filter( array_map("trim", preg_split( "/(?<!\\\)\\=/", $filter )) ); // split on unescaped '='
+                                $filter = $arr_args[0];
+                                $args = array();
+                                $args[] = $route;
+                                if( isset($arr_args[1]) ){
+                                    $str_args = str_replace( '\\=', '=', $arr_args[1] );
+
+                                    // multiple arguments?
+                                    $arr_args = array_filter( array_map("trim", preg_split( "/(?<!\\\)\\,/", $str_args )) ); // split on unescaped ','
+                                    for( $x=0; $x<count($arr_args); $x++ ){
+                                        $args[] = str_replace( array("\\,", "'"), array(",", "\'"), $arr_args[$x] );
+                                    }
+                                }
+
+                                if( $filter ){
+                                    // execute it
+                                    if( array_key_exists($filter, $FUNCS->filters) ){
+                                        $callable = $FUNCS->filters[$filter];
+                                    }
+                                    else{
+                                        $callable = trim( $filter ); // literal string
+                                    }
+
+                                    $callable = $this->is_callable( $callable );
+                                    if( !$callable ){
+                                        ob_end_clean();
+                                        die( "ERROR: process_route() route \"".$masterpage."::".$route->name."\" - Filter '".$filter."' not found" );
+                                    }
+
+                                    $ret = call_user_func_array( $callable, $args );
+                                    if( !is_null($ret) ){
+                                        // if a filter returns a non-null value, terminate route processing and return the value
+                                        return $ret;
+                                    }
+                                }
+                            }
+                        }
+
+                        // if controller class specified, instantiate it ..
+                        if( $route->class ){
+                            if( !class_exists($route->class) ){
+                                ob_end_clean();
+                                die( "ERROR: process_route() route \"".$masterpage."::".$route->name."\" - controller class '".$route->class."' not found" );
+                            }
+                            $controller = new $route->class();
+                            $callable = array( $controller, $route->action ); // when class is specified, the 'action' parameter is supposed to be a method of that class
+                        }
+                        else{
+                            $callable = $route->action;
+                        }
+
+                        if( !($callable = $this->is_callable($callable)) ){
+                            ob_end_clean();
+                            die( "ERROR: process_route() route \"".$masterpage."::".$route->name."\" - action is not callable" );
+                        }
+
+                        // match route parameters to callable function's arguments
+                        if( is_array($callable) ){
+                            $class_callable = ( is_object($callable[0]) ) ? get_class($callable[0]) : $callable[0];
+                            $reflection = new ReflectionMethod( $class_callable, $callable[1] );
+                        }
+                        elseif( is_string($callable) ){
+                            $reflection = new ReflectionFunction( $callable );
+                        }
+
+                        $args = array();
+                        $values = $route->resolved_values;
+                        $parameters = $reflection->getParameters();
+                        foreach( $parameters as $param ){
+                            if( isset($values[$param->name]) ){
+                                $args[] = $values[$param->name];
+                            }
+                            else{
+                                $args[] = ( $param->isDefaultValueAvailable() ) ? $param->getDefaultValue() : '';
+                            }
+                        }
+
+                        // set this route as the current route..
+                        $FUNCS->current_route = $route;
+
+                        // set in context
+                        $vars = array();
+                        $vars['k_route_name'] = $route->name;
+                        $vars['k_route_module'] = $route->module;
+                        $vars['k_route_masterpage'] = $route->masterpage;
+                        $vars['k_route_link'] = K_ADMIN_URL . K_ADMIN_PAGE . "?o=$masterpage";
+                        if( strlen($path) ){ $vars['k_route_link'] .= '&q=' . $path; }
+                        $vars['k_qs_link'] = $FUNCS->get_qs_link( $vars['k_route_link'] ); // link with passed qs parameters
+                        foreach( $route->values as $k=>$v ){
+                            if( $route->wildcard && $k==$route->wildcard ){
+                                $wildcard_count = count($route->values[$route->wildcard]);
+
+                                $vars['rt_wildcard_count'] = $wildcard_count;
+                                $vars['rt_'.$k] = implode('/', $route->values[$route->wildcard]);
+                                for( $x=0; $x<$wildcard_count; $x++ ){
+                                    $vars['rt_'.$k.'_'.($x+1)] = $route->values[$route->wildcard][$x];
+                                }
+                            }
+                            else{
+                                $vars['rt_'.$k] = $v;
+                            }
+                        }
+                        $CTX->set_all( $vars, 'global' );
+
+                        // HOOK: admin_pre_action
+                        $FUNCS->dispatch_event( 'admin_pre_action', array($route, &$callable, &$args) );
+
+                        // and finally execute the main action ..
+                        $html = call_user_func_array( $callable, $args );
+
+                        // HOOK: admin_post_action
+                        $FUNCS->dispatch_event( 'admin_post_action', array($route, &$callable, &$args, &$html) );
+
+                        return $html;
+                    }
+                }
+            }
+
+            // return 404 route not found
+            return $FUNCS->raise_error( ROUTE_NOT_FOUND );
+
+        }
+
+        function generate_route( $masterpage, $name, $values=array() ){
+            $masterpage = trim( $masterpage );
+            $name = trim( $name );
+
+            if( $masterpage=='' || $name=='' ){ return '#'; } // No masterpage or route name - no link
+
+            // get route object
+            $routes = $this->routes[$masterpage];
+            if( !is_array($routes) || !($route = $routes[$name]) ){
+                return '#';
+            }
+
+            $q = $route->generate( $values );
+            $link = K_ADMIN_URL . K_ADMIN_PAGE . "?o=$masterpage";
+            if( strlen($q) ){ $link .= '&q=' . $q; }
+
+            return $link;
+        }
+
+        function register_filter( $name, $callable ){
+            $name = trim($name);
+            if( !$name ){ ob_end_clean(); die( "ERROR: function register_filter(): Please provide a name to register the filter" ); }
+            if( array_key_exists($name, $this->filters) ){ ob_end_clean(); die( "ERROR: function register_filter(): '$name' already registered" ); }
+
+            $callable = $this->is_callable( $callable, 1 /*syntax only*/ );
+            if( !$callable ){ ob_end_clean(); die( "ERROR: function register_filter(): Please provide a valid callable for the filter '$name'" ); }
+
+            $this->filters[$name] = $callable;
         }
 
         // Store the passed script to output it in admin. (called from udfs)
@@ -2877,6 +3909,49 @@ OUT;
                 $sep = ( strpos($src, '?')===false ) ? '?' : '&';
                 $this->styles[MD5($src)] = $src . $sep . 'kver=' . K_COUCH_BUILD;
             }
+        }
+
+        function add_js( $code ){
+            $this->admin_js .= $code . "\r\n";
+        }
+
+        function add_css( $css ){
+            $this->admin_css .= $css . "\r\n";
+        }
+
+        function add_html( $html ){
+            $this->admin_html .= $html . "\r\n";
+        }
+
+        function get_js(){
+            static $done=0;
+            if( !$done ){
+                $this->dispatch_event( 'add_admin_js' );
+                $done=1;
+            }
+            return $this->admin_js;
+        }
+
+        function get_css(){
+            static $done=0;
+            if( !$done ){
+                $this->dispatch_event( 'add_admin_css' );
+                $done=1;
+            }
+            return $this->admin_css;
+        }
+
+        function get_html(){
+            static $done=0;
+            if( !$done ){
+                $this->dispatch_event( 'add_admin_html' );
+                $done=1;
+            }
+            return $this->admin_html;
+        }
+
+        function show_alert( $heading='', $content='', $type='' ){
+            return $this->render( 'alert', $heading, $content, $type );
         }
 
         function is_core_type( $fieldtype ){
@@ -3066,16 +4141,15 @@ OUT;
         }
 
         function file_get_contents( $url ){
-            $html = @file_get_contents( $url );
-            if( $html==FALSE ){
-                // try curl
-                if( extension_loaded('curl') ){
-                    $ch = curl_init();
-                    curl_setopt( $ch, CURLOPT_URL, $url );
-                    curl_setopt( $ch, CURLOPT_RETURNTRANSFER, 1 );
-                    $html = curl_exec( $ch );
-                    curl_close( $ch );
-                }
+            if( extension_loaded('curl') ){
+                $ch = curl_init();
+                curl_setopt( $ch, CURLOPT_URL, $url );
+                curl_setopt( $ch, CURLOPT_RETURNTRANSFER, 1 );
+                $html = curl_exec( $ch );
+                curl_close( $ch );
+            }
+            else{
+                $html = @file_get_contents( $url );
             }
             return $html;
         }
@@ -3234,220 +4308,31 @@ OUT;
             return $arr;
         }
 
-        function render_admin_page_ex( $_p ){
-            global $AUTH, $DB;
-
-            if( !K_PAID_LICENSE ){ $html_title = 'CouchCMS - Simple Open-Source Content Management : '; }
-            $html_title .= $this->t( 'admin_panel' );
-            ?>
-            <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-            <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
-            <head>
-                <title><?php echo $html_title ?></title>
-                <link rel="shortcut icon" href="<?php echo K_ADMIN_URL . 'favicon.ico'; ?>" type="image/x-icon" />
-                <script type="text/javascript">try { document.execCommand('BackgroundImageCache', false, true); } catch(e) {}</script>
-                <script type="text/javascript" src="<?php echo K_ADMIN_URL . 'includes/mootools-core-1.4.5.js'; ?>"></script>
-                <script type="text/javascript" src="<?php echo K_ADMIN_URL . 'includes/mootools-more-1.4.0.1.js'; ?>"></script>
-                <script type="text/javascript" src="<?php echo K_ADMIN_URL . 'includes/slimbox/slimbox.js'; ?>"></script>
-                <script type="text/javascript" src="<?php echo K_ADMIN_URL . 'includes/smoothbox/smoothbox.js?v=1.3.5'; ?>"></script>
-                <?php
-                foreach( $this->scripts as $k=>$v ){
-                    echo '<script type="text/javascript" src="'.$v.'"></script>'."\n";
-                }
-                ?>
-
-                <link rel="stylesheet" href="<?php echo K_ADMIN_URL . 'includes/slimbox/slimbox.css'; ?>" type="text/css" media="screen" />
-                <link rel="stylesheet" href="<?php echo K_ADMIN_URL . 'includes/smoothbox/smoothbox.css'; ?>" type="text/css" media="screen" />
-                <link rel="stylesheet" href="<?php echo K_ADMIN_URL . 'theme/styles.css?ver='.K_COUCH_BUILD.''; ?>" type="text/css" media="screen" />
-                <!--[if IE]>
-                <link rel="stylesheet" href="<?php echo K_ADMIN_URL . 'theme/ie.css?ver='.K_COUCH_BUILD.''; ?>" type="text/css" media="screen, projection">
-                <![endif]-->
-                <?php
-                foreach( $this->styles as $k=>$v ){
-                    echo '<link rel="stylesheet" href="'.$v.'" type="text/css" media="screen" />'."\n";
-                }
-                ?>
-            </head>
-            <body>
-            <div id="container" ><div id="container2" >
-
-            <?php
-            // header
-            echo '<div id="header" >';
-            if( K_PAID_LICENSE ){
-                if( defined('K_LOGO_DARK') ){
-                    $logo_src = K_ADMIN_URL.'theme/images/'.K_LOGO_DARK;
-                }
-                else{
-                    $logo_src = K_ADMIN_URL.'theme/images/couch_dark.gif';
-                }
+        function is_ajax(){
+            if( !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH'])=='xmlhttprequest' ){
+                return true;
             }
-            else{
-                $logo_src = K_ADMIN_URL.'logo.php?d=1';
-            }
-            echo '<a href="'.K_ADMIN_URL . K_ADMIN_PAGE.'"><img id="couch-logo" src="'.$logo_src.'" /></a>';
-
-            echo '<ul id="admin-subnav">';
-            $nonce = $this->create_nonce( 'update_user_'.$AUTH->user->id );
-            echo '<li>'.$this->t('greeting').', <a href="'.K_ADMIN_URL . K_ADMIN_PAGE.'?o=users&act=edit&id='.$AUTH->user->id.'&nonce='.$nonce.'"><b>' . ucwords( strtolower($AUTH->user->title) ) . '</b></a></li>';
-            echo '<li>|</li>';
-            echo '<li><a href="'.K_SITE_URL.'" target="_blank">'.$this->t('view_site').'</a></li>';
-            echo '<li>|</li>';
-            echo '<li><a href="'.$this->get_logout_link(K_ADMIN_URL . K_ADMIN_PAGE).'">'.$this->t('logout').'</a></li>';
-            echo '</ul>';
-            ?>
-            <noscript>
-                <div class="error">
-                    <?php echo $this->t('javascript_msg'); ?>
-                </div>
-            </noscript>
-            <?php
-            if( $_p['link'] ){
-                echo '<h2><a id="listing-header" href="'.$_p['link'].'">' . $_p['title'] .'</a></h2>';
-            }
-            else{
-                echo '<h2>' . $_p['title'] .'</h2>';
-            }
-            echo $_p['buttons'];
-            echo '</div>'; // end header
-
-            // body
-            ?>
-            <div id="sidebar">
-                <ul class="templates">
-                    <?php
-                    $show_comments_link = 0;
-                    $rs = $DB->select( K_TBL_TEMPLATES, array('*'), '1=1 ORDER BY k_order, id ASC' );
-                    if( count($rs) ){
-                        foreach( $rs as $tpl ){
-
-                            $class = '';
-                            if( $tpl['hidden'] ){
-                                if( $AUTH->user->access_level < K_ACCESS_LEVEL_SUPER_ADMIN ){
-                                    continue;
-                                }
-                                else{
-                                    $class = "hidden-template ";
-                                }
-                            }
-
-                            $class .= ( $tpl['name']==$_p['tpl_name'] ) ? "active-template" : "template";
-                            echo '<li class="'.$class.'">';
-                            if( $tpl['clonable'] ){
-                                $link = K_ADMIN_URL . K_ADMIN_PAGE . '?act=list&tpl=' . $tpl['id'];
-                            }
-                            else{
-                                $nonce = $this->create_nonce( 'edit_page_'.$tpl['id'] );
-                                $link = K_ADMIN_URL . K_ADMIN_PAGE . '?act=edit&tpl=' . $tpl['id'] .'&nonce='.$nonce;
-                            }
-                            if( $AUTH->user->access_level >= K_ACCESS_LEVEL_SUPER_ADMIN ){
-                                echo '<a title="'.$tpl['name'].'" href="'.$link.'">';
-                            }
-                            else{
-                                echo '<a href="'.$link.'">';
-                            }
-                            if( $tpl['clonable'] ){
-                                echo '<img src="'.K_ADMIN_URL.'theme/images/copy.gif"/> ';
-                            }
-                            echo ( $tpl['title'] ) ? $tpl['title'] : $tpl['name'];
-                            echo '</a>';
-                            echo '</li>';
-
-                            if( $tpl['commentable'] ) $show_comments_link=1;
-                        }
-                    }
-                    ?>
-                    <li class="template-separator">
-                        <a href="#">&nbsp;</a>
-                    </li>
-                    <?php
-                        // Show link to comments section only if any template is commentable or if any comment exists
-                        if( !$show_comments_link ){
-                            $rs = $DB->select( K_TBL_COMMENTS, array('id'), '1=1 LIMIT 1' );
-                            if( count($rs) ) $show_comments_link=1;
-                        }
-                    ?>
-                    <?php
-                        if( $show_comments_link ){
-                            $class = ( $_p['module']=='comments' ) ? "active-template" : "template";
-                    ?>
-                            <li class="<?php echo $class; ?>">
-                                <a title="<?php echo $this->t('manage_comments'); ?>" href="<?php echo K_ADMIN_URL . K_ADMIN_PAGE.'?o=comments'; ?>">
-                                    <img src="<?php echo K_ADMIN_URL.'theme/images/comment.gif'; ?>">
-                                    <?php echo $this->t('comments'); ?>
-                                </a>
-                            </li>
-                    <?php } ?>
-
-                    <?php $class = ( $_p['module']=='users' ) ? "active-template" : "template"; ?>
-                    <li class="<?php echo $class; ?>">
-                        <a title="<?php echo $this->t('manage_users'); ?>" href="<?php echo K_ADMIN_URL . K_ADMIN_PAGE.'?o=users'; ?>">
-                            <img src="<?php echo K_ADMIN_URL.'theme/images/user.gif'; ?>">
-                            <?php echo $this->t('users'); ?>
-                        </a>
-                    </li>
-
-                    <?php
-                        if( $_p['module']=='drafts' ){
-                            $class = 'active-template';
-                            $draft_img = 'drafts-open.gif';
-                            $show_drafts_link = 1;
-                        }
-                        else{
-                            $class = 'template';
-                            $draft_img = 'drafts-closed.gif';
-                        }
-                        if( !$show_drafts_link ){
-                            $rs = $DB->select( K_TBL_PAGES, array('id'), 'parent_id>0 LIMIT 1' );
-                            if( count($rs) ) $show_drafts_link=1;
-                        }
-                    ?>
-                    <?php if( $show_drafts_link ){ ?>
-                    <li class="<?php echo $class; ?>">
-                        <a title="<?php echo $this->t('manage_drafts'); ?>" href="<?php echo K_ADMIN_URL . K_ADMIN_PAGE.'?o=drafts'; ?>">
-                            <img src="<?php echo K_ADMIN_URL.'theme/images/'.$draft_img; ?>">
-                            <?php echo $this->t('drafts'); ?>
-                        </a>
-                    </li>
-                    <?php } ?>
-                </ul>
-            </div>
-
-            <div id="admin-wrapper">
-                <div id="admin-wrapper-header">
-                    <?php if( $_p['show_advanced'] ){ ?>
-                        <div id="advanced-settings">
-                            <a id="toggle" class="collapsed" href="#"><?php echo $this->t('advanced_settings'); ?></a>
-                        </div>
-                    <?php } ?>
-                    <?php if( $_p['subtitle'] ) echo '<h3>'.$_p['subtitle'].'</h3>';  ?>
-
-                </div>
-                <div id="admin-wrapper-body">
-                    <?php echo $_p['content'] ?>
-                </div>
-            </div>
-
-            <div id="footer" style="z-index:99999 !important; display:block !important; visibility:visible !important;">
-                <?php
-                    $admin_footer = '<a href="http://www.couchcms.com/" style="display:inline !important; visibility:visible !important;">CouchCMS - Simple Open-Source Content Management ';
-                    $admin_footer .= 'v' . K_COUCH_VERSION . ' (build ' . K_COUCH_BUILD . ')</a>';
-                    if( K_PAID_LICENSE ){
-                        if( defined('K_ADMIN_FOOTER') ) $admin_footer = K_ADMIN_FOOTER;
-                    }
-                    echo $admin_footer;
-                    if( defined('K_IS_MY_TEST_MACHINE') ){
-                        echo '&nbsp;['.k_timer_stop().']';
-                    }
-                ?>
-            </div>
-            </div></div>
-            </body>
-            </html>
-            <?php
-            die;
+            return false;
         }
 
+        function get_template_name(){
+            // Added this for those (extremely rare) cases where the template name cannot be calculated by the logic that follows.
+            // For this to work, place define( 'K_TEMPLATE_NAME', 'actual_template_name.php' ); before require_once( 'couch/cms.php' );
+            if ( defined('K_TEMPLATE_NAME') ) return K_TEMPLATE_NAME;
+
+            // Our assumption here is that 'couch' folder resides directly in the website
+            // folder it is handling.
+
+            $tpl = realpath( $_SERVER['SCRIPT_FILENAME'] );
+            $tpl = str_replace( '\\', '/', $tpl );
+
+            if( substr( $tpl, 0, strlen(K_SITE_DIR) ) != K_SITE_DIR ){
+                return $this->raise_error( "'couch' folder should reside in the main web-site folder" );
+            }
+            $tpl = substr( $tpl, strlen(K_SITE_DIR) );
+
+            return $tpl;
+        }
 
     }// end class KFuncs
 

@@ -2,10 +2,10 @@
  *
  *  TableGear (Dynamic table data in HTML)
  *
- *  Version: 1.6
+ *  Version: 1.6 for jQuery
  *  Documentation: AndrewPlummer.com (http://www.andrewplummer.com/code/tablegear/)
  *  Inspired by: TableKit for Prototype (http://www.millstream.com.au/view/code/tablekit/)
- *  Written for: Mootools 1.2
+ *  Written for: jQuery 1.4
  *  License: MIT-style License
  *
  *  Copyright (c) 2010 Andrew Plummer
@@ -14,412 +14,213 @@
  */
 
 
-var TableGear = new Class({
+(function($){
 
-  Implements: Options,
+  function setDefaults(name, value, hash){
+    if(hash[name] === undefined) hash[name] = value;
+  }
 
-  options: {
-    hideInputs: true,
-    rowStriping: true,
-    autoSelect: true,
-    addNewRows: true,
-    deletePrompt: "Delete this row?",
-    noDataMessage: "- No Data -",
-    addRowLabel: "Add a Row",
-    limitAddedRows: 0
-  },
+  jQuery.fn.tableGear = function(options){
 
-  initialize: function(id, options){
+    options = options || {};
 
-    this.tableID = id;
-    this.setOptions(options);
-    var el = $(id);
+    setDefaults('hideInputs',   true,                options);
+    setDefaults('rowStriping',  true,                options);
+    setDefaults('addNewRows',   true,                options);
+    setDefaults('deletePrompt', 'Delete this row?',  options);
+    setDefaults('noDataMessage', '- No Data -',      options);
+    setDefaults('addRowLabel',  'Add a Row',         options);
+    setDefaults('limitAddedRows', 0,                 options);
 
-    if(!el){
-      this.throwError("Element '"+id+"' does not exist.");
-    }
-    if(el.get("tag") != "table"){
-      this.throwError("Element '"+id+"' must be a <table>.");
-    }
-    this.table = el;
-    this.form = el.getParent("form");
+    initialize(this);
 
-    var thead = this.requireElement("thead", this.table, "Element <thead> is required inside <table>.");
-    this.headerRow = this.requireElement("tr", thead, "A <tr> element is required inside <thead>.", "title");
-    this.headers = this.headerRow.getChildren("th");
+    var table;
+    var tbody;
 
-    this.editableCells = new Array();
+    var id;  // Id of the table
 
-    this.tbody = this.requireElement("tbody", this.table, "Element <tbody> is required inside <table>.");
+    var rows;
+    var headers;
+    var emptyRow;
 
-    this.rows = this.tbody.getChildren("tr");
-    //if(!this.rows.length) this.throwError("Element <tbody> requires at least one row.");
-    this.nextid = this.rows.length;
+    var addRow;
+    var _sortorder;
 
-    this.rows.each(function(row, rowIndex){
-      if(row.hasClass("noDataRow")) return;
-      this.initializeRow(row, rowIndex);
-    }, this);
+    function initialize(el){
 
-    if(this.options.addNewRows && this.form){
-      var newRowForm = $('addNewRow_' + id);
-      newRowForm.setStyle("display", "none");
-      this.emptyDataRow = $('newDataRow_' + id);
-      /*this.addRow = new Element("p", {"class": "addRow"});
-      this.addRow.adopt(new Element("a", {html: this.options.addRowLabel, events: {click: function(event){
-        this.addNewRow();
-      }.bind(this)}}));
-      this.addRow.inject(this.table, "after");*/
-      this.addRow = $('addRow_' + id);
-      this.addRow.getElement('a').addEvent("click", function(event){
-         this.addNewRow();
-      }.bind(this));
+      rows = [];
+      id = el.selector.replace('#', '');
 
-      if(!this.options.editableCellsPerRow){
-        this.options.editableCellsPerRow = this.emptyDataRow.getElements("td.editable").length;
-      }
-    }
-
-    // row drag and drop
-    this.arrangeObj = new ArrangeTableRows({
-      el: this.tableID,
-      onDrag : {
-         showCell : 0
-      }
-    })
-    this.arrangeObj.tg = this;
-    this._sortorder = $('_' + this.tableID + '_sortorder');
-    this._record_order();
-
-    if(!this.rows.length) this.addNewRow();
-  },
-
-  queue: new Array(),
-
-  requireElement: function(css, parent, error, exclude){
-
-    //var elements = parent.getChildren(css);
-
-    /* This is a workaround for lack of "," support in getChildren... change to getChildren when fixed */
-    var split = css.split(",");
-    var elements = [];
-    for(i=0;i<split.length;i++){
-      elements.combine(parent.getChildren(split[i]));
-    }
-    /* End workaround */
-
-    if(!elements) this.throwError(error);
-    var match;
-    elements.each(function(element){
-      if(element.hasClass(exclude)) return;
-      else match = element;
-    });
-    return match;
-  },
-
-  throwError: function(error){
-
-    var exception = "TableGear Error: " + error;
-    alert(exception);
-    throw new Error(exception);
-  },
-
-  addJob: function(row, cell, input, span){
-
-    if(input.get("value") == input.retrieve("currentValue")) return;
-    span.set("html", input.get("value"));
-
-  },
-
-  update: function(){
-
-    this.rows = this.tbody.getChildren("tr");
-
-  },
-
-  stripify: function(){
-    this.rows.each(function(row, rowIndex){
-      this.addStripe(row, rowIndex+1);
-    }, this);
-  },
-
-  addStripe: function(row, index){
-
-    if(!this.options.rowStriping) return;
-    var css = ((index + 1) % 2) ? "even" : "odd";
-    row.erase("class");
-    row.addClass(css);
-  },
-
-  setValue: function(input, value){
-    var tag = input.get("tag");
-    if(tag == "select") input.selectedIndex = input.getElement("option[value="+value+"]").index;
-    else input.set("value", value);
-  },
-
-  initializeRow: function(row, rowIndex){
-
-    this.addStripe(row, rowIndex+1);
-    var cells = row.getChildren("td");
-
-    if(!this.options.editableCellsPerRow) this.options.editableCellsPerRow = row.getElements("td.editable").length;
-
-    var keyInput = row.getElement("input[name^=edit]");
-    if(keyInput){
-      this.hasKeyInput = true;
-      row.store('keyInput', keyInput);
-      if(this.options.hideInputs){
-        var parentCell = keyInput.getParent("td");
-        if(parentCell){
-          var editColumn = cells.indexOf(parentCell);
-          if(this.headers) this.headers[editColumn].setStyle("display", "none");
-          if(this.footers) this.footers[editColumn].setStyle("display", "none");
-          parentCell.setStyle("display", "none");
-        }
-        else keyInput.setStyle("display", "none");
-      }
-    }
-
-    cells.each(function(cell, colIndex){
-
-      var cellID = rowIndex + ":" + colIndex;
-      var column = this.headers[colIndex];
-      var colType = column.retrieve("colType");
-      if(column.hasClass("sortable")){
-        if(colType == "numeric" && !column.hasClass("numeric")){
-          var text = cell.get("text");
-          if(text && !text.match(/[-+]?\d*\.?\d+/)) column.store("colType", "string");
-        }
-      }
-      if(cell.hasClass("inline")){
-
-        this.editableCells.push(cell);
-
-        if (!this.form) this.throwError("Cells require a <form> element to be editable.");
-
-        var span  = this.requireElement("span", cell, "A <span> element is required in editable cell " + cellID + ".");
-        var input = this.requireElement("input,select,textarea", cell, "An <input>, <select>, or <textarea> element is required in editable cell " + cellID + ".");
-          span.setStyle("display", "inline");
-          input.setStyle("display", "none");
-          input.set("autoComplete", "off");
-          var tag = input.get("tag");
-          input.store("currentValue", input.get("value"));
-          input.store("column", colIndex);
-
-          /* IE Selects fire on every key press, so make them act like Firefox */
-          var tridentSelect = (Browser.Engine.trident && tag == "select") ? true : false;
-          input.store("tridentSelect", tridentSelect);
-
-        if(this.options.hideInputs){
-          cell.addEvent("click", function(event){
-
-            span.setStyle("display", "none");
-            input.setStyle("display", "inline");
-
-            input.focus();
-            if(input.select && this.options.autoSelect) input.select();
-
-          }.bindWithEvent(this));
-        }
-
-
-        input.addEvent("blur", function(event){
-
-          if(tridentSelect) this.addJob(row, cell, input, span);
-          if(!this.options.hideInputs) return;
-
-          span.setStyle("display", "inline");
-          input.setStyle("display", "none");
-
-        }.bindWithEvent(this));
-
-        input.addEvent("change", function(event){
-          if(tridentSelect) return;
-          this.addJob(row, cell, input, span);
-        }.bindWithEvent(this));
-
-        input.addEvent("click", function(event){
-          event.stopPropagation();
-        }.bindWithEvent(this));
-
-        input.addEvent("esckey", function(event){
-          this.setValue(input, input.retrieve("currentValue"));
-          if(input.select && this.options.autoSelect) input.select();
-          else input.focus();
-        }.bindWithEvent(this));
-
-      } else if(cell.getElement("input[name^=delete]")){
-
-        var input = this.requireElement("input[type=checkbox]", cell, "An <input> checkbox element is required for deletable rows in cell " + cellID + '.\n(Name property should be "delete[]".)');
-        if(this.options.hideInputs) input.setStyle("display", "none");
-
-        var label = cell.getElement("label");
-        if(label) label.setStyle("display", "block");
-        cell.addEvent("click", function(event){
-
-          event.preventDefault();
-          this.deleteDataRow(row, input);
-
-        }.bindWithEvent(this));
-
+      if(el.is('table')){
+        table = el;
+      } else {
+        throwError("Element '"+id+"' must be a <table>.");
       }
 
-      // deleted columns?
-      var deleted_div = cell.getElement("div.k_cell_deleted");
-      if(deleted_div){
-         deleted_div.setStyle('height', cell.offsetHeight);
-      }
+      requireElement('thead', table, '<thead> is required inside <table>');
 
-    }, this);
-  },
+      headers = $('thead th', table)
 
-  addNewRow: function(event){
-    var noDataRow = this.tbody.getElement("tr.noDataRow");
-    if(noDataRow){
-      noDataRow.dispose();
-      this.rows.erase(noDataRow);
-    }
+      tbody = requireElement('tbody', table, '<tbody> is required inside <table>');
+      tbody.bind( '_reorder', _reordered );
 
-    var newDataRow = this.emptyDataRow.clone();
-    newDataRow.erase("style");
-
-    newDataRow.erase("id");
-    newDataRow.set('id', this.tableID + '-' + this.nextid );
-    var cells = newDataRow.getChildren("td");
-    cells.each(function(cell, colIndex){
-      if(cell.hasClass("editable")){
-         /*var input = this.requireElement("input,select,textarea", cell, "An <input>, <select>, or <textarea> element is required in editable cell.");
-         var name = input.get('name');
-         input.set('name', name.replace('data[xxx]', this.tableID + '[' + this.nextid + ']'));
-         */
-
-         var td_content = cell.get("html");
-         td_content = td_content.replace(/data\[xxx\]/g, this.tableID + '[' + this.nextid + ']')
-         td_content = td_content.replace(/data-xxx-/g, this.tableID + '-' + this.nextid + '-')
-         cell.set("html", td_content);
-
-         cell.getElements('*').each(
-            function(el){
-               if(el.get('tag')=='a'){
-                  if(el.hasClass("smoothbox")){ //smoothbox
-                     el.onclick = TB_bind;
-                  }
-                  if(el.rel && el.rel.test(/^lightbox/i)){ //lightbox
-                    el.slimbox();
-                  }
-               }
-               // id hack
-               var idx = el.get('idx');
-               if( idx ){
-                  el.erase("idx");
-                  el.set('id', idx.replace('data-xxx-', this.tableID + '-' + this.nextid + '-'));
-               }
-            }, this
-         );
-         //
-      }
-    }, this);
-    this.nextid++;
-
-    newDataRow.inject(this.tbody);
-    this.rows.push(newDataRow);
-    this.initializeRow(newDataRow, this.rows.length-1);
-
-    this.arrangeObj._k(newDataRow);
-    this._record_order();
-  },
-
-  deleteDataRow: function(row, input){
-    if(this.options.deletePrompt && !confirm(this.options.deletePrompt)) return;
-    this.removeRow(row);
-    this.stripify();
-    this._record_order();
-  },
-
-  removeRow: function(row){
-    this.rows.erase(row);
-    row.fireEvent('row_delete');
-    row.destroy();
-    if(this.rows.length < 1){
-      var colspan = this.headers.length + 1; // drag handle
-      this.headers.each(function(header){
-        if(header.getStyle("display") == "none") colspan--;
+      nextid = 0;
+      $('tbody tr', table).each(function(rowIndex){
+        var el = $(this);
+        if(el.hasClass('noDataRow')) return;
+        initializeRow(el, rowIndex);
+        nextid++;
       });
-      var noData = new Element("td", {"text": this.options.noDataMessage,"colspan": colspan,"align": "center"});
-      var noDataRow = new Element("tr", {"class": "noDataRow odd"});
-      noDataRow.adopt(noData);
-      this.tbody.adopt(noDataRow);
-      this.addRow.setStyle("display", "block");
+
+
+      if(options.addNewRows){
+        $('#addNewRow_' + id).hide();
+        emptyRow = $('#newDataRow_' + id);
+        addRow = $('#addRow_' + id);
+        $('a', addRow).on("click", function(event){
+             addNewRow();
+        });
+      }
+
+      _sortorder = $('#_' + id + '_sortorder');
+
+      _record_order();
+      if(!rows.length) addNewRow();
+
     }
-    this.editableCells.empty();
-    this.tbody.getElements('td.editable').each(function(cell){
-      this.editableCells.push(cell);
-    }, this);
-  },
 
-  _reordered: function(){
-      this.update();
-      this.stripify();
-      this._record_order();
-  },
-
-  _record_order: function(){
-      this._sortorder.set("value", this.arrangeObj.getRows().join(','));
-  }
-
-});
-
-
-if(!Element.Events.tabkey){
-  Element.Events.tabkey = {
-    base: "keydown",
-    condition: function(event){
-      return (event.key == "tab");
+    function requireElement(selector, el, error){
+      var found = el.find(selector);
+      if(found.length == 0) throwError(error);
+      return found;
     }
-  }
-}
-if(!Element.Events.enterkey){
-  Element.Events.enterkey = {
-    base: "keydown",
-    condition: function(event){
-      return (event.key == "enter");
-    }
-  }
-}
 
-if(!Element.Events.esckey){
-  Element.Events.esckey = {
-    base: "keydown",
-    condition: function(event){
-      return (event.key == "esc");
+    function throwError(error){
+      var exception = "TableGear Error: " + error;
+      alert(exception);
+      throw new Error(exception);
     }
-  }
-}
 
-if(!Element.Events.arrowkeys){
-  Element.Events.arrowkeys = {
-    base: "keydown",
-    condition: function(event){
-      var arrows = ["up", "down"];
-      return (arrows.contains(event.key));
+    function update(){
+      rows = [];
+      $('tbody tr', table).each(function(rowIndex){
+        var el = $(this);
+        rows.push(el);
+      });
     }
-  }
-}
 
-if(!Element.Events.pageUpKey){
-  Element.Events.pageUpKey = {
-    base: "keydown",
-    condition: function(event){
-      return (event.code == 33);
+    function stripify(){
+        $.each(rows, function(rowIndex){
+          var row = $(this);
+          addStripe(row, rowIndex);
+        });
     }
-  }
-}
 
-if(!Element.Events.pageDownKey){
-  Element.Events.pageDownKey = {
-    base: "keydown",
-    condition: function(event){
-      return (event.code == 34);
+    function addStripe(row, index){
+      if(index % 2 == 0){
+        row.addClass('odd');
+        row.removeClass('even');
+      } else {
+        row.addClass('even');
+        row.removeClass('odd');
+      }
     }
-  }
-}
+
+    function initializeRow(row, rowIndex){
+      rows.push(row);
+      addStripe(row, rowIndex);
+
+      $('td', row).each(function(columnIndex){
+
+        var cell = $(this);
+        var cellID = rowIndex + ":" + columnIndex;
+
+        var deleteCheckbox = $('input[name^=delete]', cell);
+        if(deleteCheckbox.length > 0){
+            var input = requireElement("input[type=checkbox]", cell, "An <input> checkbox element is required for deletable rows in cell " + cellID + '.\n(Name property should be "delete[]".)');
+            if(options.hideInputs) input.css("display", "none");
+
+            var label = $("label", cell);
+            if(label) label.css("display", "block");
+            cell.on("click", function(event){
+              event.preventDefault();
+              removeRow(row);
+            });
+        }
+      });
+
+    }
+
+    function addNewRow(){
+      $('.noDataRow', tbody).remove();
+      var newRow = emptyRow.clone();
+      newRow.removeAttr('style');
+      newRow.removeAttr('id');
+      newRow.attr('id', id + '-' + nextid );
+
+      $('td', newRow).each(function(columnIndex){
+          var cell = $(this);
+
+          if(cell.hasClass('editable')){
+             var td_content = cell.html();
+             td_content = td_content.replace(/data\[xxx\]/g, id + '[' + nextid + ']')
+             td_content = td_content.replace(/data-xxx-/g, id + '-' + nextid + '-')
+             cell.html(td_content);
+
+             cell.find('*').each(function(){
+               // id hack
+               var el = $(this);
+               var idx = el.attr('idx');
+               if( idx ){
+                  el.removeAttr("idx");
+                  el.attr('id', idx); // not necessary with jQuery as, unlike mootools, it does return the id
+               }
+             });
+          }
+
+      });
+
+      nextid++;
+      tbody.append(newRow);
+      initializeRow(newRow, rows.length);
+      _record_order();
+    }
+
+    function removeRow(row){
+      if(options.deletePrompt && !confirm(options.deletePrompt)) return;
+
+      rows = $.grep(rows, function(r){ return r.attr('id') !== row.attr('id'); });
+      row.trigger('row_delete');
+      row.remove();
+      if(rows.length < 1){
+        var message = options.noDataMessage;
+        var colspan = $('thead th:visible', table).length;
+        var noDataRow = $('<tr class="noDataRow odd"><td align="center" colspan="'+colspan+'">'+message+'</td></tr>');
+        tbody.append(noDataRow);
+        addRow.show();
+      }
+      stripify();
+      _record_order();
+    }
+
+    function _reordered(){
+      update();
+      stripify();
+      _record_order();
+    }
+
+    function _record_order(){
+        var ret = [];
+
+        $.each(rows, function(rowIndex){
+          var row = $(this);
+          var row_id = row.attr('id');
+          ret.push(row_id.substr(row_id.lastIndexOf('-')+1));
+        });
+
+        _sortorder.val(ret.join(','));
+    }
+
+  };
+
+})(jQuery);

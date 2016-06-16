@@ -31,7 +31,7 @@
             <link rel="stylesheet" href="<?php echo $css_link; ?>" />
             <?php
             if( !$skip_ckeditor ){
-                require_once( K_COUCH_DIR.'addons/inline/view/scripts.php' );
+                require_once( K_COUCH_DIR.'addons/inline/theme/scripts.php' );
             }
             else{
                 $CTX->set( 'k_disable_inline_edit', '1', 'global' );
@@ -98,7 +98,7 @@
             $nonce = $FUNCS->create_nonce( 'edit_page_' . $obj_id );
 
             // create link
-            $url = K_ADMIN_URL."addons/inline/index.php?act=edit&tpl=".$tpl_id."&p=".$page_id."&nonce=".$nonce."&flist=".$fields;
+            $url = K_ADMIN_URL.K_ADMIN_PAGE."?o=inline&q=edit&tpl=".$tpl_id."&p=".$page_id."&nonce=".$nonce."&flist=".$fields;
             $onclick = "TINY.box.show({iframe:'".$url."',animate:false,width:795,height:535,boxid:'k_inline',modal:1});";
             if( !$CTX->get('k_disable_inline_edit') ){
                 $onclick = "if(window.CKEDITOR && window.CKEDITOR.k_regions){for(var i=0;i<window.CKEDITOR.k_regions.length;i++){if(window.CKEDITOR.k_regions[i].checkDirty()){alert( '".$prompt_text."' );window.CKEDITOR.k_regions[i].focus();return false;}}}" . $onclick;
@@ -213,6 +213,28 @@
             return '[' . $str_tb_buttons  . $row_sep . '["inlinesave"]]';
         }
 
+        static function register_admin_routes(){
+            global $FUNCS, $DB;
+
+            $route = array(
+                'name'=>'edit',
+                'path'=>'edit',
+                'include_file'=>K_COUCH_DIR.'addons/inline/inline_ex.php',
+                'class'=> 'InlineEx',
+                'action'=>'edit_action',
+                'module'=>'inline', /* owner module of this route */
+            );
+
+            $FUNCS->register_route( 'inline', $route );
+        }
+
+        // renderable theme functions
+        static function register_renderables(){
+            global $FUNCS;
+
+            $FUNCS->register_render( 'inline_content_form', array('template_path'=>K_COUCH_DIR.'addons/inline/theme/') );
+        }
+
     } // end class
 
     $FUNCS->register_tag( 'load_edit', array('Inline', 'load_edit_handler') );
@@ -220,3 +242,7 @@
     $FUNCS->register_tag( 'popup_edit', array('Inline', 'inline_handler') );
     $FUNCS->register_tag( 'inline_edit', array('Inline', 'inline_handler') );
     $FUNCS->register_tag( 'inline_link', array('Inline', 'inline_handler') );
+    if( defined('K_ADMIN') ){
+        $FUNCS->add_event_listener( 'register_admin_routes',  array('Inline', 'register_admin_routes') );
+    }
+    $FUNCS->add_event_listener( 'register_renderables',  array('Inline', 'register_renderables') );

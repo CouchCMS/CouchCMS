@@ -1,0 +1,7 @@
+<cms:capture into='my_content' >
+    <cms:show_warning heading="<cms:localize 'access_denied' />">
+        <p><cms:localize 'insufficient_privileges' /></p>
+        <a href="<cms:show k_logout_link />"><cms:localize 'logout' /></a>
+    </cms:show_warning>
+</cms:capture>
+<cms:render 'simple' my_content />

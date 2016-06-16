@@ -1,0 +1,40 @@
+<table class="table table-primary table-list">
+    <thead>
+        <tr>
+            <cms:render 'list_header' />
+        </tr>
+    </thead>
+    <tbody id="listing">
+        <cms:nested_pages
+            masterpage            = k_template_name
+            orderby               = k_selected_orderby
+            order                 = k_selected_order
+            ignore_show_in_menu   = '1'
+            ignore_active_status  = '1'
+            include_custom_fields = '1'
+            paginate              = '1'
+            limit                 = k_selected_limit
+            base_link             = k_route_link
+        >
+
+                <cms:if k_paginated_bottom >
+                    <cms:set my_paginator="<cms:render 'paginator' />" 'parent' />
+                </cms:if>
+
+                <cms:if k_paginated_top>
+                    <cms:if k_level gt '0' >
+                        <cms:parent_nested_pages page_name=k_page_name include_custom_fields='1'>
+                            <tr>
+                                <cms:render 'list_row' />
+                            </tr>
+                        </cms:parent_nested_pages>
+                    </cms:if>
+                </cms:if>
+
+                <tr>
+                    <cms:render 'list_row' />
+                </tr>
+
+        </cms:nested_pages>
+    </tbody>
+</table>

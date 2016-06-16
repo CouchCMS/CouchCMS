@@ -1,0 +1,29 @@
+<div class="gallery-wrap">
+    <div class="gallery-item">
+        <a class="gallery-img-link" href="<cms:show k_update_link />" style="background-image:url('<cms:show k_item_thumb />');"></a>
+
+        <div class="gallery-misc">
+            <div class="gallery-actions">
+                <cms:render 'list_checkbox' />
+
+                <a class="icon gallery-preview tt popup-gallery" data-popup-title="Image 7" href="<cms:show k_item_image />" title="Preview"><svg class="i"><cms:show_icon 'zoom-in' /></a>
+
+                <div class="gallery-icons">
+                    <cms:if k_has_list_updown>
+                        <cms:render 'list_updown' horizontal='1'  />
+                        <span class="nested-sep"></span>
+                    </cms:if>
+
+                    <cms:render 'list_comments_count' />
+                    <cms:render 'row_actions' />
+                </div>
+            </div>
+
+            <a class="gallery-link" href="<cms:show k_update_link />" title="<cms:show k_page_title />"><cms:excerpt count='20' truncate_chars='1'><cms:show k_item_label /></cms:excerpt></a><br/>
+
+            <div class="gallery-txt<cms:if k_page_date=='0000-00-00 00:00:00'> label label-error</cms:if>"><cms:if k_page_date=='0000-00-00 00:00:00'><cms:localize 'unpublished' /><cms:else /><cms:date k_page_date format='M jS Y' /></cms:if></div>
+
+            <div class="gallery-size"><cms:size_format bytes=k_file_size /></div>
+        </div>
+    </div>
+</div>

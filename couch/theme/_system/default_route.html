@@ -1,0 +1,9 @@
+<cms:admin_menuitems childof='_templates_'>
+    <cms:if k_menu_open_external != '1'>
+        <cms:redirect k_menu_link />
+    </cms:if>
+</cms:admin_menuitems>
+
+<cms:show_info>
+    <cms:localize 'no_templates_defined' />
+</cms:show_info>

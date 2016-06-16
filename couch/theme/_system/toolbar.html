@@ -1,0 +1,20 @@
+<div class="btn-group">
+    <cms:admin_actions childof='toolbar'>
+        <cms:if k_action_is_custom >
+            <cms:if k_action_render>
+                <cms:render k_action_render />
+            <cms:else />
+                <cms:show k_action_html />
+            </cms:if>
+        <cms:else />
+            <a class="btn icon-collapse tt-collapse<cms:if k_action_class> <cms:show k_action_class /></cms:if>"
+                data-title="<cms:if k_action_desc><cms:show k_action_desc /><cms:else /><cms:show k_action_title /></cms:if>"
+                href="<cms:show k_action_link />"
+                <cms:if k_action_target>target="<cms:show k_action_target />"</cms:if>
+            >
+                <cms:if k_action_icon ><cms:show_icon k_action_icon /></cms:if>
+                <span class="collapse-title"><cms:show k_action_title /></span>
+            </a>
+        </cms:if>
+    </cms:admin_actions>
+</div>

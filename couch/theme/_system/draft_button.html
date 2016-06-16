@@ -1,0 +1,15 @@
+<cms:if k_draft_mode='update' >
+    <div id="update-original" class="k_element field">
+        <a class="btn tt" id="btn_update_original" href="#" title="<cms:localize 'update_original_msg' />"
+            onclick="this.style.cursor='wait'; $('#k_custom_action').val('update_original' ); $('#<cms:show k_cur_form />').submit(); return false;">
+            <span class="btn-icon"><cms:show_icon 'document' /></span><cms:localize 'update_original' />
+        </a>
+    </div>
+<cms:else />
+    <div id="create-draft" class="k_element field">
+        <a class="btn tt" id="btn_draft" href="#" title="<cms:localize 'create_draft_msg' />"
+            onclick="this.style.cursor='wait'; $('#k_custom_action').val('create_draft' ); $('#<cms:show k_cur_form />').submit(); return false;">
+            <span class="btn-icon"><cms:show_icon 'document' /></span><cms:localize 'create_draft' />
+        </a>
+    </div>
+</cms:if>

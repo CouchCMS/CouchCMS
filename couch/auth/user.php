@@ -85,15 +85,22 @@
 
         }
 
+        function destroy(){
+            // release fields
+            $this->fields = array();
+        }
+
         function populate_fields(){
-            global $FUNCS;
+            global $FUNCS, $AUTH;
+
+            if( count($this->fields) ) return;
 
             $fields = array(
                         'name'=>$FUNCS->t('user_name'),
                         'title'=>$FUNCS->t('display_name'),
                         'email'=>$FUNCS->t('email'),
-                        'access_level'=>'Role',
-                        'disabled'=>'Disabled'
+                        'access_level'=>$FUNCS->t('role'),
+                        'disabled'=>$FUNCS->t('disabled')
                         );
 
             foreach( $fields as $k=>$v ){
@@ -107,7 +114,8 @@
                     'data' => $this->$k,
                     'required' => '1',
                     'validator' => '',
-                    'system' => '1'
+                    'system' => '1',
+                    'module' => 'users',
                 );
 
                 if( $k=='name' ){
@@ -118,10 +126,20 @@
                     $field_info['validator'] = 'email';
                 }
                 elseif( $k=='access_level' || $k=='disabled' ){
-                    $field_info['hidden'] = '1';
+                    if( $this->id == $AUTH->user->id ){ $field_info['hidden']='1'; };
                 }
 
-                $this->fields[] = new KFieldUser( $field_info, $this->fields );
+                if( $k=='disabled' ){
+                    $field_info['required'] = '0';
+                    $this->fields[] = new KSingleCheckField( $field_info, $this, $this->fields );
+                }
+                elseif( $k=='access_level' ){
+                    $field_info['validator'] = 'non_zero_integer';
+                    $this->fields[] = new KUserAccessLevel( $field_info, $this, $this->fields );
+                }
+                else{
+                    $this->fields[] = new KField( $field_info, $this, $this->fields );
+                }
             }
 
             $field_info = array(
@@ -134,9 +152,10 @@
                     'data' => '',
                     'required' => ($this->id == -1) ? '1' : '0',
                     'validator' => 'min_len='.K_MIN_PASSWORD_LEN.'|max_len=64',
-                    'system' => '0'
+                    'system' => '0',
+                    'module' => 'users',
                 );
-            $this->fields[] = new KFieldUser( $field_info, $this->fields );
+            $this->fields[] = new KField( $field_info, $this, $this->fields );
 
             $field_info = array(
                     'id' => -1,
@@ -148,9 +167,10 @@
                     'data' => '',
                     'required' => ($this->id == -1) ? '1' : '0',
                     'validator' => 'matches_field=k_password',
-                    'system' => '0'
+                    'system' => '0',
+                    'module' => 'users',
                 );
-            $this->fields[] = new KFieldUser( $field_info, $this->fields );
+            $this->fields[] = new KField( $field_info, $this, $this->fields );
 
             // HOOK: alter_user_fields_info
             $FUNCS->dispatch_event( 'alter_user_fields_info', array(&$this->fields, &$this) );
@@ -216,7 +236,9 @@
             // Validate all fields before persisting changes
             for( $x=0; $x<count($this->fields); $x++ ){
                 $f = &$this->fields[$x];
-                if( !$f->validate() ) $errors++;
+                if( !$f->validate() ){
+                    $errors++;
+                }
             }
 
             // HOOK: user_validate

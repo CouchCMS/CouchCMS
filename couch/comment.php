@@ -75,13 +75,17 @@
 
         function populate_fields(){
             global $FUNCS;
+
+            if( count($this->fields) ) return;
+
             $fields = array(
                         'name'=>$FUNCS->t('name'), /*'Name',*/
                         'email'=>$FUNCS->t('email'), /*'E-Mail',*/
                         'link'=>$FUNCS->t('website'), /*'Website',*/
                         'data'=>$FUNCS->t('comment'), /*'Comment',*/
-                        'date'=>'Submitted on',
-                        'approved'=>'Approved'
+                        'date'=>$FUNCS->t('submitted_on'),
+                        'approved'=>$FUNCS->t('status'),
+                        'dummy'=>'',
                         );
 
             foreach( $fields as $k=>$v ){
@@ -95,29 +99,39 @@
                     'data' => '',
                     'required' => '1',
                     'validator' => '',
-                    'system' => '1'
+                    'system' => '1',
+                    'module' => 'comments',
                 );
 
                 $field_info['name'] = 'k_'.$k;
                 $field_info['label'] = $v;
                 $field_info['data'] = $this->$k;
 
-                if( $k=='email' ){
-                    $field_info['validator'] = 'email';
+                if( $k=='date' ){
+                    $this->fields[] = new KCommentDateField( $field_info, $this, $this->fields );
                 }
-                elseif( $k=='link' ){
-                    $field_info['required'] = '0';
+                elseif( $k=='approved' ){
+                    $this->fields[] = new KSingleCheckField( $field_info, $this, $this->fields, $FUNCS->t('approved') );
                 }
-                elseif( $k=='data' ){
-                    $field_info['k_type'] = 'richtext';
-                    $field_info['toolbar'] = 'basic';
-                }
+                else{
+                    if( $k=='email' ){
+                        $field_info['validator'] = 'email';
+                    }
+                    elseif( $k=='link' ){
+                        $field_info['required'] = '0';
+                    }
+                    elseif( $k=='data' ){
+                        $field_info['k_type'] = 'richtext';
+                        $field_info['toolbar'] = 'basic';
+                    }
+                    elseif( $k=='dummy' ){
+                        $field_info['system'] = '0';
+                        $field_info['required'] = '0';
+                        $field_info['no_render'] = '1';
+                    }
 
-                if( $k=='date' || $k=='approved' ){
-                    $field_info['hidden'] = '1';
+                    $this->fields[] = new KField( $field_info, $this, $this->fields );
                 }
-
-                $this->fields[] = new KFieldUser( $field_info, $this->fields );
             }
 
             // HOOK: alter_comment_fields_info

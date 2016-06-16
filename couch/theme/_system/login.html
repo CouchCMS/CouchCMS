@@ -1,0 +1,46 @@
+<cms:capture into='my_content' >
+
+    <cms:if k_show_error>
+        <cms:show_error>
+            <cms:show k_error_msg />
+        </cms:show_error>
+    </cms:if>
+
+    <noscript>
+        <cms:show_warning>
+            <cms:localize 'javascript_msg' />
+        </cms:show_warning>
+    </noscript>
+
+    <div class="simple-box">
+        <div class="panel-heading simple-heading">
+            <span class="login-heading"><cms:localize 'admin_panel' /></span>
+        </div>
+        <div class="simple-content">
+            <div class="login-form">
+
+                <form name="frm_login" action="" class="simple-form" method="post">
+                    <div class="field prepend">
+                        <input id="k_user_name" name="k_user_name" autofocus="autofocus" class="text autofocus" placeholder="<cms:localize 'user_name' />" required="required" tabindex="1" type="text" value=""/>
+                        <cms:show_icon 'person' />
+                    </div>
+
+                    <div class="field prepend append">
+                        <input id="k_user_pwd"  name="k_user_pwd" autocomplete="off" class="password" placeholder="Password" required="required" tabindex="2" type="password" value=""/>
+                        <cms:show_icon 'lock-locked' />
+                        <a class="login-swap tt" data-swap="forgot" tabindex="4" title="<cms:localize 'forgot_password' />" href="<cms:show k_admin_link />forgotpassword.php">&nbsp;</a>
+                    </div>
+
+                    <div class="simple-btns">
+                        <button class="btn btn-primary" tabindex="3" type="submit"><cms:show_icon 'account-login' /><cms:localize 'login' /></button>
+                    </div>
+
+                    <input type="hidden" name="k_cookie_test" value="1" />
+                    <input type="hidden" name="k_login" value="1" />
+                </form>
+
+            </div>
+        </div>
+    </div>
+</cms:capture>
+<cms:render 'simple' my_content />

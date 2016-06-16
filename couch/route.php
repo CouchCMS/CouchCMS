@@ -23,39 +23,59 @@ class Route
     var $generate;
     var $filters;
     var $validators = array();
+    var $include_file;
+    var $controller;
+    var $action;
+    var $access_callback;
+    var $access_callback_params;
+    var $module;
+
 
     var $regex;
     var $matches;
     var $debug;
     var $wildcard;
+    var $resolved_values = array();
 
     function Route(
-        $name        = null,
-        $masterpage  = null,
-        $path        = null,
-        $params      = null,
-        $values      = null,
-        $method      = null,
-        $secure      = null,
-        $routable    = true,
-        $is_match    = null,
-        $generate    = null,
-        $filters     = null,
-        $validators  = null
+        $name         = null,
+        $masterpage   = null,
+        $path         = null,
+        $params       = null,
+        $values       = null,
+        $method       = null,
+        $secure       = null,
+        $routable     = true,
+        $is_match     = null,
+        $generate     = null,
+        $filters      = null,
+        $validators   = null,
+        $include_file = null,
+        $class        = null,
+        $action       = null,
+        $access_callback = null,
+        $access_callback_params = null,
+        $module       = null
     ) {
 
-        $this->name        = (string) $name;
-        $this->masterpage  = (string) $masterpage;
-        $this->path        = (string) $path;
-        $this->params      = (array) $params;
-        $this->values      = (array) $values;
-        $this->method      = ($method === null) ? null : (array) $method;
-        $this->secure      = ($secure === null) ? null : (bool)  $secure;
-        $this->routable    = (bool) $routable;
-        $this->is_match    = $is_match;
-        $this->generate    = $generate;
-        $this->filters     = $filters;
-        $this->validators  = (array) $validators;
+        $this->name         = (string) $name;
+        $this->masterpage   = (string) $masterpage;
+        $this->path         = (string) $path;
+        $this->params       = (array) $params;
+        $this->values       = (array) $values;
+        $this->method       = ($method === null) ? null : (array) $method;
+        $this->secure       = ($secure === null) ? null : (bool)  $secure;
+        $this->routable     = (bool) $routable;
+        $this->is_match     = $is_match;
+        $this->generate     = $generate;
+        $this->filters      = $filters;
+        $this->validators   = (array) $validators;
+        $this->include_file = trim( $include_file );
+        $this->class        = trim( $class );
+        $this->action       = $action;
+        $this->access_callback          = $access_callback;
+        $this->access_callback_params   = $access_callback_params;
+        $this->module       = (string) $module;
 
         // convert path and params to a regular expression
         $this->setRegex();
@@ -116,6 +136,7 @@ class Route
         }
 
         // done!
+        $this->resolved_values = $this->values;
         return true;
     }
 
@@ -133,22 +154,13 @@ class Route
      */
     function generate(array $data = null)
     {
+        global $FUNCS;
+
         // use a callable to modify the path data?
         if ($this->generate) {
-            $generate = trim( $this->generate );
-
-            if( strlen($generate) ){
-                if( strpos($generate, '::')!==false ){
-                    $arr = explode( '::', $generate );
-                    if( is_callable(array($arr[0], $arr[1])) ){
-                        call_user_func_array( array($arr[0], $arr[1]), array(&$this, &$data) );
-                    }
-                }
-                else{
-                    if( function_exists($generate) ) {
-                        call_user_func_array( $generate, array(&$this, &$data) );
-                    }
-                }
+            $callback = $FUNCS->is_callable( $this->generate );
+            if( $callback ){
+                call_user_func_array( $callback, array(&$this, &$data) );
             }
         }
 

@@ -1,0 +1,30 @@
+<cms:if k_paginator_required >
+    <cms:capture into='my_paginator_label' scope='parent' >
+        <span class="ctrl-label ctrl-label-showing">Viewing <strong><cms:show k_record_from /></strong> &ndash; <strong><cms:show k_record_to /></strong> of <strong><cms:show k_total_records /></strong></span>
+        <span class="ctrl-sep ctrl-sep-showing"></span>
+    </cms:capture>
+
+    <div class="btn-group">
+        <cms:paginator adjacents='1'>
+            <cms:if k_crumb_type='prev' >
+                <a class="btn btn-pg pg-prev tt<cms:if k_crumb_disabled> disabled</cms:if>" <cms:if k_crumb_disabled>href="#" onClick="return false"<cms:else />href="<cms:show k_crumb_link />"</cms:if> title="Previous"><cms:show_icon 'arrow-thick-left' /></a>
+            </cms:if>
+
+            <cms:if k_crumb_type='ellipsis' >
+                <a class="btn btn-pg disabled" href="#" onClick="return false">&hellip;</a>
+            </cms:if>
+
+            <cms:if k_crumb_type='page' >
+                <cms:if k_crumb_current>
+                    <a class="btn btn-pg btn-primary tt" href="#" onClick="return false" title="<cms:show k_crumb_text />"><cms:show k_crumb_text /></a>
+                <cms:else />
+                    <a class="btn btn-pg tt" href="<cms:show k_crumb_link />" title="<cms:show k_crumb_text />"><cms:show k_crumb_text /></a>
+                </cms:if>
+            </cms:if>
+
+            <cms:if k_crumb_type='next' >
+                <a class="btn btn-pg pg-next tt<cms:if k_crumb_disabled> disabled</cms:if>" <cms:if k_crumb_disabled>href="#" onClick="return false"<cms:else />href="<cms:show k_crumb_link />"</cms:if> title="Next"><cms:show_icon 'arrow-thick-right' /></a>
+            </cms:if>
+        </cms:paginator>
+    </div>
+</cms:if>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="50" height="50" xmlns="http://www.w3.org/2000/svg">
+<g opacity="0.06">
+<polygon points="0,25 25,0 0,0"/>
+<polygon points="0,50 25,50 50,25 50,0"/>
+</g>
+</svg>

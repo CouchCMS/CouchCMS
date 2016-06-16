@@ -1,0 +1,30 @@
+<cms:if k_folder_totalchildren >
+    <div class="select filter-field">
+        <select name='f_k_folders' id='f_k_folders'>
+            <option value="-1" >--- <cms:show k_root_text /> ---</option>
+            <cms:folders masterpage=k_template_name hierarchical='1' orderby='weight' >
+                <cms:if k_folder >
+                    <cms:set pad = "<cms:repeat "<cms:mul k_level '4'/>" >&nbsp;</cms:repeat>" />
+                    <option class="level-<cms:show k_level />" value="<cms:show k_folder_id />" <cms:if k_folder_id=k_selected_folderid >SELECTED=1</cms:if> >
+                        <cms:show pad /><cms:show k_folder_title />
+                    </option>
+                </cms:if>
+            </cms:folders>
+        </select>
+        <span class="select-caret"><cms:show_icon 'caret-bottom' /></span>
+    </div>
+
+    <cms:admin_add_js>
+        $(function(){
+            $('#f_k_folders').on( "change", function(){
+                var $this  = $( this );
+                var link = '<cms:show k_filter_link />';
+                var fid = $this.val();
+                if( fid != -1 ){
+                    link += '&fid=' + fid;
+                }
+                document.location.href = link;
+            });
+        });
+    </cms:admin_add_js>
+</cms:if>

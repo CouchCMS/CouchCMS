@@ -1,0 +1,36 @@
+<table class="table table-primary table-list">
+    <thead>
+        <tr>
+            <cms:render 'list_header' />
+        </tr>
+    </thead>
+    <tbody id="listing">
+        <cms:pages
+                masterpage       = k_template_name
+                id               = k_selected_pageids
+                folder           = k_selected_foldername
+                orderby          = k_selected_orderby
+                order            = k_selected_order
+                custom_field     = k_selected_custom_field
+                paginate         = '1'
+                limit            = k_selected_limit
+                show_unpublished = '1'
+                show_future_entries = '1'
+                page_name        = "<cms:if k_selected_exclude>NOT <cms:show k_selected_exclude /></cms:if>"
+                start_on         = k_selected_start_on
+                stop_before      = k_selected_stop_before
+                base_link        = k_route_link
+                token            = k_cur_token
+            >
+
+            <cms:if k_paginated_bottom >
+                <cms:set my_paginator="<cms:render 'paginator' />" 'parent' />
+            </cms:if>
+
+            <tr>
+                <cms:render 'list_row' />
+            </tr>
+
+        </cms:pages>
+    </tbody>
+</table>

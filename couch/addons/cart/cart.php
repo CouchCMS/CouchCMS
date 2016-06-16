@@ -220,7 +220,7 @@
             if( isset($_GET['kcart_action']) && $FUNCS->is_non_zero_natural($_GET['kcart_action']) ){
 
                 // Sanity check - actions should be executed only when invoked on the cart template
-                $cur_tpl = KWebpage::get_template_name();
+                $cur_tpl = $FUNCS->get_template_name();
                 if( $FUNCS->is_error($cur_tpl) || $cur_tpl!=$this->config['tpl_cart']) return;
 
                 $action = (int)$_GET['kcart_action'];

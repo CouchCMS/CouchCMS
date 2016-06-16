@@ -148,6 +148,11 @@
     // Set the following to '1' if you wish to use KCFinder as the default file-browser (will require PHP5 and modern browsers)
     define( 'K_USE_KC_FINDER', 1 );
 
+    // 26
+    // If the admin-panel uses a custom theme, set the following to the folder-name of the theme.
+    // Theme folder is expected to be within the 'couch/theme' folder. No leading or trailing slashes please.
+    //define( 'K_ADMIN_THEME', 'sample' );
+
     // 99.
     // VERY IMPORTANT!
     // Set the following to '1' ONLY IF YOU HAVE BOUGHT A COMMERCIAL LICENSE for the site you are using this file on.

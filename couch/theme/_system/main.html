@@ -1,0 +1,104 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1, minimal-ui" name="viewport"/>
+    <meta content="IE=edge" http-equiv="X-UA-Compatible"/>
+    <title><cms:localize 'admin_panel' /></title>
+    <link href="<cms:show k_system_theme_link />includes/admin/main.css?v=<cms:show k_cms_build />" rel="stylesheet"/>
+    <link href="<cms:show k_system_theme_link />includes/mcustomscrollbar/mcustomscrollbar.css?v=<cms:show k_cms_build />" rel="stylesheet"/>
+    <link href="<cms:show k_system_theme_link />includes/magnific-popup/magnific-popup.css?v=<cms:show k_cms_build />" rel="stylesheet"/>
+
+    <cms:admin_css_files>
+        <link rel="stylesheet" href="<cms:show k_css_file />" type="text/css" media="screen" />
+    </cms:admin_css_files>
+
+    <style>
+        <cms:admin_css />
+    </style>
+
+    <!--[if lt IE 9]><script src="<cms:show k_system_theme_link />includes/ie9.min.js?v=q"></script><![endif]-->
+    <!--[if lte IE 9]><script src="<cms:show k_system_theme_link />includes/matchmedia.min.js?v=q"></script><![endif]-->
+    <script src="<cms:show k_system_theme_link />includes/svg4everybody.min.js?v=q"></script>
+    <!--[if lt IE 9]><script src="<cms:show k_admin_link />includes/jquery-1.x.min.js?v=<cms:show k_cms_build />"></script><![endif]-->
+    <!--[if gte IE 9]><!--><script src="<cms:show k_admin_link />includes/jquery-2.x.min.js?v=<cms:show k_cms_build />"></script><!--<![endif]-->
+    <script src="<cms:show k_system_theme_link />includes/admin/main.js?v=<cms:show k_cms_build />"></script>
+
+    <cms:admin_js_files>
+        <script type="text/javascript" src="<cms:show k_js_file />"></script>
+    </cms:admin_js_files>
+    <link href="favicon.ico" rel="shortcut icon"/>
+</head>
+<body>
+
+<cms:if k_show_simple>
+    <div id="content">
+        <cms:admin_html />
+        <cms:show k_main_content />
+    </div>
+<cms:else />
+    <div id="sidebar">
+        <button class="tt" data-placement="right" id="sidebar-toggle" title="Toggle Sidebar" type="button"><cms:render 'icon' 'menu' /></button>
+        <div id="menu-wrap">
+            <a href="<cms:show k_admin_link /><cms:show k_admin_page />" id="logo-wrap"><cms:render 'logo' dark='1' id='logo' /></a>
+            <div class="btn-group" id="menu-btns">
+                <a class="btn btn-alt btn-menu" href="<cms:show k_logout_link />"><cms:show_icon 'account-logout' /></a>
+                <a class="btn btn-alt btn-menu" href="<cms:show k_site_link />" target="_blank"><cms:show_icon 'magnifying-glass' /></a>
+                <button class="btn btn-primary btn-menu" type="button"><cms:show_icon 'menu' /></button>
+            </div>
+        </div>
+        <div id="menu-content">
+            <div class="sidebar-txt" id="sidebar-top"><p><cms:localize 'greeting' /> <a href="<cms:show k_user_edit_link />" /><cms:show k_user_title /></a></p></div>
+            <div id="scroll-sidebar">
+
+                <cms:render 'sidebar' />
+
+                <cms:if k_user_access_level ge '10'>
+                    <div id="nav-links">
+                        <a href="<cms:show k_admin_link />gen_dump.php">Download Dump</a>
+                        <a class="popup-ajax" href="<cms:show k_admin_link />gen_htaccess.php" target="_blank" <cms:if k_prettyurls='0'>style="visibility:hidden;"</cms:if>>Generate .htaccess</a>
+                    </div>
+                </cms:if>
+            </div>
+            <div class="btn-group" id="sidebar-btns">
+                <a class="btn btn-primary" href="<cms:show k_logout_link />" id="log-out"><cms:show_icon 'account-logout' /><cms:localize 'logout' /></a>
+                <a class="btn btn-primary" href="<cms:show k_site_link />" id="view-site" target="_blank"><cms:show_icon 'magnifying-glass' /><cms:localize 'view_site' /></a>
+            </div>
+            <div class="sidebar-txt" id="sidebar-bot">
+                <p>
+                <cms:if k_admin_footer >
+                    <cms:show k_admin_footer />
+                <cms:else />
+                    <a href="http://www.couchcms.com/">CouchCMS Version <cms:show k_cms_version /> (<cms:show k_cms_build />)</a>
+                </cms:if>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div id="scroll-content">
+        <div id="header">
+            <div id="header-inner">
+                <cms:render 'toolbar' />
+                <cms:render 'title' />
+            </div>
+            <cms:render 'subtitle' />
+        </div>
+
+        <div id="content">
+            <cms:admin_html />
+            <cms:show k_main_content />
+        </div>
+    </div>
+</cms:if>
+
+<script src="<cms:show k_system_theme_link />includes/mcustomscrollbar/mcustomscrollbar.min.js?v=<cms:show k_cms_build />"></script>
+<script src="<cms:show k_system_theme_link />includes/bootstrap.min.js?v=<cms:show k_cms_build />"></script>
+<script src="<cms:show k_system_theme_link />includes/magnific-popup/magnific-popup.min.js?v=q<cms:show k_cms_build />"></script>
+<script type="text/javascript">
+    //<![CDATA[
+    <cms:admin_js />
+    //]]>
+</script>
+</body>
+</html>

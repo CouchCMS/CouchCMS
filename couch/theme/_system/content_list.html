@@ -1,0 +1,38 @@
+<cms:set my_paginator='' />
+<cms:set my_paginator_label='' />
+<cms:set my_filters="<cms:render 'filters' />" />
+<cms:set my_list="<cms:render 'content_list_inner' />" />
+
+<div class="tab-pane fade active in" id="tab-pane-list-<cms:show k_route_module />">
+
+    <cms:if my_filters || my_paginator>
+        <div class="ctrl-top">
+
+            <cms:show my_filters />
+
+            <div class="ctrl-right">
+                <cms:show my_paginator_label />
+                <cms:show my_paginator />
+            </div>
+        </div>
+
+        <cms:if "<cms:not my_filters />"><div class="sep">&nbsp;</div></cms:if>
+    </cms:if>
+
+    <form name="<cms:show k_cur_form />" id="<cms:show k_cur_form />" class="bulk-form" action="" method="post">
+
+        <cms:show my_list />
+
+        <div class="ctrl-bot">
+            <cms:render 'batch_actions' />
+            <cms:render 'extended_actions' />
+
+            <div class="ctrl-right">
+                <cms:show my_paginator />
+            </div>
+        </div>
+
+        <input type="hidden" id="nonce" name="nonce" value="<cms:create_nonce 'bulk_action_page' />">
+        <input type="hidden" id="k_bulk_action" name="k_bulk_action" value="">
+    </form>
+</div>

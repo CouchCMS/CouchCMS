@@ -40,7 +40,6 @@
     class Repeatable extends KUserDefinedField{
         var $cells = array(); // array of fields representing each cell in a row
         var $rendered_data = null;
-        var $rendered_deleted_html = null;
         var $validation_errors = 0;
 
         function Repeatable( $row, &$page, &$siblings ){
@@ -249,19 +248,45 @@
             $FUNCS->load_css( K_SITE_URL . $subdomain . 'dg-arrange-table-rows/dg-arrange-table-rows.css' );
             */
 
-            define( 'REPEATABLE_URL', K_ADMIN_URL . 'addons/repeatable/' );
-            $FUNCS->load_js( REPEATABLE_URL . 'tablegear/tablegear.js' );
-            $FUNCS->load_js( REPEATABLE_URL . 'dg-arrange-table-rows/dg-arrange-table-rows.js' );
-            $FUNCS->load_css( REPEATABLE_URL . 'tablegear/tablegear.css' );
-            $FUNCS->load_css( REPEATABLE_URL . 'dg-arrange-table-rows/dg-arrange-table-rows.css' );
+            if( !defined('REPEATABLE_URL') ){
+                define( 'REPEATABLE_URL', K_ADMIN_URL . 'addons/repeatable/' );
+                $FUNCS->load_js( K_ADMIN_URL . 'includes/jquery-ui.min.js' );
+                $FUNCS->load_js( REPEATABLE_URL . 'tablegear/tablegear.js' );
+                $FUNCS->load_css( REPEATABLE_URL . 'tablegear/tablegear.css' );
 
+                ob_start();
+                ?>
+                    $(function(){
+                        $('table.rr tbody').sortable({
+                            axis: "y",
+                            handle: ".dg-arrange-table-rows-drag-icon",
+                            helper: function (e, ui) { // https://paulund.co.uk/fixed-width-sortable-tables
+                                ui.children().each(function() {
+                                    $(this).width($(this).width());
+                                });
+                                return ui;
+                            },
+                            update: function( event, ui ){
+                                var row = ui.item;
+                                var tbody = $( row ).closest( 'tbody' );
+                                tbody.trigger('_reorder');
+                            },
+                        });
+                    });
+                <?php
+                $js = ob_get_contents();
+                ob_end_clean();
+                $FUNCS->add_js( $js );
+            }
+
+            $arr_deleted_html = array();
             ob_start();
             ?>
             <div class="tableholder">
                 <table class="rr" id="<?php echo $input_id; ?>">
                     <thead>
                         <tr>
-                            <th class="edit" style="display:none;">&nbsp;</th>
+                            <th class="dg-arrange-table-header">&nbsp;</td>
                             <?php foreach( $this->cells as $c ) :  ?>
                             <th <?php if($c->col_width){ echo 'style="width:'.$c->col_width.'px;"'; } ?>>
                                 <span><?php echo $c->label; ?></span>
@@ -274,7 +299,6 @@
                     <tbody>
                     <?php
                         $data = ( is_null($this->rendered_data) ) ? $this->orig_data : $this->rendered_data;
-                        $arr_deleted_html = ( is_null($this->rendered_deleted_html) ) ? array() : $this->rendered_deleted_html;
 
                         // dynamic params
                         if( is_null($this->rendered_data) ){
@@ -287,10 +311,7 @@
 
                         for( $x=0; $x<count($data); $x++ ){ $row_id = $x; ?>
                             <tr id="<?php echo $input_id; ?>-<?php echo $row_id; ?>">
-                                <td class="edit" style="display:none;">
-                                    <input type="checkbox" name="edit[]" value="<?php echo $row_id; ?>" />
-                                </td>
-
+                                <td class="dg-arrange-table-rows-drag-icon">&nbsp;</td>
                                 <?php
                                 if( is_null($this->rendered_data) ){ // not handling posted data
                                     // move data into cells
@@ -306,7 +327,6 @@
                                         $html .= $c->_render( $c_input_name, $c_input_id );
                                         if( $c->deleted && $AUTH->user->access_level >= K_ACCESS_LEVEL_SUPER_ADMIN && defined('K_ADMIN') ){
                                             $html .= '<div class="k_cell_deleted">&nbsp;</div>';
-                                            if( $x==0 ) $arr_deleted_html[] = $c->_html;
                                         }
                                         $html .= '</div></td>';
                                         echo $html;
@@ -331,41 +351,26 @@
                     <?php } ?>
                     </tbody>
                 </table>
-                <div><p class="addRow" id="addRow_<?php echo $input_id; ?>"><a><?php echo $FUNCS->t('add_row'); ?></a></p>
-                <?php
-                    if( count($arr_deleted_html) ){
-                        $html = '<ul class="k_element_deleted_nav">';
-                        $html .= '<li>'.$FUNCS->t('columns_missing').' </li>';
-                        $html .= '<li><a href="javascript:k_delete_column('.$this->id.', \''.$FUNCS->create_nonce( 'delete_column_'.$this->id ).'\')"><b>'.$FUNCS->t('delete_permanently').'</b></a></li>';
-                        $html .= '<li><a href="'.K_SITE_URL .'#TB_inline?height=220&width=400&inlineId=k_element_deleted_'.$input_id.'&modal=true" class="smoothbox">('.$FUNCS->t('view_code').')</a></li>';
-                        $html .= '</ul>';
-
-                        foreach( $arr_deleted_html as $deleted_html ){
-                            $str_deleted_html .= $deleted_html . "\r\n\r\n";
-                        }
-                        $html .= '<div style="display:none;" id="k_element_deleted_'.$input_id.'">';
-                        $html .= '<pre>' . htmlspecialchars( $str_deleted_html, ENT_QUOTES, K_CHARSET ) . '</pre>';
-                        $html .= '</div>';
-                        echo $html;
-                    }
-                ?>
+                <div>
+                <p class="addRow" id="addRow_<?php echo $input_id; ?>"><a><?php echo $FUNCS->t('add_row'); ?></a></p>
                 </div>
                 <input type="hidden" name="_<?php echo $input_id; ?>_sortorder" id="_<?php echo $input_id; ?>_sortorder"/>
                 <div id="addNewRow_<?php echo $input_id; ?>" class="newRow">
                     <table>
                         <tbody>
                             <tr id="newDataRow_<?php echo $input_id; ?>" class="newRow even">
-                                <td class="edit" style="display:none;">
-                                    <input type="checkbox" name="edit[]" value="" />
-                                </td>
+                                <td class="dg-arrange-table-rows-drag-icon">&nbsp;</td>
                                 <?php foreach( $this->cells as $c ) {
                                     $c->data='';
                                     $html = '<td class="editable"><div style="position:relative;">';
-                                    $widget = $c->_render( 'data[xxx]['.$c->name.']', 'data-xxx-'.$c->name, '', '', 1 );
+                                    $widget = $c->_render( 'data[xxx]['.$c->name.']', 'data-xxx-'.$c->name, '', 1 );
                                     // ID hack..innerHTML does not return 'id' so adding an 'idx' attribute with the same values.
                                     $widget = preg_replace('/(\sid)(\s*=\s*["\']data-xxx-[\w]+["\'])/is', '$1x$2$1$2', $widget);
                                     $html .= $widget;
-                                    if( $c->deleted && $AUTH->user->access_level >= K_ACCESS_LEVEL_SUPER_ADMIN ) $html .= '<div class="k_cell_deleted">&nbsp;</div>';
+                                    if( $c->deleted && $AUTH->user->access_level >= K_ACCESS_LEVEL_SUPER_ADMIN && defined('K_ADMIN') ){
+                                        $html .= '<div class="k_cell_deleted">&nbsp;</div>';
+                                        $arr_deleted_html[] = $c->_html;
+                                    }
                                     $html .= '</div></td>';
                                     echo $html;
                                 } ?>
@@ -381,13 +386,18 @@
                 </div>
             </div>
             <script type="text/javascript">
-                window.addEvent('domready', function(){
-                    var tmp = new TableGear("<?php echo $input_id; ?>");
+                $(function(){
+                    $('#<?php echo $input_id; ?>').tableGear();
                 });
             </script>
             <?php
             $html = ob_get_contents();
             ob_end_clean();
+
+            if( count($arr_deleted_html) ){
+                $html = $FUNCS->render( 'repeatable_column_deleted', $arr_deleted_html ) . $html;
+            }
+
             return $html;
         }
 
@@ -423,7 +433,6 @@
             $this->validation_errors = 0;
             $this->data = array();
             $this->rendered_data = array();
-            $this->rendered_deleted_html = array();
             $sep = '';
             for( $row=0; $row<count($data); $row++ ){
                 // recreate each row
@@ -431,12 +440,15 @@
 
                     // hydrate cell with data from database
                     $c = &$this->cells[$y];
+                    $c->orig_data = null;
                     $c->store_data_from_saved( $this->orig_data[$row][$c->name] );
                     $c->err_msg = '';
 
                     // pass posted data to each cell
                     $c->store_posted_changes( $data[$row][$c->name] );
-                    if( $c->modified ){ $this->modified = 1; }
+                    if( $c->modified ){
+                        $this->modified = 1;
+                    }
 
                     unset( $c );
                 }
@@ -502,9 +514,8 @@
                     $err_class = ( $c->err_msg ) ? ' highlite' : '';
                     $html = '<td class="editable'.$err_class.'"><div style="position:relative;">';
                     $html .= $c->_render( $input_name, $input_id );
-                    if( $c->deleted && $AUTH->user->access_level >= K_ACCESS_LEVEL_SUPER_ADMIN ){
+                    if( $c->deleted && $AUTH->user->access_level >= K_ACCESS_LEVEL_SUPER_ADMIN && defined('K_ADMIN') ){
                         $html .= '<div class="k_cell_deleted">&nbsp;</div>';
-                        if( $x==0 ) $this->rendered_deleted_html[] = $c->_html;
                     }
                     $html .= '</div></td>';
                     $this->rendered_data[$row][$c->name] = $html;
@@ -549,9 +560,36 @@
         function get_search_data(){
             return '';
         }
+
+        // renderable theme functions
+        static function register_renderables(){
+            global $FUNCS;
+
+            $FUNCS->register_render( 'repeatable_column_deleted', array('template_path'=>K_COUCH_DIR.'addons/repeatable/theme/', 'template_ctx_setter'=>array('Repeatable', '_render_repeatable_column_deleted')) );
+        }
+
+        static function _render_repeatable_column_deleted( $arr_deleted_html ){
+            global $FUNCS, $CTX;
+
+            static $done=0;
+            if( !$done ){
+                $CTX->set( 'k_add_js_for_repeatable_column_deleted', '1' );
+                $done=1;
+            }
+            else{
+                $CTX->set( 'k_add_js_for_repeatable_column_deleted', '0' );
+            }
+
+            foreach( $arr_deleted_html as $deleted_html ){
+                $str_deleted_html .= $deleted_html . "\r\n\r\n";
+            }
+            $CTX->set( 'k_deleted_html', $FUNCS->escape_HTML($str_deleted_html) );
+        }
+
     }// end class
 
     // Register
     $FUNCS->register_udf( '__repeatable', 'Repeatable' ); // The UDF
     $FUNCS->register_tag( 'repeatable', array('Repeatable', 'tag_handler') ); // The helper 'shim' tag that helps create the above UDF
     $FUNCS->register_tag( 'show_repeatable', array('Repeatable', 'show_handler'), 1, 1 ); // The helper tag that shows the variables via CTX
+    $FUNCS->add_event_listener( 'register_renderables',  array('Repeatable', 'register_renderables') );

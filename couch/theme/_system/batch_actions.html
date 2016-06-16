@@ -1,0 +1,64 @@
+<cms:capture into='my_batch_actions' >
+    <div class="select bulk-field">
+        <select name="sel-bulk-action" id="sel-bulk-action">
+            <option value="-" selected="selected">Bulk action with selected</option>
+            <cms:admin_actions childof='batch'>
+                <option value="<cms:show k_action_name />"><cms:show k_action_title /></option>
+                <cms:set has_batch_action='1' 'global' />
+            </cms:admin_actions>
+        </select>
+        <span class="select-caret"><cms:show_icon 'caret-bottom' /></span>
+    </div>
+    <a id="btn_bulk_submit" class="btn ctrl-btn icon-collapse tt-collapse" data-title="Apply" href="#"><span class="btn-icon"><cms:show_icon 'check' /></span><span class="collapse-title">Apply</span></a>
+</cms:capture>
+
+<cms:if has_batch_action>
+    <cms:show my_batch_actions />
+
+    <cms:admin_add_js>
+        $(function(){
+            $('#btn_bulk_submit').on('click', function(e){
+                bulk_val = $('#sel-bulk-action').val();
+                if( bulk_val === "-" ) return false;
+
+                var col = $( ".page-selector:checked" ).not( ":disabled" );
+                if( !col.length )  return false;
+
+                for( var x=0; x<col.length; x++ ){
+                    switch( bulk_val ){
+                    <cms:admin_actions childof='batch'>
+
+                        <cms:capture into='my_code'>
+                            <cms:if k_action_is_custom >
+                                <cms:if k_action_render>
+                                    <cms:render k_action_render />
+                                <cms:else />
+                                    <cms:show k_action_html />
+                                </cms:if>
+                            <cms:else />
+                                $('body').css('cursor', 'wait');
+                                var form = $('#<cms:show k_cur_form />');
+                                form.find('#k_bulk_action').val('<cms:show k_action_name />');
+                                form.submit();
+                            </cms:if>
+                        </cms:capture>
+
+                        case '<cms:show k_action_name />':
+                        <cms:if k_action_confirmation_msg >
+                            var msg = "<cms:addslashes><cms:show k_action_confirmation_msg /></cms:addslashes>";
+                            if( confirm(msg) ){
+                                <cms:show my_code />
+                            }
+                        <cms:else />
+                            <cms:show my_code />
+                        </cms:if>
+                            break;
+                    </cms:admin_actions>
+                    }
+                    return false;
+                }
+                return false;
+            });
+        });
+    </cms:admin_add_js>
+</cms:if>

@@ -1,0 +1,14 @@
+<div id="admin_wrapper_pointer_fields" <cms:if k_field_hidden>style="display:none;"</cms:if>>
+    <div class="panel-heading">Pointer Settings</div>
+    <div class="panel-body">
+        <cms:admin_form_fields childof='_pointer_fields_' depth='1'>
+            <cms:if k_field_no_wrapper >
+                <div id="<cms:show k_field_wrapper_id />" class="field k_element k_<cms:show k_field_type /> <cms:show k_field_class />" <cms:if k_field_hidden>style="display:none;"</cms:if>>
+                    <cms:render 'form_row' />
+                </div>
+            <cms:else />
+                <cms:render 'form_row' />
+            </cms:if>
+        </cms:admin_form_fields>
+    </div>
+</div>

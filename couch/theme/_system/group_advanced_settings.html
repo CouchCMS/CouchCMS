@@ -1,0 +1,29 @@
+<cms:capture into='my_advanced_settings' >
+    <cms:admin_form_fields childof='_advanced_settings_' depth='1'>
+        <cms:render 'form_row' />
+    </cms:admin_form_fields>
+</cms:capture>
+
+<cms:if "<cms:not_empty my_advanced_settings />">
+    <cms:php>global $CTX; $CTX->set('k_show_advanced_settings', '1', 'global');</cms:php>
+
+    <div id="settings-panel">
+        <button class="btn icon-collapse tt-collapse" id="settings-panel-toggle" title="<cms:localize 'advanced_settings' />" type="button"><cms:show_icon 'cog' /><span class="collapse-title"><cms:localize 'advanced_settings' /></span></button>
+
+        <div class="panel-body fade-short" style="display:none;">
+            <cms:show my_advanced_settings />
+        </div>
+    </div>
+
+    <cms:admin_add_js>
+        $( function() {
+            var speed = 250;
+
+            $( "#settings-panel-toggle" ).on( "click", function() {
+                var $this = $( this ).blur();
+
+                ( $this.hasClass( "expanded" ) ? COUCH.slideFadeHide : COUCH.slideFadeShow )( $this.toggleClass( "expanded" ).next(), speed );
+            });
+        });
+    </cms:admin_add_js>
+</cms:if>

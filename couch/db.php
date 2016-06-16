@@ -66,11 +66,13 @@
         var $ref = 0; // reference counting of transactions
 
         // debug
+        var $debug = 0;
         var $selects = 0;
         var $inserts = 0;
         var $updates = 0;
         var $deletes = 0;
         var $queries = 0;
+        var $query_time = 0;
 
         function KDB( $host_name='', $database='', $user_name='', $password='' ){
             if( empty($host_name) ) $host_name = K_DB_HOST;
@@ -108,7 +110,11 @@
                 if( !$this->connect() ) die( "Unable to connect to database. " . mysql_error() );
             }
 
+            $t=0;
+            if( $this->debug ){ $t = microtime(true); }
             $this->result = @mysql_query( $sql, $this->conn );
+            if( $this->debug ){ $this->query_time += (microtime(true) - $t); }
+
             if( !$this->result ){
                 //die( "Could not successfully run query (".$sql.") from DB: " . mysql_error() );
                 ob_end_clean();

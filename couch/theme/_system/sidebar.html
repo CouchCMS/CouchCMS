@@ -1,0 +1,45 @@
+<ul id="nav">
+    <cms:admin_menuitems depth='1'>
+        <cms:if k_menu_is_header>
+
+            <cms:set is_menu_collapsed = '0' />
+            <cms:php>
+                // read 'collapse' state of menu-groups from cookie
+                global $CTX, $k_collapsed_groups;
+
+                if( !is_array($k_collapsed_groups) ){ $k_collapsed_groups = isset( $_COOKIE['collapsed_groups'] ) ? explode( ',', $_COOKIE['collapsed_groups'] ) : array(); }
+
+                if( in_array('<cms:show k_menu_name />', $k_collapsed_groups) ){
+                    $CTX->set( 'is_menu_collapsed', '1', $scope='parent' );
+                }
+            </cms:php>
+
+            <li class="nav-heading<cms:if is_menu_collapsed> collapsed</cms:if>">
+                <button class="nav-heading-toggle" data-id="<cms:show k_menu_name />" type="button">
+                    <span class="nav-heading-btn"></span>
+                    <cms:show k_menu_title />
+                </button>
+            </li>
+
+            <li class="nav-group"<cms:if is_menu_collapsed> style="display: none;"</cms:if>>
+                <ul>
+                <cms:admin_menuitems depth='1' childof=k_menu_name>
+                    <li>
+                        <a class="nav-icon<cms:if k_is_current> nav-active</cms:if> <cms:show k_menu_class />" title="<cms:show k_menu_name />" href="<cms:show k_menu_link />">
+                            <cms:show_icon k_menu_icon />
+                            <span class="nav-title"><cms:show k_menu_title /></span>
+                        </a>
+                    </li>
+                </cms:admin_menuitems>
+                </ul>
+            </li>
+        <cms:else />
+            <li>
+                <a class="nav-icon<cms:if k_is_current> nav-active</cms:if> <cms:show k_menu_class />" title="<cms:show k_menu_name />" href="<cms:show k_menu_link />">
+                    <cms:show_icon k_menu_icon />
+                    <span class="nav-title"><cms:show k_menu_title /></span>
+                </a>
+            </li>
+        </cms:if>
+    </cms:admin_menuitems>
+</ul>

@@ -198,7 +198,7 @@
     $t['template'] = 'Modèle';
     $t['modified'] = 'Modifié'; // Date of last modification
     $t['preview'] = 'Prévisualisation';
-    $t['confirm_delete_draft'] = 'Êtes-vous sûr de vouloir supprimer ce brouillon ?';
+    $t['confirm_delete_draft'] = 'Êtes-vous sûr de vouloir supprimer ce brouillon'; // No question mark please
     $t['confirm_delete_selected_drafts'] = 'Êtes-vous sûr de vouloir supprimer les brouillons sélectionnés ?';
     $t['confirm_apply_selected_drafts'] = 'Êtes-vous sûr de vouloir appliquer les brouillons sélectionnés?';
     $t['view_all_drafts'] = 'Voir tous les brouillons';

@@ -179,33 +179,7 @@
     function show_form( $msg, $msg_class, $msgonly=0 ){
         global $FUNCS;
 
-        if( empty($msg) ){
-            $msg = $FUNCS->t('recovery_prompt');
-        }
-        $msg_div = '<div class="'.$msg_class.'" style="margin-bottom:10px; display:';
-        if( $msg ){
-            $msg_div .= "block\">";
-            $msg_div .= $msg;
-        }
-        else{
-            $msg_div .= "none\">&nbsp;";
-        }
-        $msg_div .= '</div>';
-        ?>
-        <?php echo $FUNCS->login_header(); ?>
-
-            <?php echo $msg_div ?>
-            <?php if(!$msgonly ){ ?>
-            <form name="frm_forgotpass" action="" method="post">
-                <p>
-                    <label><?php echo $FUNCS->t('name_or_email'); ?>:<br />
-                    <input type="text" id="k_user_name" name="k_user_name" size="20" autofocus="autofocus" /></label>
-                </p>
-                <input type="submit" name="k_submit" value="<?php echo $FUNCS->t('submit'); ?>"/>
-            </form>
-            <?php } ?>
-
-        <?php echo $FUNCS->login_footer(); ?>
-        <?php
+        $html = $FUNCS->render( 'forgot_password', $msg, $msg_class, $msgonly );
+        echo $html;
     }
 ?>

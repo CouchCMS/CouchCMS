@@ -1,0 +1,14 @@
+<div id="admin_wrapper_custom_fields" <cms:if k_field_hidden>style="display:none;"</cms:if>>
+    <cms:set has_custom_fields = '0' />
+
+    <cms:admin_form_fields childof='_custom_fields_' depth='1'>
+        <cms:render 'form_row' />
+        <cms:set has_custom_fields = '1' scope='parent' />
+    </cms:admin_form_fields>
+
+    <cms:if has_custom_fields = '0' >
+        <cms:show_info>
+            <h4><cms:localize 'no_regions_defined' /></h4>
+        </cms:show_info>
+    </cms:if>
+</div>

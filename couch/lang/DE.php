@@ -199,7 +199,7 @@
     $t['template'] = 'Template';
     $t['modified'] = 'Modifiziert'; // Date of last modification
     $t['preview'] = 'Vorschau';
-    $t['confirm_delete_draft'] = 'Sind Sie sicher, dass Sie den Entwurf l&ouml;schen m&ouml;chten?';
+    $t['confirm_delete_draft'] = 'Sind Sie sicher, dass Sie den Entwurf l&ouml;schen m&ouml;chten'; // No question mark please
     $t['confirm_delete_selected_drafts'] = 'Sind Sie sicher, dass Sie die ausgew&auml;hlten Entw&uuml;rfe l&ouml;schen m&ouml;chten?';
     $t['confirm_apply_selected_drafts'] = 'Sind Sie sicher, dass Sie die ausgew&auml;hlten Entw&uuml;rfe anwenden m&ouml;chten?';
     $t['view_all_drafts'] = 'Zeige alle Entw&uuml;rfe';

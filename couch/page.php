@@ -56,6 +56,7 @@
         var $tpl_gallery;
         var $tpl_custom_params = array();
         var $tpl_handlers = array();
+        var $tpl_type = '';
 
         var $id = null;
         var $parent_id = 0;
@@ -159,12 +160,12 @@
                 $this->accessed_via_browser = 1;
 
                 $tpl_name = $this->get_template_name();
+                if( $FUNCS->is_error($tpl_name) ) return $tpl_name;
 
                 if( array_key_exists( $tpl_name, $FUNCS->cached_templates ) ){
                     $rec = $FUNCS->cached_templates[$tpl_name];
                 }
                 else{
-                    if( $FUNCS->is_error($tpl_name) ) return $tpl_name;
                     $rs = $DB->select( K_TBL_TEMPLATES, array('*'), "name='" . $DB->sanitize( $tpl_name ). "'" );
                     if( !count($rs) ){
                         // Template needs to be added. Make sure the user is logged-in as super-admin
@@ -237,6 +238,9 @@
                 $handler_name = 'tpl_handler_' . $handler;
                 $this->$handler_name = 1;
             }
+            $this->tpl_type = $rec['type'];
+            $this->tpl_parent = $rec['parent'];
+            $this->tpl_icon = $rec['icon'];
 
             // HOOK: alter_template_info
             // At this point only the template's info is available in the page object. Can be be manipulated.
@@ -283,9 +287,9 @@
                 // The custom fields -
                 $rs = $DB->select( K_TBL_FIELDS, array('*'), "template_id='" . $DB->sanitize( $this->tpl_id ). "' ORDER BY k_group, k_order, id" );
 
-                // HOOK: alter_custom_fields_info
+                // HOOK: alter_custom_fields_info_db
                 // Array of custom fields info, as fetched from the database, can be manipulated at this point.
-                $FUNCS->dispatch_event( 'alter_custom_fields_info', array(&$rs, &$this) );
+                $FUNCS->dispatch_event( 'alter_custom_fields_info_db', array(&$rs, &$this) );
 
                 // rearrange fields according to their groups (if in any)
                 $rs2 = array();
@@ -308,6 +312,7 @@
                     }
                 }
                 for( $x=0; $x<count($rs2); $x++ ){
+                    $rs2[$x]['module'] = 'pages';
                     $fieldtype = $rs2[$x]['k_type'];
                     if( $FUNCS->is_core_type($fieldtype) ){
                         $this->fields[] = new KField( $rs2[$x], $this, $this->fields );
@@ -326,14 +331,18 @@
                     }
                 }
 
+                // HOOK: alter_custom_fields_info
+                // Array of custom field objects can be manipulated at this point before being added to the page.
+                $FUNCS->dispatch_event( 'alter_custom_fields_info', array(&$this->fields, &$this) );
+
                 // The system fields -
                 $sys_fields = array(
                                     'k_page_title'=>$FUNCS->t('title'),/*'Title'*/
                                     'k_page_name'=>$FUNCS->t('name'),/*'Name',*/
                                     'k_page_folder_id'=>$FUNCS->t('folder'),
                                     'k_publish_date'=>'Publish Date',
-                                    'k_access_level'=>'Access Level',
-                                    'k_comments_open'=>'Allow Comments'
+                                    'k_access_level'=>$FUNCS->t('access_level'),
+                                    'k_comments_open'=>$FUNCS->t('comments'),
                                     );
 
                 // Nested pages will require some additonal system fields
@@ -343,12 +352,12 @@
                                     'k_weight'=>$FUNCS->t('weight'),
                                     'k_show_in_menu'=>$FUNCS->t('show_in_menu'),
                                     'k_menu_text'=>$FUNCS->t('menu_text'),
-                                    'k_is_pointer'=>'is_pointer',
+                                    'k_is_pointer'=>$FUNCS->t('points_to_another_page'),
                                     'k_open_external'=>$FUNCS->t('separate_window'),
                                     'k_pointer_link'=>$FUNCS->t('link_url'),
                                     'k_pointer_link_detail'=>'pointer_link_detail',
                                     'k_masquerades'=>'masquerades',
-                                    'k_strict_matching'=>'strict_matching',
+                                    'k_strict_matching'=>$FUNCS->t('strict_matching'),
                                     )
                                  );
                 }
@@ -382,7 +391,8 @@
                         'default_data' => '',
                         'required' => '1',
                         'validator' => '',
-                        'system' => '1'
+                        'system' => '1',
+                        'module' => 'pages',
                     );
 
                     $field_info['name'] = $k;
@@ -400,16 +410,6 @@
                             $field_info['validator_msg'] = 'title_ready='.$FUNCS->t('user_name_restrictions');
                             $field_info['maxlength'] = '255';
                             break;
-                        case 'k_publish_date':
-                        case 'k_access_level':
-                        case 'k_comments_open':
-                        case 'k_show_in_menu':
-                        case 'k_is_pointer':
-                        case 'k_open_external':
-                        case 'k_masquerades':
-                        case 'k_strict_matching':
-                            $field_info['hidden'] = '1';
-                            break;
                         case 'k_weight':
                             $field_info['hidden'] = '1';
                             $field_info['required'] = '0';
@@ -418,12 +418,17 @@
                             $field_info['width'] = '150';
                             break;
                         case 'k_menu_text':
-                            $field_info['required'] = '0';
-                            $field_info['hidden'] = '1';
-                            break;
+                            $field_info['k_desc'] = $FUNCS->t('leave_empty');
+                            $field_info['maxlength'] = '255';
                         case 'k_pointer_link_detail':
                             $field_info['required'] = '0';
                             $field_info['hidden'] = '1'; //comment out to make visible foe debugging
+                            break;
+                        case 'k_masquerades':
+                            $field_info['k_type']='radio';
+                            $field_info['opt_values']=$FUNCS->t('redirects').'=0 | '.$FUNCS->t('masquerades').'=1';
+                            $field_info['opt_selected']='0';
+                            $field_info['hidden'] = '1';
                             break;
                         case  'k_file_name':
                         case  'k_file_ext':
@@ -439,10 +444,28 @@
                         $field_info['required'] = '0';
                         $arr_sys_fields[] = new KPageFolderIDField( $field_info, $this, $this->fields );
                     }
+                    elseif( $k=='k_publish_date' ){
+                        $field_info['hidden'] = '0';
+                        $arr_sys_fields[] = new KPublishDateField( $field_info, $this, $this->fields );
+                    }
+                    elseif( $k=='k_comments_open' ){
+                        $field_info['hidden'] = '0';
+                        $arr_sys_fields[] = new KCommentsOpenField( $field_info, $this, $this->fields, $FUNCS->t('allow_comments') );
+                    }
+                    elseif( $k=='k_access_level' ){
+                        $field_info['hidden'] = '0';
+                        $arr_sys_fields[] = new KAccessLevel( $field_info, $this, $this->fields );
+                    }
                     elseif( $k=='k_nested_parent_id' ){
                         $field_info['required'] = '0';
                         $field_info['validator'] = 'KWebpage::validate_parent';
                         $arr_sys_fields[] = new KNestedPagesField( $field_info, $this, $this->fields );
+                    }
+                    elseif( $k=='k_show_in_menu' || $k=='k_is_pointer' || $k=='k_open_external' ){
+                        $arr_sys_fields[] = new KSingleCheckField( $field_info, $this, $this->fields );
+                    }
+                    elseif( $k=='k_strict_matching' ){
+                        $arr_sys_fields[] = new KSingleCheckField( $field_info, $this, $this->fields, '', 1/*inverse*/ );
                     }
                     elseif( $k=='k_pointer_link' ){
                         $field_info['required'] = '0';
@@ -823,20 +846,8 @@
         function get_template_name(){
             global $FUNCS;
 
-            // Added this for those (extremely rare) cases where the template name cannot be calculated by the logic that follows.
-            // For this to work, place define( 'K_TEMPLATE_NAME', 'actual_template_name.php' ); before require_once( 'couch/cms.php' );
-            if ( defined('K_TEMPLATE_NAME') ) return K_TEMPLATE_NAME;
-
-            // Our assumption here is that 'couch' folder resides directly in the website
-            // folder it is handling.
-
-            $tpl = realpath( $_SERVER['SCRIPT_FILENAME'] );
-            $tpl = str_replace( '\\', '/', $tpl );
-
-            if( substr( $tpl, 0, strlen(K_SITE_DIR) ) != K_SITE_DIR ){
-                return $FUNCS->raise_error( "'couch' folder should reside in the main web-site folder" );
-            }
-            $tpl = substr( $tpl, strlen(K_SITE_DIR) );
+            $tpl = $FUNCS->get_template_name();
+            if( $FUNCS->is_error($tpl) ) return $tpl;
 
             // HOOK: alter_template_name
             $FUNCS->dispatch_event( 'alter_template_name', array(&$tpl, &$this) );
@@ -894,15 +905,6 @@
             $folder_id = intval( $this->_fields['k_page_folder_id']->get_data() );
             if( !$folder_id ){
                 $this->_fields['k_page_folder_id']->store_posted_changes( '-1' );
-            }
-
-            // Publish date
-            $publish_date = trim( $this->_fields['k_publish_date']->get_data() );
-            if( $publish_date != '0000-00-00 00:00:00' ){
-                $publish_date2 = $FUNCS->make_date( $publish_date );
-                if( $publish_date != $publish_date2 ){
-                    $this->_fields['k_publish_date']->store_posted_changes( $publish_date2 );
-                }
             }
 
             // Access level
@@ -994,7 +996,6 @@
             unset( $f );
             for( $x=0; $x<count($this->fields); $x++ ){
                 $f = &$this->fields[$x];
-                if( defined('K_PHP_4') && $last_id ) $f->page->id = $this->id; // PHP4 loses reference of new parent page ??
                 if( $f->modified ){
                     if( $f->system ){
 
@@ -1190,6 +1191,10 @@
             }
 
             $arr_update['modification_date'] = $FUNCS->get_current_desktop_time();
+            if( $last_id ){ // new page
+                $rs = $DB->raw_select( 'SELECT MAX(k_order) as max FROM ' . K_TBL_PAGES );
+                $arr_update['k_order'] = ( $rs[0]['max'] ) + 1;
+            }
 
             // HOOK: alter_page_save
             $FUNCS->dispatch_event( 'alter_page_save', array(&$arr_update, &$arr_custom_fields, &$arr_fulltext_update, &$refresh_fulltext, &$this->fields, &$this) );
@@ -1846,6 +1851,7 @@
                     $vars['k_is_page'] = 1;
                     $vars['k_is_list'] = 0;
                     $vars['k_page_id'] = $this->id;
+                    $vars['k_access_level'] = $this->access_level;
                     $vars['k_page_date'] = $this->publish_date;
                     $vars['k_page_creation_date'] = $this->creation_date;
                     $vars['k_page_modification_date'] = $this->modification_date;

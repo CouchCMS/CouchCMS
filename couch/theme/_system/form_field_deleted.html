@@ -1,0 +1,50 @@
+<cms:show_error heading="<cms:localize 'field_not_found' />">
+    <a class="btn" href="javascript:k_delete_field(<cms:show k_field_id />, '<cms:show k_field_name />', '<cms:create_nonce "delete_field_<cms:show k_field_id />" />')">
+        <cms:show_icon 'trash' /><cms:localize 'delete_permanently' />
+    </a>
+    <span class="btn-or">or</span>
+    <a class="btn popup-inline" href="#k_element_deleted_<cms:show k_field_id />"><cms:show_icon 'code' /><cms:localize 'view_code' /></a>
+</cms:show_error>
+
+<div class="popup-blank popup-code mfp-hide" id="k_element_deleted_<cms:show k_field_id />">
+    <div class="popup-code-content">
+        <pre><cms:show k_field_definition /></pre>
+    </div>
+</div>
+
+
+<cms:if k_add_js_for_deleted_field>
+    <cms:admin_add_js>
+        $(function(){
+            COUCH.bindPopupInline( COUCH.el.$content.find( ".popup-inline" ) );
+        });
+
+        function k_delete_field( fid, fname, nonce ){
+            if( confirm('<cms:localize 'confirm_delete_field' />') ){
+                var qs = 'ajax.php?act=delete-field&fid='+fid+'&nonce='+encodeURIComponent( nonce );
+
+                $.ajax({
+                    dataType: "text",
+                    url:      qs
+                }).done(function( data ) {
+                    if( data === "OK" ){
+                        var $field = $('#k_element_'+fname);
+
+                        COUCH.slideFadeHide( $field, 400, function() {
+                            if ( !COUCH.data.overflowScrolling ) {
+                                $field.find( ".scroll-relation" ).doOnce(function() {
+                                    $( this ).mCustomScrollbar( "destroy" );
+                                });
+                            }
+
+                            $field.remove();
+                        });
+                    }
+                    else{
+                        alert( data );
+                    }
+                });
+            }
+        }
+    </cms:admin_add_js>
+</cms:if>

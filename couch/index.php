@@ -1,67 +1,69 @@
 <?php
-    /*
-    The contents of this file are subject to the Common Public Attribution License
-    Version 1.0 (the "License"); you may not use this file except in compliance with
-    the License. You may obtain a copy of the License at
-    http://www.couchcms.com/cpal.html. The License is based on the Mozilla
-    Public License Version 1.1 but Sections 14 and 15 have been added to cover use
-    of software over a computer network and provide for limited attribution for the
-    Original Developer. In addition, Exhibit A has been modified to be consistent with
-    Exhibit B.
-
-    Software distributed under the License is distributed on an "AS IS" basis, WITHOUT
-    WARRANTY OF ANY KIND, either express or implied. See the License for the
-    specific language governing rights and limitations under the License.
-
-    The Original Code is the CouchCMS project.
-
-    The Original Developer is the Initial Developer.
-
-    The Initial Developer of the Original Code is Kamran Kashif (kksidd@couchcms.com).
-    All portions of the code written by Initial Developer are Copyright (c) 2009, 2010
-    the Initial Developer. All Rights Reserved.
-
-    Contributor(s):
-
-    Alternatively, the contents of this file may be used under the terms of the
-    CouchCMS Commercial License (the CCCL), in which case the provisions of
-    the CCCL are applicable instead of those above.
-
-    If you wish to allow use of your version of this file only under the terms of the
-    CCCL and not to allow others to use your version of this file under the CPAL, indicate
-    your decision by deleting the provisions above and replace them with the notice
-    and other provisions required by the CCCL. If you do not delete the provisions
-    above, a recipient may use your version of this file under either the CPAL or the
-    CCCL.
-    */
-
     ob_start();
     k_timer_start();
     define( 'K_ADMIN', 1 );
 
     if ( !defined('K_COUCH_DIR') ) define( 'K_COUCH_DIR', str_replace( '\\', '/', dirname(realpath(__FILE__) ).'/') );
     require_once( K_COUCH_DIR.'header.php' );
-    header( 'Content-Type: text/html; charset='.K_CHARSET );
 
     $AUTH->check_access( K_ACCESS_LEVEL_ADMIN );
+    $FUNCS->dispatch_event( 'admin_init' );
 
-    // at this point we have a logged in user with appropriate priveleges
+    // gather routes definitions
+    $FUNCS->dispatch_event( 'register_admin_routes' );
+    define( 'K_REGISTER_ROUTES_DONE', '1' );
+    $FUNCS->dispatch_event( 'alter_admin_routes', array(&$FUNCS->routes) );
 
-    if( ($_GET['o'] == 'users') ){
-        include_once( K_COUCH_DIR.'edit-users.php' );
+    // set context ..
+    $CTX->push( '__ROOT__' );
+    $FUNCS->set_userinfo_in_context();
+    $FUNCS->dispatch_event( 'add_render_vars' );
+    if( K_THEME_NAME ){
+        $FUNCS->dispatch_event( K_THEME_NAME.'_add_render_vars' );
     }
-    elseif( ($_GET['o'] == 'comments') ){
-        include_once( K_COUCH_DIR.'edit-comments.php' );
-    }
-    elseif( ($_GET['o'] == 'folders') ){
-        include_once( K_COUCH_DIR.'edit-folders.php' );
-    }
-    elseif( ($_GET['o'] == 'drafts') ){
-        include_once( K_COUCH_DIR.'edit-drafts.php' );
+
+    // and process the current request
+    if( isset($_GET['o']{0}) ){
+        $html = $FUNCS->process_route( $_GET['o'], $_GET['q'] );
     }
     else{
-        include_once( K_COUCH_DIR.'edit-pages.php' );
+        // if no route specified in request, redirect to the first registered route (or show welcome msg if no route available)
+        $html = $FUNCS->render( 'default_route' );
+        $FUNCS->set_admin_title( $FUNCS->t('welcome') );
     }
+
+    if( $FUNCS->is_error($html) ){
+        if( $html->err_msg===ROUTE_ACCESS_DENIED ){
+            header( 'HTTP/1.1 403 Forbidden' );
+            $html = 'Access forbidden!';
+        }
+        else{
+            header( 'HTTP/1.1 404 Not Found' );
+            header( 'Status: 404 Not Found' );
+            if( $html->err_msg===ROUTE_NOT_FOUND ){
+                $html = 'Page not found';
+            }
+            else{
+                $html = $html->err_msg;
+            }
+        }
+    }
+
+    if( !$FUNCS->route_fully_rendered ){
+        $html = $FUNCS->render( 'main', $html );
+    }
+
+    if( defined('K_IS_MY_TEST_MACHINE') ){
+        $html .= "<!-- in: ".k_timer_stop()." Queries: ".$DB->queries;
+        if( $DB->debug ){ $html .= " (in ".k_format_time($DB->query_time).")"; }
+        $html .= " -->";
+    }
+
+    // final output
+    $CTX->pop();
+    header( 'Content-Type: '.$FUNCS->route_content_type.'; charset='.K_CHARSET );
+    die( $html );
+
 
     ////////////////////////////////////////////////////////////////////////////
     function k_get_time(){
@@ -79,7 +81,13 @@
     function k_timer_stop( $echo = 0 ){
         global $k_time_start, $k_time_end;
         $k_time_end = k_get_time();
-        $diff = number_format( $k_time_end - $k_time_start, 3 ) . ' sec';
+        $diff = k_format_time( $k_time_end - $k_time_start );
         if ( $echo ){ echo $diff; }
         return $diff;
+    }
+
+    function k_format_time( $microtime, $echo = 0 ){
+        $microtime = number_format( $microtime, 3 ) . ' sec';
+        if ( $echo ){ echo $microtime; }
+        return $microtime;
     }

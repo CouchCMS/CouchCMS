@@ -196,7 +196,7 @@
     $t['template'] = 'Template';
     $t['modified'] = 'Modified'; // Date of last modification
     $t['preview'] = 'Preview';
-    $t['confirm_delete_draft'] = 'Are you sure you want to delete this draft?';
+    $t['confirm_delete_draft'] = 'Are you sure you want to delete this draft'; // No question mark please
     $t['confirm_delete_selected_drafts'] = 'Are you sure you want to delete the selected drafts?';
     $t['confirm_apply_selected_drafts'] = 'Are you sure you want to apply the selected drafts?';
     $t['view_all_drafts'] = 'View all drafts';
@@ -242,3 +242,10 @@
     $t['columns_missing'] = 'Some columns missing!';
     $t['confirm_delete_columns'] = 'Are you sure you want to permanently delete the missing columns?';
     $t['add_row'] = 'Add a Row';
+
+    // 2.0
+    $t['left'] = 'Move Left';
+    $t['right'] = 'Move Right';
+    $t['crop'] = 'Crop';
+    $t['menu_templates'] = 'Templates';
+    $t['menu_modules'] = 'Administration';

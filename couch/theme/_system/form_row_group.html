@@ -1,0 +1,37 @@
+<cms:if k_field_no_wrapper>
+    <cms:show k_field_content />
+<cms:else />
+    <div id="<cms:show k_field_input_id />" class="group-wrapper k_group <cms:show k_field_class />" <cms:if k_field_hidden>style="display:none;"</cms:if>>
+
+        <a class="panel-heading panel-toggle<cms:if k_field_is_collapsed> collapsed</cms:if>" href="#"><cms:show k_field_label />
+            <cms:if k_field_desc >
+                <span class="k_desc desc">(<cms:show k_field_desc />)</span>
+            </cms:if>
+        </a>
+        <div class="panel-body"<cms:if k_field_is_collapsed> style="display:none;"</cms:if>>
+            <cms:admin_form_fields childof=k_field_name depth='1'>
+                <cms:render 'form_row' />
+            </cms:admin_form_fields>
+
+            <a class="btn panel-body-toggle" href="#"></a>
+        </div>
+    </div>
+</cms:if>
+
+<cms:if k_add_js_for_field_group >
+    <cms:admin_add_js>
+        $( function() {
+            COUCH.el.$content.on( "click", ".panel-toggle, .panel-body-toggle", $.debounce(function( e ) {
+                var $heading = $( this ).blur();
+
+                if ( $heading.hasClass( "panel-body-toggle" ) ) $heading = $heading.parent().prev();
+
+                e.preventDefault();
+
+                $heading.toggleClass( "collapsed" ).next().animate({
+                    height: "toggle"
+                }, 500 );
+            }, 200, true ));
+        });
+    </cms:admin_add_js>
+</cms:if>

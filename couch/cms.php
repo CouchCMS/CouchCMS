@@ -57,17 +57,10 @@
             $html = $FUNCS->file_get_contents( K_SITE_URL . '503.php' );
         }
         if( !$html ){
-            echo $FUNCS->login_header();
-            ?>
-            <div class="notice" style="margin-bottom:10px;">
-                <?php echo $FUNCS->t('back_soon'); ?>
-            </div>
-            <?php
-            echo $FUNCS->login_footer();
+            $html = $FUNCS->render( 'site_offline' );
         }
-        else{
-            echo $html;
-        }
+
+        echo $html;
         die;
     }
 
@@ -301,7 +294,7 @@
 
             // See if ouput needs to be cached
             if( $k_cache_file && strlen( trim($html) ) && !$PAGE->no_cache ){
-                $handle = @fopen( $k_cache_file, 'w' );
+                $handle = @fopen( $k_cache_file, 'c' );
                 if( $handle ){
                     if( $redirect_url ){
                         $pg['redirect_url'] = $redirect_url;
@@ -320,10 +313,14 @@
                         }
 
                     }
-                    @flock( $handle, LOCK_EX );
-                    @fwrite( $handle, serialize( $pg ) );
-                    @flock( $handle, LOCK_UN );
-                    @fclose( $handle );
+                    if( flock($handle, LOCK_EX) ){
+                        ftruncate( $handle, 0 );
+                        rewind( $handle );
+                        fwrite( $handle, serialize( $pg ) );
+                        fflush( $handle );
+                        flock( $handle, LOCK_UN );
+                    }
+                    fclose( $handle );
                 }
             }
 

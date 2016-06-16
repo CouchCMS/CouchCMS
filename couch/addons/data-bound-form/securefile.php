@@ -161,12 +161,12 @@
                 if( defined('K_ADMIN') ){
                     $data = $this->data['file_id'] . '|0|0|0|0|2|0|0';
                     $link = K_ADMIN_URL . 'download.php?auth=' . urlencode( $data . '|' . $FUNCS->hash_hmac($data, $FUNCS->hash_hmac($data, $FUNCS->get_secret_key())) );
-                    $html .= '<span id="file_name_' . $input_id . '" name="file_name_'. $input_name .'"><a href="'.$link.'">'.$this->data['file_name'].'</a></span>&nbsp;';
+                    $html .= '<span class="sf_filename" id="file_name_' . $input_id . '" name="file_name_'. $input_name .'"><a href="'.$link.'">'.$this->data['file_name'].'</a></span>&nbsp;';
                 }
                 else{
-                    $html .= '<span id="file_name_' . $input_id . '" name="file_name_'. $input_name .'">'.$this->data['file_name'].'</span>&nbsp;';
+                    $html .= '<span class="sf_filename" id="file_name_' . $input_id . '" name="file_name_'. $input_name .'">'.$this->data['file_name'].'</span>&nbsp;';
                 }
-                $html .= '<input type="submit" name="delete_'.$input_name.'" value="'.$delete_caption.'" />';
+                $html .= '<input type="submit" class="sf_btn" name="delete_'.$input_name.'" value="'.$delete_caption.'" />';
                 $html .= '<input type="hidden" name="secure_file_id_'.$input_name.'" value="'.$this->data['file_id'].'" />';
                 $html .= '<input type="hidden" name="secure_file_name_'.$input_name.'" value="'.$this->data['file_name'].'" />';
                 $html .= '<input type="hidden" name="secure_file_ext_'.$input_name.'" value="'.$this->data['file_ext'].'" />';
@@ -179,8 +179,8 @@
             else{
                 $submit_caption = $this->submit_caption;
                 $style = '';
-                $html .= '<input id="' . $input_id . '" name="'. $input_name .'" style="'.$style.'" '.$extra.' type="file" />';
-                $html .= '<input type="submit" name="submit_'.$input_name.'" value="'.$submit_caption.'"';
+                $html .= '<input id="' . $input_id . '" name="'. $input_name .'" style="'.$style.'" '.$extra.' type="file" class="sf_fileinput" />';
+                $html .= '<input type="submit" class="sf_btn" name="submit_'.$input_name.'" value="'.$submit_caption.'"';
                 if( !$this->show_submit )  $html .= ' style="display:none;"';
                 $html .= ' />';
             }
@@ -416,6 +416,7 @@
                 }
                 // ..check the permissible dimensions
                 if( $info[0]>$this->max_width || $info[1]>$this->max_height ){
+                    @unlink( $dest_file_path );
                     return $FUNCS->raise_error( 'The dimensions of image exceed the permitted '.$this->max_width.'px X '.$this->max_height.'px' );
                 }
 

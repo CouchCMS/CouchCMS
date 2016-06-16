@@ -1,0 +1,48 @@
+<cms:form
+    masterpage = k_selected_masterpage
+    mode = k_selected_form_mode
+    page_id = k_selected_page_id
+    enctype = 'multipart/form-data'
+    method = 'post'
+    anchor = '0'
+    add_security_token = '0'
+    id = k_cur_form
+    name = k_cur_form
+    token = k_cur_token
+    >
+
+    <div class="tab-pane fade active in" id="tab-pane-edit-<cms:show k_route_module />">
+
+        <cms:if k_success >
+
+            <cms:db_persist_form
+                _token=k_cur_token
+            />
+
+            <cms:if k_success >
+                <cms:abort>
+                    <font color="green"><b>Saved.</b></font><br/>Reloading page..<script>parent.location.reload()</script>
+                </cms:abort>
+            </cms:if>
+        </cms:if>
+
+        <cms:if k_error >
+            <cms:show_error>
+                <cms:each k_error >
+                    <cms:show item /><br>
+                </cms:each>
+            </cms:show_error>
+        </cms:if>
+
+        <!-- the editable regions -->
+        <cms:admin_form_fields depth='1'>
+            <cms:render 'form_row' />
+        </cms:admin_form_fields>
+
+        <div class="ctrl-bot">
+            <cms:render 'page_actions' />
+        </div>
+
+        <input type="hidden" id="k_custom_action" name="k_custom_action" value="">
+    </div>
+</cms:form>

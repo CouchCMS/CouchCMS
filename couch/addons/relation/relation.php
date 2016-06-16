@@ -94,50 +94,10 @@
         }
 
         // Show in admin panel
-        function _render( $input_name, $input_id, $extra1='', $extra2='', $dynamic_insertion=0 ){
+        function _render( $input_name, $input_id, $extra='', $dynamic_insertion=0 ){
             global $FUNCS;
 
-            if( $this->no_gui ){
-                $rows = $this->items_selected;
-                if( $this->has=='one' && count($rows)>1 ){
-                    array_splice( $rows, 1 );
-                }
-                foreach( $rows as $row_id ){
-                    $html .= '<input type="hidden" name="'.$input_name.'_chk[]" value="'.$row_id.'" />';
-                }
-
-                return $html;
-            }
-
-            define( 'RELATION_URL', K_ADMIN_URL . 'addons/relation/' );
-            $FUNCS->load_css( RELATION_URL . 'relation.css' );
-
-            $rows = $this->_get_rows();
-            if( $FUNCS->is_error($rows) ) return $rows->err_msg;
-
-            if( $this->has=='one' ){
-                $selected = ( count($this->items_selected) ) ? $this->items_selected[0] : ''; // can have only one item selected
-                $html .= '<select name="'.$input_name.'_chk" id="'.$input_id.'" >';
-                $html .= '<option value="-">-- Select --</option>'; //TODO get label as parameter
-
-                while( list($key, $value) = each($rows) ){
-                    $html .= '<option value="'.$key.'"';
-                    if( $selected && $key==$selected ) $html .= '  selected="selected"';
-                    $html .= '>'.$value.'</option>';
-                }
-                $html .= '</select>';
-            }
-            else{
-                $html = '<ul class="checklist cl1">';
-                $x=0;
-                while( list($key, $value) = each($rows) ){
-                    $class = ( ($x+1)%2 ) ? ' class="alt"' : '';
-                    $selected = ( in_array($key, $this->items_selected) ) ? ' checked="checked"' : '';
-                    $html .= '<li'.$class.'><label for="'.$input_name.'_chk_'.$x.'"><input id="'.$input_name.'_chk_'.$x.'" name="'.$input_name.'_chk[]" type="checkbox" value="'.$key.'"'.$selected.' /> '.$value.'</li>';
-                    $x++;
-                }
-                $html .= '</ul>';
-            }
+            $html = $FUNCS->render( 'field_relation', $this, $input_name, $input_id, $extra, $dynamic_insertion );
 
             return $html;
         }
@@ -480,11 +440,8 @@
             $field = trim( $field );
 
             // get page_id (return if used in context of list_view)
-            if( $CTX->get('k_is_page') ){
+            if( $CTX->get('k_is_page') || $CTX->get('k_is_list_page') ){
                 $page_id = $CTX->get('k_page_id');
-            }
-            elseif( $CTX->get('k_is_list_page') ){ // non-clonable template
-                $page_id = $PAGE->id;
             }
             else return; // happens in list_view
 
@@ -549,11 +506,8 @@
             if( !$masterpage ) die("ERROR: Tag \"".$node->name."\": 'masterpage' not specified");
 
             // get page_id (return if used in context of list_view)
-            if( $CTX->get('k_is_page') ){
+            if( $CTX->get('k_is_page') || $CTX->get('k_is_list_page') ){
                 $page_id = $CTX->get('k_page_id');
-            }
-            elseif( $CTX->get('k_is_list_page') ){ // non-clonable template
-                $page_id = $PAGE->id;
             }
             else return; // happens in list_view
 
@@ -593,12 +547,78 @@
             $html = $TAGS->pages( $params, $node, 4 );
             return $html;
         }
+
+        // renderable theme functions
+        static function register_renderables(){
+            global $FUNCS;
+
+            $FUNCS->register_render( 'field_relation', array('renderable'=>array('Relation', '_render_relation')) );
+            $FUNCS->register_render( 'field_reverse_relation', array('renderable'=>array('ReverseRelation', '_render_reverse_relation')) );
+        }
+
+        static function _render_relation( $f, $input_name, $input_id, $extra, $dynamic_insertion ){
+            global $FUNCS, $CTX;
+
+            if( $f->no_gui ){
+                $rows = $f->items_selected;
+                if( $f->has=='one' && count($rows)>1 ){
+                    array_splice( $rows, 1 );
+                }
+                foreach( $rows as $row_id ){
+                    $html .= '<input type="hidden" name="'.$input_name.'_chk[]" value="'.$row_id.'" />';
+                }
+
+                return $html;
+            }
+
+            define( 'RELATION_URL', K_ADMIN_URL . 'addons/relation/' );
+            $FUNCS->load_css( RELATION_URL . 'relation.css' );
+
+            $rows = $f->_get_rows();
+            if( $FUNCS->is_error($rows) ) return $rows->err_msg;
+
+            if( $f->has=='one' ){
+                $selected = ( count($f->items_selected) ) ? $f->items_selected[0] : ''; // can have only one item selected
+                $html .= '<select name="'.$input_name.'_chk" id="'.$input_id.'" >';
+                $html .= '<option value="-">-- Select --</option>'; //TODO get label as parameter
+
+                while( list($key, $value) = each($rows) ){
+                    $html .= '<option value="'.$key.'"';
+                    if( $selected && $key==$selected ) $html .= '  selected="selected"';
+                    $html .= '>'.$value.'</option>';
+                }
+                $html .= '</select>';
+            }
+            else{
+                $html .= '<div class="relation-body"><!-- Set editable region width to this div -->';
+                $html .= '<div class="scroll-relation"><!-- Set editable region height to this div as max-height:??px; -->';
+                $html .= '<ul class="checklist cl1">';
+                $x=0;
+                while( list($key, $value) = each($rows) ){
+                    $class = ( ($x+1)%2 ) ? ' class="alt"' : '';
+                    $checked = $selected = '';
+                    if( in_array($key, $f->items_selected) ){
+                        $checked = ' checked="checked"';
+                        $selected = ' class="selected"';
+                    }
+
+                    $html .= '<li'.$class.'><label for="'.$input_name.'_chk_'.$x.'"'.$selected.'><input id="'.$input_name.'_chk_'.$x.'" name="'.$input_name.'_chk[]" type="checkbox" value="'.$key.'"'.$checked.' /><span class="ctrl-option"></span> '.$value.'</li>';
+                    $x++;
+                }
+                $html .= '</ul>';
+                $html .= '</div>';
+                $html .= '</div>';
+            }
+
+            return $html;
+        }
     }
 
     // Register
     $FUNCS->register_udf( 'relation', 'Relation' );
     $FUNCS->register_tag( 'related_pages', array('Relation', 'related_pages_handler'), 1, 1 ); // The helper tag that shows the related pages
     $FUNCS->register_tag( 'reverse_related_pages', array('Relation', 'reverse_related_pages_handler'), 1, 1 ); // -do in reverse-
+    $FUNCS->add_event_listener( 'register_renderables',  array('Relation', 'register_renderables') );
 
 
     // UDF for outputting a link that lists reverse related pages in admin-panel
@@ -625,13 +645,14 @@
         }
 
         // Show in admin panel
-        function _render( $input_name, $input_id, $extra1='', $extra2='', $dynamic_insertion=0 ){
+        function _render( $input_name, $input_id, $extra='', $dynamic_insertion=0 ){
             global $FUNCS, $DB;
 
             // get template_id of reverse related masterpage
-            $rs = $DB->select( K_TBL_TEMPLATES, array('id'), "name='" . $DB->sanitize( $this->masterpage ). "'" );
+            $rs = $DB->select( K_TBL_TEMPLATES, array('id', 'name'), "name='" . $DB->sanitize( $this->masterpage ). "'" );
             if( count($rs) ){
                 $template_id = $rs[0]['id'];
+                $template_name = $rs[0]['name'];
             }
             else{
                 return "ERROR: Related template '" . $FUNCS->cleanXSS($this->masterpage) . "' not found";
@@ -658,19 +679,29 @@
 
             // Find the count of reverse related pages
             $count = 0;
+            $link = null;
             $cid = $this->page->id;
-            if( $cid != -1 ){
+            if( $cid != -1 ){ // not a new page
                 $rel_tables = K_TBL_PAGES . ' p inner join ' . K_TBL_RELATIONS . ' rel on rel.pid = p.id' . "\r\n";
                 $rel_sql = "p.parent_id=0 AND rel.cid='" . $DB->sanitize( $cid ). "' AND rel.fid='" . $DB->sanitize( $field_id ). "'";
                 $rs = $DB->select( $rel_tables, array('count(p.id) as cnt'), $rel_sql );
                 $count = $rs[0]['cnt'];
 
-                // Return link that will show the related pages
-                $link = K_ADMIN_URL . K_ADMIN_PAGE . '?act=list&tpl=' . $template_id . '&cid=' . $cid . '&rid=' . $field_id;
-                $html = '<a href="'.$link.'">' . $this->anchor_text . ' ('.$count.')</a>';
+                // link that will show the related pages
+                $link = K_ADMIN_URL . K_ADMIN_PAGE . '?o='.$template_name.'&q=list' . '&cid=' . $cid . '&rid=' . $field_id;
+            }
+
+            $html = $FUNCS->render( 'field_reverse_relation', $this, $link, $this->anchor_text, $count );
+
+            return $html;
+        }
+
+        static function _render_reverse_relation( $f, $link, $anchor_text, $count ){
+            if( $link ){
+                $html = '<a href="'.$link.'">' . $anchor_text . ' ('.$count.')</a>';
             }
             else{
-                $html = $this->anchor_text . ' ('.$count.')';
+                $html = $anchor_text . ' ('.$count.')';
             }
 
             return $html;

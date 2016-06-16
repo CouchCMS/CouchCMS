@@ -78,6 +78,20 @@
             }
         }
 
+        function has_listener( $event_name, $listener ){
+            if( !isset($this->listeners[$event_name]) ){
+                return false;
+            }
+
+            foreach( $this->listeners[$event_name] as $priority => $listeners ){
+                if( false !== ($key = array_search($listener, $listeners, true)) ){
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         function _do_dispatch( $listeners, &$args ){
             foreach( $listeners as $listener ){
                 $stop_propogation = call_user_func_array( $listener, $args );

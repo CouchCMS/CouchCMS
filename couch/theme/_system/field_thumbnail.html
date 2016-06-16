@@ -1,0 +1,88 @@
+<cms:if k_field_show_preview >
+    <div class="img-preview">
+        <a
+            id="<cms:show k_field_input_id />_preview"
+            class="popup-img"
+            href="<cms:if k_field_value><cms:show k_field_value /><cms:else /><cms:show k_system_theme_link />assets/upload-image.gif</cms:if>"
+        >
+            <img
+                id="<cms:show k_field_input_id />_tb_preview"
+                name="<cms:show k_field_input_name />_tb_preview"
+                src="<cms:if k_field_value><cms:show k_field_value /><cms:else /><cms:show k_system_theme_link />assets/upload-image.gif</cms:if>"
+                <cms:if k_field_preview_width>width="<cms:show k_field_preview_width />"</cms:if>
+                <cms:if k_field_preview_height>height="<cms:show k_field_preview_height />"</cms:if>
+                class="k_thumbnail_preview"
+            >
+            <cms:show_icon 'zoom-in' />
+        </a>
+    </div>
+</cms:if>
+
+<cms:if k_field_value>
+    <div class="crop-group">
+        <cms:if k_field_show_preview='0' >
+            <a
+                id="<cms:show k_field_input_id />_preview"
+                href="<cms:if k_field_value><cms:show k_field_value /><cms:else /><cms:show k_system_theme_link />assets/upload-image.gif</cms:if>"
+                class="btn popup-img"
+                style="display:<cms:if k_field_value>inline-block<cms:else />none</cms:if>;"
+            >
+                <cms:show_icon 'zoom-in' /><cms:localize 'preview' />
+            </a><br>
+        </cms:if>
+
+        <a class="btn crop-recreate"
+            href="javascript:k_crop_image(<cms:show k_field_tpl_id />, <cms:show k_field_page_id />, '<cms:show k_field_name />', '<cms:create_nonce "crop_image_<cms:show k_field_name />"  />')"
+        >
+            <cms:show_icon 'reload' /><cms:localize 'recreate' />
+        </a>
+        <span><cms:localize 'crop_from' />:</span>
+        <div class="select">
+            <select name="f_k_crop_pos_<cms:show k_field_name />" id="f_k_crop_pos_<cms:show k_field_name />" <cms:if k_field_is_deleted>disabled="1"</cms:if>>
+                <option value="top_left"><cms:localize 'top_left' /></option>
+                <option value="top_center"><cms:localize 'top_center' /></option>
+                <option value="top_right"><cms:localize 'top_right' /></option>
+                <option value="middle_left"><cms:localize 'middle_left' /></option>
+                <option selected="selected" value="middle"><cms:localize 'middle' /></option>
+                <option value="middle_right"><cms:localize 'middle_right' /></option>
+                <option value="bottom_left"><cms:localize 'bottom_left' /></option>
+                <option value="bottom_center"><cms:localize 'bottom_center' /></option>
+                <option value="bottom_right"><cms:localize 'bottom_right' /></option>
+            </select>
+            <span class="select-caret"><cms:show_icon 'caret-bottom' /></span>
+        </div>
+    </div>
+</cms:if>
+
+<cms:if k_add_crop_js>
+    <cms:admin_add_js>
+        function k_crop_image( tpl_id, page_id, field_id, nonce ){
+            var el_preview = '#f_'+field_id+'_preview';
+            var crop_pos = $('#f_k_crop_pos_' + field_id).val();
+            var qs = '<cms:show k_admin_link />ajax.php?act=crop&tpl='+tpl_id+'&p='+page_id+'&tb='+encodeURIComponent( field_id )+'&nonce='+ encodeURIComponent( nonce )+'&cp='+encodeURIComponent(crop_pos);
+
+            $.ajax({
+                dataType: "text",
+                url:      qs
+            }).done(function( data ) {
+                if( data === "OK" ){
+                    var href = $(el_preview).attr('href');
+                    if( href.indexOf('?') != -1 ){
+                        href = href.substr(0, href.indexOf('?'));
+                    }
+                    href = href + '?rand=' + Math.random();
+                    $(el_preview).attr('href', href);
+                    try{
+                        $('#f_'+field_id+'_tb_preview').attr('src', href);
+                    }
+                    catch( e ){}
+
+                    alert('<cms:localize 'thumb_recreated' />');
+                }
+                else{
+                    alert( data );
+                }
+            });
+        }
+    </cms:admin_add_js>
+</cms:if>

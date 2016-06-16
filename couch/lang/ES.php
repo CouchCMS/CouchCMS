@@ -198,7 +198,7 @@
     $t['template'] = 'Plantilla';
     $t['modified'] = 'Fecha de modificaci&oacute;n'; // Date of last modification
     $t['preview'] = 'Vista previa';
-    $t['confirm_delete_draft'] = '¿Seguro que desea eliminar este borrador?';
+    $t['confirm_delete_draft'] = '¿Seguro que desea eliminar este borrador'; // No question mark please
     $t['confirm_delete_selected_drafts'] = '¿Seguro que desea eliminar los borradores seleccionados?';
     $t['confirm_apply_selected_drafts'] = '¿Seguro que desea aplicar los borradores seleccionados?';
     $t['view_all_drafts'] = 'Ver todos los borradores';

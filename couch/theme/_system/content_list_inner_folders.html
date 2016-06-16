@@ -1,0 +1,39 @@
+<table class="table table-primary table-list">
+    <thead>
+        <tr>
+            <cms:render 'list_header' />
+        </tr>
+    </thead>
+    <tbody id="listing">
+        <cms:folders
+            masterpage            = k_template_name
+            orderby               = k_selected_orderby
+            order                 = k_selected_order
+            hierarchical          = '1'
+            include_custom_fields = '1'
+            paginate              = '1'
+            limit                 = k_selected_limit
+            base_link             = k_route_link
+        >
+
+                <cms:if k_paginated_bottom >
+                    <cms:set my_paginator="<cms:render 'paginator' />" 'parent' />
+                </cms:if>
+
+                <cms:if k_paginated_top>
+                    <cms:if k_level gt '0' >
+                        <cms:parentfolders folder=k_folder_name skip_child='1' orderby=k_selected_orderby order=k_selected_order >
+                            <tr>
+                                <cms:render 'list_row' />
+                            </tr>
+                        </cms:parentfolders>
+                    </cms:if>
+                </cms:if>
+
+                <tr>
+                    <cms:render 'list_row' />
+                </tr>
+
+        </cms:folders>
+    </tbody>
+</table>

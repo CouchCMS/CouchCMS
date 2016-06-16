@@ -1,0 +1,15 @@
+<cms:capture into='my_logo'>
+    <img
+        <cms:if k_logo_id >id="<cms:show k_logo_id />"</cms:if>
+        <cms:if k_logo_class >class="<cms:show k_logo_class />"</cms:if>
+        src="<cms:show k_logo_src />"
+    />
+</cms:capture>
+
+<cms:if k_logo_href >
+    <a href="<cms:show k_logo_href />">
+        <cms:show my_logo />
+    </a>
+<cms:else />
+    <cms:show my_logo />
+</cms:if>

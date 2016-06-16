@@ -1,0 +1,25 @@
+<table class="table table-primary table-list">
+    <thead>
+        <tr>
+            <cms:render 'list_header' />
+        </tr>
+    </thead>
+    <tbody id="listing">
+        <cms:query
+            sql         = k_selected_query
+            paginate    = '1'
+            limit       = k_selected_limit
+            base_link   = k_route_link
+        >
+
+            <cms:if k_paginated_bottom >
+                <cms:set my_paginator="<cms:render 'paginator' />" 'parent' />
+            </cms:if>
+
+            <tr>
+                <cms:render 'list_row' />
+            </tr>
+
+        </cms:query>
+    </tbody>
+</table>

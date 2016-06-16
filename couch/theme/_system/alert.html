@@ -1,0 +1,17 @@
+<div class="alert alert-<cms:if k_alert_type='warning'>notice<cms:else /><cms:show k_alert_type /></cms:if> alert-icon">
+    <cms:if k_alert_type='success' >
+        <cms:show_icon 'circle-check' />
+    <cms:else_if k_alert_type='error' />
+        <cms:show_icon 'circle-x' />
+    <cms:else_if k_alert_type='warning' />
+        <cms:show_icon 'warning' />
+    <cms:else />
+        <cms:show_icon 'info' />
+    </cms:if>
+
+    <cms:if k_alert_heading>
+        <h2><cms:show k_alert_heading /></h2>
+    </cms:if>
+
+    <cms:show k_alert_content />
+</div>

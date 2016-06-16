@@ -123,7 +123,7 @@
             return ( strlen($data) ) ? false : true;
         }
 
-        function _render( $input_name, $input_id, $extra1='', $extra2='', $dynamic_insertion=0 ){
+        function _render( $input_name, $input_id, $extra1='', $dynamic_insertion=0 ){
             global $FUNCS, $CTX;
 
             /*
@@ -135,45 +135,44 @@
             if( !defined('NICEDIT_URL') ) define( 'NICEDIT_URL', K_SITE_URL . $subdomain );
             $FUNCS->load_js( NICEDIT_URL . 'nicedit.js?kver=' . time() );
             */
-
-            define( 'NICEDIT_URL', K_ADMIN_URL . 'addons/nicedit/' );
-            $FUNCS->load_js( NICEDIT_URL . 'nicedit.js?v=2' );
+            if( !defined('NICEDIT_URL') ){
+                define( 'NICEDIT_URL', K_ADMIN_URL . 'addons/nicedit/' );
+                $FUNCS->load_js( NICEDIT_URL . 'nicedit.js?v=3' );
+                $FUNCS->load_css( NICEDIT_URL . 'nicedit.css' );
+            }
             $style = ( $this->height ) ? 'height:'.$this->height.'px; ' : '';
-            $style .= ( $this->width ) ? 'width:'.$this->width.'px; ' : 'width:99%; ';
+            $style .= ( $this->width ) ? 'width:'.$this->width.'px; ' : 'width:100%; ';
             $html .= '<textarea id="' . $input_id . '" name="'. $input_name .'" '.$rtl.' rows="12" cols="79" style="'.$style.'" '.$extra.'>'. htmlspecialchars( $this->get_data(), ENT_QUOTES, K_CHARSET ) .'</textarea>';
 
             if( $this->maxheight && $this->height && ($this->maxheight < $this->height) ){
                 $this->maxheight = $this->height;
             }
 
-            ob_start();
             if( !$dynamic_insertion ){
+                ob_start();
                 ?>
-                <script type="text/javascript">
-                <!--
-                try{
-                    window.addEvent('domready',
-                        function(){
-                        var ed = new nicEditor({iconsPath : '<?php echo NICEDIT_URL; ?>nicEditorIcons.gif?v=2', buttonList : <?php echo $this->buttons; ?><?php if($this->maxheight){echo ', maxHeight : '.$this->maxheight;}?>}).panelInstance('<?php echo $input_id; ?>');
+                $(function(){
+                    var ed = new nicEditor({iconsPath : '<?php echo K_SYSTEM_THEME_URL; ?>assets/', buttonList : <?php echo $this->buttons; ?><?php if($this->maxheight){echo ', maxHeight : '.$this->maxheight;}?>}).panelInstance('<?php echo $input_id; ?>');
 
-                        $('btn_submit').addEvent("my_submit", function(event){
-                           var el = nicEditors.findEditor('<?php echo $input_id ?>');
-                           if (el) el.saveContent();
-                        });
+                    $('#btn_submit').bind("my_submit", function(event){
+                        var el = nicEditors.findEditor('<?php echo $input_id ?>');
+                        if (el) el.saveContent();
+                    });
 
-                        var parentRow = $('<?php echo $input_id ?>').getParent('tr');
-                        if(parentRow){
-                            parentRow.addEvent('row_delete', function(event){
-                            ed.removeInstance('<?php echo $input_id ?>');
+                    try{
+                        var parentRow = $('#<?php echo $input_id ?>').closest('tr');
+                        if(parentRow.length){
+                            parentRow.bind('row_delete', function(event){
+                                ed.removeInstance('<?php echo $input_id ?>');
                             });
                         }
-                        }
-                    );
-                }
-                catch(e){}
-                -->
-                </script>
+                    }
+                    catch(e){}
+                });
                 <?php
+                $js = ob_get_contents();
+                ob_end_clean();
+                $FUNCS->add_js( $js );
             }
             else{
                 // Being dynamically inserted (e.g. through 'repeatable' tag).
@@ -181,29 +180,31 @@
                 // Have to use a workaround (http://24ways.org/2005/have-your-dom-and-script-it-too).
                 // Additionally, we are adding an id - the logic is that the id gets duplicated into 'idx' for the 'template' row code.
                 // This 'idx' will not be present in the cloned rows. We use this property to avoid executing JavaScript in template row.
+                ob_start();
                 ?>
-                <img src="<?php echo NICEDIT_URL; ?>blank.gif" alt="" id="<?php echo $input_id ?>_dummyimg" onload="
-                    el=$('<?php echo $input_id ?>_dummyimg');
-                    if(!el.get('idx')){
-                    var ed = new nicEditor({iconsPath : '<?php echo NICEDIT_URL; ?>nicEditorIcons.gif?v=2', buttonList : <?php echo $this->buttons; ?><?php if($this->maxheight){echo ', maxHeight : '.$this->maxheight;}?>}).panelInstance('<?php echo $input_id; ?>');
+                <img src="<?php echo K_SYSTEM_THEME_URL; ?>assets/blank.gif" alt="" id="<?php echo $input_id ?>_dummyimg" onload="
+                    el=$('#<?php echo $input_id ?>_dummyimg');
+                    if(!el.attr('idx')){
+                    var ed = new nicEditor({iconsPath : '<?php echo K_SYSTEM_THEME_URL; ?>assets/', buttonList : <?php echo $this->buttons; ?><?php if($this->maxheight){echo ', maxHeight : '.$this->maxheight;}?>}).panelInstance('<?php echo $input_id; ?>');
 
-                    $('btn_submit').addEvent('my_submit', function(event){
-                       var el = nicEditors.findEditor('<?php echo $input_id ?>');
-                       if (el) el.saveContent();
+                    $('#btn_submit').bind('my_submit', function(event){
+                        var el = nicEditors.findEditor('<?php echo $input_id ?>');
+                        if (el) el.saveContent();
                     });
 
-                    var parentRow = el.getParent('tr');
-                    if(parentRow){
-                        parentRow.addEvent('row_delete', function(event){
-                        ed.removeInstance('<?php echo $input_id ?>');
+                    var parentRow = el.closest('tr');
+                    if(parentRow.length){
+                        parentRow.bind('row_delete', function(event){
+                            ed.removeInstance('<?php echo $input_id ?>');
                         });
                     }
-                    el.setStyle('display', 'none');
+                    el.css('display', 'none');
                     }
                 " />
-            <?php }
-            $html .= ob_get_contents();
-            ob_end_clean();
+                <?php
+                $html .= ob_get_contents();
+                ob_end_clean();
+            }
             return $html;
         }
     }

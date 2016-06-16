@@ -196,7 +196,7 @@
     $t['template'] = 'Stramien';
     $t['modified'] = 'aangepast'; // Date of last modification
     $t['preview'] = 'Voorvertoning';
-    $t['confirm_delete_draft'] = 'Bent u zeker deze kladpagina te verwijderen?';
+    $t['confirm_delete_draft'] = 'Bent u zeker deze kladpagina te verwijderen'; // No question mark please
     $t['confirm_delete_selected_drafts'] = 'Bent u zeker de geselecteerde kladpaginas te verwijderen?';
     $t['confirm_apply_selected_drafts'] = 'Bent u zeker de geselecteerde kladpaginas te bevestigen?';
     $t['view_all_drafts'] = 'Bekijk alle kladpaginas';
