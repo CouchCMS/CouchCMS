@@ -678,6 +678,8 @@ COUCH.updateRichTextContent = function() {
  */
 COUCH.init = function() {
     $(function() {
+        svg4everybody();
+
         COUCH.data.overflowScrolling = COUCH.hasOverflowScrolling();
 
         COUCH.el.$collapseTooltips = $( ".tt-collapse" );
