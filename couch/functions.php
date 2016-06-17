@@ -2448,7 +2448,7 @@
 
         function validate_email( $field ){
             if( !preg_match("/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,10}$/i", trim($field->get_data())) ){
-                return KFuncs::raise_error( "Invalid E-mail" );
+                return KFuncs::raise_error( "Invalid Email" );
             }
         }
 

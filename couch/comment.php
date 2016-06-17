@@ -80,7 +80,7 @@
 
             $fields = array(
                         'name'=>$FUNCS->t('name'), /*'Name',*/
-                        'email'=>$FUNCS->t('email'), /*'E-Mail',*/
+                        'email'=>$FUNCS->t('email'), /*'Email',*/
                         'link'=>$FUNCS->t('website'), /*'Website',*/
                         'data'=>$FUNCS->t('comment'), /*'Comment',*/
                         'date'=>$FUNCS->t('submitted_on'),
