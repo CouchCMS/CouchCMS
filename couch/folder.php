@@ -597,6 +597,7 @@
                             break;
                         case 'image':
                             $field_info['k_type'] = 'image';
+                            $field_info['show_preview'] = '1';
                             $field_info['required'] = '0';
                             $field_info['system'] = '0';
                             break;

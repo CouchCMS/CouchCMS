@@ -3091,7 +3091,7 @@ FORM;
             $extended_info = ( $extended_info==1 ) ? 1 : 0;
             if( $list ) $extended_info = 1;
             $prompt = trim( $prompt );
-            if( !$prompt ) $prompt = '--Select Folder--';
+            if( !$prompt ) $prompt = '-- '.$FUNCS->t('select_folder').' --';
             $id = trim( $id );
             if( !$id ) $id = 'f_k_folders';
             $name = trim( $name );

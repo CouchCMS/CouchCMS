@@ -6,20 +6,18 @@
     </div>
 
     <div class="panel-heading<cms:if "<cms:not k_comment_approved />"> panel-primary</cms:if> comment-heading">
-        <cms:render 'list_checkbox' />
-        <cms:show k_comment_author />
-        <cms:if k_comment_author_email >
-            <span class="desc">(<a href="mailto:<cms:show k_comment_author_email />"><cms:show k_comment_author_email /></a>)</span>
-        </cms:if>
+        <cms:render 'list_checkbox' /><cms:hide>
+        </cms:hide><cms:show k_comment_author /><cms:hide>
+        </cms:hide><cms:if k_comment_author_email ><span class="desc">(<a href="mailto:<cms:show k_comment_author_email />"><cms:show k_comment_author_email /></a>)</span></cms:if>
     </div>
 
     <div class="panel-body comment-body">
         <p><cms:show k_comment /></p>
 
         <div class="comment-details">
-            <cms:date k_comment_date format='M jS Y' /> at <cms:date k_comment_date format='h:iA' />&nbsp;&nbsp;|&nbsp;&nbsp;
-            <a href="<cms:show k_view_link />"><cms:show k_comment_page_name /></a>&nbsp;&nbsp;|&nbsp;&nbsp;
-            <a href="http://www.ip-tracker.org/locator/ip-lookup.php?ip=<cms:show k_comment_author_ip_addr />" target="_blank"><cms:show k_comment_author_ip_addr /></a>
+            <cms:date k_comment_date format='M jS Y' /> at <cms:date k_comment_date format='h:iA' />&nbsp;&nbsp;|&nbsp;&nbsp;<cms:hide>
+            </cms:hide><a href="<cms:show k_view_link />"><cms:show k_comment_page_name /></a>&nbsp;&nbsp;|&nbsp;&nbsp;<cms:hide>
+            </cms:hide><a href="http://www.ip-tracker.org/locator/ip-lookup.php?ip=<cms:show k_comment_author_ip_addr />" target="_blank"><cms:show k_comment_author_ip_addr /></a>
         </div>
     </div>
 </div>

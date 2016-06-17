@@ -23,7 +23,7 @@
 
             // subtitle
             $subtitle = $FUNCS->t('list');
-            $icon = 'file';
+            $icon = 'person';
             $FUNCS->set_admin_subtitle( $subtitle, $icon );
         }
 
@@ -181,7 +181,8 @@
 
             // subtitle
             $subtitle = $FUNCS->t('edit');
-            $FUNCS->set_admin_subtitle( $subtitle );
+            $icon = 'person';
+            $FUNCS->set_admin_subtitle( $subtitle, $icon );
         }
 
         function _default_form_toolbar_actions(){
@@ -194,6 +195,7 @@
                         'title'=>$FUNCS->t('add_new'),
                         'desc'=>$FUNCS->t('add_new_user'),
                         'href'=>$FUNCS->get_qs_link( $FUNCS->generate_route( 'users', 'create_view', array('nonce'=>$FUNCS->create_nonce('create_page'))) ),
+                        'icon'=>'plus',
                         'weight'=>10,
                     );
             }

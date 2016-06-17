@@ -1030,7 +1030,7 @@
             $hilited = $this->get_data();
             $this->page->folders->visit( array('KFolder', '_k_visitor'), $dropdown_html, $hilited, 0/*$depth*/, 0/*$extended_info*/, array()/*$exclude*/ );
             $CTX->pop();
-            return '<select id="'.$input_id.'" name="'.$input_name.'"><option value="-1" >--'.$FUNCS->t('select_folder').'--</option>' .$dropdown_html . '</select>';
+            return '<select id="'.$input_id.'" name="'.$input_name.'"><option value="-1" >-- '.$FUNCS->t('select_folder').' --</option>' .$dropdown_html . '</select>';
         }
     }
 
@@ -1045,7 +1045,7 @@
             $hilited = $this->get_data();
             $PAGE->folders->visit( array('KFolder', '_k_visitor'), $dropdown_html, $hilited, 0/*$depth*/, 0/*$extended_info*/, array($OBJ->name)/*$exclude*/ );
             $CTX->pop();
-            return '<select id="'.$input_id.'" name="'.$input_name.'"><option value="-1" >--'.$FUNCS->t('none').'--</option>' .$dropdown_html . '</select>';
+            return '<select id="'.$input_id.'" name="'.$input_name.'"><option value="-1" >-- '.$FUNCS->t('none').' --</option>' .$dropdown_html . '</select>';
         }
     }
 
@@ -1255,7 +1255,7 @@
                 $hilited = $this->get_data();
                 $tree->visit( array('KNestedPage', '_k_visitor_pages'), $dropdown_html, $hilited, 0/*$depth*/, 0/*$extended_info*/, array($this->page->page_name)/*$exclude*/ );
                 $CTX->pop();
-                $html .= '<select id="'.$input_id.'" name="'.$input_name.'"><option value="-1" >--'.$FUNCS->t('none').'--</option>' .$dropdown_html . '</select>';
+                $html .= '<select id="'.$input_id.'" name="'.$input_name.'"><option value="-1" >-- '.$FUNCS->t('none').' --</option>' .$dropdown_html . '</select>';
                 //$html .= '</div>';
             }
             return $html;

@@ -32,7 +32,7 @@
 
             // subtitle
             $subtitle = $FUNCS->t('list');
-            $icon = 'file';
+            $icon = 'document';
             $FUNCS->set_admin_subtitle( $subtitle, $icon );
         }
 
@@ -279,7 +279,8 @@
 
             // subtitle
             $subtitle = $FUNCS->t('edit');
-            $FUNCS->set_admin_subtitle( $subtitle );
+            $icon = 'document';
+            $FUNCS->set_admin_subtitle( $subtitle, $icon );
         }
 
         function _default_form_toolbar_actions(){

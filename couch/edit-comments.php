@@ -162,7 +162,8 @@
 
             // subtitle
             $subtitle = $FUNCS->t('edit');
-            $FUNCS->set_admin_subtitle( $subtitle );
+            $icon = 'chat';
+            $FUNCS->set_admin_subtitle( $subtitle, $icon );
         }
 
         function _default_form_page_actions(){
@@ -180,6 +181,7 @@
                         'onclick'=>array( "this.blur();" ),
                         'href'=>$view_link,
                         'target'=>'_blank',
+                        'icon'=>'magnifying-glass',
                         'weight'=>20,
                     );
             }

@@ -1,10 +1,13 @@
-<select
-    name="<cms:show k_field_input_name />"
-    id="<cms:show k_field_input_id />"
-    <cms:if k_field_is_deleted>disabled="1"</cms:if>
-    <cms:show k_field_extra />
->
-    <cms:list_options>
-        <option value="<cms:show k_option_value />" <cms:if k_option_is_selected>selected="selected"</cms:if>><cms:show k_option /></option>
-    </cms:list_options>
-</select>
+<div class="select">
+    <select
+        name="<cms:show k_field_input_name />"
+        id="<cms:show k_field_input_id />"
+        <cms:if k_field_is_deleted>disabled="1"</cms:if>
+        <cms:show k_field_extra />
+    >
+        <cms:list_options>
+            <option value="<cms:show k_option_value />" <cms:if k_option_is_selected>selected="selected"</cms:if>><cms:show k_option /></option>
+        </cms:list_options>
+    </select>
+    <span class="select-caret"><cms:show_icon 'caret-bottom' /></span>
+</div>

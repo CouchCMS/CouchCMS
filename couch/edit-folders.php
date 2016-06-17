@@ -33,7 +33,7 @@
 
             // subtitle
             $subtitle = $FUNCS->t('list');
-            $icon = 'file';
+            $icon = 'folder';
             $FUNCS->set_admin_subtitle( $subtitle, $icon );
         }
 
@@ -219,7 +219,8 @@
 
             // subtitle
             $subtitle = $FUNCS->t('edit');
-            $FUNCS->set_admin_subtitle( $subtitle );
+            $icon = 'folder';
+            $FUNCS->set_admin_subtitle( $subtitle, $icon );
         }
 
         function define_form_fields(){
