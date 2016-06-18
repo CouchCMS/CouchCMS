@@ -2,8 +2,8 @@
     <th class="col-<cms:show k_field_class /><cms:if k_field_sortable > col-sort</cms:if><cms:if k_field_is_current > col-highlight</cms:if>">
         <cms:if k_field_sortable ><a class="col-sort-link" href="<cms:show k_filter_link />"></cms:if>
 
-        <cms:show k_field_header />
+        <cms:show k_field_header /><cms:hide>
 
-        <cms:if k_field_sortable ><cms:show_icon "caret-<cms:if k_selected_order='desc'>bottom<cms:else/>top</cms:if>" /></a></cms:if>
+        </cms:hide><cms:if k_field_sortable ><cms:show_icon "caret-<cms:if k_selected_order='desc'>bottom<cms:else/>top</cms:if>" /></a></cms:if>
     </th>
 </cms:admin_list_fields>

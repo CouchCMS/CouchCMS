@@ -226,8 +226,9 @@ div.simple-heading{border-width:0 0 1px 0;margin-top:0;cursor:default;}
 .prepend,.append{position:relative;}
 .prepend>.text,.prepend>.password{padding-left:36px;}
 .append>.password{padding-right:38px;}
-.append>.login-swap{display:block;position:absolute;right:9px;bottom:8px;width:22px;height:22px;line-height:23px;padding:0;border:0;border-radius:3px;background-color:#888;color:#fff;font-size:16px;font-weight:bold;padding-left:5px;}
+.append>.login-swap{display:block;position:absolute;right:9px;bottom:8px;width:22px;height:22px;line-height:23px;padding:0;border:0;border-radius:3px;background-color:#888;color:#fff;text-align:center;font-size:16px;font-weight:bold;}
 .append>.login-swap:before{content:"?";}
+.append>.login-swap:hover,.append>.login-swap:focus{text-decoration:none;}
 .simple-btns>.btn{display:block;width:100%;margin-top:20px;margin-right:0;}
 .simple-btns>.btn-left{float:left;width:199px;}
 .simple-btns>.btn-right{float:right;width:199px;}
@@ -368,7 +369,7 @@ input.input-group-field{position:relative;z-index:1;width:100%;border-radius:3px
 .input-group-field+.btn{display:block;position:absolute;top:0;bottom:0;border-radius:0 3px 3px 0;margin-right:0;}
 .input-group-field+.btn:focus,.input-group-field+.btn:active{z-index:2;}
 .input-group-field+.btn,.input-group-field+.btn.disabled:active{border-color:#c0c0c0;}
-.upload-group{width:36%;/*min-width:304px;*/max-width:100%;}
+.upload-group{width:36%;min-width:304px;max-width:100%;}
 .panel-body>.field>.upload-group{min-width:272px;}
 .upload-path+.btn{right:-141px;width:142px;}
 .crop-group,.ctrls-checkbox,.ctrls-radio{font-size:0;}
@@ -503,14 +504,14 @@ td.col-highlight{border-right:1px solid rgba(0,0,0,.03);border-left:1px solid rg
 
 /* Comments */
 .comment{position:relative;padding-left:104px;}
-.comment-avatar, .gravatar{display:block;position:absolute;top:0;left:0;width:80px;height:80px;border-radius:3px;/*background-image:url("images/avatar.svg");*/}
+.gravatar{display:block;position:absolute;top:0;left:0;width:80px;height:80px;border-radius:3px;background-image:url("images/avatar.svg");}
 .comment-actions{position:absolute;top:90px;left:0;width:80px;padding-top:11px;border-top:1px solid #c4c4c4;font-size:0;}
 .comment-actions:after{content:"";display:block;position:absolute;top:0;right:0;left:0;border-top:1px solid rgba(255,255,255,.65);}
 .comment-actions>.btn-actions{width:100%;}
 .comment-heading{margin-top:30px;background-image:none;}
 .comment:first-of-type>.comment-heading{margin-top:15px;}
-.comment-heading:before,.comment-heading:after{content:"";display:block;position:absolute;top:12px;left:-9px;z-index:1;width:0;height:0;border-width:9.5px 9px 9.5px 0;border-style:solid;border-color:transparent #eee transparent transparent;}
-.comment-heading:after{left:-10px;z-index:auto;border-right-color:#c0c0c0;}
+.comment-heading:before,.comment-heading:after{content:"";display:block;position:absolute;top:12px;left:-8px;z-index:1;width:0;height:0;border-width:9.5px 9px 9.5px 0;border-style:solid;border-color:transparent #eee transparent transparent;}
+.comment-heading:after{left:-9px;z-index:auto;border-right-color:#c0c0c0;}
 .comment-body{line-height:20px;padding:15px;}
 .comment-details{height:15px;line-height:15px;margin-top:15px;font-size:11px;font-weight:bold;color:#666;text-shadow:0 1px 0 rgba(255,255,255,.5);}
 .panel-primary+.comment-body>.comment-details{text-shadow:none;}
@@ -712,7 +713,7 @@ div.mfp-bottom-bar{text-shadow:0 1px 0 rgba(0,0,0,.6);}
     .ctrl-top>.ctrl-right>.btn-group{display:inline-block;}
     .dropdown{min-width:440px;}
     .panel-body>.field>.dropdown{min-width:408px;}
-    .upload-group{/*min-width:299px;*/}
+    .upload-group{min-width:299px;}
     .panel-body>.field>.upload-group{min-width:267px;}
     .crop-group>.select{min-width:216px;}
     .panel-body>.field>.crop-group>.select{min-width:184px;}
@@ -779,6 +780,5 @@ div.mfp-bottom-bar{text-shadow:0 1px 0 rgba(0,0,0,.6);}
 .dt_sep{margin-top: 13px !important;}
 .k_reverse_relation a, .k_securefile a, p.addRow a{text-decoration:underline;}
 a.unpublished, a.hidden-template span.nav-title{text-decoration: line-through;}
-a.login-swap:hover{text-decoration:none;}
 .alert.single{margin-top:0;}
 .sep{clear:both; height:38px; padding:8px;}

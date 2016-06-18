@@ -554,7 +554,7 @@
 
             $update_link = $FUNCS->generate_route( $tpl_name, 'edit_view', array('nonce'=>$FUNCS->create_nonce('edit_page_'.$page_id), 'id'=>$page_id) );
             $view_link = K_SITE_URL . $tpl_name .'?p='. $page_id;
-            $drafts_link = $FUNCS->generate_route( 'drafts', 'list_view' ) . '&tpl='.$tpl_id.'&&pid='.$page_id;
+            $drafts_link = $FUNCS->generate_route( 'drafts', 'list_view' ) . '&tpl='.$tpl_id.'&pid='.$page_id;
             $CTX->set( 'k_drafts_link', $drafts_link );
             $comments_link = $FUNCS->generate_route( 'comments', 'list_view' ) . '&page_id='.$page_id;
             $CTX->set( 'k_comments_link', $comments_link );

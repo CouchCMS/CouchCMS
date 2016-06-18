@@ -2666,9 +2666,8 @@
                 <meta content="noindex" name="robots"/>
                 <title>'.$login_title.'</title>
                 <link href="'.K_SYSTEM_THEME_URL.'includes/admin/main.css?v='.K_COUCH_BUILD.'" rel="stylesheet"/>
-                <!--[if lt IE 9]>'.K_SYSTEM_THEME_URL.'includes/ie9.min.js?v='.K_COUCH_BUILD.'"></script><![endif]-->
-                <!--[if lte IE 9]>'.K_SYSTEM_THEME_URL.'includes/matchmedia.min.js?v='.K_COUCH_BUILD.'"></script><![endif]-->
                 <script src="'.K_SYSTEM_THEME_URL.'includes/svg4everybody.min.js?v='.K_COUCH_BUILD.'"></script>
+                <link href="'.K_SYSTEM_THEME_URL.'includes/admin/images/favicon.ico" rel="shortcut icon"/>
             </head>
             <body id="simple-page">
                 <div id="simple-wrap">
@@ -3899,7 +3898,7 @@ OUT;
             $src = trim( $src );
             if( $src ){
                 $sep = ( strpos($src, '?')===false ) ? '?' : '&';
-                $this->scripts[MD5($src)] = $src . $sep . 'kver=' . K_COUCH_BUILD;
+                $this->scripts[MD5($src)] = $src . $sep . 'v=' . K_COUCH_BUILD;
             }
         }
 
@@ -3907,7 +3906,7 @@ OUT;
             $src = trim( $src );
             if( $src ){
                 $sep = ( strpos($src, '?')===false ) ? '?' : '&';
-                $this->styles[MD5($src)] = $src . $sep . 'kver=' . K_COUCH_BUILD;
+                $this->styles[MD5($src)] = $src . $sep . 'v=' . K_COUCH_BUILD;
             }
         }
 

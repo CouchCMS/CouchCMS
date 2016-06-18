@@ -65,7 +65,7 @@
 
             // subtitle
             $subtitle = $FUNCS->t('list');
-            $icon = 'file';
+            $icon = $PAGE->tpl_gallery == 1 ? 'image' : 'file';
             $FUNCS->set_admin_subtitle( $subtitle, $icon );
         }
 
@@ -527,7 +527,7 @@
 
             // subtitle
             $subtitle = ( $PAGE->id == -1  ) ? $FUNCS->t('add_new') : $FUNCS->t('edit');
-            $icon = 'file';
+            $icon = $PAGE->tpl_gallery == 1 ? 'image' : 'file';
             $FUNCS->set_admin_subtitle( $subtitle, $icon );
         }
 

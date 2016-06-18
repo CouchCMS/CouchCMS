@@ -12,8 +12,8 @@
                 href="<cms:show k_action_link />"
                 <cms:if k_action_target>target="<cms:show k_action_target />"</cms:if>
             >
-                <cms:if k_action_icon ><cms:show_icon k_action_icon /></cms:if>
-                <span class="collapse-title"><cms:show k_action_title /></span>
+                <cms:if k_action_icon ><cms:show_icon k_action_icon /></cms:if><cms:hide>
+                </cms:hide><span class="collapse-title"><cms:show k_action_title /></span>
             </a>
         </cms:if>
     </cms:admin_actions>

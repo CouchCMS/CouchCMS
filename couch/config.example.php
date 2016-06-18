@@ -160,11 +160,11 @@
     define( 'K_PAID_LICENSE', 0 );
 
         // Rebranding. Uncomment the following defines and add your info.
-        // 99a. Company Logo on light background  (Max. 171 x 64 pixels. Needs to be placed within 'couch/theme/images/' folder)
-        //define( 'K_LOGO_LIGHT', 'couch.gif' );
+        // 99a. Company Logo on light background  (Multiple of [<= 450] x 57 pixels. Needs to be placed within 'couch/theme/images/' folder)
+        //define( 'K_LOGO_LIGHT', 'couch_light.png' );
 
-        // 99b. Company Logo on dark background  (Max. 171 x 64 pixels. Needs to be placed within 'couch/theme/images/' folder)
-        //define( 'K_LOGO_DARK', 'couch_dark.gif' );
+        // 99b. Company Logo on dark background  (Multiple of [<= 219] x 68 pixels. Needs to be placed within 'couch/theme/images/' folder)
+        //define( 'K_LOGO_DARK', 'couch_dark.png' );
 
         // 99c. Footer content (Company name and link)
         //define( 'K_ADMIN_FOOTER', '<a href="http://www.yourcompany.com">COMPANY NAME</a>' );

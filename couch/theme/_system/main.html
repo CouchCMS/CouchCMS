@@ -4,32 +4,31 @@
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1, minimal-ui" name="viewport"/>
     <meta content="IE=edge" http-equiv="X-UA-Compatible"/>
+    <meta content="noindex" name="robots"/>
     <title><cms:localize 'admin_panel' /></title>
     <link href="<cms:show k_system_theme_link />includes/admin/main.css?v=<cms:show k_cms_build />" rel="stylesheet"/>
     <link href="<cms:show k_system_theme_link />includes/mcustomscrollbar/mcustomscrollbar.css?v=<cms:show k_cms_build />" rel="stylesheet"/>
     <link href="<cms:show k_system_theme_link />includes/magnific-popup/magnific-popup.css?v=<cms:show k_cms_build />" rel="stylesheet"/>
 
     <cms:admin_css_files>
-        <link rel="stylesheet" href="<cms:show k_css_file />" type="text/css" media="screen" />
+        <link rel="stylesheet" href="<cms:show k_css_file />" type="text/css" media="screen"/>
     </cms:admin_css_files>
 
     <style>
         <cms:admin_css />
     </style>
 
-    <!--[if lt IE 9]><script src="<cms:show k_system_theme_link />includes/ie9.min.js?v=q"></script><![endif]-->
-    <!--[if lte IE 9]><script src="<cms:show k_system_theme_link />includes/matchmedia.min.js?v=q"></script><![endif]-->
-    <script src="<cms:show k_system_theme_link />includes/svg4everybody.min.js?v=q"></script>
+    <script src="<cms:show k_system_theme_link />includes/svg4everybody.min.js?v=<cms:show k_cms_build />"></script>
     <script src="<cms:show k_admin_link />includes/jquery-3.x.min.js?v=<cms:show k_cms_build />"></script>
     <script src="<cms:show k_system_theme_link />includes/admin/main.js?v=<cms:show k_cms_build />"></script>
 
     <cms:admin_js_files>
         <script type="text/javascript" src="<cms:show k_js_file />"></script>
     </cms:admin_js_files>
-    <link href="favicon.ico" rel="shortcut icon"/>
+
+    <link href="<cms:show k_system_theme_link />includes/admin/images/favicon.ico" rel="shortcut icon"/>
 </head>
 <body>
-
 <cms:if k_show_simple>
     <div id="content">
         <cms:admin_html />
@@ -93,7 +92,8 @@
 
 <script src="<cms:show k_system_theme_link />includes/mcustomscrollbar/mcustomscrollbar.min.js?v=<cms:show k_cms_build />"></script>
 <script src="<cms:show k_system_theme_link />includes/bootstrap.min.js?v=<cms:show k_cms_build />"></script>
-<script src="<cms:show k_system_theme_link />includes/magnific-popup/magnific-popup.min.js?v=q<cms:show k_cms_build />"></script>
+<script src="<cms:show k_system_theme_link />includes/magnific-popup/magnific-popup.min.js?v=<cms:show k_cms_build />"></script>
+
 <script type="text/javascript">
     //<![CDATA[
     <cms:admin_js />

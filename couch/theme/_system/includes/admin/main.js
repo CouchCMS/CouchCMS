@@ -49,10 +49,8 @@ COUCH.addMediaQueryListeners = function() {
 
         this.configViewInitial( this.mediaQuery.medium, this.mediaQuery.small );
 
-        if ( !window.matchMediaPolyfill ) {
-            this.mediaQuery.medium.addListener( this.configViewMedium );
-            this.mediaQuery.small.addListener( this.configViewSmall );
-        }
+        this.mediaQuery.medium.addListener( this.configViewMedium );
+        this.mediaQuery.small.addListener( this.configViewSmall );
     } else {
         this.configViewInitial( { matches: false }, { matches: false } );
     }
@@ -678,8 +676,6 @@ COUCH.updateRichTextContent = function() {
  */
 COUCH.init = function() {
     $(function() {
-        svg4everybody();
-
         COUCH.data.overflowScrolling = COUCH.hasOverflowScrolling();
 
         COUCH.el.$collapseTooltips = $( ".tt-collapse" );
