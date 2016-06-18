@@ -1,12 +1,20 @@
 <div class="gallery-wrap">
     <div class="gallery-item">
-        <a class="gallery-img-link" href="<cms:show k_update_link />" style="background-image:url('<cms:show k_item_thumb />');"></a>
+        <cms:if k_item_thumb >
+            <a class="gallery-img-link" href="<cms:show k_update_link />" style="background-image:url('<cms:show k_item_thumb />');"></a>
+        <cms:else/>
+            <a class="gallery-img-link gallery-img-none" href="<cms:show k_update_link />">
+                <cms:show_icon 'warning' />
+            </a>
+        </cms:if>
 
         <div class="gallery-misc">
             <div class="gallery-actions">
                 <cms:render 'list_checkbox' />
 
-                <a class="icon gallery-preview tt popup-gallery" data-popup-title="<cms:show k_page_title />" href="<cms:show k_item_image />" title="<cms:localize 'preview' />"><cms:show_icon 'zoom-in' /></a>
+                <cms:if k_item_thumb >
+                    <a class="icon gallery-preview tt popup-gallery" data-popup-title="<cms:show k_page_title />" href="<cms:show k_item_image />" title="<cms:localize 'preview' />"><cms:show_icon 'zoom-in' /></a>
+                </cms:if>
 
                 <div class="gallery-icons">
                     <cms:if k_has_list_updown>

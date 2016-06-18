@@ -605,9 +605,7 @@
         // image
         $item_image = $CTX->get( 'gg_image' );
         $item_thumb = $CTX->get( 'gg_thumb' );
-        if( !$item_thumb ){
-            $item_thumb = K_SYSTEM_THEME_URL . 'assets/exclaim.gif';
-        }
+
         $CTX->set( 'k_item_image', $item_image );
         $CTX->set( 'k_item_thumb', $item_thumb );
     }
