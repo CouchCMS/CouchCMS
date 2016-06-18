@@ -142,7 +142,7 @@
             }
             $style = ( $this->height ) ? 'height:'.$this->height.'px; ' : '';
             $style .= ( $this->width ) ? 'width:'.$this->width.'px; ' : 'width:100%; ';
-            $html .= '<textarea id="' . $input_id . '" name="'. $input_name .'" '.$rtl.' rows="12" cols="79" style="'.$style.'" '.$extra.'>'. htmlspecialchars( $this->get_data(), ENT_QUOTES, K_CHARSET ) .'</textarea>';
+            $html .= '<div class="nicEdit-wrapper" style="'.( $this->width ? 'width:'.$this->width.'px;' : 'width:100%;').'"><textarea id="' . $input_id . '" name="'. $input_name .'" '.$rtl.' rows="12" cols="79" style="'.$style.'" '.$extra.'>'. htmlspecialchars( $this->get_data(), ENT_QUOTES, K_CHARSET ) .'</textarea></div>';
 
             if( $this->maxheight && $this->height && ($this->maxheight < $this->height) ){
                 $this->maxheight = $this->height;

@@ -54,7 +54,9 @@
                 <cms:if k_user_access_level ge '10'>
                     <div id="nav-links">
                         <a href="<cms:show k_admin_link />gen_dump.php">Download Dump</a>
-                        <a class="popup-ajax" href="<cms:show k_admin_link />gen_htaccess.php" target="_blank" <cms:if k_prettyurls='0'>style="visibility:hidden;"</cms:if>>Generate .htaccess</a>
+                        <cms:if k_prettyurls >
+                            <a class="popup-ajax" href="<cms:show k_admin_link />gen_htaccess.php" target="_blank">Generate .htaccess</a>
+                        </cms:if>
                     </div>
                 </cms:if>
             </div>

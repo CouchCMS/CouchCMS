@@ -40,6 +40,10 @@
     .plupload_scroll .plupload_filelist {
         height: 202px;
     }
+
+    li.plupload_droptext {
+        line-height: 182px;
+    }
 </style>
 
 <script src="<?php echo K_ADMIN_URL . 'includes/'; ?>jquery-3.x.min.js"></script>
