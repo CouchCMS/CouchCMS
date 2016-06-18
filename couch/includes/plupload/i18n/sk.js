@@ -1,25 +1,2 @@
-// .po file like language pack
-plupload.addI18n({
-	'Select files' : 'Vyberte súbory',
-	'Add files to the upload queue and click the start button.' : 'Pridajte súbory do zoznamu a potom spustite nahrávanie.',
-	'Filename' : 'Názov súboru',
-	'Status' : 'Stav',
-	'Size' : 'Veľkosť',
-	'Add files' : 'Pridať súbory',
-	'Stop current upload' : 'Zastaviť nahrávanie',
-	'Start uploading queue' : 'Spustiť nahrávanie zoznamu',
-	'Drag files here.' : 'Sem pretiahnite súbory.',
-	'Start upload': 'Spustiť nahrávanie',
-	'Uploaded %d/%d files': 'Nahraných %d/%d súborov',
-	'Using runtime: ': 'K odoslaniu súborov sa použije rozhranie: ',
-	'N/A' : 'N/A',
-	'File extension error.': 'Chybný typ súboru.',
-	'File size error.': 'Súbor je príliš veľký.',
-	'Init error.': 'Chyba inicializácie.',
-	'HTTP Error.': 'HTTP Chyba.',
-	'Security error.': 'Bezpečnostná Chyba.',
-	'Generic error.': 'Chyba.',
-	'IO error.': 'IO Chyba',
-	'Stop Upload': 'Zastaviť nahrávanie',
-	'%d files queued': '%d súborov pridaných do zoznamu'
-});
+// Slovak (sk)
+plupload.addI18n({"Stop Upload":"Zastaviť nahrávanie","Upload URL might be wrong or doesn't exist.":"URL pre nahratie nie je správna alebo neexistuje.","tb":"tb","Size":"Veľkosť","Close":"Zatvoriť","You must specify either browse_button or drop_element.":"","Init error.":"Chyba inicializácie.","Add files to the upload queue and click the start button.":"Pridajte súbory do zoznamu a potom spustite nahrávanie.","List":"","Filename":"Názov súboru","%s specified, but cannot be found.":"","Image format either wrong or not supported.":"Formát obrázku je nesprávny alebo nie je podporovaný.","Status":"Stav","HTTP Error.":"HTTP Chyba.","Start Upload":"Spustiť nahrávanie","Error: File too large:":"Chyba: Súbor je príliš veľký:","kb":"kb","Duplicate file error.":"Duplicitný súbor.","File size error.":"Súbor je príliš veľký.","N/A":"N/A","gb":"gb","Error: Invalid file extension:":"Error: Nesprávny typ súboru:","Select files":"Vyberte súbory","%s already present in the queue.":"%s sa už nachádza v zozname.","Resoultion out of boundaries! <b>%s</b> runtime supports images only up to %wx%hpx.":"","File: %s":"Súbor: %s","b":"b","Uploaded %d/%d files":"Nahraných %d/%d súborov","Upload element accepts only %d file(s) at a time. Extra files were stripped.":"Upload element accepts only %d file(s) at a time. Extra files were stripped.","%d files queued":"%d súborov pridaných do zoznamu","File: %s, size: %d, max file size: %d":"Súbor: %s, veľkosť: %d, max. veľkosť súboru: %d","Thumbnails":"","Drag files here.":"Sem pretiahnite súbory.","Runtime ran out of available memory.":"Runtime ran out of available memory.","File count error.":"Nesprávny počet súborov.","File extension error.":"Chybný typ súboru.","mb":"mb","Add Files":"Pridať súbory"});
