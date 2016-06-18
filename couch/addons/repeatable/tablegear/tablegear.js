@@ -49,7 +49,7 @@
     function initialize(el){
 
       rows = [];
-      id = el.selector.replace('#', '');
+      id = el.attr('id');
 
       if(el.is('table')){
         table = el;

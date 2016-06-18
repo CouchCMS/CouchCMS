@@ -286,7 +286,7 @@
                 <table class="rr" id="<?php echo $input_id; ?>">
                     <thead>
                         <tr>
-                            <th class="dg-arrange-table-header">&nbsp;</td>
+                            <th class="dg-arrange-table-header">&nbsp;</th>
                             <?php foreach( $this->cells as $c ) :  ?>
                             <th <?php if($c->col_width){ echo 'style="width:'.$c->col_width.'px;"'; } ?>>
                                 <span><?php echo $c->label; ?></span>
