@@ -12,6 +12,8 @@
     $upload_link = K_ADMIN_URL . 'uploader.php?tpl='.$tpl.'&fid='.$fid.'&fn='.$fn.'&nonce='. $nonce;
     if( $cid && $rid ) $upload_link .= '&cid='.$cid.'&rid='.$rid;
 
+    $lang = str_replace( '-', '_', strtolower( K_ADMIN_LANG ) );
+
 ?>
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" dir="ltr">
@@ -46,10 +48,20 @@
     }
 </style>
 
-<script src="<?php echo K_ADMIN_URL . 'includes/'; ?>jquery-3.x.min.js"></script>
+<script src="<?php echo K_ADMIN_URL . 'includes/'; ?>jquery-3.x.min.js?v=<?php echo K_COUCH_BUILD; ?>"></script>
 <script src="<?php echo K_ADMIN_URL . 'includes/plupload/'; ?>plupload.full.min.js"></script>
 <script src="<?php echo K_ADMIN_URL . 'includes/plupload/jquery.plupload.queue/'; ?>jquery.plupload.queue.min.js"></script>
 
+<script>
+plupload.addI18n({
+    'Select files': 'Select images',
+    'Add files to the upload queue and click the start button.': 'Add images to the upload queue and click the start button.',
+    'Add Files': 'Add Images',
+    'Drag files here.': 'Drag images here.'
+});
+</script>
+
+<?php if( $lang != 'en' ){ echo '<script src="' . K_ADMIN_URL . 'includes/plupload/i18n/' . $lang . '.js"></script>'; } ?>
 </head>
 <body>
 <div id="uploader">
@@ -60,6 +72,7 @@
 // Initialize the widget when the DOM is ready
 $(function() {
     var str_log = "";
+
     function log() {
         var str = "";
 
@@ -104,13 +117,6 @@ $(function() {
         alert(str);
     }
 
-    plupload.addI18n({
-        'Select files': 'Select images',
-        'Add files to the upload queue and click the start button.': 'Add images to the upload queue and click the start button.',
-        'Add Files': 'Add Images',
-        'Drag files here.': 'Drag images here.'
-    });
-
     $("#uploader").pluploadQueue({
         // General settings
         runtimes: 'html5,flash,silverlight,html4',
@@ -131,18 +137,8 @@ $(function() {
         // Rename files by clicking on their titles
         rename: true,
 
-        // Sort files
-        sortable: false,
-
         // Enable ability to drag'n'drop files onto the widget (currently only HTML5 supports that)
         dragdrop: true,
-
-        // Views to activate
-        views: {
-            list: true,
-            thumbs: false,
-            active: 'list'
-        },
 
         // Flash settings
         flash_swf_url: '<?php echo K_ADMIN_URL . 'includes/plupload/'; ?>Moxie.swf',
@@ -150,25 +146,22 @@ $(function() {
         // Silverlight settings
         silverlight_xap_url: '<?php echo K_ADMIN_URL . 'includes/plupload/'; ?>Moxie.xap',
 
-         init: {
+        init: {
             FileUploaded: function(up, file, info) {
                 // Called when a file has finished uploading
                 if( info.response ){
-                    info.response = $.trim( info.response )
+                    info.response = $.trim( info.response );
+
                     if( info.response.length ){
                         log('[Error] File:', file, "Info:", info);
                     }
                 }
             },
-            Error: function(up, args) {
-                // Called when a error has occured
-                log('[Error] ', args);
-            },
             UploadComplete: function(up, files) {
-                // Called when all the files has finished uploading
+                // Called when all the files have finished uploading
                 window.top.k_bulk_upload_result( str_log );
             }
-         }
+        }
     });
 });
 </script>
