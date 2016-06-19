@@ -70,15 +70,15 @@
         function get_data( $for_ctx=0 ){
             global $Config;
 
-	    $data = trim( $this->data );
-	    if( !strlen($data) ) $data = trim( $this->default_data );
+        $data = trim( $this->data );
+        if( !strlen($data) ) $data = trim( $this->default_data );
 
-	    if( $data{0}==':' ){ // if marker
-		$data = substr( $data, 1 );
-		$folder = ( $this->k_type=='jcropthumb' ) ? 'image' : $this->k_type;
-		$domain_prefix = $Config['k_append_url'] . $Config['UserFilesPath'] . $folder . '/';
-		$data = $domain_prefix . $data;
-	    }
+        if( $data{0}==':' ){ // if marker
+        $data = substr( $data, 1 );
+        $folder = ( $this->k_type=='jcropthumb' ) ? 'image' : $this->k_type;
+        $domain_prefix = $Config['k_append_url'] . $Config['UserFilesPath'] . $folder . '/';
+        $data = $domain_prefix . $data;
+        }
 
             return $data;
         }

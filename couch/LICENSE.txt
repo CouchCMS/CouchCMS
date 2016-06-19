@@ -31,7 +31,7 @@ Common Public Attribution License Version 1.0 (CPAL-1.0)
         whether at the time of the initial grant or subsequently acquired, any and all of the
         rights conveyed herein.
 
-    1.9	"Modifications" means any addition to or deletion from the substance or structure
+    1.9 "Modifications" means any addition to or deletion from the substance or structure
     of either the Original Code or any previous Modifications. When Covered Code is released as
     a series of files, a Modification is:
 
@@ -290,14 +290,14 @@ Common Public Attribution License Version 1.0 (CPAL-1.0)
         such Participant under Sections 2.1(b) and 2.2(b) are revoked effective as of the date You
         first made, used, sold, distributed, or had made, Modifications made by that Participant.
 
-    8.3	If You assert a patent infringement claim against Participant alleging that such
+    8.3 If You assert a patent infringement claim against Participant alleging that such
     Participant’s Contributor Version directly or indirectly infringes any patent where such
     claim is resolved (such as by license or settlement) prior to the initiation of patent
     infringement litigation, then the reasonable value of the licenses granted by such
     Participant under Sections 2.1 or 2.2 shall be taken into account in determining the amount
     or value of any payment or license.
 
-    8.4	In the event of termination under Sections 8.1 or 8.2 above, all end user license
+    8.4 In the event of termination under Sections 8.1 or 8.2 above, all end user license
     agreements (excluding distributors and resellers) which have been validly granted by You or
     any distributor hereunder prior to termination shall survive termination.
 
