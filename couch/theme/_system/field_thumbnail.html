@@ -3,12 +3,12 @@
         <a
             id="<cms:show k_field_input_id />_preview"
             class="popup-img"
-            href="<cms:if k_field_value><cms:show k_field_value /><cms:else /><cms:show k_system_theme_link />assets/upload-image.gif</cms:if>"
+            href="<cms:if k_field_value><cms:show k_field_value /><cms:else /><cms:show k_system_theme_link />includes/admin/images/camera.svg</cms:if>"
         >
             <img
                 id="<cms:show k_field_input_id />_tb_preview"
                 name="<cms:show k_field_input_name />_tb_preview"
-                src="<cms:if k_field_value><cms:show k_field_value /><cms:else /><cms:show k_system_theme_link />assets/upload-image.gif</cms:if>"
+                src="<cms:if k_field_value><cms:show k_field_value /><cms:else /><cms:show k_system_theme_link />includes/admin/images/camera.svg</cms:if>"
                 <cms:if k_field_preview_width>width="<cms:show k_field_preview_width />"</cms:if>
                 <cms:if k_field_preview_height>height="<cms:show k_field_preview_height />"</cms:if>
                 class="k_thumbnail_preview"
@@ -23,7 +23,7 @@
         <cms:if k_field_show_preview='0' >
             <a
                 id="<cms:show k_field_input_id />_preview"
-                href="<cms:if k_field_value><cms:show k_field_value /><cms:else /><cms:show k_system_theme_link />assets/upload-image.gif</cms:if>"
+                href="<cms:if k_field_value><cms:show k_field_value /><cms:else /><cms:show k_system_theme_link />includes/admin/images/camera.svg</cms:if>"
                 class="btn popup-img"
                 style="display:<cms:if k_field_value>inline-block<cms:else />none</cms:if>;"
             >
