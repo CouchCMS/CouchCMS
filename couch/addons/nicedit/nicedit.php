@@ -137,7 +137,7 @@
             */
             if( !defined('NICEDIT_URL') ){
                 define( 'NICEDIT_URL', K_ADMIN_URL . 'addons/nicedit/' );
-                $FUNCS->load_js( NICEDIT_URL . 'nicedit.js?v=3' );
+                $FUNCS->load_js( NICEDIT_URL . 'nicedit.js' );
                 $FUNCS->load_css( NICEDIT_URL . 'nicedit.css' );
             }
             $style = ( $this->height ) ? 'height:'.$this->height.'px; ' : '';

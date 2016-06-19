@@ -250,7 +250,7 @@
 
             if( !defined('REPEATABLE_URL') ){
                 define( 'REPEATABLE_URL', K_ADMIN_URL . 'addons/repeatable/' );
-                $FUNCS->load_js( K_ADMIN_URL . 'includes/jquery-ui.min.js' );
+                $FUNCS->load_js( REPEATABLE_URL . 'jquery-ui.min.js' );
                 $FUNCS->load_js( REPEATABLE_URL . 'tablegear/tablegear.js' );
                 $FUNCS->load_css( REPEATABLE_URL . 'tablegear/tablegear.css' );
 

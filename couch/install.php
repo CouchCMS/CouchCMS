@@ -584,13 +584,13 @@
 
                 <div class="field prepend">
                     <cms:input type="password" id="k_user_pwd" name="password" required="1" validator='min_len=5'
-                        autocomplete="off" class="text" placeholder="Password" 'required="required"' value="" />
+                        autocorrect="off" autocapitalize="off" spellcheck="false" class="password" placeholder="Password" 'required="required"' value="" />
                     <svg class="i"><use xlink:href="<cms:php>echo K_SYSTEM_THEME_URL;</cms:php>assets/open-iconic.svg#lock-locked"></use></svg>
                 </div>
 
                 <div class="field prepend">
                     <cms:input type="password" id="k_user_pwd_repeat" name="repeat_password" required="1" validator='matches_field=password'
-                        autocomplete="off" class="text" placeholder="Repeat Password" 'required="required"' value="" />
+                        autocorrect="off" autocapitalize="off" spellcheck="false" class="password" placeholder="Repeat Password" 'required="required"' value="" />
                     <svg class="i"><use xlink:href="<cms:php>echo K_SYSTEM_THEME_URL;</cms:php>assets/open-iconic.svg#lock-locked"></use></svg>
                 </div>
 

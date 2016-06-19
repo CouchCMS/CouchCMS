@@ -830,6 +830,7 @@
             $arr_vars['k_field_selected_value'] = $selected;
             $arr_vars['k_field_separator'] = $separator;
             $arr_vars['k_field_val_separator'] = $val_separator;
+            $arr_vars['k_field_width'] = $f->width;
 
             $CTX->set_all( $arr_vars );
         }
@@ -1101,11 +1102,11 @@
             ob_start();
             if( !$this->page->tpl_nested_pages ){
             ?>
-                <input type="radio" <?php if( $publish_date == '0000-00-00 00:00:00' ){?>checked="checked"<?php } ?> value="0" id="f_publish_status_0" name="f_publish_status" onClick="$('#date-dropdown').css('visibility', 'hidden')"/>
-                <label for="f_publish_status_0"><?php echo $FUNCS->t('unpublished'); ?></label><br>
-                <input type="radio" <?php if( $publish_date != '0000-00-00 00:00:00' ){?>checked="checked"<?php } ?> value="1" id="f_publish_status_1" name="f_publish_status" onClick="$('#date-dropdown').css('visibility', 'visible')"/>
+                <input type="radio" <?php if( $publish_date != '0000-00-00 00:00:00' ){?>checked="checked"<?php } ?> value="1" id="f_publish_status_1" name="f_publish_status" onClick="$('#publish-date').show()"/>
                 <label for="f_publish_status_1"><?php echo $FUNCS->t('published'); ?></label><br>
-                <div id="date-dropdown" style="visibility:<?php if( $publish_date == '0000-00-00 00:00:00' ){ echo 'hidden'; } else{ echo 'visible'; }?>; margin-top:4px;">
+                <input type="radio" <?php if( $publish_date == '0000-00-00 00:00:00' ){?>checked="checked"<?php } ?> value="0" id="f_publish_status_0" name="f_publish_status" onClick="$('#publish-date').hide()"/>
+                <label for="f_publish_status_0"><?php echo $FUNCS->t('unpublished'); ?></label><br>
+                <div id="publish-date" style="display:<?php if( $publish_date == '0000-00-00 00:00:00' ){ echo 'hidden'; } else{ echo 'block'; }?>;">
                     <?php echo $FUNCS->date_dropdowns( $publish_date ); ?>
                 </div>
             <?php
@@ -1115,7 +1116,7 @@
                 <label for="f_publish_status_1"><?php echo $FUNCS->t('active'); ?></label>&nbsp;
                 <input type="radio" <?php if( $publish_date == '0000-00-00 00:00:00' ){?>checked="checked"<?php } ?> value="0" id="f_publish_status_0" name="f_publish_status" />
                 <label for="f_publish_status_0"><?php echo $FUNCS->t('inactive'); ?></label><br>
-                <div id="date-dropdown" style="display:none">
+                <div id="publish-date" style="display:none;">
                     <?php echo $FUNCS->date_dropdowns( $publish_date ); ?>
                 </div>
             <?php
