@@ -57,20 +57,20 @@ input,textarea,select{-moz-transition:border-color .15s ease,box-shadow .15s eas
 .fade.in,.fade-short.in,.fade-long.in{opacity:1;}
 #scroll-sidebar,#scroll-content,.scroll-relation,.popup-code-content{-ms-overflow-style:-ms-autohiding-scrollbar;-webkit-overflow-scrolling:touch;}
 .alert{position:relative;line-height:30px;padding:14px 15px;border-width:1px;border-style:solid;border-radius:3px;margin-top:15px;font-size:14px;text-shadow:0 1px 0 rgba(255,255,255,.5);}
-.alert-error{border-color:#fad2d4;background-color:#ffe6e5;color:#dd5a58;fill:#dd5a58;}
-.alert-success{border-color:#d0e3b1;background-color:#ecf7e1;color:#7baf37;fill:#7baf37;}
-.alert-info{border-color:#c4ddf6;background-color:#deefff;color:#4696c8;fill:#4696c8;}
-.alert-notice{border-color:#f9e495;background-color:#fffae0;color:#de9c02;fill:#de9c02;}
+.alert-error,.toast-error{border-color:#fad2d4;background-color:#ffe6e5;color:#dd5a58;fill:#dd5a58;}
+.alert-success,.toast-success{border-color:#d0e3b1;background-color:#ecf7e1;color:#7baf37;fill:#7baf37;}
+.alert-info,.toast-info{border-color:#c4ddf6;background-color:#deefff;color:#4696c8;fill:#4696c8;}
+.alert-notice,.toast-warning{border-color:#f9e495;background-color:#fffae0;color:#de9c02;fill:#de9c02;}
 .alert-icon{padding-left:72px;}
 .alert-icon-center{text-align:center;}
 .alert-error>.btn{border-color:#dd5a58 !important;}
-.alert-error>.btn:hover,.alert-error>.btn:focus,.alert-error>.btn:active{background-color:#fad2d4;}
+.alert-error>.btn:hover,.alert-error>.btn:focus,.alert-error>.btn:active,.toast-error>.toast-progress{background-color:#fad2d4;}
 .alert-success>.btn{border-color:#7baf37 !important;}
-.alert-success>.btn:hover,.alert-success>.btn:focus,.alert-success>.btn:active{background-color:#d0e3b1;}
+.alert-success>.btn:hover,.alert-success>.btn:focus,.alert-success>.btn:active,.toast-success>.toast-progress{background-color:#d0e3b1;}
 .alert-info>.btn{border-color:#4696c8 !important;}
-.alert-info>.btn:hover,.alert-info>.btn:focus,.alert-info>.btn:active{background-color:#c4ddf6;}
+.alert-info>.btn:hover,.alert-info>.btn:focus,.alert-info>.btn:active,.toast-info>.toast-progress{background-color:#c4ddf6;}
 .alert-notice>.btn{border-color:#de9c02 !important;}
-.alert-notice>.btn:hover,.alert-notice>.btn:focus,.alert-notice>.btn:active{background-color:#f9e495;}
+.alert-notice>.btn:hover,.alert-notice>.btn:focus,.alert-notice>.btn:active,.toast-warning>.toast-progress{background-color:#f9e495;}
 .alert>h2{font-size:20px;}
 .alert>h2+p{margin-top:5px;}
 .alert>p{line-height:24px;}
@@ -569,6 +569,30 @@ td.col-highlight{border-right:1px solid rgba(0,0,0,.03);border-left:1px solid rg
 .popover.left>.arrow{top:50%;right:-11px;border-right-width:0;border-left-color:#c0c0c0;margin-top:-11px;}
 .popover.left>.arrow:after{content:" ";right:1px;bottom:-10px;border-right-width:0;border-left-color:#fcfcfc;}
 
+/* Toastr (https://github.com/CodeSeven/toastr) - Copyright 2012-2015 - MIT License */
+.toast-title{font-size:16px;font-weight:bold;}
+.toast-message{font-size:14px;-ms-word-wrap:break-word;word-wrap:break-word;}
+.toast-close-button{position:relative;top:-10px;right:-4px;float:right;font-size:20px;font-weight:bold;color:inherit;text-shadow:0 1px 0 #fff;opacity:.8;cursor:pointer;}
+.toast-close-button:hover,.toast-close-button:focus{opacity:1;}
+button.toast-close-button{padding:0;border:0;background:transparent;cursor:pointer;-webkit-appearance:none;}
+.toast>.i{display:block;position:absolute;top:50%;left:14px;width:36px;height:36px;margin-top:-18px;}
+.toast-top-center{top:15px;right:0;width:100%;}
+.toast-bottom-center{right:0;bottom:15px;width:100%;}
+.toast-top-full-width{top:15px;right:0;left:0;}
+.toast-bottom-full-width{right:0;bottom:15px;left:0;}
+.toast-top-left{top:15px;left:15px;}
+.toast-top-right{top:15px;right:32px;}
+.toast-bottom-right{right:32px;bottom:15px;}
+.toast-bottom-left{bottom:15px;left:15px;}
+.toast-top-center,.toast-top-full-width,.toast-top-right,.toast-top-left{margin-bottom:5px;}
+.toast-bottom-center,.toast-bottom-full-width,.toast-bottom-right,.toast-bottom-left{margin-top:5px;}
+#toast-container{position:fixed;z-index:999999;pointer-events:none;}
+#toast-container>.toast{position:relative;width:310px;padding:10px 10px 12px 64px;border-width:1px;border-style:solid;border-radius:3px;overflow:hidden;opacity:.9;text-shadow:0 1px 0 rgba(255,255,255,.5);pointer-events:auto;cursor:pointer;}
+#toast-container>:hover{opacity:1;}
+#toast-container.toast-top-center>.toast,#toast-container.toast-bottom-center>.toast{width:300px;margin-right:auto;margin-left:auto;}
+#toast-container.toast-top-full-width>.toast,#toast-container.toast-bottom-full-width>.toast{width:92%;margin-right:auto;margin-left:auto;}
+.toast-progress{position:absolute;bottom:0;left:0;height:4px;opacity:.6;}
+
 /* WTF, forms? (http://wtfforms.com/) - Copyright 2014 Mark Otto - MIT License */
 .ctrl{line-height:18px;}
 .ctrl,.ctrls-checkbox>label,.ctrls-radio>label,.checklist>li>label{display:inline-block;position:relative;cursor:pointer;}
@@ -680,6 +704,8 @@ div.mfp-bottom-bar{text-shadow:0 1px 0 rgba(0,0,0,.6);}
     .crop-group>.popup-img+br,.th-collapsed{display:inline;}
     .col-title,.col-folder-title,.col-original-page,.col-user-name{width:310px;}
     .details{display:block;}
+    .toast>.i{display:none;}
+    #toast-container>.toast{width:250px;padding:10px 10px 12px 10px;}
 }
 @media(max-width:900px){
     .filter-field,.bulk-field,.search-field{width:15%;min-width:120px;}
