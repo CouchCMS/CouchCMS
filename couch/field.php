@@ -1031,7 +1031,7 @@
             $hilited = $this->get_data();
             $this->page->folders->visit( array('KFolder', '_k_visitor'), $dropdown_html, $hilited, 0/*$depth*/, 0/*$extended_info*/, array()/*$exclude*/ );
             $CTX->pop();
-            return '<select id="'.$input_id.'" name="'.$input_name.'"><option value="-1" >-- '.$FUNCS->t('select_folder').' --</option>' .$dropdown_html . '</select>';
+            return '<div class="select dropdown"><select id="'.$input_id.'" name="'.$input_name.'"><option value="-1" >-- '.$FUNCS->t('select_folder').' --</option>' .$dropdown_html . '</select><span class="select-caret">'.$FUNCS->get_icon('caret-bottom').'</span></div>';
         }
     }
 
@@ -1046,7 +1046,7 @@
             $hilited = $this->get_data();
             $PAGE->folders->visit( array('KFolder', '_k_visitor'), $dropdown_html, $hilited, 0/*$depth*/, 0/*$extended_info*/, array($OBJ->name)/*$exclude*/ );
             $CTX->pop();
-            return '<select id="'.$input_id.'" name="'.$input_name.'"><option value="-1" >-- '.$FUNCS->t('none').' --</option>' .$dropdown_html . '</select>';
+            return '<div class="select dropdown"><select id="'.$input_id.'" name="'.$input_name.'"><option value="-1" >-- '.$FUNCS->t('none').' --</option>' .$dropdown_html . '</select><span class="select-caret">'.$FUNCS->get_icon('caret-bottom').'</span></div>';
         }
     }
 
@@ -1102,20 +1102,20 @@
             ob_start();
             if( !$this->page->tpl_nested_pages ){
             ?>
-                <input type="radio" <?php if( $publish_date != '0000-00-00 00:00:00' ){?>checked="checked"<?php } ?> value="1" id="f_publish_status_1" name="f_publish_status" onClick="$('#publish-date').show()"/>
-                <label for="f_publish_status_1"><?php echo $FUNCS->t('published'); ?></label><br>
-                <input type="radio" <?php if( $publish_date == '0000-00-00 00:00:00' ){?>checked="checked"<?php } ?> value="0" id="f_publish_status_0" name="f_publish_status" onClick="$('#publish-date').hide()"/>
-                <label for="f_publish_status_0"><?php echo $FUNCS->t('unpublished'); ?></label><br>
+                <div class="ctrls-radio">
+                    <label for="f_publish_status_1" onClick="$('#publish-date').show()"><input type="radio" <?php if( $publish_date != '0000-00-00 00:00:00' ){?>checked="checked"<?php } ?> value="1" id="f_publish_status_1" name="f_publish_status"/><span class="ctrl-option"></span><?php echo $FUNCS->t('published'); ?></label>
+                    <label for="f_publish_status_0" onClick="$('#publish-date').hide()"><input type="radio" <?php if( $publish_date == '0000-00-00 00:00:00' ){?>checked="checked"<?php } ?> value="0" id="f_publish_status_0" name="f_publish_status"/><span class="ctrl-option"></span><?php echo $FUNCS->t('unpublished'); ?></label>
+                </div>
                 <div id="publish-date" style="display:<?php if( $publish_date == '0000-00-00 00:00:00' ){ echo 'hidden'; } else{ echo 'block'; }?>;">
                     <?php echo $FUNCS->date_dropdowns( $publish_date ); ?>
                 </div>
             <?php
             }else{
             ?>
-                <input type="radio" <?php if( $publish_date != '0000-00-00 00:00:00' ){?>checked="checked"<?php } ?> value="1" id="f_publish_status_1" name="f_publish_status" />
-                <label for="f_publish_status_1"><?php echo $FUNCS->t('active'); ?></label>&nbsp;
-                <input type="radio" <?php if( $publish_date == '0000-00-00 00:00:00' ){?>checked="checked"<?php } ?> value="0" id="f_publish_status_0" name="f_publish_status" />
-                <label for="f_publish_status_0"><?php echo $FUNCS->t('inactive'); ?></label><br>
+                <div class="ctrls-radio">
+                    <label for="f_publish_status_1"><input type="radio" <?php if( $publish_date != '0000-00-00 00:00:00' ){?>checked="checked"<?php } ?> value="1" id="f_publish_status_1" name="f_publish_status" /><span class="ctrl-option"></span><?php echo $FUNCS->t('active'); ?></label>
+                    <label for="f_publish_status_0"><input type="radio" <?php if( $publish_date == '0000-00-00 00:00:00' ){?>checked="checked"<?php } ?> value="0" id="f_publish_status_0" name="f_publish_status" /><span class="ctrl-option"></span><?php echo $FUNCS->t('inactive'); ?></label>
+                </div>
                 <div id="publish-date" style="display:none;">
                     <?php echo $FUNCS->date_dropdowns( $publish_date ); ?>
                 </div>
@@ -1186,7 +1186,9 @@
 
             ob_start();
             ?>
-                <input type="checkbox" value="1" <?php echo $checked; ?> name="<?php echo $input_name; ?>" id="<?php echo $input_id; ?>"/><?php echo $this->field_label; ?>
+                <div class="ctrls-checkbox">
+                    <label for="<?php echo $input_id; ?>"><input type="checkbox" value="1" <?php echo $checked; ?> name="<?php echo $input_name; ?>" id="<?php echo $input_id; ?>"/><span class="ctrl-option"></span><?php echo $this->field_label; ?></label>
+                </div>
             <?php
 
             $html .= ob_get_contents();
@@ -1249,15 +1251,13 @@
             global $FUNCS, $CTX;
 
             if( $this->page->tpl_nested_pages ){
-                //$html = '<div id="list-folders" style="margin-top:10px; ">';
                 $tree = $FUNCS->get_nested_pages( $this->page->tpl_id, $this->page->tpl_name, $this->page->tpl_access_level, 'weightx', 'asc' );
                 $CTX->push( '__ROOT__' );
                 $dropdown_html = '';
                 $hilited = $this->get_data();
                 $tree->visit( array('KNestedPage', '_k_visitor_pages'), $dropdown_html, $hilited, 0/*$depth*/, 0/*$extended_info*/, array($this->page->page_name)/*$exclude*/ );
                 $CTX->pop();
-                $html .= '<select id="'.$input_id.'" name="'.$input_name.'"><option value="-1" >-- '.$FUNCS->t('none').' --</option>' .$dropdown_html . '</select>';
-                //$html .= '</div>';
+                $html .= '<div class="select dropdown"><select id="'.$input_id.'" name="'.$input_name.'"><option value="-1" >-- '.$FUNCS->t('none').' --</option>' .$dropdown_html . '</select><span class="select-caret">'.$FUNCS->get_icon('caret-bottom').'</span></div>';
             }
             return $html;
         }

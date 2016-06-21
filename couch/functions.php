@@ -1482,9 +1482,9 @@
         }
 
         function access_levels_dropdown( $selected_level, $max_level, $min_level=0, $inherited=0 ){
-            global $DB;
+            global $DB, $FUNCS;
 
-            $html = "<select name=\"f_k_levels_list\"";
+            $html = "<div class='select dropdown'><select id=\"f_k_access_level\" name=\"f_k_levels_list\"";
             if( $inherited ) $html .= " disabled=1";
             $html .= ">\n";
             $rs = $DB->select( K_TBL_USER_LEVELS, array('name', 'title', 'k_level'), "k_level <= ".$DB->sanitize( $max_level )." AND k_level >= ".$DB->sanitize( $min_level )." ORDER BY k_level DESC" );
@@ -1495,7 +1495,7 @@
                     $html .= ">".$this->t($rec['name'])."</option>";
                 }
             }
-            $html .= "</select>";
+            $html .= "</select><span class='select-caret'>".$FUNCS->get_icon('caret-bottom')."</span></div>";
 
             return $html;
         }
@@ -1507,11 +1507,11 @@
         }
 
         function date_dropdowns( $date='' ){
-            global $PAGE;
+            global $FUNCS, $PAGE;
             //TODO: allow localization
-            $arrMonths = array('01'=>'Jan', '02'=>'Feb', '03'=>'Mar', '04'=>'Apr',
-                               '05'=>'May', '06'=>'Jun', '07'=>'Jul', '08'=>'Aug',
-                               '09'=>'Sep', '10'=>'Oct', '11'=>'Nov', '12'=>'Dec');
+            $arrMonths = array('01'=>'January',   '02'=>'February', '03'=>'March',    '04'=>'April',
+                               '05'=>'May',       '06'=>'June',     '07'=>'July',     '08'=>'August',
+                               '09'=>'September', '10'=>'October',  '11'=>'November', '12'=>'December');
 
             if( !$date ) $date = $PAGE->publish_date;
             if( !$date || $date=='0000-00-00 00:00:00' ) $date = $this->get_current_desktop_time();
@@ -1522,20 +1522,20 @@
             $m = substr( $date, 14, 2 );
             $s = substr( $date, 17, 2 );
 
-            $year = '<input type="text" id="f_k_year" name="f_k_year" value="' . $yy . '" size="4" maxlength="4" autocomplete="off" />';
-            $month = "<select id=\"f_k_month\" name=\"f_k_month\" >\n";
+            $year = '<input class="year-field" type="text" id="f_k_year" name="f_k_year" value="' . $yy . '" size="4" maxlength="4" autocomplete="off" />';
+            $month = "<div class='select month-field'><select id=\"f_k_month\" name=\"f_k_month\" >\n";
             foreach( $arrMonths as $k=>$v ){
                 $month .= "<option value=\"".$k."\"";
                 $month .= ( $k==$mm ) ? ' selected="selected"' : '';
                 $month .= ">".$v."</option>";
             }
-            $month .= "</select>";
-            $day = '<input type="text" id="f_k_day" name="f_k_day" value="' . $dd . '" size="2" maxlength="2" autocomplete="off" />';
-            $hour = '<input type="text" id="f_k_hour" name="f_k_hour" value="' . $h . '" size="2" maxlength="2" autocomplete="off" />';
-            $min = '<input type="text" id="f_k_min" name="f_k_min" value="' . $m . '" size="2" maxlength="2" autocomplete="off" />';
+            $month .= "</select><span class='select-caret'>".$FUNCS->get_icon('caret-bottom')."</span></div>";
+            $day = '<input class="day-field" type="text" id="f_k_day" name="f_k_day" value="' . $dd . '" size="2" maxlength="2" autocomplete="off" />';
+            $hour = '<input class="hour-field" type="text" id="f_k_hour" name="f_k_hour" value="' . $h . '" size="2" maxlength="2" autocomplete="off" />';
+            $min = '<input class="minute-field" type="text" id="f_k_min" name="f_k_min" value="' . $m . '" size="2" maxlength="2" autocomplete="off" />';
             $sec = '<input type="hidden" id="f_k_sec" name="f_k_sec" value="' . $s . '" size="2" maxlength="2" autocomplete="off" />';
 
-            $date = $month . $day . ', ' . $year . ' @ ' . $hour . ' : ' . $min . $sec;
+            $date = $month . $day . '<span class="field-symbol">,</span>' . $year . '<span class="field-symbol field-symbol-lg">@</span>' . $hour . '<span class="field-symbol">:</span>' . $min . $sec;
             return $date;
         }
 
