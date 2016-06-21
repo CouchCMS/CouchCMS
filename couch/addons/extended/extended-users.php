@@ -140,7 +140,7 @@
         }
 
         function delete_custom_user_fields( &$user ){
-            global $FUNCS;
+            global $FUNCS, $KUSER;
 
             $pg = $this->_get_associated_page( $user );
             if( !$pg || $pg->id==-1 ) return;
@@ -156,7 +156,7 @@
         }
 
         function delete_user_account( &$pg ){
-            global $FUNCS;
+            global $FUNCS, $KUSER;
 
             if( $pg->tpl_name!=$this->users_tpl ){ return; }
 
