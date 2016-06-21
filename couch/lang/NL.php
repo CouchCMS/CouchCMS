@@ -9,7 +9,7 @@
     $t['view_site'] = 'Bekijk Site';
     $t['logout'] = 'Uitloggen';
     $t['javascript_msg'] = 'JavaScript is uitgeschakeld of wordt niet ondersteund door de huidige browser.<br/>
-                            Gelieve uw browser te updaten of <a title="Activeer JavaScript in de huidige browser" href="http://www.google.com/support/bin/answer.py?answer=23852"><b>activeer JavaScript</b></a> om de Beheer module te gebruiken.';
+                            Gelieve uw browser te updaten of <a href="https://support.google.com/answer/23852" target="_blank">activeer JavaScript</a> om de Beheer module te gebruiken.';
     $t['add_new'] = 'Nieuw toevoegen';
     $t['add_new_page'] = 'Nieuwe pagina toevoegen';
     $t['add_new_user'] = 'Nieuwe gebruiker toevoegen';

@@ -1,11 +1,4 @@
 <cms:capture into='my_content' >
-
-    <cms:if k_show_error>
-        <cms:show_error>
-            <cms:show k_error_msg />
-        </cms:show_error>
-    </cms:if>
-
     <noscript>
         <cms:show_warning>
             <cms:localize 'javascript_msg' />
@@ -20,6 +13,12 @@
             <div class="login-form">
 
                 <form name="frm_login" action="" class="simple-form" method="post">
+                    <cms:if k_show_error>
+                        <cms:show_error>
+                            <cms:show k_error_msg />
+                        </cms:show_error>
+                    </cms:if>
+
                     <div class="field prepend">
                         <input id="k_user_name" name="k_user_name" autofocus="autofocus" class="text autofocus" placeholder="<cms:localize 'user_name' />" required="required" tabindex="1" type="text" value=""/>
                         <cms:show_icon 'person' />
@@ -43,4 +42,5 @@
         </div>
     </div>
 </cms:capture>
+
 <cms:render 'simple' my_content />

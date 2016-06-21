@@ -8,8 +8,8 @@
     $t['greeting'] = 'Hello';
     $t['view_site'] = 'View Site';
     $t['logout'] = 'Log Out';
-    $t['javascript_msg'] = 'JavaScript is disabled or is not supported by your browser.<br/>
-                            Please upgrade your browser or <a title="Enable JavaScript in your browser" href="http://www.google.com/support/bin/answer.py?answer=23852"><b>enable JavaScript</b></a> to use the Admin Panel.';
+    $t['javascript_msg'] = 'JavaScript is disabled or not supported by your browser.
+                            Please upgrade your browser or <a href="https://support.google.com/answer/23852" target="_blank">enable JavaScript</a> to use the Admin Panel.';
     $t['add_new'] = 'Add New';
     $t['add_new_page'] = 'Add a new page';
     $t['add_new_user'] = 'Add a new user';
@@ -131,21 +131,21 @@
 
     // Password recovery
     $t['recovery_prompt'] = 'Please submit your username or email address.<br/>
-                            You\'ll receive your password by email.';
+                            You will receive your password by email.';
     $t['name_or_email'] = 'Your Username or Email Address';
     $t['submit'] = 'Submit';
-    $t['submit_error'] = 'Please enter your username or email address.';
-    $t['no_such_user'] = 'No such user exists.';
+    $t['submit_error'] = 'Please enter your username or email address';
+    $t['no_such_user'] = 'No such user exists';
     $t['reset_req_email_subject'] = 'Password reset requested';
     $t['reset_req_email_msg_0'] = 'A request was received to reset your password for the following site and username';
-    $t['reset_req_email_msg_1'] = 'To confirm that the request was made by you please visit the following address, otherwise just ignore this email.';
-    $t['email_failed'] = 'Email could not be sent.';
+    $t['reset_req_email_msg_1'] = 'To confirm that the request was made by you, please visit the following address, otherwise just ignore this email.';
+    $t['email_failed'] = 'Email could not be sent';
     $t['reset_req_email_confirm'] = 'A confirmation email has been sent to you.<br/>
                                     Please check your email inbox.';
     $t['invalid_key'] = 'Invalid key';
     $t['reset_email_subject'] = 'Your new password';
     $t['reset_email_msg_0'] = 'Your password has been reset for the following site and username';
-    $t['reset_email_msg_1'] = 'Once logged in you can change your password.';
+    $t['reset_email_msg_1'] = 'You can change your password once logged in.';
     $t['reset_email_confirm'] = 'Your password has been reset.<br/>
                                 Please check your email for the new password.';
 

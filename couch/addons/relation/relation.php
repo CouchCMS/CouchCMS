@@ -579,7 +579,7 @@
 
             if( $f->has=='one' ){
                 $selected = ( count($f->items_selected) ) ? $f->items_selected[0] : ''; // can have only one item selected
-                $html .= '<select name="'.$input_name.'_chk" id="'.$input_id.'" >';
+                $html .= '<div class="select dropdown"'.( $f->width ? ' style="width:'.$f->width.'px;min-width:'.$f->width.'px;"' : '').'><select name="'.$input_name.'_chk" id="'.$input_id.'" >';
                 $html .= '<option value="-">-- Select --</option>'; //TODO get label as parameter
 
                 while( list($key, $value) = each($rows) ){
@@ -587,12 +587,12 @@
                     if( $selected && $key==$selected ) $html .= '  selected="selected"';
                     $html .= '>'.$value.'</option>';
                 }
-                $html .= '</select>';
+                $html .= '</select><span class="select-caret">'.$FUNCS->get_icon('caret-bottom').'</span></div>';
             }
             else{
-                $html .= '<div class="relation-body"><!-- Set editable region width to this div -->';
-                $html .= '<div class="scroll-relation"><!-- Set editable region height to this div as max-height:??px; -->';
-                $html .= '<ul class="checklist cl1">';
+                $html .= '<div class="relation-body"'.( $f->width ? ' style="width:'.$f->width.'px;"' : '').'>';
+                $html .= '<div class="scroll-relation"'.( $f->height ? ' style="max-height:'.$f->height.'px;"' : '').'>';
+                $html .= '<ul class="checklist">';
                 $x=0;
                 while( list($key, $value) = each($rows) ){
                     $class = ( ($x+1)%2 ) ? ' class="alt"' : '';
@@ -602,7 +602,7 @@
                         $selected = ' class="selected"';
                     }
 
-                    $html .= '<li'.$class.'><label for="'.$input_name.'_chk_'.$x.'"'.$selected.'><input id="'.$input_name.'_chk_'.$x.'" name="'.$input_name.'_chk[]" type="checkbox" value="'.$key.'"'.$checked.' /><span class="ctrl-option"></span> '.$value.'</li>';
+                    $html .= '<li'.$class.'><label for="'.$input_name.'_chk_'.$x.'"'.$selected.'><input id="'.$input_name.'_chk_'.$x.'" name="'.$input_name.'_chk[]" type="checkbox" value="'.$key.'"'.$checked.' /><span class="ctrl-option"></span>'.$value.'</li>';
                     $x++;
                 }
                 $html .= '</ul>';

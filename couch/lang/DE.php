@@ -12,7 +12,7 @@
     $t['view_site'] = 'Seite ansehen';
     $t['logout'] = 'Abmelden';
     $t['javascript_msg'] = 'JavaScript ist deaktiviert oder wird von Ihrem Browser nicht unterst&uuml;tzt.<br/>
-                            Bitte aktualisieren Sie Ihren Browser oder <a title="aktivieren Sie JavaScript in Ihrem Browser" href="http://www.google.com/support/bin/answer.py?answer=23852"><b>aktivieren Sie JavaScript</b></a> um das Admin Panel zu verwenden.';
+                            Bitte aktualisieren Sie Ihren Browser oder <a href="https://support.google.com/answer/23852" target="_blank">aktivieren Sie JavaScript</a> um das Admin Panel zu verwenden.';
     $t['add_new'] = 'Hinzuf&uuml;gen';
     $t['add_new_page'] = 'Neue Seite';
     $t['add_new_user'] = 'Neuer Benutzer';

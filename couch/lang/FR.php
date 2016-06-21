@@ -11,7 +11,7 @@
     $t['view_site'] = 'Voir le site';
     $t['logout'] = 'Déconnexion';
     $t['javascript_msg'] = 'JavaScript est désactivé ou n\'est pas supporté par votre navigateur.<br/>
-                            Veuilez mettre à jour votre navigateur ou <a title="Activer JavaScript dans votre navigateur" href="http://www.google.com/support/bin/answer.py?answer=23852"><b>activer JavaScript</b></a> pour utiiser l\'administration.';
+                            Veuilez mettre à jour votre navigateur ou <a href="https://support.google.com/answer/23852" target="_blank">activer JavaScript</a> pour utiiser l\'administration.';
     $t['add_new'] = 'Ajouter nouveau';
     $t['add_new_page'] = 'Ajouter une nouvelle page';
     $t['add_new_user'] = 'Ajouter un nouvel utilisateur';
