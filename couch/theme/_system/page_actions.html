@@ -7,8 +7,8 @@
         </cms:if>
     <cms:else />
         <a class="btn<cms:if k_action_class> <cms:show k_action_class /></cms:if>" id="<cms:show k_action_name />" href="<cms:show k_action_link />"<cms:if k_action_target> target="<cms:show k_action_target/>"</cms:if><cms:if k_action_onclick> onclick="<cms:show k_action_onclick/>"</cms:if>>
-            <cms:if k_action_icon ><span class="btn-icon"><cms:show_icon k_action_icon /></span></cms:if>
-            <span><cms:show k_action_title /></span>
+            <cms:if k_action_icon ><span class="btn-icon"><cms:show_icon k_action_icon /></span></cms:if><cms:hide>
+            </cms:hide><cms:show k_action_title />
         </a>
     </cms:if>
 </cms:admin_actions>

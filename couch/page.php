@@ -415,7 +415,7 @@
                             $field_info['required'] = '0';
                             $field_info['k_desc'] = $FUNCS->t('page_weight_desc');
                             $field_info['validator'] = 'integer';
-                            $field_info['width'] = '150';
+                            $field_info['width'] = '128';
                             break;
                         case 'k_menu_text':
                             $field_info['k_desc'] = $FUNCS->t('leave_empty');

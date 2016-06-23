@@ -548,8 +548,8 @@
                 'name'=>$FUNCS->t('name'),
                 'pid'=>$FUNCS->t('parent_folder'),
                 'weight'=>$FUNCS->t('weight'),
-                'k_desc'=>$FUNCS->t('desc'),
-                'image'=>$FUNCS->t('image')
+                'image'=>$FUNCS->t('image'),
+                'k_desc'=>$FUNCS->t('desc')
                 );
 
             foreach( $fields as $k=>$v ){
@@ -588,12 +588,13 @@
                             $field_info['k_desc'] = $FUNCS->t('weight_desc');
                             $field_info['validator'] = 'integer';
                             $field_info['required'] = '0';
-                            $field_info['width'] = '150';
+                            $field_info['width'] = '128';
                             break;
                         case 'k_desc':
                             $field_info['k_type'] = 'richtext';
                             $field_info['required'] = '0';
                             $field_info['system'] = '0';
+                            $field_info['height'] = '196';
                             break;
                         case 'image':
                             $field_info['k_type'] = 'image';

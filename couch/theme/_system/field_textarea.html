@@ -4,7 +4,8 @@
     <cms:if k_field_rtl>dir="RTL"</cms:if>
     rows="12"
     cols="79"
+    class="textarea"
     <cms:if k_field_is_deleted>disabled="1"</cms:if>
-    style="<cms:if k_field_height>height:<cms:show k_field_height />px;</cms:if>width:<cms:if k_field_width><cms:show k_field_width />px;<cms:else />100%;</cms:if>"
+    style="<cms:if k_field_height>height:<cms:show k_field_height />px;</cms:if><cms:if k_field_width>width:<cms:show k_field_width />px;</cms:if>"
     <cms:show k_field_extra />
 ><cms:show k_field_value /></textarea>

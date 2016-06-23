@@ -20,9 +20,9 @@
 
         <cms:if k_field_err_msg || k_field_is_required>
             <cms:if k_field_err_msg >
-                <span class="label label-error k_notice" id="k_notice_<cms:show k_field_input_id />"><cms:show k_field_err_msg /></span>
+                <div class="labels"><span class="label label-error k_notice" id="k_notice_<cms:show k_field_input_id />"><cms:show k_field_err_msg /></span></div>
             <cms:else_if k_field_is_required />
-                <span class="label label-txt k_notice" id="k_notice_<cms:show k_field_input_id />">(<cms:localize 'required' />)</span>
+                <div class="labels"><span class="label label-txt k_notice" id="k_notice_<cms:show k_field_input_id />">(<cms:localize 'required' />)</span></div>
             </cms:if>
         </cms:if>
     </div>
