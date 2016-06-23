@@ -137,7 +137,7 @@ option{padding-right:11px;padding-left:11px;cursor:pointer;}
 .select>.disabled+.select-caret{background-color:#e4e4e4;}
 .select>select:focus+.select-caret{background-color:#fff;}
 .select-caret>.i{position:absolute;top:13px;left:4px;width:10px;height:10px;fill:#222;}
-.select>select{width:100%;padding-right:12px;-moz-appearance:none;-webkit-appearance:none;appearance:none;}
+.select>select{width:100%;padding-right:28px;-moz-appearance:none;-webkit-appearance:none;appearance:none;}
 .select>select::-ms-expand{display:none;}
 .disabled,.readonly{border-color:#c0c0c0 !important;background-color:#e4e4e4 !important;box-shadow:none !important;cursor:not-allowed !important;}
 button{display:inline-block;outline:none;background-image:none;font-family:inherit;font-size:inherit;cursor:pointer;}
