@@ -1,19 +1,39 @@
-<div class="ctrls-checkbox">
-<cms:list_options>
-    <cms:if k_option_is_blank>
-        <br />
-    <cms:else />
-        <label for="<cms:show k_field_input_id /><cms:show k_option_count />">
-            <input
-                type="checkbox"
-                name="<cms:show k_field_input_name />[]"
-                id="<cms:show k_field_input_id /><cms:show k_option_count />"
-                value="<cms:show k_option_value />"
-                <cms:show k_field_extra />
-                <cms:if k_field_is_deleted>disabled="1"</cms:if>
-                <cms:if k_option_is_selected>checked="checked"</cms:if>
-            ><span class="ctrl-option"></span><cms:show k_option />
-        </label>
-    </cms:if>
-</cms:list_options>
-</div>
+<cms:if k_field_simple_mode >
+    <cms:list_options>
+        <cms:if k_option_is_blank >
+            <br/>
+        <cms:else />
+            <label for="<cms:show k_field_input_id /><cms:show k_option_count />">
+                <input
+                    type="checkbox"
+                    name="<cms:show k_field_input_name />[]"
+                    id="<cms:show k_field_input_id /><cms:show k_option_count />"
+                    value="<cms:show k_option_value />"
+                    <cms:show k_field_extra />
+                    <cms:if k_field_is_deleted >disabled="1"</cms:if>
+                    <cms:if k_option_is_selected >checked="checked"</cms:if>
+                > <cms:show k_option />
+            </label>
+        </cms:if>
+    </cms:list_options>
+<cms:else />
+    <div class="ctrls-checkbox">
+        <cms:list_options>
+            <cms:if k_option_is_blank >
+                <br/>
+            <cms:else />
+                <label for="<cms:show k_field_input_id /><cms:show k_option_count />">
+                    <input
+                        type="checkbox"
+                        name="<cms:show k_field_input_name />[]"
+                        id="<cms:show k_field_input_id /><cms:show k_option_count />"
+                        value="<cms:show k_option_value />"
+                        <cms:show k_field_extra />
+                        <cms:if k_field_is_deleted >disabled="1"</cms:if>
+                        <cms:if k_option_is_selected >checked="checked"</cms:if>
+                    ><span class="ctrl-option"></span><cms:show k_option />
+                </label>
+            </cms:if>
+        </cms:list_options>
+    </div>
+</cms:if>

@@ -349,9 +349,8 @@ div.simple-heading{border-width:0 0 1px 0;margin-top:0;cursor:default;}
 #settings-panel>.panel-body>.field>.dropdown{min-width:408px;}
 #publish-date{margin-top:5px;font-size:0;}
 .month-field{min-width:134px;vertical-align:top;margin-right:12px;}
-#publish-date>div.month-field{display:inline-block;}
-input.day-field,input.hour-field,input.minute-field{display:inline-block;max-width:50px;text-align:center;}
-input.year-field{display:inline-block;max-width:62px;text-align:center;}
+input.day-field,input.hour-field,input.minute-field{max-width:50px;text-align:center;}
+input.year-field{max-width:62px;text-align:center;}
 .field-symbol{display:inline-block;width:8px;line-height:38px;margin:0 3px;vertical-align:top;text-align:center;font-size:12px;cursor:default;}
 .field-symbol.field-symbol-lg{width:16px;}
 

@@ -96,6 +96,7 @@
         var $err_msg_refresh = '';
         var $requires_multipart = 0;
         var $trust_mode = 1;
+        var $simple_mode = 0;
         var $no_js = 0;
         var $orig_data = null;
         var $module = null;
@@ -552,7 +553,7 @@
         static function _render_textarea( $f, $input_name, $input_id, $extra, $dynamic_insertion ){
             global $CTX;
 
-            KField::_set_common_vars( $f->k_type, $input_name, $input_id, $extra, $dynamic_insertion );
+            KField::_set_common_vars( $f->k_type, $input_name, $input_id, $extra, $dynamic_insertion, $f->simple_mode );
             $arr_vars = array();
             $arr_vars['k_field_value'] = htmlspecialchars( $f->get_data(), ENT_QUOTES, K_CHARSET );
             $arr_vars['k_field_rtl'] = ( $f->rtl ) ? '1' : '0';
@@ -722,7 +723,7 @@
         static function _render_image( $f, $input_name, $input_id, $extra, $dynamic_insertion ){
             global $CTX;
 
-            KField::_set_common_vars( $f->k_type, $input_name, $input_id, $extra, $dynamic_insertion );
+            KField::_set_common_vars( $f->k_type, $input_name, $input_id, $extra, $dynamic_insertion, $f->simple_mode );
             $arr_vars = array();
             $arr_vars['k_field_value'] = $f->get_data();
             $arr_vars['k_field_show_preview'] = ( $f->show_preview ) ? '1' : '0';
@@ -744,7 +745,7 @@
         static function _render_thumbnail( $f, $input_name, $input_id, $extra, $dynamic_insertion ){
             global $CTX;
 
-            KField::_set_common_vars( $f->k_type, $input_name, $input_id, $extra, $dynamic_insertion );
+            KField::_set_common_vars( $f->k_type, $input_name, $input_id, $extra, $dynamic_insertion, $f->simple_mode );
             $arr_vars = array();
             $arr_vars['k_field_value'] = $f->get_data();
             $arr_vars['k_field_show_preview'] = ( $f->show_preview ) ? '1' : '0';
@@ -769,7 +770,7 @@
         static function _render_file( $f, $input_name, $input_id, $extra, $dynamic_insertion ){
             global $CTX;
 
-            KField::_set_common_vars( $f->k_type, $input_name, $input_id, $extra, $dynamic_insertion );
+            KField::_set_common_vars( $f->k_type, $input_name, $input_id, $extra, $dynamic_insertion, $f->simple_mode );
             $arr_vars = array();
             $arr_vars['k_field_value'] = $f->get_data();
             $arr_vars['k_field_input_width'] = $f->input_width; // Set by repeatable tag
@@ -802,7 +803,7 @@
         static function _render_text( $f, $input_name, $input_id, $extra, $dynamic_insertion ){
             global $CTX;
 
-            KField::_set_common_vars( $f->k_type, $input_name, $input_id, $extra, $dynamic_insertion );
+            KField::_set_common_vars( $f->k_type, $input_name, $input_id, $extra, $dynamic_insertion, $f->simple_mode );
             $arr_vars = array();
             $arr_vars['k_field_value'] = htmlspecialchars( $f->get_data(), ENT_QUOTES, K_CHARSET );
             $arr_vars['k_field_rtl'] = ( $f->rtl ) ? '1' : '0';
@@ -824,7 +825,7 @@
             $separator = ( $f->k_separator ) ? $f->k_separator : '|';
             $val_separator = ( $f->val_separator ) ? $f->val_separator : '=';
 
-            KField::_set_common_vars( $f->k_type, $input_name, $input_id, $extra, $dynamic_insertion );
+            KField::_set_common_vars( $f->k_type, $input_name, $input_id, $extra, $dynamic_insertion, $f->simple_mode );
             $arr_vars = array();
             $arr_vars['k_field_opt_values'] = $f->opt_values;
             $arr_vars['k_field_selected_value'] = $selected;
@@ -837,19 +838,18 @@
 
         // message
         static function _render_message( $f, $input_name, $input_id, $extra, $dynamic_insertion ){
-            $html .= $f->get_data();
+            $html = $f->get_data();
             return $html;
         }
 
         // hidden
         static function _render_hidden( $f, $input_name, $input_id, $extra, $dynamic_insertion ){
-            $html = '';
             $value = $f->get_data();
             $html = '<input type="hidden" id="' . $input_id . '" name="'. $input_id .'" value="'. htmlspecialchars( $value, ENT_QUOTES, K_CHARSET ) .'" />';
             return $html;
         }
 
-        static function _set_common_vars( $type, $input_name, $input_id, $extra, $dynamic_insertion ){
+        static function _set_common_vars( $type, $input_name, $input_id, $extra, $dynamic_insertion, $simple_mode ){
             global $CTX;
 
             $arr_vars = array();
@@ -858,6 +858,7 @@
             $arr_vars['k_field_input_id'] = $input_id;
             $arr_vars['k_field_extra'] = $extra;
             $arr_vars['k_field_dynamic_insertion'] = $dynamic_insertion;
+            $arr_vars['k_field_simple_mode'] = $simple_mode;
 
             $CTX->set_all( $arr_vars );
         }
@@ -1031,7 +1032,14 @@
             $hilited = $this->get_data();
             $this->page->folders->visit( array('KFolder', '_k_visitor'), $dropdown_html, $hilited, 0/*$depth*/, 0/*$extended_info*/, array()/*$exclude*/ );
             $CTX->pop();
-            return '<div class="select dropdown"><select id="'.$input_id.'" name="'.$input_name.'"><option value="-1" >-- '.$FUNCS->t('select_folder').' --</option>' .$dropdown_html . '</select><span class="select-caret">'.$FUNCS->get_icon('caret-bottom').'</span></div>';
+
+            $html = '<select id="'.$input_id.'" name="'.$input_name.'"><option value="-1" >-- '.$FUNCS->t('select_folder').' --</option>' .$dropdown_html. '</select>';
+
+            if( !$this->simple_mode ){
+                $html = '<div class="select dropdown">' . $html . '<span class="select-caret">'.$FUNCS->get_icon('caret-bottom').'</span></div>';
+            }
+
+            return $html;
         }
     }
 
@@ -1046,7 +1054,14 @@
             $hilited = $this->get_data();
             $PAGE->folders->visit( array('KFolder', '_k_visitor'), $dropdown_html, $hilited, 0/*$depth*/, 0/*$extended_info*/, array($OBJ->name)/*$exclude*/ );
             $CTX->pop();
-            return '<div class="select dropdown"><select id="'.$input_id.'" name="'.$input_name.'"><option value="-1" >-- '.$FUNCS->t('none').' --</option>' .$dropdown_html . '</select><span class="select-caret">'.$FUNCS->get_icon('caret-bottom').'</span></div>';
+
+            $html = '<select id="'.$input_id.'" name="'.$input_name.'"><option value="-1" >-- '.$FUNCS->t('none').' --</option>' .$dropdown_html. '</select>';
+
+            if( !$this->simple_mode ){
+                $html = '<div class="select dropdown">' . $html . '<span class="select-caret">'.$FUNCS->get_icon('caret-bottom').'</span></div>';
+            }
+
+            return $html;
         }
     }
 
@@ -1184,15 +1199,15 @@
                 $checked = ( !$this->get_data() ) ? 'checked="checked"' : '';
             }
 
-            ob_start();
-            ?>
-                <div class="ctrls-checkbox">
-                    <label for="<?php echo $input_id; ?>"><input type="checkbox" value="1" <?php echo $checked; ?> name="<?php echo $input_name; ?>" id="<?php echo $input_id; ?>"/><span class="ctrl-option"></span><?php echo $this->field_label; ?></label>
-                </div>
-            <?php
+            $html = '<input type="checkbox" value="1" '.$checked.' name="'.$input_name.'" id="'.$input_id.'"/>';
 
-            $html .= ob_get_contents();
-            ob_end_clean();
+            if( $this->simple_mode ){
+                $html = '<label for="'.$input_id.'">' . $html . ' ' . $this->field_label . '</label>';
+            }
+            else{
+                $html = '<div class="ctrls-checkbox"><label for="'.$input_id.'">' . $html . '<span class="ctrl-option"></span>' . $this->field_label . '</label></div>';
+            }
+
             return $html;
         }
     }
@@ -1257,7 +1272,12 @@
                 $hilited = $this->get_data();
                 $tree->visit( array('KNestedPage', '_k_visitor_pages'), $dropdown_html, $hilited, 0/*$depth*/, 0/*$extended_info*/, array($this->page->page_name)/*$exclude*/ );
                 $CTX->pop();
-                $html .= '<div class="select dropdown"><select id="'.$input_id.'" name="'.$input_name.'"><option value="-1" >-- '.$FUNCS->t('none').' --</option>' .$dropdown_html . '</select><span class="select-caret">'.$FUNCS->get_icon('caret-bottom').'</span></div>';
+
+                $html = '<select id="'.$input_id.'" name="'.$input_name.'"><option value="-1" >-- '.$FUNCS->t('none').' --</option>' .$dropdown_html. '</select>';
+
+                if( !$this->simple_mode ){
+                    $html = '<div class="select dropdown">' . $html . '<span class="select-caret">'.$FUNCS->get_icon('caret-bottom').'</span></div>';
+                }
             }
             return $html;
         }

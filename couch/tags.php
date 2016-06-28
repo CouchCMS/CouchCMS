@@ -5349,7 +5349,7 @@ FORM;
                                  'width', 'height', 'style',
                                  'format', 'reload_text',
                                  'allowed_html_tags',
-                                 'trust_mode', 'no_js',
+                                 'trust_mode', 'no_js', 'simple_mode',
                                  'strip_tags',
                                  );
             $extra = '';
@@ -5419,8 +5419,17 @@ FORM;
 
                             // turn off trusted_mode unless specified otherwise
                             $f->trust_mode = ( $trust_mode==1 ) ? 1 : 0;
+
                             // no JavaScript if inline editing
                             $f->no_js = ( $no_js==1 ) ? 1 : 0;
+
+                            // render in simple mode if not in admin-panel (except if explicitly instructed otherwise)
+                            if( is_null($simple_mode) ){
+                                $f->simple_mode = ( defined('K_ADMIN') ) ? 0 : 1;
+                            }
+                            else{
+                                $f->simple_mode = ( $simple_mode==1 ) ? 1 : 0;
+                            }
 
                             $PAGE->forms[$form][$name] = &$f;
                             break;
