@@ -1296,7 +1296,7 @@
         $dir = ( $horizontal ) ? 'left' : 'up';
         $icon = ( $horizontal ) ? 'chevron-left' : 'chevron-top';
         if( $show_up ){
-            $html .='<a class="up icon tt" href="#" onclick="k_updown( \''.$page_id.'\', 1 ); return false;" title="'.$FUNCS->t($dir).'">'.$FUNCS->get_icon($icon).'</a>';
+            $html .='<a class="up icon tt" href="#" onclick="$( this ).blur(); k_updown( \''.$page_id.'\', 1 ); return false;" title="'.$FUNCS->t($dir).'">'.$FUNCS->get_icon($icon).'</a>';
         }
         else{
             $html .='<span class="icon-spacer"></span>';
@@ -1306,7 +1306,7 @@
         $dir = ( $horizontal ) ? 'right' : 'down';
         $icon = ( $horizontal ) ? 'chevron-right' : 'chevron-bottom';
         if( $show_down ){
-            $html .='<a class="down icon tt" href="#" onclick="k_updown( \''.$page_id.'\', 0 ); return false;" title="'.$FUNCS->t($dir).'">'.$FUNCS->get_icon($icon).'</a>';
+            $html .='<a class="down icon tt" href="#" onclick="$( this ).blur(); k_updown( \''.$page_id.'\', 0 ); return false;" title="'.$FUNCS->t($dir).'">'.$FUNCS->get_icon($icon).'</a>';
         }
         else{
             $html .='<span class="icon-spacer"></span>';
