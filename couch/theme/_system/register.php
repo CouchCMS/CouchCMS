@@ -1299,7 +1299,7 @@
             $html .='<a class="up icon tt" href="#" onclick="k_updown( \''.$page_id.'\', 1 ); return false;" title="'.$FUNCS->t($dir).'">'.$FUNCS->get_icon($icon).'</a>';
         }
         else{
-            $html .='<a class="up" href="#" onclick="return false;">'.$FUNCS->get_icon('blank').'</a>';
+            $html .='<span class="icon-spacer"></span>';
         }
 
         // down arrow
@@ -1309,7 +1309,7 @@
             $html .='<a class="down icon tt" href="#" onclick="k_updown( \''.$page_id.'\', 0 ); return false;" title="'.$FUNCS->t($dir).'">'.$FUNCS->get_icon($icon).'</a>';
         }
         else{
-            $html .='<a class="down" href="#" onclick="return false;">'.$FUNCS->get_icon('blank').'</a>';
+            $html .='<span class="icon-spacer"></span>';
         }
 
         static $done=0;
@@ -1333,6 +1333,7 @@
                     })
                     .done(function( data ){
                         $( '#listing' ).replaceWith( $( $.parseHTML( data ) ).find( '#listing' ) );
+                        $( '#listing' ).html( $( '#listing' ).html() );
                     })
                     .always(function() {
                         $('#k_overlay').css('display', 'none');
