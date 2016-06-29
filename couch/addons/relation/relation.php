@@ -579,7 +579,10 @@
 
             if( $f->has=='one' ){
                 $selected = ( count($f->items_selected) ) ? $f->items_selected[0] : ''; // can have only one item selected
-                $html .= '<div class="select dropdown"'.( $f->width ? ' style="width:'.$f->width.'px;min-width:'.$f->width.'px;"' : '').'><select name="'.$input_name.'_chk" id="'.$input_id.'" >';
+                if( !$f->simple_mode ){
+                    $html .= '<div class="select dropdown"'.( $f->width ? ' style="width:'.$f->width.'px;min-width:'.$f->width.'px;"' : '').'>';
+                }
+                $html .= '<select name="'.$input_name.'_chk" id="'.$input_id.'"'.( $f->width && $f->simple_mode ? ' style="width:'.$f->width.'px;"' : '').'>';
                 $html .= '<option value="-">-- Select --</option>'; //TODO get label as parameter
 
                 while( list($key, $value) = each($rows) ){
@@ -587,7 +590,10 @@
                     if( $selected && $key==$selected ) $html .= '  selected="selected"';
                     $html .= '>'.$value.'</option>';
                 }
-                $html .= '</select><span class="select-caret">'.$FUNCS->get_icon('caret-bottom').'</span></div>';
+                $html .= '</select>';
+                if( !$f->simple_mode ){
+                    $html .= '<span class="select-caret">'.$FUNCS->get_icon('caret-bottom').'</span></div>';
+                }
             }
             else{
                 $html .= '<div class="relation-body"'.( $f->width ? ' style="width:'.$f->width.'px;"' : '').'>';

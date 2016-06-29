@@ -37,7 +37,9 @@
             <cms:show_icon 'reload' /><cms:localize 'recreate' />
         </a>
         <span><cms:localize 'crop_from' />:</span>
-        <div class="select">
+        <cms:if k_field_simple_mode >
+            <div class="select">
+        </cms:if>
             <select name="f_k_crop_pos_<cms:show k_field_name />" id="f_k_crop_pos_<cms:show k_field_name />" <cms:if k_field_is_deleted>disabled="1"</cms:if>>
                 <option value="top_left"><cms:localize 'top_left' /></option>
                 <option value="top_center"><cms:localize 'top_center' /></option>
@@ -49,8 +51,9 @@
                 <option value="bottom_center"><cms:localize 'bottom_center' /></option>
                 <option value="bottom_right"><cms:localize 'bottom_right' /></option>
             </select>
-            <span class="select-caret"><cms:show_icon 'caret-bottom' /></span>
-        </div>
+        <cms:if k_field_simple_mode >
+            <span class="select-caret"><cms:show_icon 'caret-bottom' /></span></div>
+        </cms:if>
     </div>
 </cms:if>
 
