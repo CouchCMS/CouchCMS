@@ -55,6 +55,7 @@
         function tag_handler( $params, $node ){
             global $CTX, $FUNCS, $TAGS, $PAGE, $AUTH;
             if( $AUTH->user->access_level < K_ACCESS_LEVEL_SUPER_ADMIN ) return;
+            if( defined('K_ADMIN') ) return; // nop within admin panel
 
             $attr = $FUNCS->get_named_vars(
                     array(  'name'=>'',
@@ -72,7 +73,7 @@
                     $attr = $FUNCS->get_named_vars( array('type'=>'', 'name'=>''), $child_params );
                     $child_type = strtolower( trim($attr['type']) );
                     if( $FUNCS->is_core_type($child_type) ){
-                        if( in_array($child_type, array('richtext', 'thumbnail', 'hidden', 'message', 'group')) ){ //unsupported types
+                        if( in_array($child_type, array('thumbnail', 'hidden', 'message', 'group')) ){ //unsupported types
                             continue;
                         }
                     }
@@ -271,6 +272,14 @@
                                 var tbody = $( row ).closest( 'tbody' );
                                 tbody.trigger('_reorder');
                             },
+                            start: function( event, ui ){
+                                var row = ui.item;
+                                row.trigger('_reorder_start');
+                              },
+                            stop: function( event, ui ){
+                                var row = ui.item;
+                                row.trigger('_reorder_stop');
+                            },
                         });
                     });
                 <?php
@@ -324,7 +333,7 @@
                                         $c_input_name = 'f_'. $this->name .'['. $row_id .']['. $c->name .']';
                                         $c_input_id = 'f_'. $this->name .'-'. $row_id .'-'. $c->name;
                                         $html = '<td class="editable"><div style="position:relative;">';
-                                        $html .= $c->_render( $c_input_name, $c_input_id );
+                                        $html .= $c->_render( $c_input_name, $c_input_id, '', false );
                                         if( $c->deleted && $AUTH->user->access_level >= K_ACCESS_LEVEL_SUPER_ADMIN && defined('K_ADMIN') ){
                                             $html .= '<div class="k_cell_deleted">&nbsp;</div>';
                                         }
@@ -513,7 +522,7 @@
                     $input_id = 'f_'. $this->name .'-'. $row .'-'. $c->name;
                     $err_class = ( $c->err_msg ) ? ' highlite' : '';
                     $html = '<td class="editable'.$err_class.'"><div style="position:relative;">';
-                    $html .= $c->_render( $input_name, $input_id );
+                    $html .= $c->_render( $input_name, $input_id, '', false );
                     if( $c->deleted && $AUTH->user->access_level >= K_ACCESS_LEVEL_SUPER_ADMIN && defined('K_ADMIN') ){
                         $html .= '<div class="k_cell_deleted">&nbsp;</div>';
                     }

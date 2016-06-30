@@ -159,6 +159,7 @@
                         if (el) el.saveContent();
                     });
 
+                    <?php if( $dynamic_insertion===false ){ /* not dynamically inserted but is within repeatable regions */ ?>
                     try{
                         var parentRow = $('#<?php echo $input_id ?>').closest('tr');
                         if(parentRow.length){
@@ -168,6 +169,7 @@
                         }
                     }
                     catch(e){}
+                    <?php } ?>
                 });
                 <?php
                 $js = ob_get_contents();

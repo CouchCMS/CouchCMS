@@ -1057,6 +1057,8 @@
             global $CTX, $FUNCS, $PAGE, $DB, $AUTH;
             $is_udf = 0;
 
+            if( defined('K_ADMIN') ) return; // nop within admin panel
+
             $core_params = array(
                 'name'=>'',
                 'label'=>'',
@@ -1490,6 +1492,9 @@
             global $FUNCS, $PAGE, $DB, $AUTH;
 
             if( $AUTH->user->access_level >= K_ACCESS_LEVEL_SUPER_ADMIN ){
+
+                if( defined('K_ADMIN') ) return; // nop within admin panel
+
                 $core_params = array(
                                    'title'=>'',
                                    'clonable'=>'0',

@@ -568,7 +568,7 @@
             global $FUNCS;
 
             if( $f->deleted || $f->no_js ){
-                return $FUNCS->render( 'textarea', $f, $input_name, $input_id, $extra, $dynamic_insertion );
+                return $FUNCS->render( 'field_textarea', $f, $input_name, $input_id, $extra, $dynamic_insertion );
             }
 
             $html = '';
@@ -646,8 +646,20 @@
                 $config['stylesCombo_stylesSet'] = $custom_style_name . ':' . $custom_style_file;
             }
 
+            // rendered within repeatable region?
+            $repeatable = 0;
+            if( $dynamic_insertion || $dynamic_insertion===false ){
+                // NOTE: With v2.0, for regions *within* repeatable-regions, when the need arose to differentiate between regions that already exist (from previous saves)
+                // and those being added on-the-fly by clicking 'new', to preserve backward compatibility the $dynamic_insertion is set to boolean 'false' for
+                // existing regions (and '1', as previously, for dynamically added).
+
+                $repeatable = 1;
+            }
+
             // toolbars
             $toolbar = $f->toolbar; // basic, medium, full.
+            if( $repeatable && $toolbar=='' ) $toolbar = 'basic';
+
             if( $toolbar == 'full' ){
                 $config['toolbar'] = array(
                     array( 'Bold', 'Italic', 'Underline', 'Strike', '-', 'Subscript', 'Superscript'),
@@ -714,7 +726,124 @@
                 );
             }
 
-            $html .= $f->page->CKEditor->editor( $input_id, $value, $config );
+            if( $repeatable ){
+                ob_start();
+                ?>
+                var parentRow = $("#"+eid).closest("tr");
+                if(parentRow.length){
+                    parentRow.bind("row_delete", function(event){
+                        var ed = CKEDITOR.instances[ eid ];
+                        if( typeof ed != "undefined" ){
+                            ed.destroy();
+                            CKEDITOR.remove( ed );
+                        }
+                    });
+                    parentRow.bind("_reorder_start", function(event){
+                        var ed = CKEDITOR.instances[ eid ];
+                        if( typeof ed != "undefined" ){
+                            if( typeof CKEDITOR.k_config_cks == "undefined" ) CKEDITOR.k_config_cks = [];
+                            CKEDITOR.k_config_cks[eid] = ed.config;
+                            var txtarea = $("#"+eid);
+                            var dummy = txtarea.next(".cke").clone().addClass("dummy");
+                            ed.destroy();
+                            CKEDITOR.remove( ed );
+                            txtarea.hide().after(dummy);
+                        }
+                    });
+                    parentRow.bind("_reorder_stop", function(event){
+                        CKEDITOR.replace( eid, CKEDITOR.k_config_cks[eid] );
+                        var txtarea = $("#"+eid);
+                        txtarea.next(".dummy").remove();
+                    });
+                }
+                <?php
+                $dyn_js = ob_get_contents();
+                ob_end_clean();
+
+                if( $dynamic_insertion ){ // being added on-the-fly.. output template markup that will be duplicated for each dynamically added new row
+                    $tmp = $f->page->CKEditor->editor( $input_name, $value, $config );
+
+                    if( preg_match('/<textarea.*?<\/textarea>/i', $tmp, $matches) ){
+                        $html .= $matches[0];
+                    }
+
+                    if( strpos($tmp, 'window.CKEDITOR_BASEPATH')!==false ){
+                        if( preg_match_all('/<script[^>]*>.*?<\/script>/s', $tmp, $matches, PREG_PATTERN_ORDER) ){
+                            $matches = $matches[0]; // scripts
+                            $tmp = array_pop( $matches );
+
+                            $html0 = '';
+                            foreach ($matches as $match) {
+                                $html0 .= $match;
+                            }
+                            if( strlen($html0) ){ $FUNCS->add_html( $html0 ); };
+                        }
+                    }
+
+                    if( preg_match('/CKEDITOR\\.replace\\(.*\\);/sim', $tmp, $matches) ){
+                        $html1 = str_replace( '\'', '"', $matches[0] );
+                    }
+
+                    // Being dynamically inserted (e.g. through 'repeatable' tag).
+                    // Simply outputting script will not work.
+                    // Have to use a workaround (http://24ways.org/2005/have-your-dom-and-script-it-too).
+                    // Additionally, we are adding an id - the logic is that the id gets duplicated into 'idx' for the 'template' row code.
+                    // This 'idx' will not be present in the cloned rows. We use this property to avoid executing JavaScript in template row.
+                    ob_start();
+                    ?>
+                    <img src="<?php echo K_SYSTEM_THEME_URL; ?>assets/blank.gif" alt="" id="<?php echo $input_id ?>_dummyimg" onload='
+                        el=$("#<?php echo $input_id ?>_dummyimg");
+                        if(!el.attr("idx")){
+                            <?php echo $html1 ?>
+
+                            var eid = "<?php echo $input_id ?>";
+                            <?php echo $dyn_js ?>
+
+                            el.css("display", "none");
+                        }
+                    ' />
+                    <?php
+                    $html .= ob_get_contents();
+                    ob_end_clean();
+
+                    return $html;
+
+                }
+                else{ /* not dynamically inserted but is being rendered within repeatable regions */
+                    $config['removePlugins']='resize';
+
+                    static $done=0;
+                    if( !$done ){
+                        $done=1;
+                        ob_start();
+                        ?>
+                        $(function(){
+                            if( CKEDITOR && CKEDITOR.k_repeatable_cks ){
+                                $.each(CKEDITOR.k_repeatable_cks, function(index, value){
+                                    try{
+                                        var eid = value;
+                                        <?php echo $dyn_js ?>
+                                    }
+                                    catch(e){}
+                                });
+                            }
+                        });
+                        <?php
+                        $js = ob_get_contents();
+                        ob_end_clean();
+                        $FUNCS->add_js( $js );
+                    }
+
+                    $html .= $f->page->CKEditor->editor( $input_name, $value, $config );
+                    $html .= "<script type=\"text/javascript\">//<![CDATA[\n";
+                    $html .= "if( !CKEDITOR.k_repeatable_cks ) CKEDITOR.k_repeatable_cks = []; CKEDITOR.k_repeatable_cks.push( '". $input_id ."' );";
+                    $html .= "\n//]]></script>\n";
+
+                    return $html;
+                }
+            }
+
+            $html .= $f->page->CKEditor->editor( $input_name, $value, $config );
 
             return $html;
         }
