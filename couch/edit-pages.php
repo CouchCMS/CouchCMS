@@ -60,6 +60,7 @@
 
             $text = $PAGE->tpl_title ? $PAGE->tpl_title : $PAGE->tpl_name;
             $link = ( $PAGE->tpl_is_clonable ) ? $FUNCS->generate_route( $PAGE->tpl_name, 'list_view' ) : '';
+            if( $link!='' ){ $link = $FUNCS->get_qs_link( $link ); }
             $icon = '';
             $FUNCS->set_admin_title( $text, $link, $icon );
 
@@ -522,6 +523,7 @@
 
             $text = $PAGE->tpl_title ? $PAGE->tpl_title : $PAGE->tpl_name;
             $link = ( $PAGE->tpl_is_clonable ) ? $FUNCS->generate_route( $PAGE->tpl_name, 'list_view' ) : '';
+            if( $link!='' ){ $link = $FUNCS->get_qs_link( $link ); }
             $icon = '';
             $FUNCS->set_admin_title( $text, $link, $icon );
 
