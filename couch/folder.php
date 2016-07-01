@@ -548,8 +548,8 @@
                 'name'=>$FUNCS->t('name'),
                 'pid'=>$FUNCS->t('parent_folder'),
                 'weight'=>$FUNCS->t('weight'),
-                'image'=>$FUNCS->t('image'),
-                'k_desc'=>$FUNCS->t('desc')
+                'k_desc'=>$FUNCS->t('desc'),
+                'image'=>$FUNCS->t('image')
                 );
 
             foreach( $fields as $k=>$v ){
