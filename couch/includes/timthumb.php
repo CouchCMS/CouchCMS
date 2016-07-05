@@ -46,7 +46,7 @@ function k_resize_image( $src, $dest=0, $new_width=0, $new_height=0, $zoom_crop=
     // get mime type of src
     $mime_type = mime_type($src);
 
-    ini_set('memory_limit', "50M");
+    ini_set('memory_limit', "64M");
 
     // make sure that the src is gif/jpg/png
     if(!valid_src_mime_type($mime_type)) {
@@ -56,14 +56,14 @@ function k_resize_image( $src, $dest=0, $new_width=0, $new_height=0, $zoom_crop=
     if(strlen($src) && file_exists($src)) {
 
         // open the existing image
-        $image = open_image($mime_type, $src);
-        if($image === false) {
+        $info = @getimagesize( $src );
+        if( $info===false || !intval($info[0]) || !intval($info[1]) ){
             return displayError('Unable to open image : ' . $src);
         }
 
         // Get original width and height
-        $width = imagesx($image);
-        $height = imagesy($image);
+        $width = $info[0];
+        $height = $info[1];
 
         // generate new w/h if not provided
         if( $new_width && !$new_height ) {
@@ -205,11 +205,15 @@ function k_resize_image( $src, $dest=0, $new_width=0, $new_height=0, $zoom_crop=
 
             }
 
+            $image = open_image($mime_type, $src);
+            if( $image === false ){ return displayError('Unable to open image : ' . $src); }
             imagecopyresampled( $canvas, $image, 0, 0, $src_x, $src_y, $new_width, $new_height, $src_w, $src_h );
 
         } else {
 
             // copy and resize part of an image with resampling
+            $image = open_image($mime_type, $src);
+            if( $image === false ){ return displayError('Unable to open image : ' . $src); }
             imagecopyresampled( $canvas, $image, 0, 0, 0, 0, $new_width, $new_height, $width, $height );
 
         }
