@@ -39,6 +39,16 @@
         box-sizing: border-box;
     }
 
+    .plupload_filelist_header {
+        box-sizing: border-box;
+        height: 33px;
+    }
+
+    .plupload_filelist_footer {
+        box-sizing: border-box;
+        height: 39px;
+    }
+
     .plupload_scroll .plupload_filelist {
         height: 202px;
     }

@@ -2,12 +2,11 @@
     <cms:admin_add_js>
         $(function() {
             toastr.success("Your changes have been saved", "Success", { // TODO: localize
-                "progressBar": true,
-                "positionClass": "toast-bottom-right",
+                "positionClass": "toast-top-right",
                 "showDuration": "250",
                 "hideDuration": "250",
-                "timeOut": "4000",
-                "extendedTimeOut": "2000",
+                "timeOut": "2500",
+                "extendedTimeOut": "500",
                 "icon": '<cms:show_icon 'check' />'
             });
         });

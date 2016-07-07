@@ -1332,8 +1332,7 @@
                         },
                     })
                     .done(function( data ){
-                        $( '#listing' ).replaceWith( $( $.parseHTML( data ) ).find( '#listing' ) );
-                        $( '#listing' ).html( $( '#listing' ).html() );
+                        $( '#listing' ).replaceWith( $( $.parseHTML( data, document ) ).find( '#listing' ) );
                     })
                     .always(function() {
                         $('#k_overlay').css('display', 'none');
