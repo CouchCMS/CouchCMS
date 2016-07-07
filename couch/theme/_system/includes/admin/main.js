@@ -640,7 +640,15 @@ COUCH.toggleNavMenu = $.debounce(function() {
  * Toggle sidebar
  */
 COUCH.toggleSidebar = $.debounce(function() {
-    this.el.$sidebar.toggleClass( "collapsed" );
+    if ( this.el.$sidebar.hasClass( "collapsed" ) ) {
+        this.el.$sidebar.removeClass( "collapsed" );
+
+        $.removeCookie( "collapsed_sidebar" );
+    } else {
+        this.el.$sidebar.addClass( "collapsed" );
+
+        $.setCookie( "collapsed_sidebar", "1", 86400, null, null, document.location.protocol === "https:" );
+    }
 }, 200, true );
 
 /**

@@ -35,7 +35,17 @@
         <cms:show k_main_content />
     </div>
 <cms:else />
-    <div id="sidebar">
+    <cms:set is_sidebar_collapsed = '0' />
+    <cms:php>
+        // read 'collapse' state of sidebar from cookie
+        global $CTX;
+
+        if( isset( $_COOKIE['collapsed_sidebar'] ) ){
+            $CTX->set( 'is_sidebar_collapsed', '1', $scope='parent' );
+        }
+    </cms:php>
+
+    <div id="sidebar"<cms:if is_sidebar_collapsed> class="collapsed"</cms:if>>
         <button class="tt" data-placement="right" id="sidebar-toggle" title="Toggle Sidebar" type="button"><cms:render 'icon' 'menu' /></button>
         <div id="menu-wrap">
             <a href="<cms:show k_admin_link /><cms:show k_admin_page />" id="logo-wrap"><cms:render 'logo' dark='1' id='logo' /></a>
