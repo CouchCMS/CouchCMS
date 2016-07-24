@@ -134,8 +134,9 @@
             $params[] = array( 'lhs'=>'type', 'op'=>'=', 'rhs'=>'__repeatable' );
             $params[] = array( 'lhs'=>'hidden', 'op'=>'=', 'rhs'=>'1' );
             $params[] = array( 'lhs'=>'schema', 'op'=>'=', 'rhs'=>$custom_params );
-            $node->children = array();
-            $TAGS->editable( $params, $node );
+            $_node = clone $node;
+            $_node->children = array();
+            $TAGS->editable( $params, $_node );
         }
 
         function show_handler( $params, $node ){
