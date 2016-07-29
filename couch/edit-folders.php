@@ -237,6 +237,7 @@
                         'title'=>$FUNCS->t('add_new'),
                         'desc'=>$FUNCS->t('add_new_folder'),
                         'href'=>$FUNCS->get_qs_link( $FUNCS->generate_route( $PAGE->tpl_name, 'folder_create_view', array('nonce'=>$FUNCS->create_nonce('edit_page_'.$PAGE->tpl_id))) ),
+                        'icon'=>'plus',
                         'weight'=>10,
                     );
             }

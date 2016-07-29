@@ -1,7 +1,7 @@
 <cms:if k_folder_totalchildren >
     <div class="select filter-field">
         <select name='f_k_folders' id='f_k_folders'>
-            <option value="-1" >--- <cms:show k_root_text /> ---</option>
+            <option value="-1" >-- <cms:show k_root_text /> --</option>
             <cms:folders masterpage=k_template_name hierarchical='1' orderby='weight' >
                 <cms:if k_folder >
                     <cms:set pad = "<cms:repeat "<cms:mul k_level '4'/>" >&nbsp;</cms:repeat>" />

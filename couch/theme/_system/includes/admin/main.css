@@ -436,7 +436,7 @@ input.input-hint,textarea.input-hint{position:relative;border-radius:3px 3px 0 0
 .panel-primary+.panel-body{background-color:#fff;}
 .panel-body>.field:first-child{padding-top:15px;margin-top:0;}
 .panel-body>.field:last-of-type{padding-bottom:15px;}
-.panel-body-toggle{display:none;position:absolute;bottom:-1px;left:50%;width:40px;height:30px;line-height:28px;border-radius:3px 3px 0 0;margin-right:0;margin-left:-20px;font-size:14px;}
+.panel-body-toggle{display:none;position:absolute;bottom:-1px;left:50%;z-index:1;width:40px;height:30px;line-height:28px;border-radius:3px 3px 0 0;margin-right:0;margin-left:-20px;font-size:14px;}
 .panel-body-toggle:after{content:"\2013";}
 
 /* Table */
