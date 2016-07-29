@@ -580,7 +580,7 @@
             if( $f->has=='one' ){
                 $selected = ( count($f->items_selected) ) ? $f->items_selected[0] : ''; // can have only one item selected
                 if( !$f->simple_mode ){
-                    $html .= '<div class="select dropdown"'.( $f->width ? ' style="width:'.$f->width.'px;min-width:'.$f->width.'px;"' : '').'>';
+                    $html .= '<div class="select dropdown"'.( $f->width ? ' style="width:'.$f->width.'px;min-width:auto;"' : '').'>';
                 }
                 $html .= '<select name="'.$input_name.'_chk" id="'.$input_id.'"'.( $f->width && $f->simple_mode ? ' style="width:'.$f->width.'px;"' : '').'>';
                 $html .= '<option value="-">-- Select --</option>'; //TODO get label as parameter

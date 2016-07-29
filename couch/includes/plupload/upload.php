@@ -56,6 +56,30 @@
     li.plupload_droptext {
         line-height: 182px;
     }
+
+    @media (max-width: 480px) {
+        .plupload_header_content {
+            padding-left: 6px;
+            background: transparent;
+        }
+        .plupload_scroll .plupload_filelist {
+            height: 180px;
+        }
+
+        li.plupload_droptext {
+            line-height: 160px;
+        }
+        .plupload_filelist_footer {
+            height: 61px;
+            position: relative;
+            padding-top: 30px;
+        }
+        .plupload_filelist_footer .plupload_file_name {
+            position: absolute;
+            top: 8px;
+            float: none;
+        }
+    }
 </style>
 
 <script src="<?php echo K_ADMIN_URL . 'includes/'; ?>jquery-3.x.min.js?v=<?php echo K_COUCH_BUILD; ?>"></script>
