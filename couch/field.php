@@ -1250,7 +1250,7 @@
                     <label for="f_publish_status_1" onClick="$('#publish-date').show()"><input type="radio" <?php if( $publish_date != '0000-00-00 00:00:00' ){?>checked="checked"<?php } ?> value="1" id="f_publish_status_1" name="f_publish_status"/><span class="ctrl-option"></span><?php echo $FUNCS->t('published'); ?></label>
                     <label for="f_publish_status_0" onClick="$('#publish-date').hide()"><input type="radio" <?php if( $publish_date == '0000-00-00 00:00:00' ){?>checked="checked"<?php } ?> value="0" id="f_publish_status_0" name="f_publish_status"/><span class="ctrl-option"></span><?php echo $FUNCS->t('unpublished'); ?></label>
                 </div>
-                <div id="publish-date" style="display:<?php if( $publish_date == '0000-00-00 00:00:00' ){ echo 'hidden'; } else{ echo 'block'; }?>;">
+                <div id="publish-date" style="display:<?php if( $publish_date == '0000-00-00 00:00:00' ){ echo 'none'; } else{ echo 'block'; }?>;">
                     <?php echo $FUNCS->date_dropdowns( $publish_date ); ?>
                 </div>
             <?php
