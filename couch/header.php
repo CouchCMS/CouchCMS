@@ -47,7 +47,6 @@
     }
 
 
-
     if( !defined('K_COUCH_DIR') ) die(); // cannot be loaded directly
 
     define( 'K_COUCH_VERSION', '2.0.beta' ); // Changes with every release
@@ -67,6 +66,14 @@
     // Ultra-simplified now that there is no IonCube involved :)
     if( !defined('K_PAID_LICENSE') ) define( 'K_PAID_LICENSE', 0 );
     if( !defined('K_REMOVE_FOOTER_LINK') ) define( 'K_REMOVE_FOOTER_LINK', 0 );
+
+    if( defined('K_REDIRECT_CODE'){
+        $k_redirect_code = K_REDIRECT_CODE;
+        $k_redirect_code = ((is_int($k_redirect_code) && ($k_redirect_code >= 300) && ($k_redirect_code <= 307)) ? $k_redirect_code : 301);
+    }
+    else{
+        $k_redirect_code = 301;
+    }
 
     // Check if a cached version of the requested page may be used
     if ( !K_SITE_OFFLINE && !defined('K_ADMIN') && K_USE_CACHE && $_SERVER['REQUEST_METHOD']!='POST' ){
@@ -100,7 +107,7 @@
                         $pg = @unserialize( file_get_contents($k_cache_file) );
                         if( $pg ){
                             if( $pg['redirect_url'] ){
-                                header( "Location: ".$pg['redirect_url'], TRUE, 301 );
+                                header( "Location: ".$pg['redirect_url'], TRUE, $k_redirect_code );
                                 die();
                             }
                             else{

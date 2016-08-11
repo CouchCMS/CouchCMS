@@ -153,6 +153,13 @@
     // Theme folder is expected to be within the 'couch/theme' folder. No leading or trailing slashes please.
     //define( 'K_ADMIN_THEME', 'sample' );
 
+    // 27
+    // Redirect code
+    // By default redirects are done with 301 (Permanant).
+    // If you want a different code, uncomment the below line and set the code
+    // 301=Permanant, 302=Found (Best option for temporary redirect)
+    //define( 'K_REDIRECT_CODE, 301 );
+
     // 99.
     // VERY IMPORTANT!
     // Set the following to '1' ONLY IF YOU HAVE BOUGHT A COMMERCIAL LICENSE for the site you are using this file on.
