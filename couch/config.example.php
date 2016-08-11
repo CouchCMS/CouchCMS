@@ -158,7 +158,7 @@
     // By default redirects are done with 301 (Permanant).
     // If you want a different code, uncomment the below line and set the code
     // 301=Permanant, 302=Found (Best option for temporary redirect)
-    //define( 'K_REDIRECT_CODE, 301 );
+    //define( 'K_REDIRECT_CODE', 301 );
 
     // 99.
     // VERY IMPORTANT!
