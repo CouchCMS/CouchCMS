@@ -1810,12 +1810,12 @@
                     $body .= $sep . '#'. $val['name'] . $sep;
                     if( $val['is_index'] ){
                         //RewriteRule ^news/index.php$ "news/" [R=301,L,QSA]
-                        $for_index .= 'RewriteRule ^'.$val['name'].'$ "'.$val['pretty_name'].'" [R=301,L,QSA]' . $sep;
+                        $for_index .= 'RewriteRule ^'.$val['name'].'$ "'.$val['pretty_name'].'" [R='.$k_redirect_code.',L,QSA]' . $sep;
                     }
                     else{
                         // Redirect if not trailing slash
                         //RewriteRule ^news/test$ "$0/" [R=301,L,QSA]
-                        $body .= 'RewriteRule ^'.substr( $val['pretty_name'], 0, strlen($val['pretty_name'])-1 )  .'$ "$0/" [R=301,L,QSA]' . $sep;
+                        $body .= 'RewriteRule ^'.substr( $val['pretty_name'], 0, strlen($val['pretty_name'])-1 )  .'$ "$0/" [R='.$k_redirect_code.',L,QSA]' . $sep;
 
                         //RewriteRule ^news/test/$ news/test.php [L,QSA]
                         $body .= 'RewriteRule ^'.$val['pretty_name'].'$ '.$val['name'].' [L,QSA]' . $sep;
@@ -1850,7 +1850,7 @@
                         //RewriteRule ^news/test/[^\.]*?([^/\.]*)$ "$0/" [R=301,L,QSA]
                         //RewriteRule ^\w[^\.]*?([^/\.]*)$ "$0/" [R=301,L,QSA]
                         $n = (strlen($val['pretty_name'])) ? $val['pretty_name'] : '\w';
-                        $body .= 'RewriteRule ^'.$n.'[^\.]*?([^/\.]*)$ "$0/" [R=301,L,QSA]' . $sep;
+                        $body .= 'RewriteRule ^'.$n.'[^\.]*?([^/\.]*)$ "$0/" [R='.$k_redirect_code.',L,QSA]' . $sep;
                     }
                     else{
                         //RewriteRule ^news/test/(+*?)$ news/test.php?q=$1 [L,QSA]
@@ -1874,7 +1874,7 @@
                 $header .= $sep;
                 $header .= '#If your site begins with \'www\', uncomment the following two lines' . $sep;
                 $header .= '#RewriteCond %{HTTP_HOST} !^www\.' . $sep;
-                $header .= '#RewriteRule ^(.*)$ http://www.%{HTTP_HOST}/$1 [R=301,L]' . $sep;
+                $header .= '#RewriteRule ^(.*)$ http://www.%{HTTP_HOST}/$1 [R='.$k_redirect_code.',L]' . $sep;
                 $header .= $sep;
                 $header .= $sep;
                 $header .= '#DO NOT EDIT BELOW THIS' . $sep;
@@ -4132,7 +4132,7 @@ OUT;
             }
             else{
                 // fall back to redirect if curl not available
-                header("Location: " . $url, TRUE, 301 );
+                header("Location: " . $url, TRUE, $k_redirect_code );
             }
 
             exit;

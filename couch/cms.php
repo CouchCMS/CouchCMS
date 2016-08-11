@@ -325,7 +325,7 @@
             }
 
             if( $redirect_url ){
-                header( "Location: ".$redirect_url, TRUE, 301 );
+                header( "Location: ".$redirect_url, TRUE, $k_redirect_code );
                 die();
             }
 
