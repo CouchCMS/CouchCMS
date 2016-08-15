@@ -3136,8 +3136,9 @@ OUT;
                     $comment_id = $DB->last_insert_id;
 
                     // HOOK: comment_inserted
-                    $err_msg = $this->dispatch_event( 'comment_inserted', array($comment_id, $arr_insert, &$approved, $params, $node) );
-                    if( $err_msg ){
+                    $err_msg = '';
+                    $this->dispatch_event( 'comment_inserted', array($comment_id, $arr_insert, &$approved, $params, $node, &$err_msg) );
+                    if( strlen($err_msg) ){
                         $DB->rollback();
                         return $this->raise_error( $err_msg );
                     }
@@ -3150,12 +3151,22 @@ OUT;
                         // invalidate cache
                         $this->invalidate_cache();
 
-                        // redirect to the inserted comment
-                        $DB->commit( 1 ); // force commit, we are redirecting.
-                        $parent_link = ( K_PRETTY_URLS ) ? $this->get_pretty_template_link( $PAGE->tpl_name ) : $PAGE->tpl_name;
-                        $comment_link = K_SITE_URL . $parent_link . "?comment=" . $comment_id;
-                        header( "Location: " . $comment_link );
-                        exit;
+                        extract( $this->get_named_vars(
+                            array(
+                                'auto_redirect'=>'1',
+                                ),
+                            $params)
+                        );
+                        $auto_redirect = ( $auto_redirect==0 ) ? 0 : 1;
+
+                        if( $auto_redirect ){
+                            // redirect to the inserted comment
+                            $DB->commit( 1 ); // force commit, we are redirecting.
+                            $parent_link = ( K_PRETTY_URLS ) ? $this->get_pretty_template_link( $PAGE->tpl_name ) : $PAGE->tpl_name;
+                            $comment_link = K_SITE_URL . $parent_link . "?comment=" . $comment_id;
+                            header( "Location: " . $comment_link );
+                            exit;
+                        }
                     }
 
                     $DB->commit();
