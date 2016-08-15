@@ -365,6 +365,9 @@
     require_once( K_ADDONS_DIR . 'cart/session.php' );
     require_once( K_ADDONS_DIR . 'data-bound-form/data-bound-form.php' );
 
+    // addons to 2.0
+    require_once( K_ADDONS_DIR . 'recaptcha/recaptcha.php' );
+
     // Current user's authentication info
     $AUTH = new KAuth( );
 
