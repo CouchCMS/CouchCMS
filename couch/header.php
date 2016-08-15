@@ -359,11 +359,11 @@
 
     // addons to 1.3
     define( 'K_ADDONS_DIR',  K_COUCH_DIR . 'addons/' );
-    require_once( K_COUCH_DIR . 'addons/nicedit/nicedit.php' );
-    require_once( K_COUCH_DIR . 'addons/repeatable/repeatable.php' );
-    require_once( K_COUCH_DIR . 'addons/relation/relation.php' );
-    require_once( K_COUCH_DIR . 'addons/cart/session.php' );
-    require_once( K_COUCH_DIR . 'addons/data-bound-form/data-bound-form.php' );
+    require_once( K_ADDONS_DIR . 'nicedit/nicedit.php' );
+    require_once( K_ADDONS_DIR . 'repeatable/repeatable.php' );
+    require_once( K_ADDONS_DIR . 'relation/relation.php' );
+    require_once( K_ADDONS_DIR . 'cart/session.php' );
+    require_once( K_ADDONS_DIR . 'data-bound-form/data-bound-form.php' );
 
     // Current user's authentication info
     $AUTH = new KAuth( );
@@ -388,8 +388,8 @@
     if( !defined('K_THEME_URL') ) define( 'K_THEME_URL', '' );
 
     // include custom functions/addons if any
-    if( file_exists(K_COUCH_DIR . 'addons/kfunctions.php') ){
-        include_once( K_COUCH_DIR.'addons/kfunctions.php' );
+    if( file_exists(K_ADDONS_DIR . 'kfunctions.php') ){
+        include_once( K_ADDONS_DIR . 'kfunctions.php' );
     }
     if( file_exists(K_SITE_DIR . 'kfunctions.php') ){
         include_once( K_SITE_DIR . 'kfunctions.php' );

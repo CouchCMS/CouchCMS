@@ -575,7 +575,7 @@
         static function register_renderables(){
             global $FUNCS;
 
-            $FUNCS->register_render( 'repeatable_column_deleted', array('template_path'=>K_COUCH_DIR.'addons/repeatable/theme/', 'template_ctx_setter'=>array('Repeatable', '_render_repeatable_column_deleted')) );
+            $FUNCS->register_render( 'repeatable_column_deleted', array('template_path'=>K_ADDONS_DIR.'repeatable/theme/', 'template_ctx_setter'=>array('Repeatable', '_render_repeatable_column_deleted')) );
         }
 
         static function _render_repeatable_column_deleted( $arr_deleted_html ){

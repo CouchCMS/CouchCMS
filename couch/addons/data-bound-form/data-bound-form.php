@@ -627,7 +627,7 @@
     $FUNCS->register_tag( 'validate_nonce', array('KDataBoundForm', 'validate_nonce') );
     $FUNCS->register_tag( 'check_nonce', array('KDataBoundForm', 'check_nonce') );
 
-    require_once( K_COUCH_DIR.'addons/data-bound-form/securefile.php' );
-    require_once( K_COUCH_DIR.'addons/data-bound-form/throttle.php' );
-    require_once( K_COUCH_DIR.'addons/data-bound-form/datetime.php' );
-    require_once( K_COUCH_DIR.'addons/data-bound-form/checkspam.php' );
+    require_once( K_ADDONS_DIR.'data-bound-form/securefile.php' );
+    require_once( K_ADDONS_DIR.'data-bound-form/throttle.php' );
+    require_once( K_ADDONS_DIR.'data-bound-form/datetime.php' );
+    require_once( K_ADDONS_DIR.'data-bound-form/checkspam.php' );

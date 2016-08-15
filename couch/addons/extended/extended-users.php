@@ -18,8 +18,8 @@
         function populate_config(){
 
             $t = array();
-            if( file_exists(K_COUCH_DIR.'addons/extended/config.php') ){
-                require_once( K_COUCH_DIR.'addons/extended/config.php' );
+            if( file_exists(K_ADDONS_DIR.'extended/config.php') ){
+                require_once( K_ADDONS_DIR.'extended/config.php' );
             }
             else{/*
                 die(

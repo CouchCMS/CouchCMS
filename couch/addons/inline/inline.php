@@ -31,7 +31,7 @@
             <link rel="stylesheet" href="<?php echo $css_link; ?>" />
             <?php
             if( !$skip_ckeditor ){
-                require_once( K_COUCH_DIR.'addons/inline/theme/scripts.php' );
+                require_once( K_ADDONS_DIR.'inline/theme/scripts.php' );
             }
             else{
                 $CTX->set( 'k_disable_inline_edit', '1', 'global' );
@@ -219,7 +219,7 @@
             $route = array(
                 'name'=>'edit',
                 'path'=>'edit',
-                'include_file'=>K_COUCH_DIR.'addons/inline/inline_ex.php',
+                'include_file'=>K_ADDONS_DIR.'inline/inline_ex.php',
                 'class'=> 'InlineEx',
                 'action'=>'edit_action',
                 'module'=>'inline', /* owner module of this route */
@@ -232,7 +232,7 @@
         static function register_renderables(){
             global $FUNCS;
 
-            $FUNCS->register_render( 'inline_content_form', array('template_path'=>K_COUCH_DIR.'addons/inline/theme/') );
+            $FUNCS->register_render( 'inline_content_form', array('template_path'=>K_ADDONS_DIR.'inline/theme/') );
         }
 
     } // end class
