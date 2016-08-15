@@ -5428,14 +5428,6 @@ FORM;
                             // no JavaScript if inline editing
                             $f->no_js = ( $no_js==1 ) ? 1 : 0;
 
-                            // render in simple mode if not in admin-panel (except if explicitly instructed otherwise)
-                            if( is_null($simple_mode) ){
-                                $f->simple_mode = ( defined('K_ADMIN') ) ? 0 : 1;
-                            }
-                            else{
-                                $f->simple_mode = ( $simple_mode==1 ) ? 1 : 0;
-                            }
-
                             $PAGE->forms[$form][$name] = &$f;
                             break;
                         }
@@ -5491,6 +5483,14 @@ FORM;
                         $f->captcha_format = strtolower( trim($format) );
                         $f->captcha_reload_text = $reload_text ? $reload_text : 'Reload Image';
                     }
+                }
+
+                // render in simple mode if not in admin-panel (except if explicitly instructed otherwise)
+                if( is_null($simple_mode) ){
+                    $f->simple_mode = ( defined('K_ADMIN') ) ? 0 : 1;
+                }
+                else{
+                    $f->simple_mode = ( $simple_mode==1 ) ? 1 : 0;
                 }
 
                 // form submitted?
