@@ -76,7 +76,7 @@ COUCH.bindPopupAJAX = function( $elements, code ) {
     $elements.magnificPopup({
         callbacks: {
             parseAjax: code ? function( response ) {
-                response.data = '<div class="popup-blank popup-code"><div class="popup-code-content">' + response.data.replace( "<", "&lt;" ).replace( ">", "&gt;" ) + '</div></div>';
+                response.data = '<div class="popup-blank popup-code"><div class="popup-code-content">' + response.data.replace( /</g, "&lt;" ).replace( />/g, "&gt;" ).replace( /(?:\r\n|\r|\n)/g, "<br/>" ) + '</div></div>';
             } : false
         },
         closeOnBgClick: false,
