@@ -45,7 +45,7 @@ To demonstrate the power and ease of Couch, we'll build a complete real world si
 More details regarding Licensing and FAQ can be found [here](http://www.couchcms.com/products/).
 
 #### Portable CouchCMS for Local Testing
-Windows user wishing to test out CouchCMS on their local systems can download it contained within a portable WAMP package (Apache / MySQL / PHP). **No installation required. Just unpack and run. Total size is 11.40 MB.** [Download now](http://www.couchcms.com/products/).
+Windows user wishing to test out CouchCMS on their local systems can download it contained within a portable WAMP package (Apache / MySQL / PHP). **No installation required. Just unpack and run.** [Download now](http://www.couchcms.com/products/).
 
 #### Documentation
 You can view the documentation online [here](http://docs.couchcms.com/), or instead you can download a zip containing the information [here](https://github.com/CouchCMS/Documentation/archive/gh-pages.zip). The [CouchCMS forum](http://www.couchcms.com/forum/) is also a great place to learn new things and request assistance.

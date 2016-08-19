@@ -36,4 +36,4 @@ config.language = 'en';
 ```
 
 All these locales have their respective language files (`de.js`, `fr.js`, etc...) present in the `couch/includes/ckeditor/lang/` folder.
-For locales other than these, you can download the corresponding language file from http://www.couchcms.com/ckeditor_431_lang.zip
+For locales other than these, you can download the corresponding language file from http://www.couchcms.com/ckeditor_459_lang.zip
