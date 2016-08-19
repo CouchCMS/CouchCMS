@@ -17,7 +17,7 @@
         </cms:if>
     </cms:list_options>
 <cms:else />
-    <div class="ctrls-radio">
+    <div class="ctrls-radio <cms:if k_field_is_deleted >ctrls-disabled</cms:if>">
         <cms:list_options>
             <cms:if k_option_is_blank >
                 <br/>
