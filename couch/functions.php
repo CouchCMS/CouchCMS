@@ -3960,8 +3960,8 @@ OUT;
             return $this->admin_html;
         }
 
-        function show_alert( $heading='', $content='', $type='' ){
-            return $this->render( 'alert', $heading, $content, $type );
+        function show_alert( $heading='', $content='', $type='', $center='' ){
+            return $this->render( 'alert', $heading, $content, $type, $center );
         }
 
         function is_core_type( $fieldtype ){

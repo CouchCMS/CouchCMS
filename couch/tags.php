@@ -6865,7 +6865,10 @@ MAP;
         function show_info( $params, $node ){
             global $FUNCS;
             extract( $FUNCS->get_named_vars(
-                        array('heading'=>''),
+                        array(
+                            'heading'=>'',
+                            'center'=>'',
+                            ),
                         $params)
                    );
             $heading = trim( $heading );
@@ -6889,7 +6892,7 @@ MAP;
                 $type = 'info';
             }
 
-            return $FUNCS->show_alert( $heading, $content, $type );
+            return $FUNCS->show_alert( $heading, $content, $type, $center );
         }
 
         function show_success( $params, $node ){

@@ -1094,7 +1094,7 @@
         return $html;
     }
 
-    function _render_alert( $heading='', $content='', $type='' ){
+    function _render_alert( $heading='', $content='', $type='', $center='' ){
         global $CTX;
 
         $type = strtolower( trim($type) );
@@ -1105,6 +1105,7 @@
         $CTX->set( 'k_alert_type', $type );
         $CTX->set( 'k_alert_heading', trim($heading) );
         $CTX->set( 'k_alert_content', trim($content) );
+        $CTX->set( 'k_alert_center', $center == '1' ? '1' : '0' );
     }
 
     function _render_list_checkbox( $for_header=0 ){
