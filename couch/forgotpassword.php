@@ -182,4 +182,3 @@
         $html = $FUNCS->render( 'forgot_password', $msg, $msg_class, $msgonly );
         echo $html;
     }
-?>
