@@ -410,8 +410,9 @@ COUCH.createActionPopovers = function() {
         selector:  ".btn-actions",
         trigger:   "focus",
         content:   function() {
-            var $content = $( this ).siblings( "a" ),
-                $actions = $content.filter( ".up, .down, .approve-comment, .disapprove-comment" );
+            var $this = $( this ),
+                $content = $this.siblings( "a" ),
+                $actions = $content.filter( ".approve-comment, .disapprove-comment" ).add( $this.parent().siblings( ".col-up-down" ).children( ".up, .down" ) );
 
             if ( $actions.length ) {
                 return $( '<div class="popover-actions"></div>' ).append( $actions.clone() ).append( '<span class="popover-actions-sep"></span>' ).append( $content.not( $actions ).clone() );

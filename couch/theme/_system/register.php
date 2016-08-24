@@ -1167,7 +1167,7 @@
         $len_pad = 0;
 
         for( $x=0; $x<$level; $x++ ){
-            $pad .= '- &nbsp;&nbsp;&nbsp;';
+            $pad .= '<span class="level-sep">-</span>';
             $len_pad += 3;
         }
 
@@ -1182,10 +1182,10 @@
 
         $html = $pad;
         if( $can_update ){
-            $html .= '<span><a href="'.$link.'" title="['.$weight.'] '.$page_title.'"'.$page_class.'>'.$abbr_title.'</a></span>';
+            $html .= '<a href="'.$link.'" title="['.$weight.'] '.$page_title.'"'.$page_class.'>'.$abbr_title.'</a>';
         }
         else{
-            $html .= '<span>'.$abbr_title.'</span>';
+            $html .= $abbr_title;
         }
         if( !$show_in_menu ){
             $html .= '&nbsp;<a href="#" onclick="return false" class="icon tt" title="'.$FUNCS->t('not_shown_in_menu').'">'.$FUNCS->get_icon('ban').'</a>';

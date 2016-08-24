@@ -915,6 +915,7 @@
 
             if( array_key_exists('k_page_title', $fields) ){
                 $fields['k_page_title']['content']="<cms:render 'list_nestedpage_title' />";
+                $fields['k_page_title']['class']='nested-title';
                 $fields['k_page_title']['sort_name']='title'; // sort field for nested_pages
             }
             if( array_key_exists('k_page_foldertitle', $fields) ){
