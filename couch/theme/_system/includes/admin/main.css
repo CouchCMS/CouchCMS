@@ -636,6 +636,7 @@ div.mfp-iframe-holder .mfp-close,div.mfp-inline-holder .mfp-close,div.mfp-ajax-h
 div.mfp-iframe-scaler iframe{background:#fff;}
 div.mfp-figure:after{background:#f5f5f5;}
 div.mfp-bottom-bar{text-shadow:0 1px 0 rgba(0,0,0,.6);}
+.plupload-iframe-scaler{padding-top:38%;}
 
 .mfp-fade.mfp-bg,.mfp-fade.mfp-wrap .mfp-content,.mfp-fade .mfp-arrow{opacity:0;
     -moz-transition:all .2s ease-out;

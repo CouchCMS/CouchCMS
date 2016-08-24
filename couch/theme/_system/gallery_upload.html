@@ -14,11 +14,10 @@
         $('.plupload-gallery').magnificPopup({
             type: 'iframe',
             iframe: {
-                markup: '<style>.mfp-iframe-holder .mfp-content {max-width: 900px;height:330px}</style>'+
-                        '<div class="mfp-iframe-scaler" >'+
+                markup: '<div class="mfp-iframe-scaler plupload-iframe-scaler">'+
                         '<div class="mfp-close"></div>'+
                         '<iframe class="mfp-iframe" frameborder="0" allowfullscreen></iframe>'+
-                        '</div></div>'
+                        '</div>'
             },
             closeOnBgClick: false,
             preloader:      false,
