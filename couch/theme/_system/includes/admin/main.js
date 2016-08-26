@@ -275,11 +275,44 @@ COUCH.bindTableSelect = function() {
 };
 
 /**
+ * Bind comment item click select action
+ */
+COUCH.bindCommentsSelect = function() {
+    this.el.$content.find( "#comments-listing" ).on( "click", ".comment-heading", function( e ) {
+        if ( e.target === this ) {
+            var $checkboxAll = COUCH.el.$content.find( ".checkbox-all" ),
+                $checkboxes = COUCH.el.$content.find( ".checkbox-item" ).not( ":disabled" ),
+                $this = $( this );
+
+            $this.find( ".checkbox-item" ).not( ":disabled" ).prop( "checked", function( i, val ) {
+                return !val;
+            }).trigger( "change" );
+
+            if ( $checkboxes.length === $checkboxes.filter( ":checked" ).length ) {
+                $checkboxAll.prop( "checked", true );
+            } else {
+                $checkboxAll.prop( "checked", false );
+            }
+        }
+    });
+
+    this.el.$content.find( "#comments-listing" ).on( "change", ".checkbox-all", function( e ) {
+        var $this = $( this ),
+            $checkboxes = COUCH.el.$content.find( ".checkbox-item" ).not( ":disabled" ),
+            checked = $this.prop( "checked" );
+
+        $checkboxes.prop( "checked", checked );
+    });
+};
+
+/**
  * Bind gallery item click select action
  */
 COUCH.bindGallerySelect = function() {
-    this.el.$content.find( ".gallery-listing" ).on( "click", ".gallery-item:not(.gallery-folder)", function( e ) {
-        var $this = $( this );
+    this.el.$content.find( "#gallery-listing" ).on( "click", ".gallery-item:not(.gallery-folder)", function( e ) {
+        var $checkboxAll = COUCH.el.$content.find( ".checkbox-all" ),
+            $checkboxes = COUCH.el.$content.find( ".checkbox-item" ).not( ":disabled" ),
+            $this = $( this );
 
         if ( e.target === this || /DIV|STRONG/.test( e.target.nodeName ) ) {
             $this.find( ".checkbox-item" ).not( ":disabled" ).prop( "checked", function( i, val ) {
@@ -290,12 +323,20 @@ COUCH.bindGallerySelect = function() {
         } else if ( e.target.nodeName === "INPUT" && !$( e.target ).is( ":disabled" ) ) {
             $this.toggleClass( "selected" );
         }
+
+        if ( $checkboxes.length === $checkboxes.filter( ":checked" ).length ) {
+            $checkboxAll.prop( "checked", true );
+        } else {
+            $checkboxAll.prop( "checked", false );
+        }
     });
 
-    this.el.$content.find( ".gallery-listing" ).on( "change", ".checkbox-all", function( e ) {
-        var $this = $( this );
-        var $checkboxes = COUCH.el.$content.find( ".checkbox-item" ).not( ":disabled" );
-        $checkboxes.prop( "checked", $this.prop( "checked" ) ).trigger( "change" );
+    this.el.$content.find( "#gallery-listing" ).on( "change", ".checkbox-all", function( e ) {
+        var $this = $( this ),
+            $checkboxes = COUCH.el.$content.find( ".checkbox-item" ).not( ":disabled" ),
+            checked = $this.prop( "checked" );
+
+        $checkboxes.prop( "checked", checked ).trigger( "change" ).closest( ".gallery-item" ).toggleClass( "selected", checked );
     });
 };
 

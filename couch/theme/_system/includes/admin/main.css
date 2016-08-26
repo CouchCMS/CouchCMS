@@ -103,7 +103,7 @@ background-image:linear-gradient(to bottom, rgba(255,255,255,.075) 0%, rgba(0,0,
 .tab>a:hover,.tab>a:focus,
 .cke_dialog_tab:hover,.cke_dialog_tab:focus,.cke_dialog_ui_button:hover,.cke_dialog_ui_button:focus,
 .panel-toggle:hover,.panel-toggle:focus{text-decoration:none;}
-.simple-btns:after,#header-inner:after,#tabs:after,.ctrl-top:after,.ctrl-bot:after,#settings-panel:after,.gallery-listing:after,.gallery-actions:after{content:"";display:block;clear:both;}
+.simple-btns:after,#header-inner:after,#tabs:after,.ctrl-top:after,.ctrl-bot:after,#settings-panel:after,#gallery-listing:after,.gallery-actions:after{content:"";display:block;clear:both;}
 #sidebar-toggle,.field-hint,.panel-heading,.table>thead,.popover-title{background-color:#ececec;}
 .gallery-img-none{background-image:url("images/stripe.svg");}
 #scroll-sidebar>.mCustomScrollBox>.mCSB_container,.scroll-relation>.mCustomScrollBox>.mCSB_container{margin-right:0;}
@@ -385,7 +385,7 @@ input.input-group-field{position:relative;z-index:1;width:100%;border-radius:3px
 .field>.field-label{font-weight:bold;text-shadow:0 1px 0 rgba(255,255,255,.5);}
 .field>.field-label+br+.alert{margin-top:6px;margin-bottom:15px;}
 .ctrls-checkbox>label,.ctrls-radio>label{line-height:28px;margin-right:20px;font-size:13px;}
-.ctrls-checkbox>label>.ctrl-option,.ctrls-radio>label>.ctrl-option{margin-right:8px;vertical-align:-4px;}
+.select-all>.ctrl>.ctrl-option,.ctrls-checkbox>label>.ctrl-option,.ctrls-radio>label>.ctrl-option{margin-right:8px;vertical-align:-4px;}
 .desc{line-height:14px;margin-left:5px;vertical-align:1px;font-size:11px;color:#777;}
 .panel-heading>.desc{font-size:12px;}
 .panel-body>.field>.field-label>.desc,.panel-heading>.desc{color:#666;}
@@ -501,6 +501,8 @@ td.col-highlight{border-right:1px solid rgba(0,0,0,.03);border-left:1px solid rg
 .col-highlight>.col-sort-link:hover>.i,.col-highlight>.col-sort-link:focus>.i{-ms-transform:rotate(180deg);
     -webkit-transform:rotate(180deg);
     transform:rotate(180deg);}
+#gallery-listing>.select-all{margin-right:15px;}
+.select-all>.ctrl{position:relative;bottom:-39px;z-index:1;padding-right:12px;font-size:12px;background-color:#f5f5f5;}
 
 /* Comments */
 .comment{position:relative;padding-left:104px;}
@@ -517,7 +519,7 @@ td.col-highlight{border-right:1px solid rgba(0,0,0,.03);border-left:1px solid rg
 .panel-primary+.comment-body>.comment-details{text-shadow:none;}
 
 /* Gallery */
-.gallery-listing{margin-right:-15px;overflow-y:hidden;}
+#gallery-listing{margin-right:-15px;}
 .gallery-wrap{float:left;width:16.66667%;max-width:325px;padding:15px 15px 0 0;}
 .gallery-item{padding:10px;border:1px solid #c0c0c0;border-radius:3px;background-color:#fafafa;}
 .gallery-item.selected{background-color:#eaeaea;}
@@ -594,7 +596,7 @@ button.toast-close-button{padding:0;border:0;background:transparent;cursor:point
 .toast-progress{position:absolute;bottom:0;left:0;height:4px;opacity:.6;}
 
 /* WTF, forms? (http://wtfforms.com/) - Copyright 2014 Mark Otto - MIT License */
-.ctrl{line-height:18px;}
+.ctrl{line-height:18px;font-weight:normal;}
 .ctrl,.ctrls-checkbox>label,.ctrls-radio>label,.checklist>li>label{display:inline-block;position:relative;cursor:pointer;}
 .ctrl-disabled,.ctrls-disabled>label,.checklist-disabled>li>label{cursor:not-allowed;}
 .ctrl>input,.ctrls-checkbox>label>input,.ctrls-radio>label>input,.checklist>li>label>input{position:absolute;z-index:-1;opacity:0;}
@@ -805,7 +807,6 @@ div.mfp-bottom-bar{text-shadow:0 1px 0 rgba(0,0,0,.6);}
     height: 57px; /* Height of logo */
 }
 
-.select_all{ padding-top: 25px; }
 #k_notice_f_k_access_level,
 #k_notice_f_k_publish_date,
 #k_notice_f_k_show_in_menu,

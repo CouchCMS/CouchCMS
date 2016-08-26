@@ -1109,7 +1109,7 @@
     }
 
     function _render_list_checkbox( $for_header=0 ){
-        global $CTX;
+        global $CTX, $FUNCS;
 
         $page_id = $CTX->get( 'k_page_id' );
         $can_delete = $CTX->get( 'k_can_delete' );
@@ -1117,7 +1117,7 @@
         if( $for_header ){
             $html = '<label class="ctrl checkbox">';
             $html .= '<input class="checkbox-all" type="checkbox" name="check-all" />';
-            $html .= '<span class="ctrl-option tt" title="Select/Deselect All"></span></label>';
+            $html .= '<span class="ctrl-option"></span>'.$FUNCS->t('select-deselect').'</label>';
         }
         else{
             $html = '<label class="ctrl checkbox">';
