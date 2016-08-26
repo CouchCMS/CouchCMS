@@ -233,7 +233,7 @@
             $this->orig_data = $this->data;
         }
 
-        function _render( $input_name, $input_id, $extra='' ){
+        function _render( $input_name, $input_id, $extra='', $dynamic_insertion=0 ){
             global $FUNCS, $CTX, $AUTH;
 
             /*

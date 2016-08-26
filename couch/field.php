@@ -1035,7 +1035,7 @@
             $this->modified = ( strcmp( $this->orig_data, $this->data )==0 ) ? false : true; // values unchanged
         }
 
-        function _render( $input_name, $input_id, $extra='' ){
+        function _render( $input_name, $input_id, $extra='', $dynamic_insertion=0 ){
             global $FUNCS, $CTX;
 
             $value = $this->get_data();
@@ -1046,7 +1046,7 @@
                 $html = '<textarea  name="'.$input_name.'"  id="'.$input_id.'" '.$extra.'>'.htmlspecialchars( $value, ENT_QUOTES, K_CHARSET ).'</textarea>';
             }
             elseif( $this->k_type=='radio' || $this->k_type=='checkbox' || $this->k_type=='dropdown' ){
-                $html = parent::_render( $input_name, $input_id, $extra );
+                $html = parent::_render( $input_name, $input_id, $extra, $dynamic_insertion );
             }
             elseif( $this->k_type=='captcha' ){
                 $fmt = $this->captcha_format;
@@ -1135,25 +1135,9 @@
             $def['hide']= $visibile ? 0 : 1;
         }
 
-        function render(){
-            global $FUNCS, $CTX;
+        function render(){} // defunct
 
-            $input_id = 'f_'.$this->name;
-            $input_name = $input_id;
-            $label = ($this->label) ? $this->label : $this->name;
-            $visibility = 'none';
-            if( !$this->page->is_master && count($this->page->folders->children) && !$this->page->tpl_nested_pages && !$this->page->parent_id ){
-                $visibility = 'block';
-            }
-            $html .= '<div id="'.$this->name.'" class="k_element" style="display:'.$visibility.'">';
-            $html .= '<label for="'.$input_name.'"><b>'.$label.':</b></label><br/>';
-            $html .= $this->_render( $input_name, $input_id );
-            $html .= '</div>';
-
-            return $html;
-        }
-
-        function _render( $input_name, $input_id, $extra='' ){
+        function _render( $input_name, $input_id, $extra='', $dynamic_insertion=0 ){
             global $FUNCS, $CTX;
 
             $CTX->push( '__ROOT__' );
@@ -1175,7 +1159,7 @@
     class KFolderIDField extends KField{
         function render(){} // defunct
 
-        function _render( $input_name, $input_id, $extra='' ){
+        function _render( $input_name, $input_id, $extra='', $dynamic_insertion=0 ){
             global $FUNCS, $CTX, $PAGE, $OBJ;
 
             $CTX->push( '__ROOT__' );
@@ -1238,7 +1222,7 @@
 
         function render(){} // defunct
 
-        function _render( $input_name, $input_id, $extra='' ){
+        function _render( $input_name, $input_id, $extra='', $dynamic_insertion=0 ){
             global $FUNCS;
 
             $publish_date = $this->get_data();
@@ -1251,7 +1235,7 @@
                     <label for="f_publish_status_0" onClick="$('#publish-date').hide()"><input type="radio" <?php if( $publish_date == '0000-00-00 00:00:00' ){?>checked="checked"<?php } ?> value="0" id="f_publish_status_0" name="f_publish_status"/><span class="ctrl-option"></span><?php echo $FUNCS->t('unpublished'); ?></label>
                 </div>
                 <div id="publish-date" style="display:<?php if( $publish_date == '0000-00-00 00:00:00' ){ echo 'none'; } else{ echo 'block'; }?>;">
-                    <?php echo $FUNCS->date_dropdowns( $publish_date ); ?>
+                    <?php echo $FUNCS->date_dropdowns( $publish_date, $this->simple_mode ); ?>
                 </div>
             <?php
             }else{
@@ -1261,7 +1245,7 @@
                     <label for="f_publish_status_0"><input type="radio" <?php if( $publish_date == '0000-00-00 00:00:00' ){?>checked="checked"<?php } ?> value="0" id="f_publish_status_0" name="f_publish_status" /><span class="ctrl-option"></span><?php echo $FUNCS->t('inactive'); ?></label>
                 </div>
                 <div id="publish-date" style="display:none;">
-                    <?php echo $FUNCS->date_dropdowns( $publish_date ); ?>
+                    <?php echo $FUNCS->date_dropdowns( $publish_date, $this->simple_mode ); ?>
                 </div>
             <?php
             }
@@ -1284,11 +1268,11 @@
             parent::store_posted_changes( $post_val );
         }
 
-        function _render( $input_name, $input_id, $extra='' ){
+        function _render( $input_name, $input_id, $extra='', $dynamic_insertion=0 ){
             global $FUNCS;
 
             $publish_date = $this->get_data();
-            $html = $FUNCS->date_dropdowns( $publish_date );
+            $html = $FUNCS->date_dropdowns( $publish_date, $this->simple_mode );
 
             return $html;
         }
@@ -1318,7 +1302,7 @@
 
         function render(){} // defunct
 
-        function _render( $input_name, $input_id, $extra='' ){
+        function _render( $input_name, $input_id, $extra='', $dynamic_insertion=0 ){
             global $FUNCS;
 
             if( !$this->inverse ){
@@ -1360,20 +1344,20 @@
 
         function render(){} // defunct
 
-        function _render( $input_name, $input_id, $extra='' ){
+        function _render( $input_name, $input_id, $extra='', $dynamic_insertion=0 ){
             global $FUNCS, $AUTH;
 
             $inherited = 0;
             $level = $this->page->get_access_level( $inherited ); //template level and folder level override page level
             if( $this->page->access_level > $AUTH->user->access_level ){
                 $inherited = 1;
-                $html = $FUNCS->access_levels_dropdown( $level, 10, 0, $inherited);
+                $html = $FUNCS->access_levels_dropdown( $level, 10, 0, $inherited, $this->simple_mode);
             }
             else{
                 if( !$inherited ){
                     $level = $this->get_data();
                 }
-                $html = $FUNCS->access_levels_dropdown( $level /*selected*/, $AUTH->user->access_level/*max*/, 0/*min*/, $inherited/*disabled*/);
+                $html = $FUNCS->access_levels_dropdown( $level /*selected*/, $AUTH->user->access_level/*max*/, 0/*min*/, $inherited/*disabled*/, $this->simple_mode);
             }
 
             return $html;
@@ -1381,17 +1365,17 @@
     }
 
     class KUserAccessLevel extends KAccessLevel{
-        function _render( $input_name, $input_id, $extra='' ){
+        function _render( $input_name, $input_id, $extra='', $dynamic_insertion=0 ){
             global $FUNCS, $AUTH;
 
-            $html = $FUNCS->access_levels_dropdown( $this->page->access_level, $AUTH->user->access_level - 1, 1 );
+            $html = $FUNCS->access_levels_dropdown( $this->page->access_level, $AUTH->user->access_level - 1, 1, $this->simple_mode );
 
             return $html;
         }
     }
 
     class KNestedPagesField extends KField{
-        function _render( $input_name, $input_id, $extra='' ){
+        function _render( $input_name, $input_id, $extra='', $dynamic_insertion=0 ){
             global $FUNCS, $CTX;
 
             if( $this->page->tpl_nested_pages ){
@@ -1663,7 +1647,7 @@
         }
 
         // Render input field
-        function _render( $input_name, $input_id, $extra='' ){
+        function _render( $input_name, $input_id, $extra='', $dynamic_insertion=0 ){
             $html = 'Extend _render() to create your own markup for this form field';
             return $this->wrap_fieldset( $html );
         }
@@ -1715,8 +1699,8 @@
             parent::KUserDefinedFormField( $fields, $siblings );
         }
 
-        function _render( $input_name, $input_id, $extra='' ){
-            return call_user_func( array(&$this->obj, '_render'), $input_name, $input_id, $extra );
+        function _render( $input_name, $input_id, $extra='', $dynamic_insertion=0 ){
+            return call_user_func( array(&$this->obj, '_render'), $input_name, $input_id, $extra, $dynamic_insertion );
         }
 
         function get_data(){

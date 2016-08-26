@@ -138,7 +138,7 @@
         }
 
         // Output to admin panel
-        function _render( $input_name, $input_id, $extra='' ){
+        function _render( $input_name, $input_id, $extra='', $dynamic_insertion=0 ){
             global $FUNCS, $CTX;
 
             if( $this->data['file_id'] ){

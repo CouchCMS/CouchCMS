@@ -94,7 +94,7 @@
             // defunct
         }
 
-        function _render( $input_name, $input_id, $extra1='' ){
+        function _render( $input_name, $input_id, $extra1='', $dynamic_insertion=0 ){
             global $FUNCS, $CTX, $Config;
 
             $assoc_image = $this->page->_fields[$this->assoc_field]->get_data();

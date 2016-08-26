@@ -1481,7 +1481,7 @@
             $this->dispatch_event( 'alter_user_set_context' );
         }
 
-        function access_levels_dropdown( $selected_level, $max_level, $min_level=0, $inherited=0 ){
+        function access_levels_dropdown( $selected_level, $max_level, $min_level=0, $inherited=0, $simple_mode=0 ){
             global $DB, $FUNCS;
 
             $html = '<div class="select dropdown"><select id="f_k_access_level" name="f_k_levels_list"';
@@ -1506,7 +1506,7 @@
             return gmdate( 'Y-m-d H:i:s', (time() + (K_GMT_OFFSET * 60 * 60)) );
         }
 
-        function date_dropdowns( $date='' ){
+        function date_dropdowns( $date='', $simple_mode=0 ){
             global $FUNCS, $PAGE;
             //TODO: allow localization
             $arrMonths = array('01'=>'January',   '02'=>'February', '03'=>'March',    '04'=>'April',

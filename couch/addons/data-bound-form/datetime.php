@@ -117,7 +117,7 @@
         }
 
         // Output to admin panel
-        function _render( $input_name, $input_id, $extra='' ){
+        function _render( $input_name, $input_id, $extra='', $dynamic_insertion=0 ){
             global $FUNCS, $CTX;
             $FUNCS->load_css( K_ADMIN_URL . 'addons/data-bound-form/datetime.css' );
 
@@ -366,8 +366,8 @@
             parent::KUserDefinedFormField( $fields, $siblings );
         }
 
-        function _render( $input_name, $input_id, $extra='' ){
-            return call_user_func( array(&$this->obj, '_render'), $input_name, $input_id, $extra );
+        function _render( $input_name, $input_id, $extra='', $dynamic_insertion=0 ){
+            return call_user_func( array(&$this->obj, '_render'), $input_name, $input_id, $extra, $dynamic_insertion );
         }
 
         function get_data(){

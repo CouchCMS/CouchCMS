@@ -65,7 +65,7 @@
         }
 
         // Render input field
-        function _render( $input_name, $input_id, $extra='' ){
+        function _render( $input_name, $input_id, $extra='', $dynamic_insertion=0 ){
             return; // no visible markup required
         }
 
