@@ -1108,7 +1108,7 @@
         $CTX->set( 'k_alert_center', $center == '1' ? '1' : '0' );
     }
 
-    function _render_list_checkbox( $for_header=0 ){
+    function _render_list_checkbox( $for_header=0, $text_label=0 ){
         global $CTX, $FUNCS;
 
         $page_id = $CTX->get( 'k_page_id' );
@@ -1117,10 +1117,15 @@
         if( $for_header ){
             $html = '<label class="ctrl checkbox">';
             $html .= '<input class="checkbox-all" type="checkbox" name="check-all" />';
-            $html .= '<span class="ctrl-option"></span>'.$FUNCS->t('select-deselect').'</label>';
+            if( $text_label ){
+                $html .= '<span class="ctrl-option"></span>'.$FUNCS->t('select-deselect').'</label>';
+            }
+            else{
+                $html .= '<span class="ctrl-option tt" title="'.$FUNCS->t('select-deselect').'"></span></label>';
+            }
         }
         else{
-            $html = '<label class="ctrl checkbox">';
+            $html = '<label class="ctrl checkbox'.( !$can_delete ? ' ctrl-disabled' : '' ).'">';
             $html .= '<input type="checkbox" value="'.$page_id.'" class="page-selector checkbox-item" name="page-id[]" id="page-selector-'.$page_id.'"';
             if(  !$can_delete  ) $html .= ' disabled="1"';
             $html .= '/>';
