@@ -1484,7 +1484,10 @@
         function access_levels_dropdown( $selected_level, $max_level, $min_level=0, $inherited=0, $simple_mode=0 ){
             global $DB, $FUNCS;
 
-            $html = '<div class="select dropdown"><select id="f_k_access_level" name="f_k_levels_list"';
+            if( !$simple_mode ){
+                $html .= '<div class="select dropdown">';
+            }
+            $html .= '<select id="f_k_access_level" name="f_k_levels_list"';
             if( $inherited ) $html .= " disabled=1";
             $html .= ">\n";
             $rs = $DB->select( K_TBL_USER_LEVELS, array('name', 'title', 'k_level'), "k_level <= ".$DB->sanitize( $max_level )." AND k_level >= ".$DB->sanitize( $min_level )." ORDER BY k_level DESC" );
@@ -1495,7 +1498,10 @@
                     $html .= ">".$this->t($rec['name'])."</option>";
                 }
             }
-            $html .= '</select><span class="select-caret">'.$FUNCS->get_icon('caret-bottom').'</span></div>';
+            $html .= '</select>';
+            if( !$simple_mode ){
+                $html .= '<span class="select-caret">'.$FUNCS->get_icon('caret-bottom').'</span></div>';
+            }
 
             return $html;
         }
@@ -1523,13 +1529,21 @@
             $s = substr( $date, 17, 2 );
 
             $year = '<input class="year-field" type="text" id="f_k_year" name="f_k_year" value="' . $yy . '" size="4" maxlength="4" autocomplete="off" />';
-            $month = '<div class="select month-field"><select id="f_k_month" name="f_k_month">'."\n";
+            if( $simple_field ){
+                $month = '<select class="month-field" id="f_k_month" name="f_k_month">'."\n";
+            }
+            else{
+                $month = '<div class="select month-field"><select id="f_k_month" name="f_k_month">'."\n";
+            }
             foreach( $arrMonths as $k=>$v ){
                 $month .= '<option value="'.$k.'"';
                 $month .= ( $k==$mm ) ? ' selected="selected"' : '';
                 $month .= '>'.$v.'</option>';
             }
-            $month .= '</select><span class="select-caret">'.$FUNCS->get_icon('caret-bottom').'</span></div>';
+            $month .= '</select>';
+            if( !$simple_field ){
+                $month .= '<span class="select-caret">'.$FUNCS->get_icon('caret-bottom').'</span></div>';
+            }
             $day = '<input class="day-field" type="text" id="f_k_day" name="f_k_day" value="' . $dd . '" size="2" maxlength="2" autocomplete="off" />';
             $hour = '<input class="hour-field" type="text" id="f_k_hour" name="f_k_hour" value="' . $h . '" size="2" maxlength="2" autocomplete="off" />';
             $min = '<input class="minute-field" type="text" id="f_k_min" name="f_k_min" value="' . $m . '" size="2" maxlength="2" autocomplete="off" />';
