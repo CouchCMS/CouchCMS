@@ -1529,7 +1529,7 @@
             $s = substr( $date, 17, 2 );
 
             $year = '<input class="year-field" type="text" id="f_k_year" name="f_k_year" value="' . $yy . '" size="4" maxlength="4" autocomplete="off" />';
-            if( $simple_field ){
+            if( $simple_mode ){
                 $month = '<select class="month-field" id="f_k_month" name="f_k_month">'."\n";
             }
             else{
@@ -1541,7 +1541,7 @@
                 $month .= '>'.$v.'</option>';
             }
             $month .= '</select>';
-            if( !$simple_field ){
+            if( !$simple_mode ){
                 $month .= '<span class="select-caret">'.$FUNCS->get_icon('caret-bottom').'</span></div>';
             }
             $day = '<input class="day-field" type="text" id="f_k_day" name="f_k_day" value="' . $dd . '" size="2" maxlength="2" autocomplete="off" />';
@@ -3936,15 +3936,33 @@ OUT;
         }
 
         function add_js( $code ){
-            $this->admin_js .= $code . "\r\n";
+            static $sig = array();
+
+            $hash = MD5( $code );
+            if( !isset($sig[$hash]) ){
+                $this->admin_js .= $code . "\r\n";
+                $sig[$hash] = 1;
+            }
         }
 
         function add_css( $css ){
-            $this->admin_css .= $css . "\r\n";
+            static $sig = array();
+
+            $hash = MD5( $css );
+            if( !isset($sig[$hash]) ){
+                $this->admin_css .= $css . "\r\n";
+                $sig[$hash] = 1;
+            }
         }
 
         function add_html( $html ){
-            $this->admin_html .= $html . "\r\n";
+            static $sig = array();
+
+            $hash = MD5( $html );
+            if( !isset($sig[$hash]) ){
+                $this->admin_html .= $html . "\r\n";
+                $sig[$hash] = 1;
+            }
         }
 
         function get_js(){
