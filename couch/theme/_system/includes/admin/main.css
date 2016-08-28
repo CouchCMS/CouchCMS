@@ -223,7 +223,7 @@ a.icon:hover,a.icon:focus{color:#000;fill:#000;}
 .icon>.i{width:20px;}
 .popover-actions{white-space:nowrap;}
 .popover-actions-sep{display:inline-block;width:1px;height:26px;margin:0 8px;vertical-align:top;background-color:#ccc;}
-.popover-actions>.icon{height:26px;padding:4px 0;vertical-align:top;}
+.popover-actions>.icon{height:26px;padding:4px 0;vertical-align:top;font-size:0;}
 .popover-actions>.icon>.i{width:28px;height:18px;}
 .col-count>.icon{padding:0 0 4px;margin-left:8px;font-size:12px;text-shadow:0 1px 0 #fff;}
 .col-count>.icon:first-child{margin-left:0;}
@@ -552,6 +552,7 @@ td.col-highlight{border-right:1px solid rgba(0,0,0,.03);border-left:1px solid rg
 .gallery-preview{float:left;margin-left:4px;}
 .gallery-icons{float:right;}
 .gallery-icons>.btn-actions{height:18px;line-height:18px;}
+.gallery-sep{display:inline-block;width:1px;height:18px;margin:0 4px;vertical-align:top;background-color:#ccc;}
 .gallery-link{display:inline-block;max-width:100%;height:16px;line-height:16px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:12px;}
 .gallery-txt,.gallery-size{display:inline-block;height:16px;line-height:16px;font-size:11px;}
 .gallery-size{position:absolute;right:0;bottom:0;color:#444;}
@@ -742,7 +743,7 @@ div.kcfinder-iframe .mfp-content{max-width:968px;}
         -webkit-transition:none;
         transition:none;}
     #sidebar{position:relative;top:auto;bottom:auto;left:auto !important;width:auto;height:auto;border-right:0;}
-    #menu-content,#sidebar-toggle,#sidebar-top,#nav-links,#sidebar-btns,.col-actions>.icon,.comment-actions>.icon,.gallery-icons>.icon{display:none;}
+    #menu-content,#sidebar-toggle,#sidebar-top,#nav-links,#sidebar-btns,.col-actions>.icon,.comment-actions>.icon,.gallery-icons>.icon,.gallery-sep{display:none;}
     #logo-wrap{display:inline-block;padding:0;margin:15px 0 15px 30px;}
     #menu-btns{display:block;}
     .btn-actions{display:inline-block;}

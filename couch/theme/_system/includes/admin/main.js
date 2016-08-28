@@ -89,7 +89,7 @@ COUCH.bindPopupAJAX = function( $elements, code ) {
  * Bind Magnific Popup gallery
  */
 COUCH.bindPopupGallery = function() {
-    this.el.$content.find( ".gallery-listing" ).magnificPopup({
+    this.el.$content.find( "#gallery-listing" ).magnificPopup({
         delegate: ".popup-gallery",
         gallery: {
             enabled: true
@@ -453,7 +453,7 @@ COUCH.createActionPopovers = function() {
         content:   function() {
             var $this = $( this ),
                 $content = $this.siblings( "a" ),
-                $actions = $content.filter( ".approve-comment, .disapprove-comment" ).add( $this.parent().siblings( ".col-up-down" ).children( ".up, .down" ) );
+                $actions = $content.filter( ".approve-comment, .disapprove-comment, .up, .down" ).add( $this.parent().siblings( ".col-up-down" ).children( ".up, .down" ) );
 
             if ( $actions.length ) {
                 return $( '<div class="popover-actions"></div>' ).append( $actions.clone() ).append( '<span class="popover-actions-sep"></span>' ).append( $content.not( $actions ).clone() );
