@@ -103,13 +103,15 @@ COUCH.bindPopupGallery = function() {
  * @param {jQuery Object} $elements
  * @param {Function}      [callbackOpen]
  * @param {Function}      [callbackClosed]
+ * @param {String}        [mainClass]
  */
-COUCH.bindPopupIframe = function( $elements, callbackOpen, callbackClosed ) {
+COUCH.bindPopupIframe = function( $elements, callbackOpen, callbackClosed, mainClass ) {
     $elements.magnificPopup({
         callbacks: {
             afterClose: callbackClosed,
             beforeOpen: callbackOpen
         },
+        mainClass: mainClass ? mainClass : "",
         closeOnBgClick: false,
         preloader:      false,
         type:           "iframe"
@@ -144,13 +146,11 @@ COUCH.bindPopupInline = function( $elements ) {
  * @param {String}        file
  */
 COUCH.browseChooseFile = function( $button, file ) {
-    var id = $button.attr('data-kc-finder');
-    $('#' + id).val( file );
-    try{
-        $("#" + id + "_preview").attr( "href", file );
-        $("#" + id + "_img_preview").attr( "src", file );
-    }
-    catch( e ){}
+    var id = $button.attr( "data-kc-finder" );
+
+    $( "#" + id ).val( file ).trigger( "change" );
+    $( "#" + id + "_preview" ).attr( "href", file );
+    $( "#" + id + "_img_preview" ).attr( "src", file );
 
     $.magnificPopup.close();
 };

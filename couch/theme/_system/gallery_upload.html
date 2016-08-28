@@ -10,18 +10,7 @@
     $(function(){
         COUCH.bindGallerySelect();
 
-        //COUCH.bindPopupIframe( $( ".plupload-gallery" ) );
-        $('.plupload-gallery').magnificPopup({
-            type: 'iframe',
-            iframe: {
-                markup: '<div class="mfp-iframe-scaler plupload-iframe-scaler">'+
-                        '<div class="mfp-close"></div>'+
-                        '<iframe class="mfp-iframe" frameborder="0" allowfullscreen></iframe>'+
-                        '</div>'
-            },
-            closeOnBgClick: false,
-            preloader:      false,
-        });
+        COUCH.bindPopupIframe($(".plupload-gallery"), null, null, "plupload-iframe");
 
         COUCH.bindPopupGallery();
     });

@@ -32,7 +32,7 @@
             var el=$('#<cms:show k_field_input_id />_button');
             if(!el.attr('idx')){
                 <cms:if k_field_use_kcfinder >
-                    COUCH.bindPopupIframe( el , COUCH.browseKCFinderOpen,  COUCH.browseKCFinderClose );
+                    COUCH.bindPopupIframe( el , COUCH.browseKCFinderOpen,  COUCH.browseKCFinderClose, "kcfinder-iframe" );
                 <cms:else />
                     COUCH.bindPopupIframe( el );
                 </cms:if>
@@ -47,7 +47,7 @@
             COUCH.bindPopupImage( COUCH.el.$content.find( ".popup-img" ) );
 
             <cms:if k_field_use_kcfinder >
-                COUCH.bindPopupIframe( COUCH.el.$content.find( ".upload-group>.popup-iframe" ), COUCH.browseKCFinderOpen,  COUCH.browseKCFinderClose );
+                COUCH.bindPopupIframe( COUCH.el.$content.find( ".upload-group>.popup-iframe" ), COUCH.browseKCFinderOpen,  COUCH.browseKCFinderClose, "kcfinder-iframe" );
             <cms:else />
                 COUCH.bindPopupIframe( COUCH.el.$content.find( ".upload-group>.popup-iframe" ) );
             </cms:if>

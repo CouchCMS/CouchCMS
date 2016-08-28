@@ -50,11 +50,11 @@
     }
 
     .plupload_scroll .plupload_filelist {
-        height: 202px;
+        height: 214px;
     }
 
     li.plupload_droptext {
-        line-height: 182px;
+        line-height: 194px;
     }
 
     @media (max-width: 480px) {

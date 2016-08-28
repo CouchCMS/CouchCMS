@@ -23,6 +23,25 @@ button.btn-txt:hover,button.btn-txt:focus{color:#663d2d;fill:#663d2d;}
 .comment-heading.panel-primary:after{border-right-color:#43291f;}
 .table.table-primary,.table.table-primary>thead>tr>th{border-color:#43291f;}
 
+/* Logos */
+#simple-logo {
+    height: 57px; /* Height of simple (install/login/maintenance) logo */
+}
+
+#logo {
+    height: 68px; /* Height of sidebar logo */
+}
+
+#scroll-sidebar {
+    top: 124px; /* Height of sidebar logo + 56 */
+}
+
+@media (max-height: 540px) {
+    #scroll-sidebar {
+        top: 89px; /* Height of sidebar logo + 21 */
+    }
+}
+
 /* Transitions */
 input,textarea,select{-moz-transition:border-color .15s ease,box-shadow .15s ease;
     -webkit-transition:border-color .15s ease,box-shadow .15s ease;
@@ -218,7 +237,7 @@ a.icon:hover,a.icon:focus{color:#000;fill:#000;}
 /* Simple Pages (Install & Login) */
 #simple-page{min-width:360px;overflow-y:scroll;background-color:#fcfcfc;}
 #simple-wrap{position:relative;top:15%;width:450px;padding:15px 0;margin:0 auto;}
-#simple-logo{display:inline-block;height:57px;} /* height = height of logo */
+#simple-logo{display:inline-block;}
 .simple-box{border:1px solid #c0c0c0;border-radius:3px;margin-top:15px;background-color:#f5f5f5;}
 .login-form,.forgot-form{overflow:hidden;}
 .simple-form{padding:0 15px 15px;}
@@ -242,14 +261,13 @@ div.simple-heading{border-width:0 0 1px 0;margin-top:0;cursor:default;}
 #sidebar.collapsed{left:-240px;}
 #menu-wrap{position:relative;border-bottom:1px solid #0a0a0a;background-color:#303030;box-shadow:0 1px 0 rgba(255,255,255,.04);}
 #logo-wrap{display:block;padding:10px;}
-#logo{height:68px;} /* height = height of logo */
 #menu-btns{display:none;position:absolute;top:50%;right:30px;margin-top:-24px;}
 .sidebar-txt{height:35px;padding:10px;background-color:#303030;text-shadow:0 1px 0 rgba(0,0,0,.6);}
 #sidebar-top{border-bottom:1px solid #0a0a0a;box-shadow:0 1px 0 rgba(255,255,255,.04);}
 .sidebar-txt>p{height:14px;line-height:14px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;color:#888;}
 .sidebar-txt>p>a{font-weight:normal;color:#ccc;}
 .sidebar-txt>p>a:hover,.sidebar-txt>p>a:focus{color:#eee;}
-#scroll-sidebar{position:absolute;top:124px;right:0;bottom:84px;left:0;overflow-y:auto;} /* top = height of logo + 56 */
+#scroll-sidebar{position:absolute;right:0;bottom:84px;left:0;overflow-y:auto;}
 #nav{padding:0;list-style-type:none;}
 .nav-group>ul{padding-left:0;}
 #nav>li>a,.nav-group>ul>li>a{display:block;position:relative;height:32px;padding:0 15px;color:#aaa;fill:#aaa;font-size:0;font-weight:normal;text-shadow:0 1px 0 rgba(0,0,0,.6);}
@@ -589,7 +607,7 @@ button.toast-close-button{padding:0;border:0;background:transparent;cursor:point
 .toast-top-center,.toast-top-full-width,.toast-top-right,.toast-top-left{margin-bottom:5px;}
 .toast-bottom-center,.toast-bottom-full-width,.toast-bottom-right,.toast-bottom-left{margin-top:5px;}
 #toast-container{position:fixed;z-index:999999;pointer-events:none;}
-#toast-container>.toast{position:relative;width:310px;padding:10px 10px 12px 64px;border-width:1px;border-style:solid;border-radius:3px;overflow:hidden;opacity:.9;text-shadow:0 1px 0 rgba(255,255,255,.5);pointer-events:auto;cursor:pointer;}
+#toast-container>.toast{position:relative;width:334px;padding:10px 10px 12px 64px;border-width:1px;border-style:solid;border-radius:3px;overflow:hidden;opacity:.9;text-shadow:0 1px 0 rgba(255,255,255,.5);pointer-events:auto;cursor:pointer;}
 #toast-container>:hover{opacity:1;}
 #toast-container.toast-top-center>.toast,#toast-container.toast-bottom-center>.toast{width:300px;margin-right:auto;margin-left:auto;}
 #toast-container.toast-top-full-width>.toast,#toast-container.toast-bottom-full-width>.toast{width:92%;margin-right:auto;margin-left:auto;}
@@ -638,7 +656,9 @@ div.mfp-iframe-holder .mfp-close,div.mfp-inline-holder .mfp-close,div.mfp-ajax-h
 div.mfp-iframe-scaler iframe{background:#fff;}
 div.mfp-figure:after{background:#f5f5f5;}
 div.mfp-bottom-bar{text-shadow:0 1px 0 rgba(0,0,0,.6);}
-.plupload-iframe-scaler{padding-top:38%;}
+.plupload-iframe .mfp-iframe-scaler{padding-top:38%;}
+div.kcfinder-iframe .mfp-content{max-width:968px;}
+.kcfinder-iframe .mfp-iframe-scaler{padding-top:50%;}
 
 .mfp-fade.mfp-bg,.mfp-fade.mfp-wrap .mfp-content,.mfp-fade .mfp-arrow{opacity:0;
     -moz-transition:all .2s ease-out;
@@ -661,7 +681,6 @@ div.mfp-bottom-bar{text-shadow:0 1px 0 rgba(0,0,0,.6);}
 }
 @media(max-height:540px){
     #simple-wrap{top:5%;}
-    #scroll-sidebar{top:89px;} /* top = height of logo + 21 */
     #sidebar-top{display:none;}
 }
 
@@ -708,7 +727,7 @@ div.mfp-bottom-bar{text-shadow:0 1px 0 rgba(0,0,0,.6);}
     .col-title,.col-folder-title,.col-original-page,.col-user-name{width:310px;}
     .details{display:block;}
     .toast>.i{display:none;}
-    #toast-container>.toast{width:250px;padding:10px 10px 12px 10px;}
+    #toast-container>.toast{width:280px;padding:10px 10px 12px 10px;}
 }
 @media(max-width:900px){
     .filter-field,.bulk-field,.search-field{width:15%;min-width:120px;}
@@ -782,31 +801,6 @@ div.mfp-bottom-bar{text-shadow:0 1px 0 rgba(0,0,0,.6);}
     .comment-heading>.desc{display:block;margin-left:33px;}
 }
 
-/* Simple Pages (Install/Login/503) */
-#simple-logo {
-    height: 57px; /* Height of logo */
-}
-
-/* Admin Pages */
-#logo {
-    height: 68px; /* Height of logo */
-}
-
-#scroll-sidebar {
-    top: 124px; /* Height of logo + 56 */
-}
-
-@media (max-height: 540px) {
-    #scroll-sidebar {
-        top: 89px; /* Height of logo + 21 */
-    }
-}
-
-/* Simple Pages (Install/Login/503) */
-#simple-logo {
-    height: 57px; /* Height of logo */
-}
-
 #k_notice_f_k_access_level,
 #k_notice_f_k_publish_date,
 #k_notice_f_k_show_in_menu,
@@ -814,8 +808,8 @@ div.mfp-bottom-bar{text-shadow:0 1px 0 rgba(0,0,0,.6);}
 #k_notice_f_k_open_external,
 #k_notice_f_k_comments_open,
 #k_notice_f_k_date,
-#k_notice_f_k_approved
-{ display: none; }
+#k_notice_f_k_approved{display:none;}
+
 .k_element_deleted{margin-top: 6px;margin-bottom: 15px;}
 .dt_sep{margin-top: 13px !important;}
 .k_reverse_relation a, .k_securefile a, p.addRow a{text-decoration:underline;}

@@ -8,7 +8,7 @@
     <cms:php>global $CTX; $CTX->set('k_show_advanced_settings', '1', 'global');</cms:php>
 
     <div id="settings-panel">
-        <button class="btn icon-collapse tt-collapse" id="settings-panel-toggle" title="<cms:localize 'advanced_settings' />" type="button"><cms:show_icon 'cog' /><span class="collapse-title"><cms:localize 'advanced_settings' /></span></button>
+        <button class="btn icon-collapse tt-collapse" id="settings-panel-toggle" data-title="<cms:localize 'advanced_settings' />" type="button"><cms:show_icon 'cog' /><span class="collapse-title"><cms:localize 'advanced_settings' /></span></button>
 
         <div class="panel-body fade-short" style="display:none;">
             <cms:show my_advanced_settings />
