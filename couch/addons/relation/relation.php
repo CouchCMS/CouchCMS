@@ -579,10 +579,13 @@
 
             if( $f->has=='one' ){
                 $selected = ( count($f->items_selected) ) ? $f->items_selected[0] : ''; // can have only one item selected
-                if( !$f->simple_mode ){
-                    $html .= '<div class="select dropdown"'.( $f->width ? ' style="width:'.$f->width.'px;min-width:auto;"' : '').'>';
+                if( $f->simple_mode ){
+                    $html .= '<select name="'.$input_name.'_chk" id="'.$input_id.'"'.( $f->width ? ' style="width:'.$f->width.'px;"' : '' ).( $f->deleted ? ' disabled="1"' : '' ).'>';
                 }
-                $html .= '<select name="'.$input_name.'_chk" id="'.$input_id.'"'.( $f->width && $f->simple_mode ? ' style="width:'.$f->width.'px;"' : '').'>';
+                else{
+                    $html .= '<div class="select dropdown"'.( $f->width ? ' style="width:'.$f->width.'px;min-width:auto;"' : '' ).'>';
+                    $html .= '<select name="'.$input_name.'_chk" id="'.$input_id.'"'.( $f->deleted ? ' class="disabled" disabled="1"' : '' ).'>';
+                }
                 $html .= '<option value="-">-- Select --</option>'; //TODO get label as parameter
 
                 while( list($key, $value) = each($rows) ){
@@ -596,9 +599,16 @@
                 }
             }
             else{
-                $html .= '<div class="relation-body"'.( $f->width ? ' style="width:'.$f->width.'px;"' : '').'>';
-                $html .= '<div class="scroll-relation"'.( $f->height ? ' style="max-height:'.$f->height.'px;"' : '').'>';
-                $html .= '<ul class="checklist">';
+                if( $f->simple_mode ){
+                    $html .= '<ul class="checklist">';
+                }
+                else{
+                    $html .= '<div class="relation-body"'.( $f->width ? ' style="width:'.$f->width.'px;"' : '' ).'>';
+                    $html .= '<div class="scroll-relation"'.( $f->height ? ' style="max-height:'.$f->height.'px;"' : '' ).'>';
+                    $html .= '<ul class="checklist'.( $f->deleted ? ' checklist-disabled' : '' ).'">';
+                }
+                $deleted = $f->deleted ? ' disabled="1"' : '';
+                $markup = !$f->simple_mode ? '<span class="ctrl-option"></span>' : '';
                 $x=0;
                 while( list($key, $value) = each($rows) ){
                     $class = ( ($x+1)%2 ) ? ' class="alt"' : '';
@@ -608,12 +618,14 @@
                         $selected = ' class="selected"';
                     }
 
-                    $html .= '<li'.$class.'><label for="'.$input_name.'_chk_'.$x.'"'.$selected.'><input id="'.$input_name.'_chk_'.$x.'" name="'.$input_name.'_chk[]" type="checkbox" value="'.$key.'"'.$checked.' /><span class="ctrl-option"></span>'.$value.'</li>';
+                    $html .= '<li'.$class.'><label for="'.$input_name.'_chk_'.$x.'"'.$selected.'><input id="'.$input_name.'_chk_'.$x.'" name="'.$input_name.'_chk[]" type="checkbox" value="'.$key.'"'.$checked.$deleted.' />'.$markup.$value.'</li>';
                     $x++;
                 }
                 $html .= '</ul>';
-                $html .= '</div>';
-                $html .= '</div>';
+                if( !$f->simple_mode ){
+                    $html .= '</div>';
+                    $html .= '</div>';
+                }
             }
 
             return $html;
