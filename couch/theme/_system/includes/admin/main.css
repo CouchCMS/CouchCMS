@@ -493,7 +493,7 @@ input.input-hint,textarea.input-hint{position:relative;border-radius:3px 3px 0 0
 .th-collapsed{display:none;}
 .details{display:none;line-height:16px;padding:0;margin-top:2px;list-style-type:none;font-size:11px;}
 .details>li{padding-left:1px;}
-.details>li:before{content:"\2013";position:relative;top:-1px;margin-right:8px;color:#777;}
+.details>li:before{content:"\2013";position:relative;top:-1px;margin-right:6px;color:#777;}
 .details>li>strong{color:#333;}
 .details>li>.label{display:inline;}
 .details>li>a,.nested-link,.table>tbody>tr>td>a{color:#333;}

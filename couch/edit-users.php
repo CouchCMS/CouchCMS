@@ -95,7 +95,7 @@
                     'weight'=>'0',
                     'header'=>$FUNCS->t('name'),
                     'content'=>"<cms:render 'list_title' />",
-                    'class'=>'user_name',
+                    'class'=>'user-name',
                 );
 
             $arr_fields['title'] =

@@ -137,12 +137,14 @@
                 array(
                     'weight'=>'20',
                     'header'=>$FUNCS->t('name'),
+                    'class'=>'folder-name',
                 );
 
             $arr_fields['k_folder_pagecount'] =
                 array(
                     'weight'=>'30',
                     'header'=>$FUNCS->t('pages'),
+                    'class'=>'pages-count',
                 );
 
             $arr_fields['k_actions'] =

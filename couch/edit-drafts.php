@@ -108,7 +108,7 @@
                 array(
                     'weight'=>'0',
                     'header'=>$FUNCS->t('original_page'),
-                    'class'=>'title align_bottom',
+                    'class'=>'original-page',
                     'content'=>"<cms:render 'list_title' />",
                 );
 
@@ -116,7 +116,7 @@
                 array(
                     'weight'=>'20',
                     'header'=>$FUNCS->t('template'),
-                    'class'=>'folder',
+                    'class'=>'template',
                     'content'=>"<cms:render 'list_template' />",
                 );
 
@@ -124,8 +124,8 @@
                 array(
                     'weight'=>'30',
                     'header'=>$FUNCS->t('modified'),
+                    'class'=>'modified',
                     'content'=>"<cms:render 'list_mod_date' />",
-                    'class'=>'date drafts',
                 );
 
             $arr_fields['k_actions'] =

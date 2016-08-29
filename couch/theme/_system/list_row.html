@@ -1,5 +1,39 @@
 <cms:admin_list_fields>
     <td class="col-<cms:show k_field_class />">
         <cms:show k_field_content />
+
+        <cms:if k_field_class == 'title' >
+            <ul class="details">
+                <cms:if k_count_drafts >
+                    <li>
+                        <strong><cms:localize 'drafts' />:</strong>
+                        <cms:show k_count_drafts />
+                    </li>
+                </cms:if>
+
+                <cms:if k_comments_count >
+                    <li>
+                        <strong><cms:localize 'comments' />:</strong>
+                        <cms:show k_comments_count />
+                    </li>
+                </cms:if>
+
+                <cms:if k_page_foldertitle >
+                    <li>
+                        <strong><cms:localize 'folder' />:</strong>
+                        <cms:show k_page_foldertitle />
+                    </li>
+                </cms:if>
+
+                <li>
+                    <strong><cms:localize 'date' />:</strong>
+                    <cms:if k_page_date == '0000-00-00 00:00:00' >
+                        <span class="label label-error"><cms:localize 'unpublished' /></span>
+                    <cms:else />
+                        <cms:date k_page_date format='M jS Y' />
+                    </cms:if>
+                </li>
+            </ul>
+        </cms:if>
     </td>
 </cms:admin_list_fields>
