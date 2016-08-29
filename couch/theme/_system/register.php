@@ -676,7 +676,7 @@
         global $CTX, $FUNCS, $PAGE;
 
         $page_ids = '';
-        $msg = 'Search..';
+        $msg = 'Search&hellip;';
         $query = strip_tags( trim($_GET['s']) );
 
         if( $query ){

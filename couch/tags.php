@@ -2803,7 +2803,7 @@
             global $CTX, $FUNCS;
             extract( $FUNCS->get_named_vars(
                        array(
-                             'msg'=>'Search..',
+                             'msg'=>'Search&hellip;',
                              'processor'=>''
                             ),
                        $params) );
