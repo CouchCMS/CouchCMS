@@ -174,7 +174,7 @@
     }
 
     if( !extension_loaded('mysql') ){
-        die( 'MySQL extension missing from your host\'s PHP installation' );
+        include_once( K_COUCH_DIR . 'includes/mysql2i/mysql2i.class.php' );
     }
 
     if ( !defined('K_SITE_DIR') ) define( 'K_SITE_DIR', dirname( K_COUCH_DIR ) . '/' );
