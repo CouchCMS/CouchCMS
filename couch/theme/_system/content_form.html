@@ -1,5 +1,7 @@
 <cms:if "<cms:get_flash 'submit_success' />" >
     <cms:admin_add_js>
+        var submit_success = true;
+
         $(function() {
             toastr.success("Your changes have been saved", "Success", { // TODO: localize
                 "positionClass": "toast-bottom-right",
@@ -12,6 +14,53 @@
         });
     </cms:admin_add_js>
 </cms:if>
+
+<cms:admin_add_js>
+    $(function() {
+        var $form = $("#k_admin_frm");
+
+        $form.sisyphus({
+            customKeySuffix: "<cms:concat k_site_link '|' k_route_module '|' k_route_masterpage '|' "<cms:if k_page_id><cms:show k_page_id/><cms:else/><cms:show rt_id/></cms:if>"/>",
+            autoRelease: false,
+            onBeforeRestore: function() {
+                return !window.submit_success;
+            },
+            onRestore: function() {
+                COUCH.el.$content.find(".upload-path").each(function() {
+                    var $this = $(this),
+                        image = $this.val();
+
+                    if (image !== "") {
+                        $this.closest(".field").find(".popup-img").attr("href", image).children("img").attr("src", image);
+                    }
+                });
+
+                var $draft_dismiss = $('<a class="btn"><cms:show_icon 'arrow-right' />Continue Editing</a>').on("click", function() {
+                    COUCH.slideFadeHide($(this).parent(), 400);
+                });
+
+                var $draft_discard = $('<a class="btn"><cms:show_icon 'trash' />Discard Changes</a>').on("click", function() {
+                    window.submit_success = true;
+
+                    $form.sisyphus().manuallyReleaseData();
+
+                    window.location = window.location.href;
+                });
+
+                var $draft_controls = $('<div class="alert alert-info alert-icon fade-long in"><cms:show_icon 'info' /><h2>Unsaved changes have been restored</h2><span class="btn-or">or</span></div>');
+
+                $draft_controls.find(".btn-or").before($draft_dismiss);
+                $draft_controls.find(".btn-or").after($draft_discard);
+
+                $form.children(".tab-pane:first").prepend($draft_controls);
+            }
+        });
+
+        if (window.submit_success) {
+            $form.sisyphus().manuallyReleaseData();
+        }
+    });
+</cms:admin_add_js>
 
 <cms:set my_filters="<cms:render 'filters' />" />
 <cms:if "<cms:not_empty my_filters />" >
