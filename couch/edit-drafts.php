@@ -5,10 +5,10 @@
 
     class KDraftsAdmin extends KPagesAdmin{
 
-        function KDraftsAdmin(){
+        function __construct(){
             global $FUNCS;
 
-            parent::KPagesAdmin();
+            parent::__construct();
             $FUNCS->add_event_listener( 'alter_render_vars_content_list_inner', array($this, '_alter_render_vars') );
             $FUNCS->add_event_listener( 'alter_pages_form_fields', array($this, '_hide_system_fields') );
         }

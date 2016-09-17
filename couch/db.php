@@ -74,7 +74,7 @@
         var $queries = 0;
         var $query_time = 0;
 
-        function KDB( $host_name='', $database='', $user_name='', $password='' ){
+        function __construct( $host_name='', $database='', $user_name='', $password='' ){
             if( empty($host_name) ) $host_name = K_DB_HOST;
             if( empty($database) ) $database = K_DB_NAME;
             if( empty($user_name) ) $user_name = K_DB_USER;

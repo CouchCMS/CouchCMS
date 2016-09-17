@@ -37,7 +37,7 @@ class Route
     var $wildcard;
     var $resolved_values = array();
 
-    function Route(
+    function __construct(
         $name         = null,
         $masterpage   = null,
         $path         = null,

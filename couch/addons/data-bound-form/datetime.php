@@ -247,7 +247,7 @@
         }
 
         // Output to front-end via $CTX
-        function get_data(){
+        function get_data( $for_ctx=0 ){
             return $this->data;
         }
 
@@ -353,17 +353,17 @@
     class KDateTimeForm extends KUserDefinedFormField{
         var $obj;
 
-        function handle_params( $params ){
+        function handle_params( $params, $node ){
 
             return KDateTime::_handle_params( $params );
 
         }
 
-        function KDateTimeForm( $fields, &$siblings ){
+        function __construct( $fields, &$siblings ){
             global $PAGE;
 
             $this->obj = new KDateTime( $fields, $PAGE /*dummy*/, $siblings );
-            parent::KUserDefinedFormField( $fields, $siblings );
+            parent::__construct( $fields, $siblings );
         }
 
         function _render( $input_name, $input_id, $extra='', $dynamic_insertion=0 ){

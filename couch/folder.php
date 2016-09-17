@@ -55,7 +55,7 @@
         var $first_pos = 0; // first and last immediate children
         var $last_pos = 0;
 
-        function KNestable(){
+        function __construct(){
 
         }
 
@@ -406,7 +406,7 @@
 
         var $fields; // for admin form
 
-        function KFolder( $row, $template_name, &$root ){
+        function __construct( $row, $template_name, &$root ){
             global $FUNCS, $Config;
 
             foreach( $row as $k=>$v ){
@@ -783,7 +783,7 @@
         }
 
         // callback function to create folders dropdown
-        function _k_visitor( &$folder, &$html, &$node ){
+        static function _k_visitor( &$folder, &$html, &$node ){
             global $CTX, $FUNCS;
 
             $level = $CTX->get('k_level', 1);
@@ -843,7 +843,7 @@
         var $is_current = 0;
         var $most_current = 0;
 
-        function KNestedPage( $row, $template_name, &$root ){
+        function __construct( $row, $template_name, &$root ){
             global $FUNCS, $Config;
 
             foreach( $row as $k=>$v ){
@@ -1325,7 +1325,7 @@
         }
 
         // callback function to create nested-pages dropdown
-        function _k_visitor_pages( &$page, &$html, &$node ){
+        static function _k_visitor_pages( &$page, &$html, &$node ){
             global $CTX, $FUNCS;
 
             $level = $CTX->get('k_level', 1);
@@ -1374,7 +1374,7 @@
         var $html;
         var $render;
 
-        function KAdminMenuItem( $row, &$root ){
+        function __construct( $row, &$root ){
             global $FUNCS;
 
             foreach( $row as $k=>$v ){

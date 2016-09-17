@@ -42,9 +42,9 @@
         var $rendered_data = null;
         var $validation_errors = 0;
 
-        function Repeatable( $row, &$page, &$siblings ){
+        function __construct( $row, &$page, &$siblings ){
             // call parent
-            parent::KUserDefinedField( $row, $page, $siblings );
+            parent::__construct( $row, $page, $siblings );
 
             // now for own logic
             $this->orig_data = array();
@@ -546,7 +546,7 @@
         }
 
         // Output to front-end via $CTX
-        function get_data(){
+        function get_data( $for_ctx=0 ){
             global $CTX;
 
             // Data not a simple string hence

@@ -43,7 +43,7 @@
         var $old_msgs = array();
         var $new_msgs = array();
 
-        function KSession(){
+        function __construct(){
             global $FUNCS;
 
             // get flash data from session

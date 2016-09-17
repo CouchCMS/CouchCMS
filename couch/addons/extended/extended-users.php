@@ -11,7 +11,7 @@
         var $lost_password_tpl;
         var $registration_tpl;
 
-        function KExtendedUsers(){
+        function __construct(){
             $this->populate_config();
         }
 

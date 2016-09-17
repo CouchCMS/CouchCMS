@@ -63,7 +63,7 @@
 
 
     // Constructor, allow DNS server to be set
-    function email($dns = null) {
+    function __construct($dns = null) {
       // Import global variables
       global $HTTP_SERVER_VARS;
       if(!@$HTTP_SERVER_VARS['SERVER_NAME']) {
@@ -396,7 +396,7 @@
     var $status       = array();
     var $dnsResponse  = null;
 
-    function mxQuery($dns = null) {
+    function __construct($dns = null) {
       // Set DNS server if specified
       if($dns) {
         $this->dnsServer = $dns;

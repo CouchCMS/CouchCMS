@@ -5,10 +5,10 @@
 
     class KFoldersAdmin extends KPagesAdmin{
 
-        function KFoldersAdmin(){
+        function __construct(){
             global $FUNCS;
 
-            parent::KPagesAdmin();
+            parent::__construct();
             $FUNCS->add_event_listener( 'alter_render_vars_content_list_inner', array($this, '_alter_render_vars') );
         }
 

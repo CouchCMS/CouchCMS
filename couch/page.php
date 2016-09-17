@@ -111,7 +111,7 @@
         var $_template_locked = 0;
 
 
-        function KWebpage( $template_id=null, $page_id=null, $page_name=null, $html=null, $skip_custom_fields=null ){
+        function __construct( $template_id=null, $page_id=null, $page_name=null, $html=null, $skip_custom_fields=null ){
             global $FUNCS;
 
             $template_id = trim( $template_id );

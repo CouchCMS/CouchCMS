@@ -40,11 +40,11 @@
     // UDF for secure file upload
     class SecureFile extends KUserDefinedField{
 
-        function SecureFile( $row, &$page, &$siblings ){
+        function __construct( $row, &$page, &$siblings ){
             global $FUNCS;
 
             // call parent
-            parent::KUserDefinedField( $row, $page, $siblings );
+            parent::__construct( $row, $page, $siblings );
 
             $this->orig_data = array();
             $this->requires_multipart = 1;
@@ -189,7 +189,7 @@
         }
 
         // Output to front-end via $CTX
-        function get_data(){
+        function get_data( $for_ctx=0 ){
             global $CTX;
 
             // Data not a simple string hence

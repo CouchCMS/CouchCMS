@@ -67,7 +67,7 @@
 
     class COUCH{
 
-        function invoke( $ignore_level=0 ){
+        static function invoke( $ignore_level=0 ){
             global $DB, $FUNCS, $PAGE, $AUTH, $CTX, $k_cache_file;
 
             if( $ignore_level > 0 ){

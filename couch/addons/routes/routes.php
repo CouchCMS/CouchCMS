@@ -8,7 +8,7 @@
         var $obj_routes = array();
         var $cache_key = 'k_cached_routes';
 
-        function KRoutes(){
+        function __construct(){
             global $FUNCS;
 
             $cache_value = @unserialize( base64_decode($FUNCS->get_setting($this->cache_key)) );

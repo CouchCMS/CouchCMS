@@ -56,7 +56,7 @@
 
         var $_template_locked = 0;
 
-        function KUser( $id='', $is_numeric=0 ){
+        function __construct( $id='', $is_numeric=0 ){
             global $FUNCS, $DB;
 
             if( $id ){

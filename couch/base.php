@@ -6,7 +6,7 @@
         var $form_name = 'k_admin_frm';
         var $list_form_name = 'k_admin_frm_list';
 
-        function KBaseAdmin(){
+        function __construct(){
 
         }
 

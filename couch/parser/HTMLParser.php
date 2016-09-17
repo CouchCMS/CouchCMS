@@ -58,7 +58,7 @@
                                 'mark', 'nav', 'rp', 'rt', 'ruby', 'section', 'summary', 'time', 'wbr'
                                 );
 
-        function KHTMLNode( $type, $name='', $attr='', $text='', $cleanXSS=0, $for_comments=0, $safe_tags=null ){
+        function __construct( $type, $name='', $attr='', $text='', $cleanXSS=0, $for_comments=0, $safe_tags=null ){
             global $FUNCS;
 
             if( $name{0}=='/' ){
@@ -115,7 +115,7 @@
                 }
             }
 
-            parent::KNode($type, $name, $attr, $text );
+            parent::__construct($type, $name, $attr, $text );
         }
 
         function normalize_entities( $str ){
@@ -254,7 +254,7 @@
             return $html;
         }
 
-        function get_info(){
+        function get_info( $level=0 ){
             return;
         }
 
@@ -301,7 +301,7 @@
                         'tr','tt','u','ul','var'
                         );
 
-        function KHTMLParser( $str, $ignore_tags=null, $cleanXSS=0, $for_comments=0, $allowed_html_tags='' ){
+        function __construct( $str, $ignore_tags=null, $cleanXSS=0, $for_comments=0, $allowed_html_tags='' ){
             $this->str = $str;
             $this->state = K_STATE_TEXT;
             $this->stack = array();

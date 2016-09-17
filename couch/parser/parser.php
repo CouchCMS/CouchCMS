@@ -65,7 +65,7 @@
         // All tags that 'loop' (i.e. call 'foreach( $node->children as $child )' multiple times.
         var $support_zebra = array('__ROOT__', '__embed__', 'while', 'repeat', 'each', 'pages', 'folders', 'listfolders', 'dropdownfolders', 'parentfolders', 'archives', 'search', 'comments', 'query', 'weeks', 'days', 'entries', 'templates', 'nested_pages', 'parent_nested_pages', 'nested_crumbs', 'menu', 'admin_menuitems', 'admin_menu', 'admin_breadcrumbs', 'admin_actions', 'admin_list_fields', 'admin_form_fields', 'admin_js_files', 'admin_css_files', 'paginator', 'list_options');
 
-        function KContext(){
+        function __construct(){
 
         }
 
@@ -293,7 +293,7 @@
         var $char_num;
         var $children = array();
 
-        function KNode( $type, $name='', $attr='', $text='' ){
+        function __construct( $type, $name='', $attr='', $text='' ){
             $this->type = $type;
             $this->name = $name;
             if( is_array($attr) ) $this->attributes = $attr;
@@ -450,7 +450,7 @@
         var $cond_ops = array("==", "!=", "lt", "gt", "le", "ge", "eq", "ne");
         var $logical_ops = array("&&", "||");
 
-        function KParser( &$str, $line_num=0, $pos=0, $quit_at_char='', $id_prefix='' ){
+        function __construct( &$str, $line_num=0, $pos=0, $quit_at_char='', $id_prefix='' ){
             $this->str = &$str;
             $this->line_num = $line_num;
             $this->pos = $pos;

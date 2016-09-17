@@ -173,7 +173,7 @@
             '_'=>'-'
         );
 
-        function KField( $row, &$page, &$siblings ){
+        function __construct( $row, &$page, &$siblings ){
             global $FUNCS;
 
             foreach( $row as $k=>$v ){
@@ -995,7 +995,7 @@
     }// end class KField
 
     class KFieldUser extends KField{
-        function KFieldUser( $fields, &$siblings ){
+        function __construct( $fields, &$siblings ){
             foreach( $fields as $k=>$v ){
                $this->$k = $v;
             }
@@ -1282,8 +1282,8 @@
         var $field_label;
         var $inverse;
 
-        function KSingleCheckField( $row, &$page, &$siblings, $field_label='', $inverse=0 ){
-            parent::KField( $row, $page, $siblings );
+        function __construct( $row, &$page, &$siblings, $field_label='', $inverse=0 ){
+            parent::__construct( $row, $page, $siblings );
 
             $field_label = trim( $field_label );
             $inverse = trim( $inverse );
@@ -1453,7 +1453,7 @@
     // So now, $f->data at all times contains the same data as is stored in the database.
     class KUserDefinedField extends KField{
 
-        function KUserDefinedField( $row, &$page, &$siblings ){
+        function __construct( $row, &$page, &$siblings ){
             global $FUNCS;
 
             // udf params
@@ -1473,7 +1473,7 @@
             }
 
             // call parent
-            parent::KField( $row, $page, $siblings );
+            parent::__construct( $row, $page, $siblings );
 
             if( !$FUNCS->is_core_type($this->k_type) ){
                 $this->udf = 1;
@@ -1659,7 +1659,7 @@
         }
 
         // Called to give value to be set in CTX
-        function get_data(){
+        function get_data( $for_ctx=0 ){
             global $CTX;
 
             if( count($CTX->ctx) ){
@@ -1678,7 +1678,7 @@
     class KSingleCheckFieldForm extends KUserDefinedFormField{
         var $obj;
 
-        function handle_params( $params ){
+        function handle_params( $params, $node ){
             global $FUNCS;
 
             $attr = $FUNCS->get_named_vars(
@@ -1692,11 +1692,11 @@
 
         }
 
-        function KSingleCheckFieldForm( $fields, &$siblings ){
+        function __construct( $fields, &$siblings ){
             global $PAGE;
 
             $this->obj = new KSingleCheckField( $fields, $PAGE /*dummy*/, $siblings, $fields['field_label'], $fields['inverse'] );
-            parent::KUserDefinedFormField( $fields, $siblings );
+            parent::__construct( $fields, $siblings );
         }
 
         function _render( $input_name, $input_id, $extra='', $dynamic_insertion=0 ){

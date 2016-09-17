@@ -72,7 +72,7 @@
         var $custom_vars = array();
 
 
-        function KCart(){
+        function __construct(){
             global $FUNCS;
 
             $this->populate_config();
