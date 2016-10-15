@@ -141,7 +141,7 @@ if ( !defined('K_COUCH_DIR') ) die(); // cannot be loaded directly
             }
 
         }
-        return null;
+        //return null;
     };
 
 </script>
