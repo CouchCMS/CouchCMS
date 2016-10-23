@@ -341,9 +341,19 @@
                     if( $extended_info ){
                         $this->children[$x]->set_in_context();
 
+                        // save 'order'by and 'order' before calling child tags as they (pages tag notably), can modify these values
+                        $orig_cmp_field = $this->cmp_field;
+                        $orig_cmp_order = $this->cmp_order;
+
                         $CTX->set( 'k_element_start', 1 ); //e.g. <LI>
                         call_user_func_array( $callback, array(&$this->children[$x], &$param0, &$param1) );
                         $CTX->set( 'k_element_start', 0 );
+
+                        // check if 'order'by and 'order' have changed
+                        if( $this->cmp_field!=$orig_cmp_field || $this->cmp_order!=$orig_cmp_order ){
+                            $this->root->set_sort( $orig_cmp_field, $orig_cmp_order );
+                            $this->root->sort(1);
+                        }
                     }
 
                     $quit = $this->children[$x]->visit( $callback, $param0, $param1, $depth, $extended_info, $exclude, $level+1, $exclude_if_not_in_menu, $exclude_if_inactive, $paginate, $cb_skip );
