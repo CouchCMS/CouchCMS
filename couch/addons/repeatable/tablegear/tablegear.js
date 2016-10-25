@@ -38,6 +38,7 @@
     var tbody;
 
     var id;  // Id of the table
+    var nextid;
 
     var rows;
     var headers;
