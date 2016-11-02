@@ -5,7 +5,7 @@
 
     class Inline{
 
-        function load_edit_handler( $params, $node ){
+        static function load_edit_handler( $params, $node ){
             global $AUTH, $FUNCS, $CTX;
             if( ($AUTH->user->access_level < K_ACCESS_LEVEL_ADMIN) || $CTX->get('k_disable_edit') ) return;
 
@@ -42,13 +42,13 @@
             return $html;
         }
 
-        function no_edit_handler( $params, $node ){
+        static function no_edit_handler( $params, $node ){
             global $CTX;
 
             $CTX->set( 'k_disable_edit', '1', 'global' );
         }
 
-        function inline_handler( $params, $node ){
+        static function inline_handler( $params, $node ){
             global $CTX, $FUNCS, $AUTH;
             if( ($AUTH->user->access_level < K_ACCESS_LEVEL_ADMIN) || $CTX->get('k_disable_edit') ) return;
 
@@ -132,7 +132,7 @@
             return $html;
         }
 
-        function _toolbar( $str_toolbar ){
+        static function _toolbar( $str_toolbar ){
 
             if( $str_toolbar ){
                 $available_buttons = array(

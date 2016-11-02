@@ -203,7 +203,7 @@
             return $s;
         }
 
-        function _handle_extends( $DOM ){
+        static function _handle_extends( $DOM ){
             if( count($DOM->children)>1 ){
                 if( $DOM->children[1]->name != 'extends' ) return;
 

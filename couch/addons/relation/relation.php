@@ -429,7 +429,7 @@
         }
 
         //////////////// Tags //////////////////////////////////////////////////
-        function related_pages_handler( $params, $node ){
+        static function related_pages_handler( $params, $node ){
             global $CTX, $FUNCS, $TAGS, $PAGE, $DB;
 
             extract( $FUNCS->get_named_vars(
@@ -492,7 +492,7 @@
             return $html;
         }
 
-        function reverse_related_pages_handler( $params, $node ){
+        static function reverse_related_pages_handler( $params, $node ){
             global $CTX, $FUNCS, $TAGS, $PAGE, $DB;
 
             extract( $FUNCS->get_named_vars(

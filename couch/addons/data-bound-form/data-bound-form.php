@@ -40,7 +40,7 @@
     class KDataBoundForm{
 
         // Saves Data Bound Forms ('db_persist' tag also piggy-backs on this)
-        function db_persist_form( $params, $node ){
+        static function db_persist_form( $params, $node ){
             global $FUNCS, $DB, $CTX, $AUTH;
             if( $node->name=='db_persist_form' && count($node->children) ) {die("ERROR: Tag \"".$node->name."\" is a self closing tag");}
 
@@ -247,13 +247,13 @@
         }
 
         // Creates new page or Updates existing one
-        function db_persist( $params, $node ){
+        static function db_persist( $params, $node ){
             // delegate to 'db_persist_form' tag
             return KDataBoundForm::db_persist_form( $params, $node );
         }
 
         // Same as db_persist above but has no context of its own
-        function db_persist_ex( $params, $node ){
+        static function db_persist_ex( $params, $node ){
 
             if( count($node->children) ) {die("ERROR: Tag \"".$node->name."\" is a self closing tag");}
 
@@ -263,7 +263,7 @@
         }
 
         // Deletes page
-        function db_delete( $params, $node ){
+        static function db_delete( $params, $node ){
             global $FUNCS, $DB, $CTX;
             if( count($node->children) ) {die("ERROR: Tag \"".$node->name."\" is a self closing tag");}
 
@@ -321,7 +321,7 @@
         }
 
         // Deletes page bound to the form
-        function db_delete_form( $params, $node ){
+        static function db_delete_form( $params, $node ){
             global $FUNCS, $DB, $CTX;
             if( count($node->children) ) {die("ERROR: Tag \"".$node->name."\" is a self closing tag");}
 
@@ -362,7 +362,7 @@
         }
 
         // Begins transaction
-        function db_begin_trans( $params, $node ){
+        static function db_begin_trans( $params, $node ){
             global $DB;
             if( count($node->children) ) {die("ERROR: Tag \"".$node->name."\" is a self closing tag");}
 
@@ -370,7 +370,7 @@
         }
 
         // Commits transaction
-        function db_commit_trans( $params, $node ){
+        static function db_commit_trans( $params, $node ){
             global $DB, $FUNCS;
             if( count($node->children) ) {die("ERROR: Tag \"".$node->name."\" is a self closing tag");}
 
@@ -386,7 +386,7 @@
         }
 
         // Rollbacks transaction
-        function db_rollback_trans( $params, $node ){
+        static function db_rollback_trans( $params, $node ){
             global $DB, $FUNCS;
             if( count($node->children) ) {die("ERROR: Tag \"".$node->name."\" is a self closing tag");}
 
@@ -402,7 +402,7 @@
         }
 
         // Provides meta-info about all fields in a template
-        function db_fields( $params, $node ){
+        static function db_fields( $params, $node ){
             global $FUNCS, $PAGE, $DB, $CTX;
 
             extract( $FUNCS->get_named_vars(
@@ -550,7 +550,7 @@
         ////////////////////////////////////////////////////////////////////////
 
         // Given an 'action', returns a nonce for it
-        function create_nonce( $params, $node ){
+        static function create_nonce( $params, $node ){
             global $FUNCS;
             if( count($node->children) ) {die("ERROR: Tag \"".$node->name."\" is a self closing tag");}
 
@@ -571,7 +571,7 @@
         // Given an 'action' and its purported 'nonce', verifies if the nonce tallies with the action.
         // If verification fails the script is summarily terminated.
         // If 'nonce' not provided, looks for a GPC parameter named 'nonce'.
-        function validate_nonce( $params, $node ){
+        static function validate_nonce( $params, $node ){
             global $FUNCS;
             if( count($node->children) ) {die("ERROR: Tag \"".$node->name."\" is a self closing tag");}
 
@@ -592,7 +592,7 @@
         // Given an 'action' and its purported 'nonce', verifies if the nonce tallies with the action.
         // Returns '1' if verification suceeds else returns '0'.
         // If 'nonce' not provided, looks for a GPC parameter named 'nonce'.
-        function check_nonce( $params, $node ){
+        static function check_nonce( $params, $node ){
             global $FUNCS;
             if( count($node->children) ) {die("ERROR: Tag \"".$node->name."\" is a self closing tag");}
 

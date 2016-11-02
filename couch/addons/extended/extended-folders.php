@@ -2,7 +2,7 @@
     if ( !defined('K_COUCH_DIR') ) die(); // cannot be loaded directly
 
     class KExtendedFolders{
-        function add_template_params( &$attr_custom, $params, $node ){
+        static function add_template_params( &$attr_custom, $params, $node ){
             global $FUNCS;
 
             $attr = $FUNCS->get_named_vars(
@@ -18,7 +18,7 @@
 
         }
 
-        function &_get_associated_page( &$folder ){
+        static function &_get_associated_page( &$folder ){
             global $FUNCS, $DB;
 
             if( isset($folder->_assoc_page) ) return $folder->_assoc_page;
@@ -63,7 +63,7 @@
             return $folder->_assoc_page;
         }
 
-        function _get_folder_masterpage( $tpl_name ){
+        static function _get_folder_masterpage( $tpl_name ){
             global $FUNCS, $DB;
 
             if( array_key_exists( $tpl_name, $FUNCS->cached_templates ) ){
@@ -87,7 +87,7 @@
             return $custom_params['folder_masterpage'];
         }
 
-        function add_custom_folder_fields( &$fields, &$folder ){
+        static function add_custom_folder_fields( &$fields, &$folder ){
             global $FUNCS, $DB;
 
             $pg = KExtendedFolders::_get_associated_page( $folder );
@@ -108,7 +108,7 @@
 
         }
 
-        function save_custom_folder_fields( &$folder, $action, &$errors ){
+        static function save_custom_folder_fields( &$folder, $action, &$errors ){
             global $FUNCS, $DB;
 
             $pg = KExtendedFolders::_get_associated_page( $folder );
@@ -123,7 +123,7 @@
             $errors = $pg->save();
         }
 
-        function delete_custom_folder_fields( &$folder ){
+        static function delete_custom_folder_fields( &$folder ){
 
             $pg = KExtendedFolders::_get_associated_page( $folder );
             if( !$pg || $pg->id==-1 ) return;
@@ -136,7 +136,7 @@
 
         }
 
-        function add_param_to_tag( &$attr, $params, $node ){
+        static function add_param_to_tag( &$attr, $params, $node ){
             global $FUNCS, $CTX;
 
             if( $node->name=='folders' ){
@@ -151,7 +151,7 @@
             }
         }
 
-        function set_custom_fields_in_context( &$folder, $page_specific ){
+        static function set_custom_fields_in_context( &$folder, $page_specific ){
             global $CTX;
 
             if( !$page_specific ){
@@ -161,7 +161,7 @@
             }
         }
 
-        function _set_in_context( &$folder ){
+        static function _set_in_context( &$folder ){
             global $FUNCS, $CTX, $DB;
 
             $folder_masterpage = $CTX->get('k_folder_masterpage', 1);

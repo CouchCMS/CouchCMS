@@ -6,13 +6,14 @@
 
         // add more candidate template names for renderables implemented as templates
         $FUNCS->add_event_listener( K_THEME_NAME.'_alter_render_vars_content_list_inner', 'MyTheme::_alter_render_vars' );
+        $FUNCS->add_event_listener( K_THEME_NAME.'_alter_render_vars_content_form', 'MyTheme::_alter_render_vars' );
     }
 
 
     // class containing the theme functions
     class MyTheme{
 
-        function _alter_render_vars( &$candidate_templates, $name, $args ){
+        static function _alter_render_vars( &$candidate_templates, $name, $args ){
             global $FUNCS, $CTX;
 
             // for every candidate template for the renderable, add a template that has the current masterpage suffixed

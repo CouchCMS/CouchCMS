@@ -534,7 +534,7 @@
 
         //////
         // Handles 'cms:show_securefile' tag
-        function show_handler( $params, $node ){
+        static function show_handler( $params, $node ){
             global $FUNCS, $CTX, $DB;
             if( !count($node->children) ) return;
 

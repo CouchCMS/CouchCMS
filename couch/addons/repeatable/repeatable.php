@@ -52,7 +52,7 @@
 
         }
 
-        function tag_handler( $params, $node ){
+        static function tag_handler( $params, $node ){
             global $CTX, $FUNCS, $TAGS, $PAGE, $AUTH;
             if( $AUTH->user->access_level < K_ACCESS_LEVEL_SUPER_ADMIN ) return;
             if( defined('K_ADMIN') ) return; // nop within admin panel
@@ -139,7 +139,7 @@
             $TAGS->editable( $params, $_node );
         }
 
-        function show_handler( $params, $node ){
+        static function show_handler( $params, $node ){
             global $FUNCS, $CTX;
 
             extract( $FUNCS->get_named_vars(
