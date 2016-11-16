@@ -303,6 +303,19 @@
             return $arr_filters;
         }
 
+        function _default_form_page_actions(){
+            global $FUNCS, $PAGE, $CTX;
+
+            $arr_actions = parent::_default_form_page_actions();
+
+            if( is_array($arr_actions['btn_view']) ){
+                $arr_actions['btn_view']['title'] = $FUNCS->t('preview');
+                $arr_actions['btn_view']['href'] = K_SITE_URL . $PAGE->tpl_name . '?p=' . $PAGE->id;
+            }
+
+            return $arr_actions;
+        }
+
         function _set_advanced_setting_fields( &$arr_fields ){
             global $FUNCS;
 

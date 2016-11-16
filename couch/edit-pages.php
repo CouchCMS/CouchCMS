@@ -815,7 +815,7 @@
                 $FUNCS->validate_nonce( 'edit_page_' . $obj_id, $nonce );
             }
             else{
-                $FUNCS->dispatch_event( 'pages_rt_filter_resolve_page', array($tpl, &$tpl_id, &$page_id, $nonce) );
+                $FUNCS->dispatch_event( 'pages_rt_filter_resolve_page', array($tpl, &$tpl_id, &$page_id, $nonce, $act) );
             }
 
             // set page object
