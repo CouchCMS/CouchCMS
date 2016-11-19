@@ -680,7 +680,7 @@
         $query = strip_tags( trim($_GET['s']) );
 
         if( $query ){
-            $code = "<cms:search masterpage='".$PAGE->tpl_name."' ids_only='1' />";
+            $code = "<cms:search masterpage='".$PAGE->tpl_name."' ids_only='1' show_future_entries='1' qs_param='<' />"; // the dummy 'qs_param' will effectively make the cms:search tag ignore pagination
             $parser = new KParser( $code );
             $page_ids = $parser->get_HTML();
             if( !$page_ids ) $page_ids='0';
