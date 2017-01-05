@@ -465,7 +465,15 @@
 
 
         function &get_DOM(){
+            global $FUNCS;
+
             if( !$this->parsed ){
+
+                if( $this->quit_at_char == '' ){
+                    // HOOK: alter_str_to_parse
+                    $FUNCS->dispatch_event( 'alter_str_to_parse', array(&$this->str) );
+                }
+
                 $starts = $this->pos;
                 $len = strlen( $this->str );
 
