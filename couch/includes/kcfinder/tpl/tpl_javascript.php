@@ -3,7 +3,7 @@
 <script src="js/jquery.drag.js" type="text/javascript"></script>
 <script src="js/helper.js" type="text/javascript"></script>
 <script src="js/jquery.finger.min.js" type="text/javascript"></script>
-<script src="js/browser/joiner.php?v=3.12" type="text/javascript"></script>
+<script src="js/browser/joiner.php?v=3.12c" type="text/javascript"></script>
 <script src="js_localize.php?lng=<?php echo $this->lang ?>&nonce=<?php echo $this->nonce ?>" type="text/javascript"></script>
 <?php IF (isset($this->opener['TinyMCE']) && $this->opener['TinyMCE']): ?>
 <script src="<?php echo $this->config['_tinyMCEPath'] ?>/tiny_mce_popup.js" type="text/javascript"></script>
@@ -35,6 +35,7 @@ browser.opener.TinyMCE = true;
 <?php ENDIF ?>
 browser.cms = "<?php echo text::jsValue($this->cms) ?>";
 browser.nonce = "<?php echo text::jsValue($this->nonce) ?>";
+browser.basePath = "<?php echo text::jsValue($this->basePath) ?>";
 _.kuki.domain = "<?php echo text::jsValue($this->config['cookieDomain']) ?>";
 _.kuki.path = "<?php echo text::jsValue($this->config['cookiePath']) ?>";
 _.kuki.prefix = "<?php echo text::jsValue($this->config['cookiePrefix']) ?>";

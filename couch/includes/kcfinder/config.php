@@ -108,6 +108,8 @@ $_CONFIG = array(
     //'_sessionPath' => "/my/path",
 
     'ChmodOnUpload' => "1",
+
+    'useExplicitPath' => false,
 );
 
 ?>

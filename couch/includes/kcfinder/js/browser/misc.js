@@ -330,7 +330,7 @@ browser.humanSize = function(size) {
 };
 
 browser.baseGetData = function(act) {
-    var data = 'browse.php?type=' + encodeURIComponent(this.type) + '&lng=' + this.lang;
+    var data = this.basePath + 'browse.php?type=' + encodeURIComponent(this.type) + '&lng=' + this.lang;
     if (act)
         data += "&act=" + act;
     if (this.cms)
