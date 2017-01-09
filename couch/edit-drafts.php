@@ -139,7 +139,7 @@
             return $arr_fields;
         }
 
-        function _set_list_sort( $order='' ){
+        function _set_list_sort( $orderby='', $order='' ){
             global $FUNCS;
 
             $order = trim( $order );

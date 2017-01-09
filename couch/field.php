@@ -1482,7 +1482,7 @@
 
         // called statically from 'cms:editable' tag to handle the parameters passed to it
         // Should parse out the parameters specific to this field and also sanitize the values.
-        function handle_params( $params ){
+        static function handle_params( $params ){
             /*
             global $FUNCS;
             $attr = $FUNCS->get_named_vars(
@@ -1622,7 +1622,7 @@
         // called statically from 'cms:input' tag to handle the parameters passed to it
         // Should parse out the parameters specific to this field and also sanitize the values.
         // The $node parameter can be used to set the 'value' parameter by looping through child nodes (as in textarea)
-        function handle_params( $params, $node ){
+        static function handle_params( $params, $node ){
             /*
             global $FUNCS;
             $attr = $FUNCS->get_named_vars(
@@ -1678,7 +1678,7 @@
     class KSingleCheckFieldForm extends KUserDefinedFormField{
         var $obj;
 
-        function handle_params( $params, $node ){
+        static function handle_params( $params, $node ){
             global $FUNCS;
 
             $attr = $FUNCS->get_named_vars(

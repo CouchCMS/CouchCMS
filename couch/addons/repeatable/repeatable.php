@@ -185,7 +185,7 @@
             }
         }
 
-        function handle_params( $params ){
+        static function handle_params( $params ){
             global $FUNCS;
             $attr = $FUNCS->get_named_vars(
                 array(  'schema'=>'',

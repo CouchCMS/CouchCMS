@@ -40,7 +40,7 @@
     // UDF for DateTime
     class KDateTime extends KUserDefinedField{
 
-        function handle_params( $params ){
+        static function handle_params( $params ){
             global $AUTH;
             if( $AUTH->user->access_level < K_ACCESS_LEVEL_SUPER_ADMIN ) return;
 
@@ -48,7 +48,7 @@
 
         }
 
-        function _handle_params( $params ){
+        static function _handle_params( $params ){
             global $FUNCS;
 
             // get supplied params
@@ -353,7 +353,7 @@
     class KDateTimeForm extends KUserDefinedFormField{
         var $obj;
 
-        function handle_params( $params, $node ){
+        static function handle_params( $params, $node ){
 
             return KDateTime::_handle_params( $params );
 

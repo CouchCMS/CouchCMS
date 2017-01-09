@@ -39,7 +39,7 @@
 
     class Nicedit extends KUserDefinedField{
 
-        function handle_params( $params ){
+        static function handle_params( $params ){
             global $FUNCS, $AUTH;
             if( $AUTH->user->access_level < K_ACCESS_LEVEL_SUPER_ADMIN ) return;
 
