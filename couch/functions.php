@@ -1186,6 +1186,7 @@
                 'is_custom'=>0,
                 'html'=>'',
                 'render'=>'',
+                'args'=>'',
 
                 'is_compound'=>0,
                 'hide'=>0,
@@ -1218,6 +1219,7 @@
             $menuitem['is_custom'] = ( $menuitem['is_custom']==1 ) ? 1 : 0;
             $menuitem['html'] = trim( $menuitem['html'] );
             $menuitem['render'] = trim( $menuitem['render'] );
+            $menuitem['args'] = trim( $menuitem['args'] );
 
             $menuitem['is_compound'] = ( $menuitem['is_compound']==1 ) ? 1 : 0;
             $menuitem['hide'] = ( $menuitem['hide']==1 ) ? 1 : 0;

@@ -1383,6 +1383,7 @@
         var $is_custom;
         var $html;
         var $render;
+        var $args;
 
         function __construct( $row, &$root ){
             global $FUNCS;
@@ -1435,6 +1436,7 @@
             $arr_vars['k_'.$label.'_is_custom'] = $this->is_custom;
             $arr_vars['k_'.$label.'_html'] = $this->html;
             $arr_vars['k_'.$label.'_render'] = $this->render;
+            $arr_vars['k_'.$label.'_args'] = $this->args;
 
             // Dynamically calculated
             $arr_vars['k_is_active'] = $this->is_current;
