@@ -53,7 +53,7 @@
                     'reverse_has'=>'', /*  -do-  */
                     'folder'=>'',
                     'include_subfolders'=>'1',
-                    'orderby'=>'', /* publish_date, page_title, page_name */
+                    'orderby'=>'', /* publish_date, page_title, page_name, weight */
                     'order_dir'=>'', /* desc, asc */
                     'no_gui'=>'0', /* for setting values only programmatically */
                   ),
@@ -220,7 +220,8 @@
             else{
                 // order & orderby
                 $orderby = trim( $this->orderby );
-                if( $orderby!='publish_date' && $orderby!='page_title' && $orderby!='page_name' ) $orderby = 'publish_date';
+                if( $orderby!='publish_date' && $orderby!='page_title' && $orderby!='page_name' && $orderby!='weight' ) $orderby = 'publish_date';
+                if( $orderby == 'weight' ){ $orderby = 'k_order'; }
                 $order = trim( $this->order_dir );
                 if( $order!='desc' && $order!='asc' ) $order = 'desc';
                 $sql .= "ORDER BY ".$orderby." ".$order."\r\n";
