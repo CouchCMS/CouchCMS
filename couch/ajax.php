@@ -137,8 +137,8 @@
                     }
 
                     // Confirm no cloned pages (except the default-page) exist
-                    $rs2 = $DB->select( K_TBL_PAGES, array('*'), "template_id='" . $DB->sanitize( $tpl_id ). "' AND is_master<>'1'" );
-                    if( count($rs2) ){
+                    $rs2 = $DB->select( K_TBL_PAGES, array('count(*) as cnt'), "template_id='" . $DB->sanitize( $tpl_id ). "' AND is_master<>'1'" );
+                    if( $rs2[0]['cnt'] ){
                         die( 'Template has existing cloned pages' );
                     }
 
