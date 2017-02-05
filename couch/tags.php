@@ -4432,6 +4432,12 @@ FORM;
                     $content_field = 'content';
                 }
 
+                $arr_vars['k_field_is_last'] = ( $x==$total_items-1 ) ? 1 : 0;
+                $arr_vars['k_field_count'] = $x + $startcount;
+                $arr_vars['k_total_fields'] = $total_items;
+
+                $CTX->set_all( $arr_vars );
+
                 //$arr_vars['k_field_header'] = $item['header'];
                 //$arr_vars['k_field_content'] = $item['content'];
                 $arr = $item[$content_field];
@@ -4440,17 +4446,12 @@ FORM;
                     foreach( $arr as $child ){
                         $html2 .= $child->get_HTML();
                     }
-                    $arr_vars['k_field_'.$content_field] = $html2;
+                    $content = $html2;
                 }
                 else{
-                    $arr_vars['k_field_'.$content_field] = '';
+                    $content = '';
                 }
-
-                $arr_vars['k_field_is_last'] = ( $x==$total_items-1 ) ? 1 : 0;
-                $arr_vars['k_field_count'] = $x + $startcount;
-                $arr_vars['k_total_fields'] = $total_items;
-
-                $CTX->set_all( $arr_vars );
+                $CTX->set( 'k_field_'.$content_field, $content );
 
                 // and call the children providing each row's data
                 foreach( $node->children as $child ){
