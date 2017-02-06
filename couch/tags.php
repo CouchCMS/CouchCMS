@@ -870,8 +870,9 @@
             // sanitize params
             $link = trim( $link );
             $querystring = trim( $querystring );
-
-            $sep = ( strpos($link, '?')===false ) ? '?' : '&';
+            if( $querystring ){
+                $sep = ( strpos($link, '?')===false ) ? '?' : '&';
+            }    
             return $link . $sep . $querystring;
         }
 
