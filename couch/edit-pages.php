@@ -20,7 +20,7 @@
             if( !file_exists(K_SITE_DIR . $PAGE->tpl_name) ){
                 $html = $FUNCS->render( 'template_missing' );
 
-                $rs = $DB->select( K_TBL_PAGES, array('id'), "template_id='" . $DB->sanitize( $PAGE->tpl_id ). "' AND is_master<>'1'" );
+                $rs = $DB->select( K_TBL_PAGES, array('id'), "template_id='" . $DB->sanitize( $PAGE->tpl_id ). "' AND is_master<>'1' LIMIT 1" );
                 if( count($rs) ){
                     $FUNCS->add_html( $html );
                 }
