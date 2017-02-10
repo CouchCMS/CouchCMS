@@ -36,14 +36,9 @@
     </div>
 <cms:else />
     <cms:set is_sidebar_collapsed = '0' />
-    <cms:php>
-        // read 'collapse' state of sidebar from cookie
-        global $CTX;
-
-        if( isset( $_COOKIE['collapsed_sidebar'] ) ){
-            $CTX->set( 'is_sidebar_collapsed', '1', $scope='parent' );
-        }
-    </cms:php>
+    <cms:if "<cms:gpc 'collapsed_sidebar' method='cookie' />">
+        <cms:set is_sidebar_collapsed = '1' scope='parent' />
+    </cms:if>
 
     <div id="sidebar"<cms:if is_sidebar_collapsed> class="collapsed"</cms:if>>
         <button class="tt" data-placement="right" id="sidebar-toggle" title="Toggle Sidebar" type="button"><cms:render 'icon' 'menu' /></button>
