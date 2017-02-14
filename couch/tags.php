@@ -2907,6 +2907,10 @@ FORM;
                     $arr = array_slice( $arr, 0, -1 );
                 }
                 $html = implode( ' ', $arr );
+                
+                if( $sep ){ // Trim off trailing punctuation
+                     $html = rtrim( $html, ',:;!?.' );
+                }                
             }
 
             return $html . $sep;
