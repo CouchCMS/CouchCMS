@@ -198,7 +198,8 @@
             extract( $FUNCS->get_named_vars(
                         array( 'var'=>'',
                                'masterpage'=>'',
-                               'page'=>''
+                               'page'=>'',
+                               'id'=>''
                               ),
                         $params)
                    );
@@ -214,6 +215,9 @@
                 if( $page ){
                     $sql .= "p.page_name = '".$DB->sanitize( $page )."' and ";
                 }
+                elseif( $id ){
+                    $sql .= "p.id = '".$DB->sanitize( $id )."' and ";
+                }             
                 else{
                     $sql .= "p.is_master = '1' and "; //if no page specified, use the default page
                 }
