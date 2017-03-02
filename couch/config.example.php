@@ -97,7 +97,7 @@
     // 15.
     // By default the inbuilt php function 'mail()' is used to deliver messages.
     // On certain hosts this function might fail due to configuration problems.
-    // In such cases, set the following to '1' to use an alternative method to send emails
+    // In such cases, set the following to '1' to use an alternative method (phpMailer) to send emails
     define( 'K_USE_ALTERNATIVE_MTA', 0 );
 
     // 16.

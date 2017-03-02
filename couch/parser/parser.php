@@ -61,7 +61,7 @@
         var $ctx = array();
         // 'listfolders' and 'dropdownfolders' internally use 'folders' hence need a context
         // 'do_shortcodes' stores self object in $CTX hence needs a scope.
-        var $support_scope = array('__ROOT__', '__embed__', 'test', 'repeat', 'hide', 'each', 'pages', 'folder', 'folders', 'listfolders', 'dropdownfolders', 'parentfolders', 'breadcrumbs', 'archives', 'form', 'paypal_processor', 'search', 'comments', 'query', 'link', 'calendar', 'weeks', 'days', 'entries', 'templates', 'capture', 'do_shortcodes', 'nested_pages', 'parent_nested_pages', 'nested_crumbs', 'menu', 'admin_menuitems', 'admin_menu', 'admin_breadcrumbs', 'admin_actions', 'admin_list_fields', 'admin_form_fields', 'admin_js_files', 'admin_css_files', 'config_list_view', 'config_form_view', 'exif', 'paginator', 'list_options');
+        var $support_scope = array('__ROOT__', '__embed__', 'test', 'repeat', 'hide', 'each', 'pages', 'folder', 'folders', 'listfolders', 'dropdownfolders', 'parentfolders', 'breadcrumbs', 'archives', 'form', 'paypal_processor', 'search', 'comments', 'query', 'link', 'calendar', 'weeks', 'days', 'entries', 'templates', 'capture', 'do_shortcodes', 'nested_pages', 'parent_nested_pages', 'nested_crumbs', 'menu', 'admin_menuitems', 'admin_menu', 'admin_breadcrumbs', 'admin_actions', 'admin_list_fields', 'admin_form_fields', 'admin_js_files', 'admin_css_files', 'config_list_view', 'config_form_view', 'exif', 'paginator', 'list_options', 'send_mail');
         // All tags that 'loop' (i.e. call 'foreach( $node->children as $child )' multiple times.
         var $support_zebra = array('__ROOT__', '__embed__', 'while', 'repeat', 'each', 'pages', 'folders', 'listfolders', 'dropdownfolders', 'parentfolders', 'archives', 'search', 'comments', 'query', 'weeks', 'days', 'entries', 'templates', 'nested_pages', 'parent_nested_pages', 'nested_crumbs', 'menu', 'admin_menuitems', 'admin_menu', 'admin_breadcrumbs', 'admin_actions', 'admin_list_fields', 'admin_form_fields', 'admin_js_files', 'admin_css_files', 'paginator', 'list_options');
 
@@ -168,24 +168,38 @@
         /*
          * 'get' by default will fetch a var by searching upwards through the
          * hierarchy of scopes.
-         * However, if 'local' is specified, it will look only in the immediate
-         * scope, returning null if var not found here.
+         * However, if 'scope' is specified, it will look only in the specified
+         * scope (either local or global), returning null if var not found here.
+         *
+         * For backward compatibility, a value of '1' or 'true' will translate to 'local' scope
+         * As a new addition, '2' will mean 'global'.
          */
-        function get( $varname, $local=false ){
-            if( $local ){
-                // search only in local scope
+        function get( $varname, $scope=false ){
+            if( $scope ){
+                $scope = (int)$scope; // local or global?
+                if( $scope==2 ){
+                    // search only in global scope
+                    if( isset($this->ctx[0]['_scope_']) ){
+                        return $this->ctx[0]['_scope_'][$varname];
+                    }
+                }
+                else{
+                    // search only in local scope
+                    for( $x=count($this->ctx)-1; $x>=0; $x-- ){
+                        if( isset($this->ctx[$x]['_scope_']) ){
+                            return $this->ctx[$x]['_scope_'][$varname];
+                        }
+                    }
+                }
+            }
+            else{
                 for( $x=count($this->ctx)-1; $x>=0; $x-- ){
-                    if( isset($this->ctx[$x]['_scope_']) ){
+                    if( isset($this->ctx[$x]['_scope_']) && isset($this->ctx[$x]['_scope_'][$varname]) ){
                         return $this->ctx[$x]['_scope_'][$varname];
                     }
                 }
             }
 
-            for( $x=count($this->ctx)-1; $x>=0; $x-- ){
-                if( isset($this->ctx[$x]['_scope_']) && isset($this->ctx[$x]['_scope_'][$varname]) ){
-                    return $this->ctx[$x]['_scope_'][$varname];
-                }
-            }
             return null;
         }
 
@@ -246,21 +260,32 @@
         }
 
         // For internal use. Exact equivalent of get() but for objects of internal use.
-        function &get_object_ex( $objname, $local=false ){
-            if( $local ){
-                // search only in local scope
+        function &get_object_ex( $objname, $scope=false ){
+            if( $scope ){
+                $scope = (int)$scope; // local or global?
+                if( $scope==2 ){
+                    // search only in global scope
+                    if( isset($this->ctx[0]['_obj_']) ){
+                        return $this->ctx[0]['_obj_'][$objname];
+                    }
+                }
+                else{
+                    // search only in local scope
+                    for( $x=count($this->ctx)-1; $x>=0; $x-- ){
+                        if( isset($this->ctx[$x]['_obj_']) ){
+                            return $this->ctx[$x]['_obj_'][$objname];
+                        }
+                    }
+                }
+            }
+            else{
                 for( $x=count($this->ctx)-1; $x>=0; $x-- ){
-                    if( isset($this->ctx[$x]['_obj_']) ){
+                    if( isset($this->ctx[$x]['_obj_']) && isset($this->ctx[$x]['_obj_'][$objname]) ){
                         return $this->ctx[$x]['_obj_'][$objname];
                     }
                 }
             }
 
-            for( $x=count($this->ctx)-1; $x>=0; $x-- ){
-                if( isset($this->ctx[$x]['_obj_']) && isset($this->ctx[$x]['_obj_'][$objname]) ){
-                    return $this->ctx[$x]['_obj_'][$objname];
-                }
-            }
             return null;
         }
 

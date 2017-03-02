@@ -51,7 +51,7 @@
     if( !defined('K_COUCH_DIR') ) die(); // cannot be loaded directly
 
     define( 'K_COUCH_VERSION', '2.0' ); // Changes with every release
-    define( 'K_COUCH_BUILD', '20170114' ); // YYYYMMDD - do -
+    define( 'K_COUCH_BUILD', '20170228' ); // YYYYMMDD - do -
 
     if( file_exists(K_COUCH_DIR.'config.php') ){
         require_once( K_COUCH_DIR.'config.php' );
@@ -315,9 +315,6 @@
     }
 
     require_once( K_COUCH_DIR.'auth/auth.php' );
-    if ( defined('K_USE_ALTERNATIVE_MTA') && K_USE_ALTERNATIVE_MTA ){
-        require_once( K_COUCH_DIR.'includes/email.php' );
-    }
 
     // set paths for uploaded images
     global $Config;
@@ -367,6 +364,9 @@
 
     // addons to 2.0
     require_once( K_ADDONS_DIR . 'recaptcha/recaptcha.php' );
+    if ( defined('K_USE_ALTERNATIVE_MTA') && K_USE_ALTERNATIVE_MTA ){
+        require_once( K_ADDONS_DIR . 'phpmailer/phpmailer.php' );
+    }
 
     // Current user's authentication info
     $AUTH = new KAuth( );

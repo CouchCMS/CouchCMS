@@ -105,13 +105,20 @@
             global $CTX;
             if( count($node->children) ) {die("ERROR: Tag \"".$node->name."\" is a self closing tag");}
 
-            // If second param set and first is a variable, return variable only from local scope.
+            // If second param set and first is a variable, return variable only from the specified scope scope.
             if( $params[1]['rhs'] && $node->attributes[0]['value_type']==K_VAL_TYPE_VARIABLE ){
-                return $CTX->get( $node->attributes[0]['value'], 1 );
+                $scope = strtolower( trim($params[1]['rhs']) );
+                if( $scope != '' ){
+                    if( $scope!='1' && $scope!='2' && $scope!='global' && $scope!='local'  ){
+                        die("ERROR: Tag \"".$node->name."\" has unknown scope '" . $scope. "'. Only 'global (2)' or 'local (1)' are valid.");
+                    }
+                    $scope = ( $scope=='global' || $scope=='2' ) ? 2 : 1;
+
+                    return $CTX->get( $node->attributes[0]['value'], $scope );
+                }
             }
-            else{
-                return $params[0]['rhs'];
-            }
+
+            return $params[0]['rhs'];
         }
 
         function set( $params, $node ){
@@ -122,7 +129,7 @@
             if( $varname ){
                 $scope = strtolower( trim($params[1]['rhs']) );
                 if( $scope != '' && ($scope!='parent' && $scope!='global' && $scope!='local') ){
-                    die("ERROR: Tag \"".$node->name."\" has unknown scope " . $scope);
+                    die("ERROR: Tag \"".$node->name."\" has unknown scope '" . $scope. "'. Only 'global', 'local' or 'parent' are valid.");
                 }
 
                 if( substr($varname, 0, 2)!='k_' ){
@@ -143,13 +150,26 @@
                         array( 'var'=>'',
                                'local_only'=>'',
                                'default'=>'',
+                               'scope'=>null,
                               ),
                         $params)
                    );
 
             $var = trim($var);
-            $scope = ( $local_only==1 ) ? 1 : 0;
+            $tmp = ( $local_only==1 ) ? 1 : 0;
             $has_default = ( strlen($default) ) ? 1 : 0;
+
+            // v2.0 - this new parameter, if set, overrides 'local_only'
+            if( !is_null($scope) ){
+                $scope = strtolower( trim($scope) );
+                if( $scope != '' ){
+                    if( $scope!='global' && $scope!='local' ){
+                        die("ERROR: Tag \"".$node->name."\" has unknown scope '" . $scope. "'. Only 'global' or 'local' are valid.");
+                    }
+                    $tmp = ( $scope=='global' ) ? 2 : 1;
+                }
+            }
+            $scope = $tmp;
 
             if( $var ){
                 $val = $CTX->get( $var, $scope );
@@ -217,7 +237,7 @@
                 }
                 elseif( $id ){
                     $sql .= "p.id = '".$DB->sanitize( $id )."' and ";
-                }             
+                }
                 else{
                     $sql .= "p.is_master = '1' and "; //if no page specified, use the default page
                 }
@@ -876,7 +896,7 @@
             $querystring = trim( $querystring );
             if( $querystring ){
                 $sep = ( strpos($link, '?')===false ) ? '?' : '&';
-            }    
+            }
             return $link . $sep . $querystring;
         }
 
@@ -2911,10 +2931,10 @@ FORM;
                     $arr = array_slice( $arr, 0, -1 );
                 }
                 $html = implode( ' ', $arr );
-                
+
                 if( $sep ){ // Trim off trailing punctuation
-                     $html = rtrim( $html, ',:;!?.' );
-                }                
+                    $html = rtrim( $html, ',:;!?.' );
+                }
             }
 
             return $html . $sep;
@@ -5555,7 +5575,7 @@ FORM;
         }
 
         function send_mail( $params, $node ){
-            global $FUNCS;
+            global $FUNCS, $CTX;
 
             extract( $FUNCS->get_named_vars(
                         array(
@@ -5564,7 +5584,7 @@ FORM;
                               'cc'=>'',
                               'bcc'=>'',
                               'reply_to'=>'',
-                              'return_path'=>'',
+                              'sender'=>'',
                               'charset'=>'',
                               'subject'=>'',
                               'debug'=>'0',
@@ -5579,12 +5599,16 @@ FORM;
             $cc = trim( $cc );
             $bcc = trim( $bcc );
             $reply_to = trim( $reply_to );
-            $return_path = trim( $return_path );
+            $sender = trim( $sender );
             $charset = trim( $charset );
             if( $charset=='' ) $charset=K_CHARSET;
             $debug = ( $debug==1 ) ? 1 : 0;
             $logfile = trim( $logfile );
             $html = ( $html==1 ) ? 1 : 0;
+
+            //  setup objects to be filled by child cms:attachment and cms:alt_body tags
+            $arr_config = array( 'att'=>array(), 'alt_body'=>null );
+            $CTX->set_object( '__config', $arr_config );
 
             foreach( $node->children as $child ){
                 $msg .= $child->get_HTML();
@@ -5594,7 +5618,7 @@ FORM;
             if( $cc ) $headers['Cc']=$cc;
             if( $bcc ) $headers['Bcc']=$bcc;
             if( $reply_to ) $headers['Reply-To']=$reply_to;
-            if( $return_path ) $headers['Return-Path']=$return_path;
+            if( $sender ) $headers['Sender']=$sender;
             $headers['MIME-Version']='1.0';
             if( $html ){
                 $headers['Content-Type']='text/html; charset='.$charset;
@@ -5606,7 +5630,7 @@ FORM;
                 $msg = strip_tags($msg);
             }
 
-            $rs = $FUNCS->send_mail( $from, $to, $subject, $msg, $headers );
+            $rs = $FUNCS->send_mail( $from, $to, $subject, $msg, $headers, $arr_config, $debug );
             if( $debug ){
                 $log = "From: $from\r\nTo: $to\r\n";
                 foreach( $headers as $k=>$v ){

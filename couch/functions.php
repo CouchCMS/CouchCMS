@@ -2229,11 +2229,11 @@
             return $s;
         }
 
-        function send_mail( $from, $to, $subject, $text, $headers="" ){
+        function send_mail( $from, $to, $subject, $text, $headers="", $arr_config=null, $debug=0 ){
 
             // HOOK: alter_send_mail
             $result = false;
-            $skip = $this->dispatch_event( 'alter_send_mail', array(&$from, &$to, &$subject, &$text, &$headers, &$result) );
+            $skip = $this->dispatch_event( 'alter_send_mail', array(&$from, &$to, &$subject, &$text, &$headers, &$result, &$arr_config, $debug) );
             if( $skip ){ return $result; }
 
             // Source: http://www.anyexample.com/
@@ -2247,6 +2247,7 @@
             $h = '';
             if( is_array($headers) ){
                 foreach( $headers as $k=>$v ){
+                    if( $k=='Sender' ) continue;
                     $h .= $this->_rsc($k).': '.$this->_rsc($v).$mail_sep;
                 }
                 if( $h != '' ) {
@@ -2259,12 +2260,7 @@
             $to = $this->_rsc( $to );
             $subject = $this->_rsc( $subject );
 
-            if ( defined('K_USE_ALTERNATIVE_MTA') && K_USE_ALTERNATIVE_MTA ){
-                return @email( $to, $subject, $text, 'From: '.$from.$h );
-            }
-            else{
-                return @mail( $to, $subject, $text, 'From: '.$from.$h );
-            }
+            return @mail( $to, $subject, $text, 'From: '.$from.$h );
         }
 
         function register_validator( $name, $callable ){
@@ -4376,6 +4372,42 @@ OUT;
             $tpl = substr( $tpl, strlen(K_SITE_DIR) );
 
             return $tpl;
+        }
+
+        function get_tmp_dir(){
+            static $tmp_dir = false;
+
+            if( !$tmp_dir ){
+
+                // candidate directories..
+                $dirs = array();
+                if( defined('K_TMP_DIR') ) $dirs[] = K_TMP_DIR;
+                if( ini_get('upload_tmp_dir') ) $dirs[] = ini_get( 'upload_tmp_dir' );
+                if( function_exists('sys_get_temp_dir') ){
+                    $dirs[] = sys_get_temp_dir();
+                }
+                else{ // PHP 5 < 5.2.1
+                    if( getenv('TMPDIR') ){ $dirs[] = getenv( 'TMPDIR' ); }
+                    elseif( getenv('TEMP') ){ $dirs[] = getenv( 'TEMP' ); }
+                    elseif( getenv('TMP') ){ $dirs[] = getenv( 'TMP' ); }
+                    else{
+                        $temp_file = tempnam( md5(uniqid(rand(), TRUE)), '' );
+                        if( $temp_file ){
+                            $dirs[] = dirname( $temp_file );
+                            unlink( $temp_file );
+                        }
+                    }
+                }
+
+                foreach( $dirs as $dir ){
+                    if( @is_dir($dir) && @is_writable($dir) ){
+                        $tmp_dir = rtrim( realpath($dir), '/\\' ) . '/';
+                        break;
+                    }
+                }
+            }
+
+            return $tmp_dir;
         }
 
     }// end class KFuncs
