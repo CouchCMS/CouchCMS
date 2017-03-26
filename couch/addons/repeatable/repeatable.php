@@ -315,6 +315,7 @@
                             for( $y=0; $y<count($this->cells); $y++ ){
                                 $c = &$this->cells[$y];
                                 $c->resolve_dynamic_params();
+                                $c->simple_mode = $this->simple_mode;
                                 unset( $c );
                             }
                         }
@@ -437,6 +438,7 @@
             for( $y=0; $y<count($this->cells); $y++ ){
                 $c = &$this->cells[$y];
                 $c->resolve_dynamic_params();
+                $c->simple_mode = $this->simple_mode;
                 unset( $c );
             }
 
