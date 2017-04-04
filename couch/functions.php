@@ -2724,7 +2724,7 @@ OUT;
 
             // $item_number is actually our page_id. Get the page.
             if( KFuncs::is_natural($item_number) ){
-                $rs = $DB->select( K_TBL_PAGES, array('id', 'template_id'), "id = '".$DB->sanitize( $item_number )."' AND page_title = '".$DB->sanitize( trim($item_name) )."'" );
+                $rs = $DB->select( K_TBL_PAGES, array('id', 'template_id'), "id = '".$DB->sanitize( $item_number )."'" );
                 if( count($rs) ){
                     $rec = $rs[0];
                     $pg = new KWebpage( $rec['template_id'], $rec['id'] );
@@ -2732,6 +2732,7 @@ OUT;
                         for( $x=0; $x<count($pg->fields); $x++ ){
                             if( $pg->fields[$x]->name == 'pp_price' ){
                                 $pp_price = trim( $pg->fields[$x]->get_data() );
+                                break;
                             }
                         }
 
