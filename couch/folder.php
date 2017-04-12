@@ -351,8 +351,8 @@
 
                         // check if 'order'by and 'order' have changed
                         if( $this->cmp_field!=$orig_cmp_field || $this->cmp_order!=$orig_cmp_order ){
-                            $this->root->set_sort( $orig_cmp_field, $orig_cmp_order );
-                            $this->root->sort(1);
+                            $this->children[$x]->root->set_sort( $orig_cmp_field, $orig_cmp_order );
+                            $this->children[$x]->root->sort(1);
                         }
                     }
 
