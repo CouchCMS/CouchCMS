@@ -823,6 +823,8 @@
             if( $PAGE->error ){
                 return $FUNCS->raise_error( ROUTE_NOT_FOUND );
             }
+            $PAGE->folders->set_sort( 'weight', 'asc' );
+            $PAGE->folders->sort( 1 );
             $PAGE->set_context();
         }
 
