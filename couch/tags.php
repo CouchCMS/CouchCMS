@@ -6600,7 +6600,7 @@ MAP;
             if( is_array($days) ){
 
                 // Today's date for timeline
-                $date = time() + (K_GMT_OFFSET * 60 * 60); //desktop time
+                $date = @strtotime( $FUNCS->get_current_desktop_time() ); //desktop time
                 $cur_year = date( 'Y', $date );
                 $cur_month = date( 'm', $date );
                 $cur_day = date( 'd', $date );
