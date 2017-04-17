@@ -68,6 +68,8 @@
     if( !defined('K_PAID_LICENSE') ) define( 'K_PAID_LICENSE', 0 );
     if( !defined('K_REMOVE_FOOTER_LINK') ) define( 'K_REMOVE_FOOTER_LINK', 0 );
 
+    if ( !defined('K_HTTPS') ) define( 'K_HTTPS', (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS']=='on') ? 1 : 0 );
+
     // Check if a cached version of the requested page may be used
     if ( !K_SITE_OFFLINE && !defined('K_ADMIN') && K_USE_CACHE && $_SERVER['REQUEST_METHOD']!='POST' ){
 
@@ -88,7 +90,12 @@
         if( !$auth && !$no_cache ){
             $k_cache_dir = K_COUCH_DIR . 'cache/';
             if( is_writable($k_cache_dir) ){
-                $k_cache_file = $k_cache_dir . md5($_SERVER['REQUEST_URI']) . '.dat';
+
+                $k_cache_url = 'http' . ((K_HTTPS) ? 's://' : '://') . $_SERVER['HTTP_HOST'] .
+                                (($_SERVER['SERVER_PORT']!='80' && $_SERVER['SERVER_PORT']!='443' && (strpos($_SERVER['HTTP_HOST'], ':')===false)) ? ':' . $_SERVER['SERVER_PORT'] : '') .
+                                $_SERVER['REQUEST_URI'];
+
+                $k_cache_file = $k_cache_dir . md5($k_cache_url) . '.dat';
                 if( file_exists($k_cache_file) ){
 
                     // Check if the cache has not expired
@@ -100,8 +107,13 @@
                         $pg = @unserialize( file_get_contents($k_cache_file) );
                         if( $pg ){
                             if( $pg['redirect_url'] ){
-                                header( "Location: ".$pg['redirect_url'], TRUE, 301 );
-                                die();
+                                if( $pg['redirect_url']===$k_cache_url ){ // corner case
+                                    @unlink( $k_cache_file );
+                                }
+                                else{
+                                    header( "Location: ".$pg['redirect_url'], TRUE, 301 );
+                                    die();
+                                }
                             }
                             else{
                                 $html = $pg['cached_html'];
@@ -178,7 +190,6 @@
     }
 
     if ( !defined('K_SITE_DIR') ) define( 'K_SITE_DIR', dirname( K_COUCH_DIR ) . '/' );
-    if ( !defined('K_HTTPS') ) define( 'K_HTTPS', (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS']=='on') ? 1 : 0 );
 
     //unset($_SERVER['DOCUMENT_ROOT']); //testing
     if ( !defined('K_SITE_URL') ){
