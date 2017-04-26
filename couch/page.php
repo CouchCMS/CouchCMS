@@ -882,7 +882,11 @@
             }
 
             if( $name=='' && $title!='' ){
-                $name = $FUNCS->get_clean_url( $title );
+                $name = $FUNCS->get_clean_url( $title );				
+                if ($name=='' && function_exists('transliterator_transliterate')) {
+					$transliterated_title = transliterator_transliterate('Any-Latin; Latin-ASCII; Lower()', $title);
+					$name = $FUNCS->get_clean_url($transliterated_title);
+				}
                 // verify the name does not already exist
                 $unique = false;
                 $unique_id = 1;
