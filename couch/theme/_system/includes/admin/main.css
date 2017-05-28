@@ -657,7 +657,7 @@ div.mfp-iframe-scaler iframe{background:#fff;}
 div.mfp-figure:after{background:#f5f5f5;}
 div.mfp-bottom-bar{text-shadow:0 1px 0 rgba(0,0,0,.6);}
 .plupload-iframe .mfp-iframe-scaler{padding-top:38%;}
-div.kcfinder-iframe .mfp-content{max-width:968px;}
+div.kcfinder-iframe .mfp-content{max-width:968px; height:100%}
 .kcfinder-iframe .mfp-iframe-scaler{padding-top:50%;}
 
 .mfp-fade.mfp-bg,.mfp-fade.mfp-wrap .mfp-content,.mfp-fade .mfp-arrow{opacity:0;

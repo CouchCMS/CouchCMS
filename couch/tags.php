@@ -102,38 +102,60 @@
         }
 
         function show( $params, $node ){
-            global $CTX;
+            global $FUNCS, $CTX;
             if( count($node->children) ) {die("ERROR: Tag \"".$node->name."\" is a self closing tag");}
 
-            // If second param set and first is a variable, return variable only from the specified scope scope.
-            if( $params[1]['rhs'] && $node->attributes[0]['value_type']==K_VAL_TYPE_VARIABLE ){
-                $scope = strtolower( trim($params[1]['rhs']) );
-                if( $scope != '' ){
-                    if( $scope!='1' && $scope!='2' && $scope!='global' && $scope!='local'  ){
-                        die("ERROR: Tag \"".$node->name."\" has unknown scope '" . $scope. "'. Only 'global (2)' or 'local (1)' are valid.");
-                    }
-                    $scope = ( $scope=='global' || $scope=='2' ) ? 2 : 1;
+            extract( $FUNCS->get_named_vars(
+                        array( 'var'=>'', /*placeholder*/
+                               'scope'=>'',
+                               'as_json'=>'0',
+                              ),
+                        $params)
+                   );
 
-                    return $CTX->get( $node->attributes[0]['value'], $scope );
+            $value = $params[0]['rhs'];
+            $scope = strtolower( trim($scope) );
+            $as_json = ( $as_json==1 ) ? 1 : 0;
+
+            // If scope set and first param is a variable, return variable only from the specified scope scope.
+            if( $scope != '' && $node->attributes[0]['value_type']==K_VAL_TYPE_VARIABLE ){
+                if( $scope!='1' && $scope!='2' && $scope!='global' && $scope!='local'  ){
+                    die("ERROR: Tag \"".$node->name."\" has unknown scope '" . $scope. "'. Only 'global (2)' or 'local (1)' are valid.");
                 }
+                $scope = ( $scope=='global' || $scope=='2' ) ? 2 : 1;
+
+                $value = $CTX->get( $node->attributes[0]['value'], $scope );
             }
 
-            return $params[0]['rhs'];
+            if( $as_json && is_array($value) ){ $value = $FUNCS->json_encode( $value ); }
+            return $value;
         }
 
         function set( $params, $node ){
-            global $CTX;
+            global $FUNCS, $CTX;
             if( count($node->children) ) {die("ERROR: Tag \"".$node->name."\" is a self closing tag");}
 
+            extract( $FUNCS->get_named_vars(
+                        array(
+                               'scope'=>'',
+                               'is_json'=>'0',
+                              ),
+                        $params)
+                   );
+
             $varname = $params[0]['lhs'];
+            $value = $params[0]['rhs'];
+            $scope = strtolower( trim($scope) );
+            $is_json = ( $is_json==1 ) ? 1 : 0;
+
             if( $varname ){
-                $scope = strtolower( trim($params[1]['rhs']) );
                 if( $scope != '' && ($scope!='parent' && $scope!='global' && $scope!='local') ){
                     die("ERROR: Tag \"".$node->name."\" has unknown scope '" . $scope. "'. Only 'global', 'local' or 'parent' are valid.");
                 }
 
                 if( substr($varname, 0, 2)!='k_' ){
-                    $CTX->set( $varname, $params[0]['rhs'], $scope );
+                    if( $is_json && !is_array($value) ){ $value = $FUNCS->json_decode( $value ); }
+                    $CTX->set( $varname, $value, $scope );
                 }
                 else{
                     die("ERROR: \"".$varname."\" cannot be set because it begins with 'k_' (considered system variable)");
@@ -151,6 +173,7 @@
                                'local_only'=>'',
                                'default'=>'',
                                'scope'=>null,
+                               'as_json'=>'0',
                               ),
                         $params)
                    );
@@ -158,6 +181,7 @@
             $var = trim($var);
             $tmp = ( $local_only==1 ) ? 1 : 0;
             $has_default = ( strlen($default) ) ? 1 : 0;
+            $as_json = ( $as_json==1 ) ? 1 : 0;
 
             // v2.0 - this new parameter, if set, overrides 'local_only'
             if( !is_null($scope) ){
@@ -172,10 +196,14 @@
             $scope = $tmp;
 
             if( $var ){
-                $val = $CTX->get( $var, $scope );
-                if( $has_default && !strlen($val) ){ $val = $default; }
+                $value = $CTX->get( $var, $scope );
+                if( $has_default ){
+                    $has_content = is_array($value) ? count($value) : strlen($value);
+                    if( !$has_content )$value = $default;
+                }
 
-                return $val;
+                if( $as_json && is_array($value) ){ $value = $FUNCS->json_encode( $value ); }
+                return $value;
             }
         }
 
@@ -187,13 +215,15 @@
             extract( $FUNCS->get_named_vars(
                         array( 'var'=>'',
                                'value'=>'',
-                               'scope'=>''
+                               'scope'=>'',
+                               'is_json'=>'0',
                               ),
                         $params)
                    );
 
             $varname = trim( $var );
-            $scope = strtolower( $scope );
+            $scope = strtolower( trim($scope) );
+            $is_json = ( $is_json==1 ) ? 1 : 0;
 
             if( $varname ){
                 if( $scope != '' && ($scope!='parent' && $scope!='global' && $scope!='local') ){
@@ -201,6 +231,7 @@
                 }
 
                 if( substr($varname, 0, 2)!='k_' ){
+                    if( $is_json && !is_array($value) ){ $value = $FUNCS->json_decode( $value ); }
                     $CTX->set( $varname, $value, $scope );
                 }
                 else{
@@ -290,13 +321,18 @@
 
             extract( $FUNCS->get_named_vars(
                         array( 'into'=>'',
-                               'scope'=>''
+                               'scope'=>'',
+                               'trim'=>'0',
+                               'is_json'=>'0',
                               ),
                         $params)
                    );
             $varname = trim( $into );
             $scope = strtolower( trim($scope) );
             if( $scope=='' ) $scope='global';
+            $trim = ( $trim==1 ) ? 1 : 0;
+            $is_json = ( $is_json==1 ) ? 1 : 0;
+
             if( $varname ){
                 if( $scope!='parent' && $scope!='global' ){ //local scope makes no sense
                     die("ERROR: Tag \"".$node->name."\" has unknown scope " . $scope);
@@ -308,6 +344,8 @@
                         $html .= $child->get_HTML();
                     }
 
+                    if( $trim ){ $html = trim( $html ); }
+                    if( $is_json ){ $html = $FUNCS->json_decode( $html ); }
                     $CTX->set( $varname, $html, $scope );
                 }
                 else{
@@ -336,54 +374,143 @@
             global $FUNCS, $CTX;
             extract( $FUNCS->get_named_vars(
                         array( 'var'=>'',
-                               'as'=>'item',
-                               'sep'=>'|'
+                               'as'=>'',
+                               'sep'=>'|',
+                               'key'=>'',
+                               'startcount'=>'0'
                               ),
                         $params)
                    );
 
-            if( !$sep ) $sep = '|';
-            if( $sep == '\r\n' ){
-                $sep = "\n";
-            }
-            elseif( $sep == '\r' ){
-                $sep = "\r";
-            }
-            elseif( $sep == '\n' ){
-                $sep = "\n";
-            }
-            elseif( $sep == '\t' ){
-                $sep = "\t";
+            $as = trim( $as ); if( $as=='' ){ $as='item'; }
+            $key = trim( $key ); if( $key=='' ){ $key='key'; }
+            $startcount = $FUNCS->is_int( $startcount ) ? intval( $startcount ) : 1;
+
+            if( !is_array($var) ){
+                if( !$sep ) $sep = '|';
+                if( $sep == '\r\n' ){
+                    $sep = "\n";
+                }
+                elseif( $sep == '\r' ){
+                    $sep = "\r";
+                }
+                elseif( $sep == '\n' ){
+                    $sep = "\n";
+                }
+                elseif( $sep == '\t' ){
+                    $sep = "\t";
+                }
+                else{
+                    $use_preg=1;
+                }
+
+                if( $var ){
+                    if( $use_preg ){
+                        $arr_vars = array_map( "trim", preg_split( "/(?<!\\\)\\".$sep."/", $var ) ); // allows escaping of separator with a backslash
+                    }
+                    else{
+                        $arr_vars = array_map( "trim", explode( $sep, $var ) );
+                    }
+
+                }
+
+                $cnt_arr = count($arr_vars);
+                $CTX->set( 'k_total_items', $cnt_arr );
+                $children = $node->children;
+
+                for( $x=0; $x<count($arr_vars); $x++ ){
+                    $CTX->set( 'k_count', $x + $startcount );
+                    $CTX->set( 'k_first_item', ($x==0) ? '1' : '0' );
+                    $CTX->set( 'k_last_item', ($x==$cnt_arr-1) ? '1' : '0' );
+
+                    if( $use_preg ){
+                        $CTX->set( $as, str_replace( '\\'.$sep, $sep, $arr_vars[$x] ) ); //unescape separator
+                    }
+                    else{
+                        $CTX->set( $as, $arr_vars[$x] );
+                    }
+
+                    // setup a way for the child nodes to signal 'break' or 'continue'
+                    $arr_config = array( 'break'=>0, 'continue'=>0 );
+                    $CTX->set_object( '__config', $arr_config );
+
+                    foreach( $children as $child ){
+                        $html .= $child->get_HTML();
+
+                        if( $child->type==K_NODE_TYPE_CODE){
+                            if( $arr_config['break'] ){ $count++; break 2; }
+                            if( $arr_config['continue'] ){ $count++; continue 2; }
+                        }
+                    }
+                }
             }
             else{
-                $use_preg=1;
+                $cnt_arr = count($var);
+                $CTX->set( 'k_total_items', $cnt_arr );
+                $children = $node->children;
+
+                $count = 0;
+                foreach( $var as $k=>$v ){
+                    $CTX->set( 'k_count', $count + $startcount );
+                    $CTX->set( 'k_first_item', ($count==0) ? '1' : '0' );
+                    $CTX->set( 'k_last_item', ($count==$cnt_arr-1) ? '1' : '0' );
+                    $CTX->set( $key, $k );
+                    $CTX->set( $as, $v );
+
+                    // setup a way for the child nodes to signal 'break' or 'continue'
+                    $arr_config = array( 'break'=>0, 'continue'=>0 );
+                    $CTX->set_object( '__config', $arr_config );
+
+                    foreach( $children as $child ){
+                        $html .= $child->get_HTML();
+
+                        if( $child->type==K_NODE_TYPE_CODE){
+                            if( $arr_config['break'] ){ $count++; break 2; }
+                            if( $arr_config['continue'] ){ $count++; continue 2; }
+                        }
+                    }
+
+                    $count++;
+                }
             }
 
-            if( $var ){
-                if( $use_preg ){
-                    $arr_vars = array_map( "trim", preg_split( "/(?<!\\\)\\".$sep."/", $var ) ); // allows escaping of separator with a backslash
-                }
-                else{
-                    $arr_vars = array_map( "trim", explode( $sep, $var ) );
-                }
-
-            }
-
-            $children = $node->children;
-            for( $x=0; $x<count($arr_vars); $x++ ){
-                $CTX->set( 'k_count', $x );
-                if( $use_preg ){
-                    $CTX->set( $as, str_replace( '\\'.$sep, $sep, $arr_vars[$x] ) ); //unescape separator
-                }
-                else{
-                    $CTX->set( $as, $arr_vars[$x] );
-                }
-
-                foreach( $children as $child ){
-                    $html .= $child->get_HTML();
-                }
-            }
             return $html;
+        }
+
+        function k_break( $params, $node ){
+            global $CTX;
+            if( count($node->children) ) {die("ERROR: Tag \"break\" is a self closing tag");}
+
+            // get the 'config' object supplied by 'cms:each' tag
+            $arr_config = &$CTX->get_object( '__config', 'each' );
+            if( is_array($arr_config) && isset($arr_config['break']) ){
+                $arr_config['break']=1;
+            }
+        }
+
+        function k_continue( $params, $node ){
+            global $CTX;
+            if( count($node->children) ) {die("ERROR: Tag \"continue\" is a self closing tag");}
+
+            // get the 'config' object supplied by 'cms:each' tag
+            $arr_config = &$CTX->get_object( '__config', 'each' );
+            if( is_array($arr_config) && isset($arr_config['continue']) ){
+                $arr_config['continue']=1;
+            }
+        }
+
+        function is_array( $params, $node ){
+            global $CTX;
+            if( count($node->children) ) {die("ERROR: Tag \"".$node->name."\" is a self closing tag");}
+
+            return is_array( $params[0]['rhs'] ) ? '1' : '0';
+        }
+
+        function array_count( $params, $node ){
+            global $CTX;
+            if( count($node->children) ) {die("ERROR: Tag \"".$node->name."\" is a self closing tag");}
+
+            return is_array( $params[0]['rhs'] ) ? count($params[0]['rhs']) : '0';
         }
 
         function embed( $params, $node ){
@@ -904,8 +1031,7 @@
             global $FUNCS;
             $children = $node->children;
 
-            $cond = $FUNCS->resolve_condition( $node->attributes );
-            if( eval("return ".$cond.";") ){
+            if( $FUNCS->resolve_condition( $node->attributes ) ){
                 foreach( $children as $child ){
                     if( $child->type == K_NODE_TYPE_CODE && ($child->name == 'else' || $child->name == 'else_if') ){ break; }
                     $html .= $child->get_HTML();
@@ -923,8 +1049,7 @@
                                 $ok = true;
                             }
                             else{
-                                $cond = $FUNCS->resolve_condition( $child->attributes );
-                                if( eval("return ".$cond.";") ){
+                                if( $FUNCS->resolve_condition( $child->attributes ) ){
                                     $ok = true;
                                 }
                             }
@@ -942,8 +1067,7 @@
             global $FUNCS;
             if( count($node->children) ) {die("ERROR: Tag \"".$node->name."\" is a self closing tag");}
 
-            $cond = $FUNCS->resolve_condition( $node->attributes );
-            return ( eval("return ".$cond.";") ) ? 0 : 1;
+            return ( $FUNCS->resolve_condition( $node->attributes ) ) ? 0 : 1;
         }
 
         function k_else( $params, $node ){
@@ -960,7 +1084,7 @@
 
             $safety = 0;
             $cond = $FUNCS->resolve_condition( $node->attributes );
-            while( eval("return ".$cond.";") ){
+            while( $cond ){
                 if( ++$safety > 1000 ){ die("Infinite while loop"); }
                 foreach( $children as $child ){
                     $html .= $child->get_HTML();
@@ -1003,6 +1127,8 @@
             if( $node->attributes[0]['value_type']!=K_VAL_TYPE_VARIABLE ) die( "ERROR: Tag \"".$node->name."\": First parameter should be a variable" );
             $var = $node->attributes[0]['value'];
             $p0 = $params[0]['rhs'];
+            if( is_array($p0) ) return;
+
             $p1 = isset($params[1]['rhs']) ? $params[1]['rhs'] : 1;
             $CTX->set( $var, $p0+$p1, 'parent' );
 
@@ -1016,6 +1142,8 @@
             if( $node->attributes[0]['value_type']!=K_VAL_TYPE_VARIABLE ) die( "ERROR: Tag \"".$node->name."\": First parameter should be a variable" );
             $var = $node->attributes[0]['value'];
             $p0 = $params[0]['rhs'];
+            if( is_array($p0) ) return;
+
             $p1 = isset($params[1]['rhs']) ? $params[1]['rhs'] : 1;
             $CTX->set( $var, $p0-$p1, 'parent' );
 
@@ -1027,6 +1155,7 @@
             $p0 = $params[0]['rhs'];
             $p1 = $params[1]['rhs'];
 
+            if( is_array($p0) || is_array($p1) ) return;
             return $p0 * $p1;
         }
 
@@ -1035,6 +1164,7 @@
             $p0 = $params[0]['rhs'];
             $p1 = $params[1]['rhs'];
 
+            if( is_array($p0) || is_array($p1) ) return;
             return $p0 / $p1;
         }
 
@@ -1043,6 +1173,7 @@
             $p0 = $params[0]['rhs'];
             $p1 = $params[1]['rhs'];
 
+            if( is_array($p0) || is_array($p1) ) return;
             return $p0 + $p1;
         }
 
@@ -1051,6 +1182,7 @@
             $p0 = $params[0]['rhs'];
             $p1 = $params[1]['rhs'];
 
+            if( is_array($p0) || is_array($p1) ) return;
             return $p0 - $p1;
         }
 
@@ -1059,6 +1191,7 @@
             $p0 = $params[0]['rhs'];
             $p1 = $params[1]['rhs'];
 
+            if( is_array($p0) || is_array($p1) ) return;
             return $p0 % $p1;
         }
 

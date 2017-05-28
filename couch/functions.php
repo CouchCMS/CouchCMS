@@ -92,6 +92,7 @@
         var $route_content_type = '';
 
         var $_ed;
+        var $json = null;
 
         function __construct(){
             define( '_64e3',  (64.0 * 64.0 * 64.0) );
@@ -156,7 +157,8 @@
                         $param['rhs'] = $attr['value'];
                         break;
                     case K_VAL_TYPE_VARIABLE:
-                        $param['rhs'] = trim( $CTX->get($attr['value']) );
+                        $val = $CTX->get( $attr['value'] );
+                        $param['rhs'] = ( !is_array($val) ) ? trim( $val ) : $val;
                         break;
                     case K_VAL_TYPE_SPECIAL:
                         $param['rhs'] = trim( $attr['value']->get_HTML() );
@@ -200,7 +202,7 @@
                     }
                 }
             }
-            return $s;
+            return eval("return ".$s.";");
         }
 
         static function _handle_extends( $DOM ){
@@ -4411,6 +4413,28 @@ OUT;
             return $tmp_dir;
         }
 
+        function json_encode( $value ){
+            if( function_exists('json_encode') ) return json_encode( $value );
+
+            if( !class_exists('Services_JSON') ){
+                require_once( K_COUCH_DIR . 'includes/JSON.php' );
+            }
+            if( is_null($this->json) ) $this->json = new Services_JSON( SERVICES_JSON_LOOSE_TYPE );
+
+            return $this->json->encode( $value );
+        }
+
+        function json_decode( $value ){
+            if( function_exists('json_decode') ) return json_decode( $value, true );
+
+            if( !class_exists('Services_JSON') ){
+                require_once( K_COUCH_DIR . 'includes/JSON.php' );
+            }
+            if( is_null($this->json) ) $this->json = new Services_JSON( SERVICES_JSON_LOOSE_TYPE );
+
+            return $this->json->decode( $value );
+        }
+
     }// end class KFuncs
 
 
@@ -4418,6 +4442,7 @@ OUT;
         var $err_msg = '';
 
         function __construct( $err_msg='' ){
+            $this->error=1;
             $this->err_msg = $err_msg;
         }
     }

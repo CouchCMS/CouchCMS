@@ -95,6 +95,70 @@
             unset( $this->ctx[count($this->ctx)-1] );
         }
 
+        // a shim function now to accomodate dot syntax
+        function set( $varname, $value, $scope='', $obj_to_array=0 ){
+            global $FUNCS;
+
+            if( is_bool($value) ){ $value = (int)$value; }
+            if( $obj_to_array && (is_array($value) || is_object($value)) ){
+                $value = $FUNCS->json_decode( $FUNCS->json_encode($value) ); // recursively converts all objects to arrays
+            }
+
+            if( strpos($varname, '.')===false ){
+                return $this->_set( $varname, $value, $scope );
+            }
+
+            // we are dealing with arrays now e.g "zoo.mammals.dogs.small"
+            $keys = array_map( "trim", explode('.', $varname) );
+            $varname = array_shift( $keys );
+
+            $parent = null;
+            switch( $scope ){
+            case "global":
+                $parent = &$this->ctx[0]['_scope_'][$varname];
+                break;
+            case "parent":
+                for( $x=count($this->ctx)-1; $x>=0; $x-- ){
+                    if( isset($this->ctx[$x]['_scope_']) && isset($this->ctx[$x]['_scope_'][$varname]) ){
+                        $parent = &$this->ctx[$x]['_scope_'][$varname];
+                        break 2;
+                    }
+                }
+            default:
+                for( $x=count($this->ctx)-1; $x>=0; $x-- ){
+                    if( isset($this->ctx[$x]['_scope_']) ){
+                        $parent = &$this->ctx[$x]['_scope_'][$varname];
+                        break;
+                    }
+                }
+            }
+
+            $cnt_keys = count( $keys );
+            for( $x=0; $x<$cnt_keys; $x++ ){
+                $key = $keys[$x];
+
+                if( is_array($parent) ){
+                    if( $x==$cnt_keys-1 ){
+                        if( $key=='' ){
+                            //$key=count( $parent );
+                            $tmp = array_filter( array_keys($parent), 'is_int' );
+                            $key = ( count($tmp) ) ? max($tmp)+1 : 0;
+                        }
+                        $parent[$key] = $value;
+                    }
+                    else{
+                        $tmp = &$parent[$key];
+                        unset( $parent );
+                        $parent = &$tmp;
+                        unset( $tmp );
+                    }
+                }
+                else{
+                    return;
+                }
+            }
+        }
+
         /*
            'set' by default will set a variable only in the immediate scope (first scoped tag encountered)
            However if 'parent' is specified as second param, it searches
@@ -104,9 +168,7 @@
 
            If 'global' is set, the var is set at the root scope.
         */
-        function set( $varname, $value, $scope='' ){
-            if( is_bool($value) ){ $value = (int)$value; }
-
+        function _set( $varname, $value, $scope='' ){
             if( $scope=='global' ){
                 $this->ctx[0]['_scope_'][$varname] = $value;
                 return;
@@ -131,24 +193,13 @@
         }
 
         // Same as above. Used internally to set variables in bulk in a single scope
-        function set_all( $arr_vars, $scope='' ){
-            if( is_array($arr_vars) && count($arr_vars) ){
-                if( $scope=='global' ){
-                    $ctx = &$this->ctx[0]['_scope_'];
-                }
-                else{
-                    for( $x=count($this->ctx)-1; $x>=0; $x-- ){
-                        if( isset($this->ctx[$x]['_scope_']) ){
-                            $ctx = &$this->ctx[$x]['_scope_'];
-                            break;
-                        }
-                    }
-                }
+        function set_all( $arr_vars, $scope='', $obj_to_array=0 ){
+            global $FUNCS;
 
+            if( is_array($arr_vars) && count($arr_vars) ){
                 // Set all the array elements into the selected context
                 foreach( $arr_vars as $varname=>$value ){
-                    if( is_bool($value) ){ $value = (int)$value; }
-                    $ctx[$varname] = $value;
+                    $this->set( $varname, $value, $scope, $obj_to_array );
                 }
             }
         }
@@ -165,6 +216,39 @@
             }
         }
 
+        // a shim function now to accomodate dot syntax
+        function get( $varname, $scope=false ){
+            if( strpos($varname, '.')===false ){
+                return $this->_get( $varname, $scope );
+            }
+
+            // we are dealing with arrays now e.g "zoo.mammals.dogs.small"
+            $keys = array_map( "trim", explode('.', $varname) );
+            $varname = array_shift( $keys );
+
+            $parent = $this->_get( $varname, $scope );
+            $cnt_keys = count( $keys );
+
+            for( $x=0; $x<$cnt_keys; $x++ ){
+                $key = $keys[$x];
+                if( $key=='' ) $key=0;
+
+                if( is_array($parent) && isset($parent[$key]) ){
+                    if( $x==$cnt_keys-1 ){
+                        return $parent[$key];
+                    }
+                    else{
+                        $parent = $parent[$key];
+                    }
+                }
+                else{
+                    return null;
+                }
+            }
+
+            return null;
+        }
+
         /*
          * 'get' by default will fetch a var by searching upwards through the
          * hierarchy of scopes.
@@ -174,7 +258,7 @@
          * For backward compatibility, a value of '1' or 'true' will translate to 'local' scope
          * As a new addition, '2' will mean 'global'.
          */
-        function get( $varname, $scope=false ){
+        function _get( $varname, $scope=false ){
             if( $scope ){
                 $scope = (int)$scope; // local or global?
                 if( $scope==2 ){
@@ -368,7 +452,7 @@
                 case K_NODE_TYPE_CODE:
                     $CTX->push( $this->name );
                     $func = $this->name;
-                    if( $this->name=='if' || $this->name=='else' || $this->name=='while' || $this->name=='extends' ) $func = 'k_'.$func;
+                    if( $this->name=='if' || $this->name=='else' || $this->name=='while' || $this->name=='extends' || $this->name=='break' || $this->name=='continue' ) $func = 'k_'.$func;
 
                     if( method_exists($TAGS, $func) ){
                         if( !($this->name=='if' || $this->name=='while' || $this->name=='not' || $this->name=='else_if') ){
@@ -929,9 +1013,9 @@
         }
 
         function is_valid_for_label( $char, $pos=-1 ){
-            // Labels (tag names and attributes) can contain [a-z][A-Z][0-9]_-
-            // except for the first character that cannot be a numeral or an hyphen.
-            if( ($char>='A' && $char<='Z') || ($char>='a' && $char<='z') || ($char=='_') || (($char=='-')&&($pos!=0)) || (($char>='0' && $char<='9')&&($pos!=0)) ){
+            // Labels (tag names and attributes) can contain [a-z][A-Z][0-9]_.-
+            // except for the first character that cannot be a numeral or an hyphen or a period.
+            if( ($char>='A' && $char<='Z') || ($char>='a' && $char<='z') || ($char=='_') || (($char=='-')&&($pos!=0)) || (($char>='0' && $char<='9')&&($pos!=0)) || (($char=='.')&&($pos!=0)) ){
                 return true;
             }
             return false;
