@@ -86,6 +86,7 @@
         var $admin_js = '';
         var $admin_css = '';
         var $admin_html = '';
+        var $admin_meta = '';
 
         var $current_route = null;
         var $route_fully_rendered = 0;
@@ -3966,6 +3967,16 @@ OUT;
             }
         }
 
+        function add_meta( $meta ){
+            static $sig = array();
+
+            $hash = MD5( $html );
+            if( !isset($sig[$hash]) ){
+                $this->admin_meta .= $meta . "\r\n";
+                $sig[$hash] = 1;
+            }
+        }
+
         function get_js(){
             static $done=0;
             if( !$done ){
@@ -3991,6 +4002,15 @@ OUT;
                 $done=1;
             }
             return $this->admin_html;
+        }
+
+        function get_meta(){
+            static $done=0;
+            if( !$done ){
+                $this->dispatch_event( 'add_admin_meta' );
+                $done=1;
+            }
+            return $this->admin_meta;
         }
 
         function show_alert( $heading='', $content='', $type='', $center='' ){

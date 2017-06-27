@@ -4737,6 +4737,12 @@ FORM;
             return $FUNCS->get_html();
         }
 
+        function admin_meta( $params, $node ){
+            global $FUNCS;
+
+            return $FUNCS->get_meta();
+        }
+
         function admin_route_link( $params, $node ){
             global $FUNCS;
 
