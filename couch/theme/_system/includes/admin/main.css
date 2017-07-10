@@ -274,7 +274,7 @@ div.simple-heading{border-width:0 0 1px 0;margin-top:0;cursor:default;}
 #nav>li>a:hover,#nav>li>a:focus,.nav-group>ul>li>a:hover,.nav-group>ul>li>a:focus{background-color:#1a1a1a;color:#eee;fill:#eee;}
 .nav-active{box-shadow:0 1px 0 rgba(255,255,255,.1) inset,0 1px 0 rgba(0,0,0,.15);}
 #nav>li>.nav-active,#nav>li>.nav-active:hover,#nav>li>.nav-active:focus,.nav-group>ul>li>.nav-active,.nav-group>ul>li>.nav-active:hover,.nav-group>ul>li>.nav-active:focus{color:#fff;}
-.nav-title{display:inline-block;max-width:100%;height:32px;line-height:32px;padding-left:26px;overflow:hidden;vertical-align:top;font-size:12px;white-space:nowrap;text-overflow:ellipsis;}
+.nav-title{display:inline-block;max-width:100%;height:32px;line-height:32px;padding-left:26px;/*overflow:hidden;*/vertical-align:top;font-size:12px;white-space:nowrap;text-overflow:ellipsis;}
 .nav-heading{position:relative;height:32px;padding:0 15px;margin:12px 0 6px;}
 .nav-heading:before{content:"";display:block;padding-top:12px;border-top:1px solid #0a0a0a;}
 .nav-heading:after,#nav-links:after,#sidebar-btns:after{content:"";display:block;position:absolute;top:0;right:0;left:0;border-top:1px solid rgba(255,255,255,.04);}
