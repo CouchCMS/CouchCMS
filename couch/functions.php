@@ -943,6 +943,10 @@
             if( !$chopped_url['path'] ) return false;
 
             $url .= $chopped_url['path'];
+
+            // HOOK: get_url
+            $this->dispatch_event( 'get_url', array(&$url) );
+
             return $url;
         }
 
@@ -1825,59 +1829,88 @@
                 $for_index = '';
                 $body = '';
                 $sep = "\n";
+                $arr_rules = array();
+
                 foreach( $rs as $key=>$val ){
-                    $body .= $sep . '#'. $val['name'] . $sep;
-                    if( $val['is_index'] ){
-                        //RewriteRule ^news/index.php$ "news/" [R=301,L,QSA]
-                        $for_index .= 'RewriteRule ^'.$val['name'].'$ "'.$val['pretty_name'].'" [R=301,L,QSA]' . $sep;
-                    }
-                    else{
-                        // Redirect if not trailing slash
-                        //RewriteRule ^news/test$ "$0/" [R=301,L,QSA]
-                        $body .= 'RewriteRule ^'.substr( $val['pretty_name'], 0, strlen($val['pretty_name'])-1 )  .'$ "$0/" [R=301,L,QSA]' . $sep;
-
-                        //RewriteRule ^news/test/$ news/test.php [L,QSA]
-                        $body .= 'RewriteRule ^'.$val['pretty_name'].'$ '.$val['name'].' [L,QSA]' . $sep;
-                    }
-
-                    $name = ( $val['is_index'] ) ? $val['pretty_name'] : $val['name'];
 
                     // is routable? (i.e. has custom routes)
-                    $has_custom_routes = 0;
+                    $val['has_custom_routes'] = 0;
                     $custom_params = array();
                     if( strlen($val['custom_params']) ){
                         $custom_params = $FUNCS->unserialize($val['custom_params']);
                         if( is_array($custom_params) && $custom_params['routable'] ){
-                            $has_custom_routes = 1;
+                            $val['has_custom_routes'] = 1;
                         }
                     }
 
-                    if( !$has_custom_routes ){
+                    $rules_index = array();
+                    $rules = array();
+
+                    if( $val['is_index'] ){
+                        //RewriteRule ^news/index.php$ "news/" [R=301,L,QSA]
+                        $rules_index[] = 'RewriteRule ^'.$val['name'].'$ "'.$val['pretty_name'].'" [R=301,L,QSA]';
+                    }
+                    else{
+                        // Redirect if not trailing slash
+                        //RewriteRule ^news/test$ "$0/" [R=301,L,QSA]
+                        $rules[] = 'RewriteRule ^'.substr( $val['pretty_name'], 0, strlen($val['pretty_name'])-1 )  .'$ "$0/" [R=301,L,QSA]';
+
+                        //RewriteRule ^news/test/$ news/test.php [L,QSA]
+                        $rules[] = 'RewriteRule ^'.$val['pretty_name'].'$ '.$val['name'].' [L,QSA]';
+                    }
+
+                    $name = ( $val['is_index'] ) ? $val['pretty_name'] : $val['name'];
+
+                    if( !$val['has_custom_routes'] ){
                         // Page
                         //RewriteRule ^news/test/.*?([^\.\/]*)\.html$ news/test.php?pname=$1 [L,QSA]
-                        $body .= 'RewriteRule ^'. $val['pretty_name'].'.*?([^\.\/]*)\.html$ '.$name.'?pname=$1 [L,QSA]' . $sep;
+                        $rules[] = 'RewriteRule ^'. $val['pretty_name'].'.*?([^\.\/]*)\.html$ '.$name.'?pname=$1 [L,QSA]';
 
                         // Archives
                         //RewriteRule ^news/([1-2]\d{3})/(?:(0[1-9]|1[0-2])/(?:(0[1-9]|1[0-9]|2[0-9]|3[0-1])/)?)?$  [L,QSA]
-                        $body .= 'RewriteRule ^'.$val['pretty_name'].'([1-2]\d{3})/(?:(0[1-9]|1[0-2])/(?:(0[1-9]|1[0-9]|2[0-9]|3[0-1])/)?)?$ '.$name.'?d=$1$2$3 [L,QSA]' . $sep;
+                        $rules[] = 'RewriteRule ^'.$val['pretty_name'].'([1-2]\d{3})/(?:(0[1-9]|1[0-2])/(?:(0[1-9]|1[0-9]|2[0-9]|3[0-1])/)?)?$ '.$name.'?d=$1$2$3 [L,QSA]';
 
                         // Folder
                         //RewriteRule ^news/test/[^\.]*?([^/\.]*)/$ news/test.php?fname=$1 [L,QSA]
-                        $body .= 'RewriteRule ^'.$val['pretty_name'].'[^\.]*?([^/\.]*)/$ '.$name.'?fname=$1 [L,QSA]' . $sep;
+                        $rules[] = 'RewriteRule ^'.$val['pretty_name'].'[^\.]*?([^/\.]*)/$ '.$name.'?fname=$1 [L,QSA]';
 
                         // Folder redirect if not trailing slash
                         //RewriteRule ^news/test/[^\.]*?([^/\.]*)$ "$0/" [R=301,L,QSA]
                         //RewriteRule ^\w[^\.]*?([^/\.]*)$ "$0/" [R=301,L,QSA]
                         $n = (strlen($val['pretty_name'])) ? $val['pretty_name'] : '\w';
-                        $body .= 'RewriteRule ^'.$n.'[^\.]*?([^/\.]*)$ "$0/" [R=301,L,QSA]' . $sep;
+                        $rules[] = 'RewriteRule ^'.$n.'[^\.]*?([^/\.]*)$ "$0/" [R=301,L,QSA]';
                     }
                     else{
                         //RewriteRule ^news/test/(+*?)$ news/test.php?q=$1 [L,QSA]
-                        $body .= 'RewriteRule ^'. $val['pretty_name'].'(.+?)$ '.$name.'?q=$1 [L,QSA]' . $sep;
+                        $rules[] = 'RewriteRule ^'. $val['pretty_name'].'(.+?)$ '.$name.'?q=$1 [L,QSA]';
+                    }
+
+                    // HOOK: alter_rewrite_rules
+                    $FUNCS->dispatch_event( 'alter_rewrite_rules', array($val['name'], &$val, &$rules, &$rules_index) );
+
+                    $arr_rules[$val['name']] = array( 'rules_index'=>$rules_index, 'rules'=>$rules );
+                }
+
+                // HOOK: alter_rewrite_rules_final
+                $FUNCS->dispatch_event( 'alter_rewrite_rules_final', array(&$arr_rules) );
+
+                // Send back the consolidated rules
+                foreach( $arr_rules as $tpl=>$entries ){
+                    if( count($entries['rules_index']) ){
+                        foreach( $entries['rules_index'] as $rule ){
+                            $for_index .= $rule . $sep;
+                        }
+                    }
+
+                    if( count($entries['rules']) ){
+                        $body .= $sep . '#'. $tpl . $sep;
+
+                        foreach( $entries['rules'] as $rule ){
+                            $body .=  $rule . $sep;
+                        }
                     }
                 }
 
-                // Send back the consolidated rules
                 $header .= 'Options +SymLinksIfOwnerMatch -MultiViews' . $sep;
                 $header .= '<IfModule mod_rewrite.c>' . $sep;
                 $header .= 'RewriteEngine On' . $sep;

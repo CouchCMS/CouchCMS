@@ -662,7 +662,7 @@
                     array(
                         'title'=>$FUNCS->t('view'),
                         'onclick'=>array( "this.blur();" ),
-                        'href'=>$CTX->get('k_page_link'),
+                        'href'=>K_SITE_URL . $PAGE->tpl_name . '?p=' . $PAGE->id,
                         'target'=>'_blank',
                         'icon'=>'magnifying-glass',
                         'weight'=>20,
