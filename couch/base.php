@@ -359,6 +359,7 @@
         }
 
         function _set_default_field_groups( &$arr_fields ){
+			global $FUNCS;
             // divide fields into three groups - 'advanced settings', 'sytem_fields' and 'custom_fields'
             // 1. advanced settings
             $arr_fields[ '_advanced_settings_' ] = array( 'no_wrapper'=>'1' );
