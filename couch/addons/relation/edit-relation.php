@@ -165,7 +165,7 @@
             global $FUNCS;
 
             $limit = trim( $limit );
-            if( $limit=='' ){  $limit = '3'; }
+            if( $limit=='' ){  $limit = '25'; }
 
             $FUNCS->set_admin_list_default_limit( $limit );
         }
