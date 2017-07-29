@@ -1,0 +1,128 @@
+<div class="select dropdown k-relation-ex<cms:if k_has_one> has-one</cms:if>">
+    <select name="<cms:show k_field_input_id />_select" id="<cms:show k_field_input_id />_select" class="k-relation-select" size="<cms:if k_has_one>1<cms:else />8</cms:if>" multiple>
+        <cms:each k_options as='value'>
+            <option value="<cms:show key />"><cms:show value /></option>
+        </cms:each>
+    </select>
+    <div class="k-relation-buttons">
+        <a class="btn popup-iframe add" href="#" tabindex="1" data-mfp-src="//about:blank" data_relation_src="<cms:show k_target_link />" data_relation_field="<cms:show k_field_input_id />" onclick="this.blur();" <cms:if k_has_one && k_option_ids>style="display:none;"</cms:if>><cms:show_icon 'plus' /><span><cms:localize 'add' /></span></a>
+        <a class="btn remove<cms:if k_has_one='0'> disabled</cms:if>" href="#" tabindex="2" onclick="this.blur();" <cms:if k_has_one && k_option_ids=''>style="display:none;"</cms:if>><cms:localize 'remove' /></a>
+    </div>
+    <input type="hidden" class="k-relation-ids" name="<cms:show k_field_input_id />" value="<cms:show k_option_ids />" />
+</div>
+
+<cms:if k_add_js >
+    <cms:admin_add_js>
+        $(function(){ 
+            var iframe_name = 'k-iframe-' + Math.floor(Math.random()*1000001);
+            var form = $('<form />', { id: 'k-relation-form', action: '', method: 'POST', style: 'display:none' });
+            var input = $('<input />', { id: '__k_relation_ids__', name: '__k_relation_ids__', type: 'hidden' });
+            form.append(input).appendTo($('body'));
+
+            $( ".k-relation-ex" ).each(function(index){
+                var field = $(this);
+                var list = field.find('select');
+                var btn_remove = field.find('.btn.remove');
+                var btn_add = field.find('.btn.add');
+                var label_add = btn_add.find('span');
+                var input_ids = field.find('.k-relation-ids');
+                var has_one = field.hasClass( 'has-one' );
+
+                if( has_one ){  
+                    list.mousedown(function(e){
+                        e.preventDefault();
+                    });
+                }
+                else{
+                    list.change(function(){
+                        if( $(this).find('option:selected').length ){
+                            btn_remove.removeClass("disabled");
+                        }
+                        else{
+                            btn_remove.addClass("disabled");
+                        }
+                    });
+                }
+
+                list.bind( '_refresh', function(){
+                    var str_ids = '';
+                    var sep = '';
+                    $(this).find('option').each(function(i, selected) {
+                        str_ids += sep + $(this).val();
+                        sep = ',';
+                    });
+                    input_ids.val( str_ids );
+                    
+                    if( has_one ){
+                        if(str_ids.length){
+                            btn_remove.css('display', 'inline-block');
+                            btn_add.css('display', 'none');
+                        }
+                        else{
+                            btn_add.css('display', 'inline-block');
+                            btn_remove.css('display', 'none');
+                        }
+                    }
+                });
+
+                btn_remove.click(function(){
+                    if( has_one ){
+                        list.empty();
+                    }
+                    else{
+                        list.find('option:selected').each(function(i, selected) {
+                            $(this).remove();
+                        });
+                    }
+                    list.trigger('change');
+                    list.trigger('_refresh');
+
+                    return false;
+                });
+
+                // modal callbacks
+                var modal_before_open = function() {
+                    window.KRelation = {
+                        callBack: function( content, exit_code ){
+                            if( exit_code=='exit_save' ){
+                                var arr = jQuery.parseJSON(content);
+
+                                if(arr.length){
+                                    if( has_one && arr.length>1 ) arr.splice(1);
+
+                                    var html = '';
+                                    $.each(arr, function( key, val ){
+                                        html += '<option value="' + val.id + '">' + val.title + '</option>';
+                                    });
+
+                                    if( has_one ) list.empty();
+                                    list.append(html);
+                                    list.trigger('_refresh');
+                                }
+                            }
+
+                            // close modal
+                            modal_after_close();
+                        }
+                    };
+
+                    // prep form
+                    form.attr( "action", btn_add.attr('data_relation_src') );
+                    form.attr( "target", iframe_name );
+                    input.val( input_ids.val() );
+                };
+
+                var modal_open = function() {
+                    form.submit();
+                };
+
+                var modal_after_close = function() {
+                    window.KRelation = null;
+                    $.magnificPopup.close();
+                };
+
+                COUCH.bindPopupIframe( btn_add, modal_before_open, modal_after_close, "mosaic-iframe", true, iframe_name, modal_open );
+            }); 
+        });
+    </cms:admin_add_js>
+</cms:if>
