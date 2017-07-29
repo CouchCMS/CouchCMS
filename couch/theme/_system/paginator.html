@@ -4,7 +4,7 @@
         <span class="ctrl-sep ctrl-sep-showing"></span>
     </cms:capture>
 
-    <div class="btn-group">
+    <div class="btn-group paginator">
         <cms:paginator adjacents='1'>
             <cms:if k_crumb_type='prev' >
                 <a class="btn btn-pg pg-prev tt<cms:if k_crumb_disabled> disabled</cms:if>" <cms:if k_crumb_disabled>href="#" onClick="return false"<cms:else />href="<cms:show k_crumb_link />"</cms:if> title="Previous"><cms:show_icon 'arrow-thick-left' /></a>

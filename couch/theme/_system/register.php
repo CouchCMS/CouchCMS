@@ -311,6 +311,8 @@
         $rs = $DB->select( K_TBL_TEMPLATES, array('*'), '1=1 ORDER BY id ASC' );
         if( count($rs) ){
             foreach( $rs as $tpl ){
+                if( $tpl['hidden'] > 1 ) continue;
+
                 $icon = trim( $tpl['icon'] );
                 $class = '';
                 $show = 1;
@@ -547,7 +549,7 @@
 
             $delete_prompt = $FUNCS->t( 'confirm_delete_folder' );
         }
-        else{ // pages module
+        elseif( $route->module=='pages' ){
             $page_id  = $CTX->get('k_page_id');
             $tpl_id   = $CTX->get('k_template_id');
             $tpl_name = $CTX->get('k_template_name');
