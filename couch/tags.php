@@ -7548,4 +7548,43 @@ MAP;
             return $html;
         }
 
+        // Array related tags
+        /*
+            for non-associative arrays e.g.
+            <cms:set rec='["de", "fr", "es"]' is_json='1' />
+            <cms:arr_val_exists 'fr' in=rec />
+        */
+        function arr_val_exists( $params, $node ){
+            global $FUNCS;
+            if( count($node->children) ) {die("ERROR: Tag \"".$node->name."\" is a self closing tag");}
+
+            extract( $FUNCS->get_named_vars(
+                        array( 'val'=>'',
+                               'in'=>'',
+                              ),
+                        $params)
+                   );
+
+            return ( is_array($in) && in_array($val, $in) ) ? '1' : '0';
+        }
+
+        /*
+            for associative arrays e.g.
+            <cms:set rec='{"name":"John", "age":30, "cars":[ "Ford", "BMW", "Fiat" ]}' is_json='1' />
+            <cms:arr_key_exists 'cars' in=rec />
+        */
+        function arr_key_exists( $params, $node ){
+            global $FUNCS;
+            if( count($node->children) ) {die("ERROR: Tag \"".$node->name."\" is a self closing tag");}
+
+            extract( $FUNCS->get_named_vars(
+                        array( 'key'=>'',
+                               'in'=>'',
+                              ),
+                        $params)
+                   );
+
+            return ( is_array($in) && array_key_exists($key, $in) ) ? '1' : '0';
+        }
+
     } //end class KTags
