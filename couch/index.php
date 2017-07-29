@@ -28,6 +28,7 @@
     }
     else{
         // if no route specified in request, redirect to the first registered route (or show welcome msg if no route available)
+        $FUNCS->init_render();
         $html = $FUNCS->render( 'default_route' );
         $FUNCS->set_admin_title( $FUNCS->t('welcome') );
     }

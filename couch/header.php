@@ -419,17 +419,10 @@
         unset( $t );
     }
 
-    // initialize theming
-    $FUNCS->renderables = array();
-    $FUNCS->dispatch_event( 'register_renderables' );               // phase 1 - register all render functions
-    define( 'K_REGISTER_RENDERABLES_DONE', '1' );
-    $FUNCS->dispatch_event( 'override_renderables' );               // phase 2 - override render functions (meant for addons)
-    $FUNCS->dispatch_event( 'alter_renderables', array(&$FUNCS->renderables) );
-    if( K_THEME_DIR && function_exists('k_override_renderables') ){ // phase 3 - the theme layer gets the final say in overriding all render functions
-        define( 'K_THEME_OVERRIDING_RENDERABLES', '1' );
-        k_override_renderables();
+    // initialize theming (for the admin panel we'll defer this till the current route is selected)
+    if( !defined('K_ADMIN') ){
+        $FUNCS->init_render();
     }
-    define( 'K_OVERRIDING_RENDERABLES_DONE', '1' );
 
     // All addons loaded at this point
     $FUNCS->dispatch_event( 'init' );

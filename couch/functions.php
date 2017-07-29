@@ -3518,6 +3518,21 @@ OUT;
         }
 
         // functions for overridable rendering functions
+        function init_render(){
+            global $FUNCS;
+
+            $FUNCS->renderables = array();
+            $FUNCS->dispatch_event( 'register_renderables' );               // phase 1 - register all render functions
+            define( 'K_REGISTER_RENDERABLES_DONE', '1' );
+            $FUNCS->dispatch_event( 'override_renderables' );               // phase 2 - override render functions (meant for addons)
+            $FUNCS->dispatch_event( 'alter_renderables', array(&$FUNCS->renderables) );
+            if( K_THEME_DIR && function_exists('k_override_renderables') ){ // phase 3 - the theme layer gets the final say in overriding all render functions
+                define( 'K_THEME_OVERRIDING_RENDERABLES', '1' );
+                k_override_renderables();
+            }
+            define( 'K_OVERRIDING_RENDERABLES_DONE', '1' );
+        }
+
         function register_render( $name, $params ){
             if( defined('K_REGISTER_RENDERABLES_DONE') ) return;
 
@@ -3906,6 +3921,10 @@ OUT;
 
                         // HOOK: admin_pre_action
                         $FUNCS->dispatch_event( 'admin_pre_action', array($route, &$callable, &$args) );
+
+                        if( defined('K_ADMIN') ){
+                            $FUNCS->init_render();
+                        }
 
                         // and finally execute the main action ..
                         $html = call_user_func_array( $callable, $args );
