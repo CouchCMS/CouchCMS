@@ -6494,10 +6494,12 @@ MAP;
                     array(
                           'msg'=>'',
                           'is_404'=>'0',
+                          'no_commit'=>'0',
                         ),
                     $params)
                 );
             $is_404 = ( $is_404==1 ) ? 1 : 0;
+            $no_commit = ( $no_commit==1 ) ? 1 : 0;
 
             ob_end_clean(); // discard all previous content..
 
@@ -6511,7 +6513,9 @@ MAP;
                 $html = $msg;
             }
 
-            $DB->commit( 1 ); // force commit, we are finished.
+            if( !$no_commit ){
+                $DB->commit( 1 ); // force commit, we are finished.
+            }
 
             if( $is_404 ){
                 header('HTTP/1.1 404 Not Found');
