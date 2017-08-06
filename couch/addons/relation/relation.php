@@ -263,11 +263,14 @@
         }
 
         function _get_reverse_has_one_sql(){
-            $pid = $this->page->id;
+            $pid = ( $this->page->parent_id ) ? $this->page->parent_id : $this->page->id;
             $fid = $this->id;
 
             $sql = "AND p.id NOT IN"."\r\n";
-            $sql .= "(SELECT rel.cid FROM ".K_TBL_RELATIONS." rel WHERE rel.fid = '".$fid."' AND rel.pid <> '".$pid."')"."\r\n";
+            $sql .= "(SELECT rel.cid FROM ".K_TBL_RELATIONS." rel WHERE rel.fid = '".$fid."' AND rel.pid <> '".$pid."'"."\r\n";
+
+            // take drafts into consideration ..
+            $sql .= "AND rel.pid NOT IN (SELECT p2.id FROM couch_pages p2 WHERE p2.parent_id = '".$pid."'))"."\r\n";
 
             return $sql;
         }
@@ -679,9 +682,6 @@
 
             KField::_set_common_vars( $f->k_type, $input_name, $input_id, $extra, $dynamic_insertion, $f->simple_mode );
 
-            $rows = $f->_get_rows( $f->items_selected, 1 /*for render*/ );
-            if( $FUNCS->is_error($rows) ){ $rows=array(); };
-
             $rows = array();
             if( $f->has=='one' ){
                 $selected = array();
@@ -691,6 +691,8 @@
             else{
                 $rows = $f->_get_rows( $f->items_selected, 1 /*for render*/ );
             }
+            if( $FUNCS->is_error($rows) ){ $rows=array(); };
+
             $CTX->set( 'k_options', $rows );
             $CTX->set( 'k_option_ids', trim(implode(',', array_keys($rows))) );
             $CTX->set( 'k_has_one', ( $f->has=='one' ) ? '1' : '0' );
