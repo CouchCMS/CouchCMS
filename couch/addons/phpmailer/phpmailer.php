@@ -150,7 +150,7 @@
 
             // debug?
             if( $this->config['debug'] || $debug ){
-                $mail->SMTPDebug = 1;
+                $mail->SMTPDebug = 3;
                 $mail->Debugoutput = array( $this, 'log_debug' );
                 ob_start();
             }
