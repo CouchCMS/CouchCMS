@@ -161,6 +161,18 @@
             return $fields;
         }
 
+        function _set_list_sort( $orderby='', $order='' ){
+            global $FUNCS;
+
+            $orderby = trim( $this->field->orderby );
+            if( !in_array($orderby, array('publish_date', 'page_title', 'page_name', 'weight')) ) $orderby = 'publish_date';
+
+            $order = trim( $this->field->order_dir );
+            if( $order!='desc' && $order!='asc' ) $order = 'desc';
+
+            $FUNCS->set_admin_list_default_sort( $orderby, $order );
+        }
+
         function _set_list_limit( $limit='' ){
             global $FUNCS;
 
