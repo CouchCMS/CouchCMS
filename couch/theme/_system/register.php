@@ -311,6 +311,8 @@
         $rs = $DB->select( K_TBL_TEMPLATES, array('*'), '1=1 ORDER BY id ASC' );
         if( count($rs) ){
             foreach( $rs as $tpl ){
+                if( $tpl['hidden'] > 1 ) continue;
+
                 $icon = trim( $tpl['icon'] );
                 $class = '';
                 $show = 1;
@@ -547,7 +549,7 @@
 
             $delete_prompt = $FUNCS->t( 'confirm_delete_folder' );
         }
-        else{ // pages module
+        elseif( $route->module=='pages' ){
             $page_id  = $CTX->get('k_page_id');
             $tpl_id   = $CTX->get('k_template_id');
             $tpl_name = $CTX->get('k_template_name');
@@ -676,11 +678,11 @@
         global $CTX, $FUNCS, $PAGE;
 
         $page_ids = '';
-        $msg = 'Search..';
+        $msg = 'Search&hellip;';
         $query = strip_tags( trim($_GET['s']) );
 
         if( $query ){
-            $code = "<cms:search masterpage='".$PAGE->tpl_name."' ids_only='1' />";
+            $code = "<cms:search masterpage='".$PAGE->tpl_name."' ids_only='1' show_future_entries='1' qs_param='<' />"; // the dummy 'qs_param' will effectively make the cms:search tag ignore pagination
             $parser = new KParser( $code );
             $page_ids = $parser->get_HTML();
             if( !$page_ids ) $page_ids='0';
@@ -1094,7 +1096,7 @@
         return $html;
     }
 
-    function _render_alert( $heading='', $content='', $type='' ){
+    function _render_alert( $heading='', $content='', $type='', $center='' ){
         global $CTX;
 
         $type = strtolower( trim($type) );
@@ -1105,10 +1107,11 @@
         $CTX->set( 'k_alert_type', $type );
         $CTX->set( 'k_alert_heading', trim($heading) );
         $CTX->set( 'k_alert_content', trim($content) );
+        $CTX->set( 'k_alert_center', $center == '1' ? '1' : '0' );
     }
 
-    function _render_list_checkbox( $for_header=0 ){
-        global $CTX;
+    function _render_list_checkbox( $for_header=0, $text_label=0 ){
+        global $CTX, $FUNCS;
 
         $page_id = $CTX->get( 'k_page_id' );
         $can_delete = $CTX->get( 'k_can_delete' );
@@ -1116,10 +1119,15 @@
         if( $for_header ){
             $html = '<label class="ctrl checkbox">';
             $html .= '<input class="checkbox-all" type="checkbox" name="check-all" />';
-            $html .= '<span class="ctrl-option tt" title="Select/Deselect All"></span></label>';
+            if( $text_label ){
+                $html .= '<span class="ctrl-option"></span>'.$FUNCS->t('select-deselect').'</label>';
+            }
+            else{
+                $html .= '<span class="ctrl-option tt" title="'.$FUNCS->t('select-deselect').'"></span></label>';
+            }
         }
         else{
-            $html = '<label class="ctrl checkbox">';
+            $html = '<label class="ctrl checkbox'.( !$can_delete ? ' ctrl-disabled' : '' ).'">';
             $html .= '<input type="checkbox" value="'.$page_id.'" class="page-selector checkbox-item" name="page-id[]" id="page-selector-'.$page_id.'"';
             if(  !$can_delete  ) $html .= ' disabled="1"';
             $html .= '/>';
@@ -1166,7 +1174,7 @@
         $len_pad = 0;
 
         for( $x=0; $x<$level; $x++ ){
-            $pad .= '- &nbsp;&nbsp;&nbsp;';
+            $pad .= '<span class="level-sep">-</span>';
             $len_pad += 3;
         }
 
@@ -1181,10 +1189,10 @@
 
         $html = $pad;
         if( $can_update ){
-            $html .= '<span><a href="'.$link.'" title="['.$weight.'] '.$page_title.'"'.$page_class.'>'.$abbr_title.'</a></span>';
+            $html .= '<a href="'.$link.'" title="['.$weight.'] '.$page_title.'"'.$page_class.'>'.$abbr_title.'</a>';
         }
         else{
-            $html .= '<span>'.$abbr_title.'</span>';
+            $html .= $abbr_title;
         }
         if( !$show_in_menu ){
             $html .= '&nbsp;<a href="#" onclick="return false" class="icon tt" title="'.$FUNCS->t('not_shown_in_menu').'">'.$FUNCS->get_icon('ban').'</a>';

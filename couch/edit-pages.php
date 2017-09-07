@@ -8,8 +8,8 @@
         var $persist_params = null;
         var $arr_config = null;
 
-        function KPagesAdmin(){
-            parent::KBaseAdmin();
+        function __construct(){
+            parent::__construct();
         }
 
         /////// 1. 'list' action ////////////////////////////////////////////////////
@@ -20,7 +20,7 @@
             if( !file_exists(K_SITE_DIR . $PAGE->tpl_name) ){
                 $html = $FUNCS->render( 'template_missing' );
 
-                $rs = $DB->select( K_TBL_PAGES, array('id'), "template_id='" . $DB->sanitize( $PAGE->tpl_id ). "' AND is_master<>'1'" );
+                $rs = $DB->select( K_TBL_PAGES, array('id'), "template_id='" . $DB->sanitize( $PAGE->tpl_id ). "' AND is_master<>'1' LIMIT 1" );
                 if( count($rs) ){
                     $FUNCS->add_html( $html );
                 }
@@ -662,7 +662,7 @@
                     array(
                         'title'=>$FUNCS->t('view'),
                         'onclick'=>array( "this.blur();" ),
-                        'href'=>$CTX->get('k_page_link'),
+                        'href'=>K_SITE_URL . $PAGE->tpl_name . '?p=' . $PAGE->id,
                         'target'=>'_blank',
                         'icon'=>'magnifying-glass',
                         'weight'=>20,
@@ -815,7 +815,7 @@
                 $FUNCS->validate_nonce( 'edit_page_' . $obj_id, $nonce );
             }
             else{
-                $FUNCS->dispatch_event( 'pages_rt_filter_resolve_page', array($tpl, &$tpl_id, &$page_id, $nonce) );
+                $FUNCS->dispatch_event( 'pages_rt_filter_resolve_page', array($tpl, &$tpl_id, &$page_id, $nonce, $act) );
             }
 
             // set page object
@@ -823,6 +823,8 @@
             if( $PAGE->error ){
                 return $FUNCS->raise_error( ROUTE_NOT_FOUND );
             }
+            $PAGE->folders->set_sort( 'weight', 'asc' );
+            $PAGE->folders->sort( 1 );
             $PAGE->set_context();
         }
 
@@ -883,10 +885,10 @@
 
     class KNestedPagesAdmin extends KPagesAdmin{
 
-        function KNestedPagesAdmin(){
+        function __construct(){
             global $FUNCS;
 
-            parent::KPagesAdmin();
+            parent::__construct();
             $FUNCS->add_event_listener( 'alter_render_vars_content_list_inner', array($this, '_alter_render_vars') );
         }
 
@@ -915,6 +917,7 @@
 
             if( array_key_exists('k_page_title', $fields) ){
                 $fields['k_page_title']['content']="<cms:render 'list_nestedpage_title' />";
+                $fields['k_page_title']['class']='nested-title';
                 $fields['k_page_title']['sort_name']='title'; // sort field for nested_pages
             }
             if( array_key_exists('k_page_foldertitle', $fields) ){
@@ -1076,10 +1079,10 @@
 
     class KGalleryPagesAdmin extends KPagesAdmin{
 
-        function KGalleryPagesAdmin(){
+        function __construct(){
             global $FUNCS;
 
-            parent::KPagesAdmin();
+            parent::__construct();
             $FUNCS->add_event_listener( 'alter_render_vars_filter_folders', array($this, '_alter_render_vars') );
             $FUNCS->add_event_listener( 'alter_render_vars_content_list_inner', array($this, '_alter_render_vars') );
         }

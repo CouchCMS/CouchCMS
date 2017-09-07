@@ -50,8 +50,8 @@
 
     if( !defined('K_COUCH_DIR') ) die(); // cannot be loaded directly
 
-    define( 'K_COUCH_VERSION', '2.0.beta' ); // Changes with every release
-    define( 'K_COUCH_BUILD', '20160523' ); // YYYYMMDD - do -
+    define( 'K_COUCH_VERSION', '2.0' ); // Changes with every release
+    define( 'K_COUCH_BUILD', '20170729' ); // YYYYMMDD - do -
 
     if( file_exists(K_COUCH_DIR.'config.php') ){
         require_once( K_COUCH_DIR.'config.php' );
@@ -67,6 +67,8 @@
     // Ultra-simplified now that there is no IonCube involved :)
     if( !defined('K_PAID_LICENSE') ) define( 'K_PAID_LICENSE', 0 );
     if( !defined('K_REMOVE_FOOTER_LINK') ) define( 'K_REMOVE_FOOTER_LINK', 0 );
+
+    if ( !defined('K_HTTPS') ) define( 'K_HTTPS', (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS']=='on') ? 1 : 0 );
 
     // Check if a cached version of the requested page may be used
     if ( !K_SITE_OFFLINE && !defined('K_ADMIN') && K_USE_CACHE && $_SERVER['REQUEST_METHOD']!='POST' ){
@@ -88,7 +90,12 @@
         if( !$auth && !$no_cache ){
             $k_cache_dir = K_COUCH_DIR . 'cache/';
             if( is_writable($k_cache_dir) ){
-                $k_cache_file = $k_cache_dir . md5($_SERVER['REQUEST_URI']) . '.dat';
+
+                $k_cache_url = 'http' . ((K_HTTPS) ? 's://' : '://') . $_SERVER['HTTP_HOST'] .
+                                (($_SERVER['SERVER_PORT']!='80' && $_SERVER['SERVER_PORT']!='443' && (strpos($_SERVER['HTTP_HOST'], ':')===false)) ? ':' . $_SERVER['SERVER_PORT'] : '') .
+                                $_SERVER['REQUEST_URI'];
+
+                $k_cache_file = $k_cache_dir . md5($k_cache_url) . '.dat';
                 if( file_exists($k_cache_file) ){
 
                     // Check if the cache has not expired
@@ -100,8 +107,13 @@
                         $pg = @unserialize( file_get_contents($k_cache_file) );
                         if( $pg ){
                             if( $pg['redirect_url'] ){
-                                header( "Location: ".$pg['redirect_url'], TRUE, 301 );
-                                die();
+                                if( $pg['redirect_url']===$k_cache_url ){ // corner case
+                                    @unlink( $k_cache_file );
+                                }
+                                else{
+                                    header( "Location: ".$pg['redirect_url'], TRUE, 301 );
+                                    die();
+                                }
                             }
                             else{
                                 $html = $pg['cached_html'];
@@ -174,11 +186,10 @@
     }
 
     if( !extension_loaded('mysql') ){
-        die( 'MySQL extension missing from your host\'s PHP installation' );
+        include_once( K_COUCH_DIR . 'includes/mysql2i/mysql2i.class.php' );
     }
 
     if ( !defined('K_SITE_DIR') ) define( 'K_SITE_DIR', dirname( K_COUCH_DIR ) . '/' );
-    if ( !defined('K_HTTPS') ) define( 'K_HTTPS', (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS']=='on') ? 1 : 0 );
 
     //unset($_SERVER['DOCUMENT_ROOT']); //testing
     if ( !defined('K_SITE_URL') ){
@@ -315,9 +326,6 @@
     }
 
     require_once( K_COUCH_DIR.'auth/auth.php' );
-    if ( defined('K_USE_ALTERNATIVE_MTA') && K_USE_ALTERNATIVE_MTA ){
-        require_once( K_COUCH_DIR.'includes/email.php' );
-    }
 
     // set paths for uploaded images
     global $Config;
@@ -359,11 +367,17 @@
 
     // addons to 1.3
     define( 'K_ADDONS_DIR',  K_COUCH_DIR . 'addons/' );
-    require_once( K_COUCH_DIR . 'addons/nicedit/nicedit.php' );
-    require_once( K_COUCH_DIR . 'addons/repeatable/repeatable.php' );
-    require_once( K_COUCH_DIR . 'addons/relation/relation.php' );
-    require_once( K_COUCH_DIR . 'addons/cart/session.php' );
-    require_once( K_COUCH_DIR . 'addons/data-bound-form/data-bound-form.php' );
+    require_once( K_ADDONS_DIR . 'nicedit/nicedit.php' );
+    require_once( K_ADDONS_DIR . 'repeatable/repeatable.php' );
+    require_once( K_ADDONS_DIR . 'relation/relation.php' );
+    require_once( K_ADDONS_DIR . 'cart/session.php' );
+    require_once( K_ADDONS_DIR . 'data-bound-form/data-bound-form.php' );
+
+    // addons to 2.0
+    require_once( K_ADDONS_DIR . 'recaptcha/recaptcha.php' );
+    if ( defined('K_USE_ALTERNATIVE_MTA') && K_USE_ALTERNATIVE_MTA ){
+        require_once( K_ADDONS_DIR . 'phpmailer/phpmailer.php' );
+    }
 
     // Current user's authentication info
     $AUTH = new KAuth( );
@@ -388,8 +402,8 @@
     if( !defined('K_THEME_URL') ) define( 'K_THEME_URL', '' );
 
     // include custom functions/addons if any
-    if( file_exists(K_COUCH_DIR . 'addons/kfunctions.php') ){
-        include_once( K_COUCH_DIR.'addons/kfunctions.php' );
+    if( file_exists(K_ADDONS_DIR . 'kfunctions.php') ){
+        include_once( K_ADDONS_DIR . 'kfunctions.php' );
     }
     if( file_exists(K_SITE_DIR . 'kfunctions.php') ){
         include_once( K_SITE_DIR . 'kfunctions.php' );
@@ -405,17 +419,10 @@
         unset( $t );
     }
 
-    // initialize theming
-    $FUNCS->renderables = array();
-    $FUNCS->dispatch_event( 'register_renderables' );               // phase 1 - register all render functions
-    define( 'K_REGISTER_RENDERABLES_DONE', '1' );
-    $FUNCS->dispatch_event( 'override_renderables' );               // phase 2 - override render functions (meant for addons)
-    $FUNCS->dispatch_event( 'alter_renderables', array(&$FUNCS->renderables) );
-    if( K_THEME_DIR && function_exists('k_override_renderables') ){ // phase 3 - the theme layer gets the final say in overriding all render functions
-        define( 'K_THEME_OVERRIDING_RENDERABLES', '1' );
-        k_override_renderables();
+    // initialize theming (for the admin panel we'll defer this till the current route is selected)
+    if( !defined('K_ADMIN') ){
+        $FUNCS->init_render();
     }
-    define( 'K_OVERRIDING_RENDERABLES_DONE', '1' );
 
     // All addons loaded at this point
     $FUNCS->dispatch_event( 'init' );

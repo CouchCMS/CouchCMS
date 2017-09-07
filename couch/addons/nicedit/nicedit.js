@@ -465,7 +465,7 @@ var nicEditor = bkClass.extend({
             this.loadedPlugins.push(new plugins[i].p(this, plugins[i].o));
         }
         nicEditors.editors.push(this);
-        bkLib.addEvent((window.COUCH && !window.COUCH.simple) ? document.getElementById('scroll-content') : document.body, 'mousedown', this.selectCheck.closureListener(this));
+        bkLib.addEvent((window.COUCH && !window.COUCH.simple && document.getElementById('scroll-content')) ? document.getElementById('scroll-content') : document.body, 'mousedown', this.selectCheck.closureListener(this));
     },
 
     panelInstance: function (e, o) {

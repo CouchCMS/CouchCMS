@@ -41,7 +41,7 @@
     class KCheckSpam{
 
         // tag handler
-        function check_spam_handler( $params, $node ){
+        static function check_spam_handler( $params, $node ){
             global $CTX, $FUNCS, $AUTH, $SFS;
             if( $AUTH->user->access_level >= K_ACCESS_LEVEL_ADMIN ){ return; } // exempt admins from check
 
@@ -94,7 +94,7 @@
             }
         }
 
-        function check_stopforumspam($username, $email, $ip){
+        static function check_stopforumspam($username, $email, $ip){
             global $FUNCS;
 
             $score = 0;

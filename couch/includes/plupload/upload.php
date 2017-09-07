@@ -50,11 +50,35 @@
     }
 
     .plupload_scroll .plupload_filelist {
-        height: 202px;
+        height: 214px;
     }
 
     li.plupload_droptext {
-        line-height: 182px;
+        line-height: 194px;
+    }
+
+    @media (max-width: 480px) {
+        .plupload_header_content {
+            padding-left: 6px;
+            background: transparent;
+        }
+        .plupload_scroll .plupload_filelist {
+            height: 180px;
+        }
+
+        li.plupload_droptext {
+            line-height: 160px;
+        }
+        .plupload_filelist_footer {
+            height: 61px;
+            position: relative;
+            padding-top: 30px;
+        }
+        .plupload_filelist_footer .plupload_file_name {
+            position: absolute;
+            top: 8px;
+            float: none;
+        }
     }
 </style>
 

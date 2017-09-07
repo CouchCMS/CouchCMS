@@ -41,7 +41,7 @@
      * Throttle front-end post submisions by the specified time interval
      */
     class KThrottle extends KUserDefinedFormField{
-        function handle_params( $params, $node ){
+        static function handle_params( $params, $node ){
             global $FUNCS;
 
             $attr = $FUNCS->get_named_vars(
@@ -65,7 +65,7 @@
         }
 
         // Render input field
-        function _render( $input_name, $input_id, $extra='' ){
+        function _render( $input_name, $input_id, $extra='', $dynamic_insertion=0 ){
             return; // no visible markup required
         }
 

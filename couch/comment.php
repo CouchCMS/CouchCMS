@@ -55,7 +55,7 @@
 
         var $fields = array();
 
-        function KComment( $id ){
+        function __construct( $id ){
             global $DB, $FUNCS;
 
             $rs = $DB->select( K_TBL_COMMENTS . " cc

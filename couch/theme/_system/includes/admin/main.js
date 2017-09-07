@@ -76,7 +76,7 @@ COUCH.bindPopupAJAX = function( $elements, code ) {
     $elements.magnificPopup({
         callbacks: {
             parseAjax: code ? function( response ) {
-                response.data = '<div class="popup-blank popup-code"><div class="popup-code-content">' + response.data.replace( "<", "&lt;" ).replace( ">", "&gt;" ) + '</div></div>';
+                response.data = '<div class="popup-blank popup-code"><div class="popup-code-content">' + response.data.replace( /</g, "&lt;" ).replace( />/g, "&gt;" ).replace( /(?:\r\n|\r|\n)/g, "<br/>" ) + '</div></div>';
             } : false
         },
         closeOnBgClick: false,
@@ -89,7 +89,7 @@ COUCH.bindPopupAJAX = function( $elements, code ) {
  * Bind Magnific Popup gallery
  */
 COUCH.bindPopupGallery = function() {
-    this.el.$content.find( ".gallery-listing" ).magnificPopup({
+    this.el.$content.find( "#gallery-listing" ).magnificPopup({
         delegate: ".popup-gallery",
         gallery: {
             enabled: true
@@ -103,17 +103,30 @@ COUCH.bindPopupGallery = function() {
  * @param {jQuery Object} $elements
  * @param {Function}      [callbackOpen]
  * @param {Function}      [callbackClosed]
+ * @param {String}        [mainClass]
  */
-COUCH.bindPopupIframe = function( $elements, callbackOpen, callbackClosed ) {
-    $elements.magnificPopup({
+COUCH.bindPopupIframe = function( $elements, callbackBeforeOpen, callbackClosed, mainClass, modal, iframe_name, callbackOpen ) {
+    var config = {
         callbacks: {
             afterClose: callbackClosed,
-            beforeOpen: callbackOpen
+            beforeOpen: callbackBeforeOpen,
+            open: callbackOpen
         },
+        mainClass: mainClass ? mainClass : "",
         closeOnBgClick: false,
         preloader:      false,
-        type:           "iframe"
-    });
+        type:           "iframe",
+        modal: modal ? true : false,
+    };
+    if( modal ){
+        iframe_name = iframe_name ? iframe_name : 'k-iframe';
+        config.iframe = {
+                markup: '<div class="mfp-iframe-scaler">'+
+                        '<iframe class="mfp-iframe" name="'+iframe_name+'" frameborder="0" allowfullscreen>    </iframe>'+
+                        '</div>',
+            };
+    }
+    $elements.magnificPopup(config);
 };
 
 /**
@@ -144,13 +157,11 @@ COUCH.bindPopupInline = function( $elements ) {
  * @param {String}        file
  */
 COUCH.browseChooseFile = function( $button, file ) {
-    var id = $button.attr('data-kc-finder');
-    $('#' + id).val( file );
-    try{
-        $("#" + id + "_preview").attr( "href", file );
-        $("#" + id + "_img_preview").attr( "src", file );
-    }
-    catch( e ){}
+    var id = $button.attr( "data-kc-finder" );
+
+    $( "#" + id ).val( file ).trigger( "change" );
+    $( "#" + id + "_preview" ).attr( "href", file );
+    $( "#" + id + "_img_preview" ).attr( "src", file );
 
     $.magnificPopup.close();
 };
@@ -275,11 +286,44 @@ COUCH.bindTableSelect = function() {
 };
 
 /**
+ * Bind comment item click select action
+ */
+COUCH.bindCommentsSelect = function() {
+    this.el.$content.find( "#comments-listing" ).on( "click", ".comment-heading", function( e ) {
+        if ( e.target === this ) {
+            var $checkboxAll = COUCH.el.$content.find( ".checkbox-all" ),
+                $checkboxes = COUCH.el.$content.find( ".checkbox-item" ).not( ":disabled" ),
+                $this = $( this );
+
+            $this.find( ".checkbox-item" ).not( ":disabled" ).prop( "checked", function( i, val ) {
+                return !val;
+            }).trigger( "change" );
+
+            if ( $checkboxes.length === $checkboxes.filter( ":checked" ).length ) {
+                $checkboxAll.prop( "checked", true );
+            } else {
+                $checkboxAll.prop( "checked", false );
+            }
+        }
+    });
+
+    this.el.$content.find( "#comments-listing" ).on( "change", ".checkbox-all", function( e ) {
+        var $this = $( this ),
+            $checkboxes = COUCH.el.$content.find( ".checkbox-item" ).not( ":disabled" ),
+            checked = $this.prop( "checked" );
+
+        $checkboxes.prop( "checked", checked );
+    });
+};
+
+/**
  * Bind gallery item click select action
  */
 COUCH.bindGallerySelect = function() {
-    this.el.$content.find( ".gallery-listing" ).on( "click", ".gallery-item:not(.gallery-folder)", function( e ) {
-        var $this = $( this );
+    this.el.$content.find( "#gallery-listing" ).on( "click", ".gallery-item:not(.gallery-folder)", function( e ) {
+        var $checkboxAll = COUCH.el.$content.find( ".checkbox-all" ),
+            $checkboxes = COUCH.el.$content.find( ".checkbox-item" ).not( ":disabled" ),
+            $this = $( this );
 
         if ( e.target === this || /DIV|STRONG/.test( e.target.nodeName ) ) {
             $this.find( ".checkbox-item" ).not( ":disabled" ).prop( "checked", function( i, val ) {
@@ -290,12 +334,20 @@ COUCH.bindGallerySelect = function() {
         } else if ( e.target.nodeName === "INPUT" && !$( e.target ).is( ":disabled" ) ) {
             $this.toggleClass( "selected" );
         }
+
+        if ( $checkboxes.length === $checkboxes.filter( ":checked" ).length ) {
+            $checkboxAll.prop( "checked", true );
+        } else {
+            $checkboxAll.prop( "checked", false );
+        }
     });
 
-    this.el.$content.find( ".gallery-listing" ).on( "change", ".checkbox-all", function( e ) {
-        var $this = $( this );
-        var $checkboxes = COUCH.el.$content.find( ".checkbox-item" ).not( ":disabled" );
-        $checkboxes.prop( "checked", $this.prop( "checked" ) ).trigger( "change" );
+    this.el.$content.find( "#gallery-listing" ).on( "change", ".checkbox-all", function( e ) {
+        var $this = $( this ),
+            $checkboxes = COUCH.el.$content.find( ".checkbox-item" ).not( ":disabled" ),
+            checked = $this.prop( "checked" );
+
+        $checkboxes.prop( "checked", checked ).trigger( "change" ).closest( ".gallery-item" ).toggleClass( "selected", checked );
     });
 };
 
@@ -410,8 +462,9 @@ COUCH.createActionPopovers = function() {
         selector:  ".btn-actions",
         trigger:   "focus",
         content:   function() {
-            var $content = $( this ).siblings( "a" ),
-                $actions = $content.filter( ".up, .down, .approve-comment, .disapprove-comment" );
+            var $this = $( this ),
+                $content = $this.siblings( "a" ),
+                $actions = $content.filter( ".approve-comment, .disapprove-comment, .up, .down" ).add( $this.parent().siblings( ".col-up-down" ).children( ".up, .down" ) );
 
             if ( $actions.length ) {
                 return $( '<div class="popover-actions"></div>' ).append( $actions.clone() ).append( '<span class="popover-actions-sep"></span>' ).append( $content.not( $actions ).clone() );

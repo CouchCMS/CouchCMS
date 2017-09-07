@@ -67,7 +67,7 @@
 
     class COUCH{
 
-        function invoke( $ignore_level=0 ){
+        static function invoke( $ignore_level=0 ){
             global $DB, $FUNCS, $PAGE, $AUTH, $CTX, $k_cache_file;
 
             if( $ignore_level > 0 ){
@@ -266,19 +266,11 @@
                         if( $url != $canonical_url ){
                             // Redirect to canonical url
                             // append querystring params, if any
-                            $sep = '';
-                            foreach( $_GET as $qk=>$qv ){
-                                if( $qk=='p' || $qk=='f' || $qk=='d' || $qk=='fname'|| $qk=='pname' || $qk=='_nr_' ) continue;
-                                $qs .= $sep . $qk . '=' . urlencode($qv);
-                                $sep = '&';
-                            }
-                            if( $qs ) $qs = '?' . $qs;
-
                             if( $_GET['_nr_'] ){ //page link being masqueraded
-                                $redirect_url = K_SITE_URL . $PAGE->link . $qs;
+                                $redirect_url = $FUNCS->get_qs_link( K_SITE_URL . $PAGE->link );
                             }
                             else{
-                                $redirect_url = $canonical_url . $qs;
+                                $redirect_url = $FUNCS->get_qs_link( $canonical_url );
                             }
                         }
                     }

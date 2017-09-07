@@ -40,7 +40,7 @@
     // UDF for DateTime
     class KDateTime extends KUserDefinedField{
 
-        function handle_params( $params ){
+        static function handle_params( $params ){
             global $AUTH;
             if( $AUTH->user->access_level < K_ACCESS_LEVEL_SUPER_ADMIN ) return;
 
@@ -48,7 +48,7 @@
 
         }
 
-        function _handle_params( $params ){
+        static function _handle_params( $params ){
             global $FUNCS;
 
             // get supplied params
@@ -117,7 +117,7 @@
         }
 
         // Output to admin panel
-        function _render( $input_name, $input_id, $extra='' ){
+        function _render( $input_name, $input_id, $extra='', $dynamic_insertion=0 ){
             global $FUNCS, $CTX;
             $FUNCS->load_css( K_ADMIN_URL . 'addons/data-bound-form/datetime.css' );
 
@@ -247,7 +247,7 @@
         }
 
         // Output to front-end via $CTX
-        function get_data(){
+        function get_data( $for_ctx=0 ){
             return $this->data;
         }
 
@@ -353,21 +353,21 @@
     class KDateTimeForm extends KUserDefinedFormField{
         var $obj;
 
-        function handle_params( $params ){
+        static function handle_params( $params, $node ){
 
             return KDateTime::_handle_params( $params );
 
         }
 
-        function KDateTimeForm( $fields, &$siblings ){
+        function __construct( $fields, &$siblings ){
             global $PAGE;
 
             $this->obj = new KDateTime( $fields, $PAGE /*dummy*/, $siblings );
-            parent::KUserDefinedFormField( $fields, $siblings );
+            parent::__construct( $fields, $siblings );
         }
 
-        function _render( $input_name, $input_id, $extra='' ){
-            return call_user_func( array(&$this->obj, '_render'), $input_name, $input_id, $extra );
+        function _render( $input_name, $input_id, $extra='', $dynamic_insertion=0 ){
+            return call_user_func( array(&$this->obj, '_render'), $input_name, $input_id, $extra, $dynamic_insertion );
         }
 
         function get_data(){

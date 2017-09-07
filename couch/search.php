@@ -43,7 +43,7 @@
         var $len = '';
         var $ranges = array();
 
-        function KKeyword( $name, $orig_text, &$existing_ranges ){
+        function __construct( $name, $orig_text, &$existing_ranges ){
             $this->name = trim( strtolower($name) );
             $this->len = strlen( $this->name );
             $text = strtolower( $orig_text );
@@ -144,7 +144,7 @@
         var $keywords = array(); // array of keyword objects pointing to this range
         var $selected = 0;
 
-        function KRange( $start, $end, $text ){
+        function __construct( $start, $end, $text ){
             if ( $end < $start ) $end = $start;
 
             $this->start = $start;

@@ -6,7 +6,7 @@
         var $form_name = 'k_admin_frm';
         var $list_form_name = 'k_admin_frm_list';
 
-        function KBaseAdmin(){
+        function __construct(){
 
         }
 
@@ -74,13 +74,14 @@
         function define_list_actions(){
             global $FUNCS;
 
-            $FUNCS->reset_admin_actions( array('toolbar', 'filter', 'batch', 'extended', 'row') );
+            $FUNCS->reset_admin_actions( array('toolbar', 'filter', 'batch', 'page', 'extended', 'row') );
 
             // register actions for each category
             $arr_action_types = array(
                 'toolbar'  => 'add_toolbar_button',
                 'filter'   => 'add_filter_action',
                 'batch'    => 'add_batch_action',
+                'page'     => 'add_page_action',
                 'extended' => 'add_extended_action',
                 'row'      => 'add_row_action'
             );
@@ -147,6 +148,12 @@
         }
 
         function _default_list_batch_actions(){
+            $arr_actions = array();
+
+            return $arr_actions;
+        }
+
+        function _default_list_page_actions(){
             $arr_actions = array();
 
             return $arr_actions;
@@ -314,7 +321,7 @@
                         "return false;",
                     ),
                     'class'=>'btn-primary',
-                    'icon'=>'cloud-download',
+                    'icon'=>'circle-check',
                     'weight'=>10,
                 );
 

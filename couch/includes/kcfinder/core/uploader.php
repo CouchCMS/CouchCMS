@@ -99,6 +99,8 @@ class uploader {
     // CSRF protection (got from $_GET['nonce'])
     protected $nonce = "";
 
+    protected $basePath = "";
+
 /** Magic method which allows read-only access to protected or private class properties
   * @param string $property
   * @return mixed */
@@ -274,6 +276,10 @@ class uploader {
                 $this->backMsg("Cannot create {dir} folder.", array('dir' => $this->type));
         } elseif (!is_readable($this->typeDir))
             $this->backMsg("Cannot read upload folder.");
+
+        if( $this->config['useExplicitPath'] ){
+            $this->basePath = K_ADMIN_URL . 'includes/kcfinder/';
+        }
     }
 
     public function _mkdir( $dir, $permissions, $recursive=false ){

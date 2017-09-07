@@ -2,7 +2,7 @@
 
     <cms:capture into='my_code'>
         <cms:if k_action_render>
-            <cms:render k_action_render />
+            <cms:render k_action_render k_action_args />
         <cms:else />
             <cms:show k_action_html />
         </cms:if>

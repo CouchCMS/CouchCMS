@@ -452,6 +452,8 @@ class CKEditor
 	 */
 	private function init()
 	{
+		global $FUNCS;
+
 		static $initComplete;
 		$out = "";
 
@@ -473,22 +475,24 @@ class CKEditor
 
 		// Skip relative paths...
 		if (strpos($ckeditorPath, '..') !== 0) {
-			$out .= $this->script("window.CKEDITOR_BASEPATH='". $ckeditorPath ."';");
+			$out = $this->script("window.CKEDITOR_BASEPATH='". $ckeditorPath ."';");
+			$FUNCS->add_meta( $out );
 		}
 
-		$out .= "<script type=\"text/javascript\" src=\"" . $ckeditorPath . 'ckeditor.js' . $args . "\"></script>\n";
+		$out = $ckeditorPath . 'ckeditor.js' . $args;
+		$FUNCS->load_js( $out );
 
 		$extraCode = "";
 		if ($this->timestamp != self::timestamp) {
 			$extraCode .= ($extraCode ? "\n" : "") . "CKEDITOR.timestamp = '". $this->timestamp ."';";
 		}
 		if ($extraCode) {
-			$out .= $this->script($extraCode);
+			$out = $this->script($extraCode);
+			$FUNCS->add_meta( $out );
 		}
 
 		$initComplete = $this->initialized = true;
 
-		return $out;
 	}
 
 	/**

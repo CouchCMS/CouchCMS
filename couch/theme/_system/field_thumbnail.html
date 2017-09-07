@@ -31,16 +31,25 @@
             </a><br>
         </cms:if>
 
-        <a class="btn crop-recreate"
-            href="javascript:k_crop_image(<cms:show k_field_tpl_id />, <cms:show k_field_page_id />, '<cms:show k_field_name />', '<cms:create_nonce "crop_image_<cms:show k_field_name />"  />')"
+        <button
+            class="btn crop-recreate <cms:if k_field_is_deleted && "<cms:not k_field_simple_mode />" >disabled</cms:if>"
+            type="button"
+            onclick="k_crop_image(<cms:show k_field_tpl_id />, <cms:show k_field_page_id />, '<cms:show k_field_name />', '<cms:create_nonce "crop_image_<cms:show k_field_name />"  />');"
+            <cms:if k_field_is_deleted>disabled="1"</cms:if>
         >
             <cms:show_icon 'reload' /><cms:localize 'recreate' />
-        </a>
+        </button>
         <span><cms:localize 'crop_from' />:</span>
-        <cms:if k_field_simple_mode >
+        <cms:if "<cms:not k_field_simple_mode />" >
             <div class="select">
         </cms:if>
-            <select name="f_k_crop_pos_<cms:show k_field_name />" id="f_k_crop_pos_<cms:show k_field_name />" <cms:if k_field_is_deleted>disabled="1"</cms:if>>
+            <select
+                id="f_k_crop_pos_<cms:show k_field_name />"
+                <cms:if k_field_is_deleted>
+                    <cms:if "<cms:not k_field_simple_mode />" >class="disabled"</cms:if>
+                    disabled="1"
+                </cms:if>
+            >
                 <option value="top_left"><cms:localize 'top_left' /></option>
                 <option value="top_center"><cms:localize 'top_center' /></option>
                 <option value="top_right"><cms:localize 'top_right' /></option>
@@ -51,7 +60,7 @@
                 <option value="bottom_center"><cms:localize 'bottom_center' /></option>
                 <option value="bottom_right"><cms:localize 'bottom_right' /></option>
             </select>
-        <cms:if k_field_simple_mode >
+        <cms:if "<cms:not k_field_simple_mode />" >
             <span class="select-caret"><cms:show_icon 'caret-bottom' /></span></div>
         </cms:if>
     </div>

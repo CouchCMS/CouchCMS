@@ -39,7 +39,7 @@
 
     class JCropThumb extends KUserDefinedField{
 
-        function handle_params( $params ){
+        static function handle_params( $params ){
             global $FUNCS, $AUTH;
             if( $AUTH->user->access_level < K_ACCESS_LEVEL_SUPER_ADMIN ) return;
 
@@ -94,7 +94,7 @@
             // defunct
         }
 
-        function _render( $input_name, $input_id, $extra1='' ){
+        function _render( $input_name, $input_id, $extra1='', $dynamic_insertion=0 ){
             global $FUNCS, $CTX, $Config;
 
             $assoc_image = $this->page->_fields[$this->assoc_field]->get_data();

@@ -40,7 +40,7 @@
     class KBBNode extends KHTMLNode{
         var $is_closed = 0;
 
-        function KBBNode( $type, $name='', $str_attr='', $text='', $is_self_closing=0, $is_end_tag=0 ){
+        function __construct( $type, $name='', $str_attr='', $text='', $is_self_closing=0, $is_end_tag=0 ){
             $this->type = $type;
             $this->name = strtolower( trim($name) );
             $str_attr = trim( $str_attr );
@@ -164,7 +164,7 @@
     }// end class KBBNode
 
     class KBBParser extends KHTMLParser{
-        function KBBParser( $str ){
+        function __construct( $str ){
             global $FUNCS;
 
             $this->str = $str;

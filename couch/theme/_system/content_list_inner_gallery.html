@@ -1,9 +1,54 @@
-<div class="gallery-listing">
+<div id="gallery-listing">
     <div id="listing">
         <cms:set my_max_items_in_row = '5' />
         <cms:set my_gallery_folder_count='0' />
         <cms:set my_cur_folder_count='0' />
         <cms:set my_page_num="<cms:gpc method='get' var='pg' default='1' />"/>
+
+        <cms:capture into='my_gallery_items' >
+            <cms:pages
+                masterpage       = k_template_name
+                id               = k_selected_pageids
+                folder           = k_selected_foldername
+                orderby          = k_selected_orderby
+                order            = k_selected_order
+                custom_field     = k_selected_custom_field
+                paginate         = '1'
+                limit            = k_selected_limit
+                show_unpublished = '1'
+                show_future_entries = '1'
+                page_name        = "<cms:if k_selected_exclude>NOT <cms:show k_selected_exclude /></cms:if>"
+                base_link        = k_route_link
+                token            = k_cur_token
+                include_subfolders = '0'
+            >
+
+                <cms:no_results>
+                    <cms:capture into='my_folder_empty' >
+                        <cms:show_info>
+                            <h4><cms:localize 'folder_empty' /></h4>
+                        </cms:show_info>
+                    </cms:capture>
+                </cms:no_results>
+
+                <cms:render 'gallery_item'
+                    max_in_row = my_max_items_in_row
+                    current_pos = k_count
+                    start_from = my_gallery_folder_count
+                />
+
+                <cms:if k_paginated_bottom >
+                    <cms:set my_paginator="<cms:render 'paginator' />" 'parent' />
+
+                    <div style="clear:both;"></div>
+                    <div class="select-all">
+                        <cms:render 'list_checkbox' for_header='1' text_label='1' />
+                    </div>
+                </cms:if>
+            </cms:pages>
+        </cms:capture>
+
+        <cms:show my_folder_empty />
 
         <cms:if my_page_num='1' && "<cms:not k_selected_custom_field />">
             <cms:folders
@@ -23,47 +68,7 @@
         </cms:if>
 
 
-        <cms:pages
-            masterpage       = k_template_name
-            id               = k_selected_pageids
-            folder           = k_selected_foldername
-            orderby          = k_selected_orderby
-            order            = k_selected_order
-            custom_field     = k_selected_custom_field
-            paginate         = '1'
-            limit            = k_selected_limit
-            show_unpublished = '1'
-            show_future_entries = '1'
-            page_name        = "<cms:if k_selected_exclude>NOT <cms:show k_selected_exclude /></cms:if>"
-            base_link        = k_route_link
-            token            = k_cur_token
-            include_subfolders = '0'
-        >
-
-            <cms:render 'gallery_item'
-                max_in_row = my_max_items_in_row
-                current_pos = k_count
-                start_from = my_gallery_folder_count
-            />
-
-            <cms:no_results>
-                <cms:show_info>
-                    <h4><cms:localize 'folder_empty' /></h4>
-                </cms:show_info>
-            </cms:no_results>
-
-            <cms:if k_paginated_bottom >
-                <cms:set my_paginator="<cms:render 'paginator' />" 'parent' />
-
-                <div style="clear:both;"></div>
-                <div class="select_all">
-                    <label>
-                        <cms:render 'list_checkbox' for_header='1' />
-                        <strong><cms:localize 'select-deselect' /></strong>
-                    </label>&nbsp;
-                </div>
-            </cms:if>
-        </cms:pages>
+        <cms:show my_gallery_items />
     </div>
 </div>
 

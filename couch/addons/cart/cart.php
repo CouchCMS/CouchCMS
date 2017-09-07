@@ -36,7 +36,6 @@
     */
 
     if ( !defined('K_COUCH_DIR') ) die(); // cannot be loaded directly
-    require_once( K_COUCH_DIR.'addons/cart/session.php' );
 
     define( 'PP_CART_VERSION', '1.0' );
     define( 'PP_ACTION_UNDEFINED', 0 );
@@ -73,7 +72,7 @@
         var $custom_vars = array();
 
 
-        function KCart(){
+        function __construct(){
             global $FUNCS;
 
             $this->populate_config();
@@ -118,8 +117,8 @@
         function populate_config(){
 
             $pp = array();
-            if( file_exists(K_COUCH_DIR.'addons/cart/config.php') ){
-                require_once( K_COUCH_DIR.'addons/cart/config.php' );
+            if( file_exists(K_ADDONS_DIR.'cart/config.php') ){
+                require_once( K_ADDONS_DIR.'cart/config.php' );
             }
             $this->config = array_map( "trim", $pp );
             unset( $pp );
@@ -786,7 +785,7 @@
         }
 
         ///////////////////////////////////////////// tag handlers//////////////
-        function product_form_handler( $params, $node ){
+        static function product_form_handler( $params, $node ){
            global $CTX, $FUNCS, $CART;
 
             // generates equivalent code of following -
@@ -841,7 +840,7 @@
             return $html;
         }
 
-        function product_options_handler( $params, $node ){
+        static function product_options_handler( $params, $node ){
            global $CTX, $FUNCS, $CART;
 
             extract( $FUNCS->get_named_vars(
@@ -891,7 +890,7 @@
 
         }
 
-        function product_option_values_handler( $params, $node ){
+        static function product_option_values_handler( $params, $node ){
             global $CTX, $FUNCS, $CART;
 
             // get the option object supplied by 'cms:pp_product_options' tag
@@ -963,14 +962,14 @@
             return $html;
         }
 
-        function cart_form_handler( $params, $node ){
+        static function cart_form_handler( $params, $node ){
            global $CART;
 
            // Delegate to 'cms:pp_product_form'
            return $CART->product_form_handler( $params, $node );
         }
 
-        function cart_items_handler( $params, $node ){
+        static function cart_items_handler( $params, $node ){
            global $CTX, $FUNCS, $CART;
            $arr_canonical_attrs = array( 'line_id', 'id', 'name', 'title', 'link', 'price', 'quantity', 'line_total', 'options', 'requires_shipping' );
 
@@ -1007,7 +1006,7 @@
         }
 
         // To be used as a child of 'cms:pp_cart_items' tag. Iterates through the options selected for the current line-item
-        function selected_options_handler( $params, $node ){
+        static function selected_options_handler( $params, $node ){
             global $CTX, $FUNCS;
             extract( $FUNCS->get_named_vars(
                         array(
@@ -1056,7 +1055,7 @@
         }
 
         // all generic variables
-        function cart_vars_handler( $params, $node ){
+        static function cart_vars_handler( $params, $node ){
             global $CTX, $FUNCS, $CART;
             if( count($node->children) ) {die("ERROR: Tag \"".$node->name."\" is a self closing tag");}
 
@@ -1140,7 +1139,7 @@
             return $html;
         }
 
-        function gateway_handler( $params, $node ){
+        static function gateway_handler( $params, $node ){
             global $CART;
             if( count($node->children) ) {die("ERROR: Tag \"".$node->name."\" is a self closing tag");}
 
@@ -1149,8 +1148,8 @@
 
     } // end class
 
-    if( file_exists(K_COUCH_DIR.'addons/cart/cart_ex.php') ){
-        require_once( K_COUCH_DIR.'addons/cart/cart_ex.php' );
+    if( file_exists(K_ADDONS_DIR.'cart/cart_ex.php') ){
+        require_once( K_ADDONS_DIR.'cart/cart_ex.php' );
         $CART = new KCartEx();
     }
     else{

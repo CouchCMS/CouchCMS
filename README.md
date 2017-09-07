@@ -1,10 +1,10 @@
-# [![CouchCMS](http://www.couchcms.com/img/logo.png "CouchCMS")](http://www.couchcms.com/)
+# [![CouchCMS](https://www.couchcms.com/img/logo.png "CouchCMS")](https://www.couchcms.com/)
 ### A simple open-source CMS for designers.
 
 ##### No knowledge of PHP required at all.
 Take any HTML/CSS template and make it CMS enabled in minutes. Just drop in a few special XHTML tags into your code and watch your static web pages come to life!
 
-![CouchCMS](http://www.couchcms.com/img/intro-bg.png "CouchCMS")
+![CouchCMS](https://www.couchcms.com/img/intro-bg.png "CouchCMS")
 
 #### Salient Features
 * **Editable Regions**: Simply by surrounding areas in your HTML code by some special tags you can make them editable by your clients.
@@ -23,29 +23,23 @@ Take any HTML/CSS template and make it CMS enabled in minutes. Just drop in a fe
 #### And the best part is&hellip;
 None of the above listed features will require you to write even a single line of PHP. As a web-designer or front-end coder, we want you to concentrate on what you do best - design and create HTML/CSS code. Leave the rest to Couch.
 
-> CouchCMS is awarded Best Web Tool of 2012 by [Web Hosting Search](http://www.webhostingsearch.com/) for providing an easy-to-use and feature-filled CMS for Designers.
 
 #### Getting Started
-To demonstrate the power and ease of Couch, we'll build a complete real world site from scratch using it. You can find the detailed tutorial along with the required files [here](http://docs.couchcms.com/tutorials/portfolio-site.html). Once you are familiar with how CouchCMS works, you can also check out the advanced tutorial [here](http://www.couchcms.com/docs/advanced-tutorial/) which demonstrates many of the more advanced features.
+To demonstrate the power and ease of Couch, we'll build a complete real world site from scratch using it. You can find the detailed tutorial along with the required files [here](http://docs.couchcms.com/tutorials/portfolio-site.html). Once you are familiar with how CouchCMS works, you can also check out the advanced tutorial [here](https://www.couchcms.com/docs/advanced-tutorial/) which demonstrates many of the more advanced features.
 
 #### License
-1. **Open Source License**: CouchCMS is licensed under [Common Public Attribution License 1.0](http://opensource.org/licenses/cpal_1.0). "Human-readable" version of CPAL would read like this:
+1. **Open Source License**: CouchCMS is licensed under [Common Public Attribution License 1.0](https://opensource.org/licenses/cpal_1.0). "Human-readable" version of CPAL would read like this:
   * This software is open source and can be freely used, modified, and distributed.
   * This software can be used for **commercial purposes**.
   * Attribution to the authorship of this software in the source code files **cannot be waived under any circumstances**.
-  * Attribution to the authorship of this software on the site front-end in the form of hyperlink can be waived with **permission of the original author**.
 
 2. **Alternate Commercial License**: Alternatively, CouchCMS may be used under a commercial license. Buying a commercial license permits you to:
-  * Remove the attribution hyperlink from all rendered contents.
   * Replace CouchCMS logo and copyright information from the back-end with your own, effectively **100% white-labeling** the software.
-  * Three months of **unlimited premium support**.
+  * One month of **unlimited premium support**.
 
  Attribution to the authorship of this software in the source code files **cannot be waived under any circumstances**.
 
-More details regarding Licensing and FAQ can be found [here](http://www.couchcms.com/products/).
-
-#### Portable CouchCMS for Local Testing
-Windows user wishing to test out CouchCMS on their local systems can download it contained within a portable WAMP package (Apache / MySQL / PHP). **No installation required. Just unpack and run. Total size is 11.40 MB.** [Download now](http://www.couchcms.com/products/).
+More details regarding Licensing and FAQ can be found [here](https://www.couchcms.com/products/).
 
 #### Documentation
-You can view the documentation online [here](http://docs.couchcms.com/), or instead you can download a zip containing the information [here](https://github.com/CouchCMS/Documentation/archive/gh-pages.zip). The [CouchCMS forum](http://www.couchcms.com/forum/) is also a great place to learn new things and request assistance.
+You can view the documentation online [here](http://docs.couchcms.com/), or instead you can download a zip containing the information [here](https://github.com/CouchCMS/Documentation/archive/gh-pages.zip). The [CouchCMS forum](https://www.couchcms.com/forum/) is also a great place to learn new things and request assistance.

@@ -7,13 +7,14 @@
         id="<cms:show k_field_input_id />"
         size="65"
         value="<cms:show k_field_value />"
-        class="k_file_text input-group-field upload-path"
-        <cms:if k_field_is_deleted>disabled="1"</cms:if>
+        class="k_file_text input-group-field upload-path <cms:if k_field_is_deleted>readonly</cms:if>"
+        <cms:if k_field_is_deleted>readonly="1"</cms:if>
     >
 
     <button
-        class="btn popup-iframe"
+        class="btn popup-iframe <cms:if k_field_is_deleted>disabled</cms:if>"
         id="<cms:show k_field_input_id />_button"
+        <cms:if k_field_is_deleted>disabled="1"</cms:if>
         <cms:if k_field_use_kcfinder >
             data-kc-finder="<cms:show k_field_input_id />"
             href="<cms:show k_admin_link />includes/kcfinder/browse.php?nonce=<cms:create_nonce 'kc_finder' />&type=file"
@@ -31,7 +32,7 @@
             var el=$('#<cms:show k_field_input_id />_button');
             if(!el.attr('idx')){
                 <cms:if k_field_use_kcfinder >
-                    COUCH.bindPopupIframe( el , COUCH.browseKCFinderOpen,  COUCH.browseKCFinderClose );
+                    COUCH.bindPopupIframe( el , COUCH.browseKCFinderOpen,  COUCH.browseKCFinderClose, 'kcfinder-iframe' );
                 <cms:else />
                     COUCH.bindPopupIframe( el );
                 </cms:if>
@@ -46,7 +47,7 @@
             COUCH.bindPopupImage( COUCH.el.$content.find( ".popup-img" ) );
 
             <cms:if k_field_use_kcfinder >
-                COUCH.bindPopupIframe( COUCH.el.$content.find( ".upload-group>.popup-iframe" ), COUCH.browseKCFinderOpen,  COUCH.browseKCFinderClose );
+                COUCH.bindPopupIframe( COUCH.el.$content.find( ".upload-group>.popup-iframe" ), COUCH.browseKCFinderOpen,  COUCH.browseKCFinderClose, "kcfinder-iframe" );
             <cms:else />
                 COUCH.bindPopupIframe( COUCH.el.$content.find( ".upload-group>.popup-iframe" ) );
             </cms:if>

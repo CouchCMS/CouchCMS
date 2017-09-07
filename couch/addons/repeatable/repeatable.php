@@ -42,9 +42,9 @@
         var $rendered_data = null;
         var $validation_errors = 0;
 
-        function Repeatable( $row, &$page, &$siblings ){
+        function __construct( $row, &$page, &$siblings ){
             // call parent
-            parent::KUserDefinedField( $row, $page, $siblings );
+            parent::__construct( $row, $page, $siblings );
 
             // now for own logic
             $this->orig_data = array();
@@ -52,7 +52,7 @@
 
         }
 
-        function tag_handler( $params, $node ){
+        static function tag_handler( $params, $node ){
             global $CTX, $FUNCS, $TAGS, $PAGE, $AUTH;
             if( $AUTH->user->access_level < K_ACCESS_LEVEL_SUPER_ADMIN ) return;
             if( defined('K_ADMIN') ) return; // nop within admin panel
@@ -134,11 +134,12 @@
             $params[] = array( 'lhs'=>'type', 'op'=>'=', 'rhs'=>'__repeatable' );
             $params[] = array( 'lhs'=>'hidden', 'op'=>'=', 'rhs'=>'1' );
             $params[] = array( 'lhs'=>'schema', 'op'=>'=', 'rhs'=>$custom_params );
-            $node->children = array();
-            $TAGS->editable( $params, $node );
+            $_node = clone $node;
+            $_node->children = array();
+            $TAGS->editable( $params, $_node );
         }
 
-        function show_handler( $params, $node ){
+        static function show_handler( $params, $node ){
             global $FUNCS, $CTX;
 
             extract( $FUNCS->get_named_vars(
@@ -184,7 +185,7 @@
             }
         }
 
-        function handle_params( $params ){
+        static function handle_params( $params ){
             global $FUNCS;
             $attr = $FUNCS->get_named_vars(
                 array(  'schema'=>'',
@@ -232,7 +233,7 @@
             $this->orig_data = $this->data;
         }
 
-        function _render( $input_name, $input_id, $extra='' ){
+        function _render( $input_name, $input_id, $extra='', $dynamic_insertion=0 ){
             global $FUNCS, $CTX, $AUTH;
 
             /*
@@ -314,6 +315,7 @@
                             for( $y=0; $y<count($this->cells); $y++ ){
                                 $c = &$this->cells[$y];
                                 $c->resolve_dynamic_params();
+                                $c->simple_mode = $this->simple_mode;
                                 unset( $c );
                             }
                         }
@@ -436,6 +438,7 @@
             for( $y=0; $y<count($this->cells); $y++ ){
                 $c = &$this->cells[$y];
                 $c->resolve_dynamic_params();
+                $c->simple_mode = $this->simple_mode;
                 unset( $c );
             }
 
@@ -545,7 +548,7 @@
         }
 
         // Output to front-end via $CTX
-        function get_data(){
+        function get_data( $for_ctx=0 ){
             global $CTX;
 
             // Data not a simple string hence
@@ -574,7 +577,7 @@
         static function register_renderables(){
             global $FUNCS;
 
-            $FUNCS->register_render( 'repeatable_column_deleted', array('template_path'=>K_COUCH_DIR.'addons/repeatable/theme/', 'template_ctx_setter'=>array('Repeatable', '_render_repeatable_column_deleted')) );
+            $FUNCS->register_render( 'repeatable_column_deleted', array('template_path'=>K_ADDONS_DIR.'repeatable/theme/', 'template_ctx_setter'=>array('Repeatable', '_render_repeatable_column_deleted')) );
         }
 
         static function _render_repeatable_column_deleted( $arr_deleted_html ){

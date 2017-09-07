@@ -11,15 +11,15 @@
         var $lost_password_tpl;
         var $registration_tpl;
 
-        function KExtendedUsers(){
+        function __construct(){
             $this->populate_config();
         }
 
         function populate_config(){
 
             $t = array();
-            if( file_exists(K_COUCH_DIR.'addons/extended/config.php') ){
-                require_once( K_COUCH_DIR.'addons/extended/config.php' );
+            if( file_exists(K_ADDONS_DIR.'extended/config.php') ){
+                require_once( K_ADDONS_DIR.'extended/config.php' );
             }
             else{/*
                 die(
@@ -794,9 +794,9 @@
     // UDF for dummy password fields
     class KDummyPassword extends KUserDefinedField{
 
-        function _render( $input_name, $input_id, $extra='' ){
+        function _render( $input_name, $input_id, $extra='', $dynamic_insertion=0 ){
             $this->k_type = 'password';
-            return KField::_render( $input_name, $input_id, $extra ); // Calling grandparent statically! Not a bug: https://bugs.php.net/bug.php?id=42016
+            return KField::_render( $input_name, $input_id, $extra, $dynamic_insertion ); // Calling grandparent statically! Not a bug: https://bugs.php.net/bug.php?id=42016
             return $html;
         }
 

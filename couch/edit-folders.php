@@ -5,10 +5,10 @@
 
     class KFoldersAdmin extends KPagesAdmin{
 
-        function KFoldersAdmin(){
+        function __construct(){
             global $FUNCS;
 
-            parent::KPagesAdmin();
+            parent::__construct();
             $FUNCS->add_event_listener( 'alter_render_vars_content_list_inner', array($this, '_alter_render_vars') );
         }
 
@@ -137,12 +137,14 @@
                 array(
                     'weight'=>'20',
                     'header'=>$FUNCS->t('name'),
+                    'class'=>'folder-name',
                 );
 
             $arr_fields['k_folder_pagecount'] =
                 array(
                     'weight'=>'30',
                     'header'=>$FUNCS->t('pages'),
+                    'class'=>'pages-count',
                 );
 
             $arr_fields['k_actions'] =
@@ -237,6 +239,7 @@
                         'title'=>$FUNCS->t('add_new'),
                         'desc'=>$FUNCS->t('add_new_folder'),
                         'href'=>$FUNCS->get_qs_link( $FUNCS->generate_route( $PAGE->tpl_name, 'folder_create_view', array('nonce'=>$FUNCS->create_nonce('edit_page_'.$PAGE->tpl_id))) ),
+                        'icon'=>'plus',
                         'weight'=>10,
                     );
             }

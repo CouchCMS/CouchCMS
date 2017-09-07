@@ -111,7 +111,7 @@
         var $_template_locked = 0;
 
 
-        function KWebpage( $template_id=null, $page_id=null, $page_name=null, $html=null, $skip_custom_fields=null ){
+        function __construct( $template_id=null, $page_id=null, $page_name=null, $html=null, $skip_custom_fields=null ){
             global $FUNCS;
 
             $template_id = trim( $template_id );
@@ -1282,16 +1282,22 @@
             global $DB, $FUNCS;
 
             $cur_time = $FUNCS->get_current_desktop_time();
-            $rs = $DB->insert( K_TBL_PAGES, array('template_id'=>$this->tpl_id,
-                                                  'page_title'=>$title,
-                                                  'page_name'=>$name,
-                                                  'creation_date'=>$cur_time,
-                                                  'creation_IP'=>trim( $FUNCS->cleanXSS(strip_tags($_SERVER['REMOTE_ADDR'])) ),
-                                                  /* default page of gallery remains unpublished (always cloned) */
-                                                  'publish_date'=>( $this->tpl_gallery && $is_master ) ? '0000-00-00 00:00:00' : $cur_time,
-                                                  'is_master'=>$is_master
-                                                  )
-                             );
+
+            $arr_insert = array(
+                'template_id'=>$this->tpl_id,
+                'page_title'=>$title,
+                'page_name'=>$name,
+                'creation_date'=>$cur_time,
+                'creation_IP'=>trim( $FUNCS->cleanXSS(strip_tags($_SERVER['REMOTE_ADDR'])) ),
+                /* default page of gallery remains unpublished (always cloned) */
+                'publish_date'=>( $this->tpl_gallery && $is_master ) ? '0000-00-00 00:00:00' : $cur_time,
+                'is_master'=>$is_master
+            );
+
+            // HOOK: alter_create_insert
+            $FUNCS->dispatch_event( 'alter_create_insert', array(&$arr_insert, &$this) );
+
+            $rs = $DB->insert( K_TBL_PAGES, $arr_insert );
             if( $rs!=1 ) return $FUNCS->raise_error( "Failed to insert record in K_TBL_PAGES" );
             $page_id = $DB->last_insert_id;
 
@@ -1308,18 +1314,24 @@
 
             $DB->begin();
             $cur_time = $FUNCS->get_current_desktop_time();
-            $rs = $DB->insert( K_TBL_PAGES, array('template_id'=>$this->tpl_id,
-                                                  'parent_id'=>$this->id,
-                                                  'page_title'=>$this->page_title,
-                                                  'page_name'=>$this->id . '-draft-' . time(),
-                                                  'creation_date'=>$cur_time,
-                                                  'modification_date'=>$cur_time,
-                                                  'is_master'=>0,
-                                                  'page_folder_id'=>$this->page_folder_id,
-                                                  'access_level'=>K_ACCESS_LEVEL_ADMIN,
-                                                  'comments_open'=>0
-                                                  )
-                             );
+
+            $arr_insert = array(
+                'template_id'=>$this->tpl_id,
+                'parent_id'=>$this->id,
+                'page_title'=>$this->page_title,
+                'page_name'=>$this->id . '-draft-' . time(),
+                'creation_date'=>$cur_time,
+                'modification_date'=>$cur_time,
+                'is_master'=>0,
+                'page_folder_id'=>$this->page_folder_id,
+                'access_level'=>K_ACCESS_LEVEL_ADMIN,
+                'comments_open'=>0
+            );
+
+            // HOOK: alter_draft_insert
+            $FUNCS->dispatch_event( 'alter_draft_insert', array(&$arr_insert, &$this) );
+
+            $rs = $DB->insert( K_TBL_PAGES, $arr_insert );
             if( $rs!=1 ){ $DB->rollback();  return $FUNCS->raise_error( "Failed to insert record in K_TBL_PAGES for draft" ); }
             $page_id = $DB->last_insert_id;
 
@@ -1338,16 +1350,22 @@
 
             $DB->begin();
             $cur_time = $FUNCS->get_current_desktop_time();
-            $rs = $DB->insert( K_TBL_PAGES, array('id'=>$this->parent_id,
-                                                  'template_id'=>$this->tpl_id,
-                                                  'page_title'=>$this->page_title,
-                                                  'page_name'=>'recreated_page_'.$this->parent_id,
-                                                  'creation_date'=>$cur_time,
-                                                  'publish_date'=>$cur_time,
-                                                  'is_master'=>!$this->tpl_is_clonable,
-                                                  'page_folder_id'=>$this->page_folder_id,
-                                                  )
-                             );
+
+            $arr_insert = array(
+                'id'=>$this->parent_id,
+                'template_id'=>$this->tpl_id,
+                'page_title'=>$this->page_title,
+                'page_name'=>'recreated_page_'.$this->parent_id,
+                'creation_date'=>$cur_time,
+                'publish_date'=>$cur_time,
+                'is_master'=>!$this->tpl_is_clonable,
+                'page_folder_id'=>$this->page_folder_id,
+            );
+
+            // HOOK: alter_recreate_parent_insert
+            $FUNCS->dispatch_event( 'alter_recreate_parent_insert', array(&$arr_insert, &$this) );
+
+            $rs = $DB->insert( K_TBL_PAGES, $arr_insert );
             if( $rs!=1 ){ $DB->rollback();  return $FUNCS->raise_error( "Failed to insert record in K_TBL_PAGES" ); }
 
             $res = $this->_create_fields( $this->parent_id, $this->page_title );

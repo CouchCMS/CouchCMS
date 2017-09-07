@@ -249,3 +249,7 @@
     $t['crop'] = 'Crop';
     $t['menu_templates'] = 'Templates';
     $t['menu_modules'] = 'Administration';
+    $t['cancel'] = 'Cancel';
+    $t['selected'] = 'Selected';
+    $t['add'] = 'Add';
+    $t['remove'] = 'Remove';

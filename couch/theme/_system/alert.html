@@ -1,4 +1,4 @@
-<div class="alert alert-<cms:if k_alert_type='warning'>notice<cms:else /><cms:show k_alert_type /></cms:if> alert-icon">
+<div class="alert alert-<cms:if k_alert_type='warning'>notice<cms:else /><cms:show k_alert_type /></cms:if> alert-icon<cms:if k_alert_center>-center</cms:if>">
     <cms:if k_alert_type='success' >
         <cms:show_icon 'check' />
     <cms:else_if k_alert_type='error' />

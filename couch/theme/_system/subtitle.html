@@ -1,8 +1,10 @@
 <ul id="tabs">
-    <li class="tab active" id="tab-<cms:show k_route_module />">
-        <a data-toggle="tab" href="#tab-pane-<cms:show k_route_module />">
-            <cms:if k_subtitle_icon><cms:show_icon k_subtitle_icon /></cms:if><cms:hide>
-            </cms:hide><cms:show k_subtitle_text />
-        </a>
-    </li>
+    <cms:if k_subtitle_text || k_subtitle_icon >
+        <li class="tab active" id="tab-<cms:show k_route_module />">
+            <a data-toggle="tab" href="#tab-pane-<cms:show k_route_module />">
+                <cms:if k_subtitle_icon><cms:show_icon k_subtitle_icon /></cms:if><cms:hide>
+                </cms:hide><cms:show k_subtitle_text />
+            </a>
+        </li>
+    </cms:if>
 </ul>

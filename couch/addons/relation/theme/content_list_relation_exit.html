@@ -1,0 +1,24 @@
+<div id='json_content' style="display:none;">
+<cms:if k_relation_exit_action='exit_save'>
+    [   
+    <cms:if k_relation_selected_ids_string>
+        <cms:pages id=k_relation_selected_ids_string skip_custom_fields='0'>
+            {
+                "id":"<cms:show k_page_id />",
+                "title":"<cms:addslashes><cms:show k_page_title /></cms:addslashes>"
+            }
+            <cms:if "<cms:not k_paginated_bottom/>">,</cms:if>
+        </cms:pages>
+    </cms:if>    
+    ] 
+</cms:if>
+</div>
+
+<cms:admin_add_js>
+    $(function(){
+        if( window.parent && window.parent.KRelation && window.parent.KRelation.callBack ){
+            var content = $('#json_content');
+            window.parent.KRelation.callBack(content.html(), '<cms:show k_relation_exit_action />');
+        }
+    });
+</cms:admin_add_js>

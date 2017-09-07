@@ -5,10 +5,10 @@
 
     class KUsersAdmin extends KBaseAdmin{
 
-        function KUsersAdmin(){
+        function __construct(){
             global $FUNCS;
 
-            parent::KBaseAdmin();
+            parent::__construct();
             $FUNCS->add_event_listener( 'alter_render_vars_content_list_inner', array($this, '_alter_render_vars') );
         }
 
@@ -95,7 +95,7 @@
                     'weight'=>'0',
                     'header'=>$FUNCS->t('name'),
                     'content'=>"<cms:render 'list_title' />",
-                    'class'=>'user_name',
+                    'class'=>'user-name',
                 );
 
             $arr_fields['title'] =

@@ -5,10 +5,10 @@
 
     class KDraftsAdmin extends KPagesAdmin{
 
-        function KDraftsAdmin(){
+        function __construct(){
             global $FUNCS;
 
-            parent::KPagesAdmin();
+            parent::__construct();
             $FUNCS->add_event_listener( 'alter_render_vars_content_list_inner', array($this, '_alter_render_vars') );
             $FUNCS->add_event_listener( 'alter_pages_form_fields', array($this, '_hide_system_fields') );
         }
@@ -108,7 +108,7 @@
                 array(
                     'weight'=>'0',
                     'header'=>$FUNCS->t('original_page'),
-                    'class'=>'title align_bottom',
+                    'class'=>'original-page',
                     'content'=>"<cms:render 'list_title' />",
                 );
 
@@ -116,7 +116,7 @@
                 array(
                     'weight'=>'20',
                     'header'=>$FUNCS->t('template'),
-                    'class'=>'folder',
+                    'class'=>'template',
                     'content'=>"<cms:render 'list_template' />",
                 );
 
@@ -124,8 +124,8 @@
                 array(
                     'weight'=>'30',
                     'header'=>$FUNCS->t('modified'),
+                    'class'=>'modified',
                     'content'=>"<cms:render 'list_mod_date' />",
-                    'class'=>'date drafts',
                 );
 
             $arr_fields['k_actions'] =
@@ -139,7 +139,7 @@
             return $arr_fields;
         }
 
-        function _set_list_sort( $order='' ){
+        function _set_list_sort( $orderby='', $order='' ){
             global $FUNCS;
 
             $order = trim( $order );
@@ -301,6 +301,19 @@
                 );
 
             return $arr_filters;
+        }
+
+        function _default_form_page_actions(){
+            global $FUNCS, $PAGE, $CTX;
+
+            $arr_actions = parent::_default_form_page_actions();
+
+            if( is_array($arr_actions['btn_view']) ){
+                $arr_actions['btn_view']['title'] = $FUNCS->t('preview');
+                $arr_actions['btn_view']['href'] = K_SITE_URL . $PAGE->tpl_name . '?p=' . $PAGE->id;
+            }
+
+            return $arr_actions;
         }
 
         function _set_advanced_setting_fields( &$arr_fields ){

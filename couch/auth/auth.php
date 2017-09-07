@@ -56,7 +56,7 @@
         var $error = '';
         var $user; //current user
 
-        function KAuth( $required_access_level=0, $prompt=1 ){
+        function __construct( $required_access_level=0, $prompt=1 ){
             global $FUNCS;
 
             $this->hasher = new PasswordHash(8, TRUE);

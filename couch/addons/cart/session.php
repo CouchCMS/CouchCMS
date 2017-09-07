@@ -43,7 +43,7 @@
         var $old_msgs = array();
         var $new_msgs = array();
 
-        function KSession(){
+        function __construct(){
             global $FUNCS;
 
             // get flash data from session
@@ -128,7 +128,7 @@
         }
 
         ////////////////////// tag handlers ////////////////////////
-        function set_session_handler( $params, $node ){
+        static function set_session_handler( $params, $node ){
             global $FUNCS, $KSESSION;
             if( count($node->children) ) {die("ERROR: Tag \"".$node->name."\" is a self closing tag");}
 
@@ -143,7 +143,7 @@
             $KSESSION->set_var( $name, $value );
         }
 
-        function get_session_handler( $params, $node ){
+        static function get_session_handler( $params, $node ){
             global $FUNCS, $KSESSION;
             if( count($node->children) ) {die("ERROR: Tag \"".$node->name."\" is a self closing tag");}
 
@@ -162,7 +162,7 @@
             return $val;
         }
 
-        function delete_session_handler( $params, $node ){
+        static function delete_session_handler( $params, $node ){
             global $FUNCS, $KSESSION;
             if( count($node->children) ) {die("ERROR: Tag \"".$node->name."\" is a self closing tag");}
 
@@ -176,7 +176,7 @@
             $KSESSION->delete_var( $name );
         }
 
-        function set_flash_handler( $params, $node ){
+        static function set_flash_handler( $params, $node ){
             global $FUNCS, $KSESSION;
             if( count($node->children) ) {die("ERROR: Tag \"".$node->name."\" is a self closing tag");}
 
@@ -192,7 +192,7 @@
 
         }
 
-        function get_flash_handler( $params, $node ){
+        static function get_flash_handler( $params, $node ){
             global $FUNCS, $KSESSION;
             if( count($node->children) ) {die("ERROR: Tag \"".$node->name."\" is a self closing tag");}
 

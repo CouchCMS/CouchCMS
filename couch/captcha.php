@@ -45,8 +45,8 @@
     require( K_COUCH_DIR. 'includes/securimage/securimage.php' );
     class securimage_ex extends securimage{
         var $captcha_num;
-        function securimage_ex(){
-            parent::securimage();
+        function __construct(){
+            parent::__construct();
 
             // get the control's name from querystring
             $this->captcha_num = intval($_GET['c']);
