@@ -2515,7 +2515,9 @@
                 if( $hide_future_entries ){
                     $sql .= " AND cp.publish_date < '".$FUNCS->get_current_desktop_time()."'";
                 }
-                $sql .= " AND NOT cp.publish_date = '0000-00-00 00:00:00'";
+                if( !$show_unpublished ){
+                    $sql .= " AND NOT cp.publish_date = '0000-00-00 00:00:00'";
+                }
                 $sql .= " AND cp.access_level<='".$AUTH->user->access_level."'";
                 $sql .= " AND ct.executable=1";
 
