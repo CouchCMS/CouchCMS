@@ -384,8 +384,9 @@
                 'content'=>"<cms:render 'group_custom_fields' />",
                 'order'=>20,
             );
-			// 4. Allow more field groups - Primarily for admin panel theme developers
-			 $FUNCS->dispatch_event( 'add_default_field_group', array(&$arr_fields));
+
+            // 4. Allow more field groups - Primarily for admin panel theme developers
+            $FUNCS->dispatch_event( 'add_default_field_group', array(&$arr_fields));
         }
 
         function _set_default_fields( &$arr_fields ){
