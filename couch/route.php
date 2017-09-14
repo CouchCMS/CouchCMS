@@ -36,6 +36,7 @@ class Route
     var $debug;
     var $wildcard;
     var $resolved_values = array();
+    var $matched_path;
 
     function __construct(
         $name         = null,
@@ -137,6 +138,7 @@ class Route
 
         // done!
         $this->resolved_values = $this->values;
+        $this->matched_path = $path;
         return true;
     }
 

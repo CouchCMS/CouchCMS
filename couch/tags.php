@@ -2515,7 +2515,9 @@
                 if( $hide_future_entries ){
                     $sql .= " AND cp.publish_date < '".$FUNCS->get_current_desktop_time()."'";
                 }
-                $sql .= " AND NOT cp.publish_date = '0000-00-00 00:00:00'";
+                if( !$show_unpublished ){
+                    $sql .= " AND NOT cp.publish_date = '0000-00-00 00:00:00'";
+                }
                 $sql .= " AND cp.access_level<='".$AUTH->user->access_level."'";
                 $sql .= " AND ct.executable=1";
 
@@ -6494,10 +6496,12 @@ MAP;
                     array(
                           'msg'=>'',
                           'is_404'=>'0',
+                          'no_commit'=>'0',
                         ),
                     $params)
                 );
             $is_404 = ( $is_404==1 ) ? 1 : 0;
+            $no_commit = ( $no_commit==1 ) ? 1 : 0;
 
             ob_end_clean(); // discard all previous content..
 
@@ -6511,7 +6515,9 @@ MAP;
                 $html = $msg;
             }
 
-            $DB->commit( 1 ); // force commit, we are finished.
+            if( !$no_commit ){
+                $DB->commit( 1 ); // force commit, we are finished.
+            }
 
             if( $is_404 ){
                 header('HTTP/1.1 404 Not Found');
@@ -7546,6 +7552,45 @@ MAP;
             $html = call_user_func_array( array($FUNCS, 'render'), $args );
 
             return $html;
+        }
+
+        // Array related tags
+        /*
+            for non-associative arrays e.g.
+            <cms:set rec='["de", "fr", "es"]' is_json='1' />
+            <cms:arr_val_exists 'fr' in=rec />
+        */
+        function arr_val_exists( $params, $node ){
+            global $FUNCS;
+            if( count($node->children) ) {die("ERROR: Tag \"".$node->name."\" is a self closing tag");}
+
+            extract( $FUNCS->get_named_vars(
+                        array( 'val'=>'',
+                               'in'=>'',
+                              ),
+                        $params)
+                   );
+
+            return ( is_array($in) && in_array($val, $in) ) ? '1' : '0';
+        }
+
+        /*
+            for associative arrays e.g.
+            <cms:set rec='{"name":"John", "age":30, "cars":[ "Ford", "BMW", "Fiat" ]}' is_json='1' />
+            <cms:arr_key_exists 'cars' in=rec />
+        */
+        function arr_key_exists( $params, $node ){
+            global $FUNCS;
+            if( count($node->children) ) {die("ERROR: Tag \"".$node->name."\" is a self closing tag");}
+
+            extract( $FUNCS->get_named_vars(
+                        array( 'key'=>'',
+                               'in'=>'',
+                              ),
+                        $params)
+                   );
+
+            return ( is_array($in) && array_key_exists($key, $in) ) ? '1' : '0';
         }
 
     } //end class KTags

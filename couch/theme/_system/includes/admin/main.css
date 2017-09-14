@@ -657,8 +657,8 @@ div.mfp-iframe-scaler iframe{background:#fff;}
 div.mfp-figure:after{background:#f5f5f5;}
 div.mfp-bottom-bar{text-shadow:0 1px 0 rgba(0,0,0,.6);}
 .plupload-iframe .mfp-iframe-scaler{padding-top:38%;}
-div.kcfinder-iframe .mfp-content{max-width:968px; height:100%}
-.kcfinder-iframe .mfp-iframe-scaler{padding-top:50%;}
+div.kcfinder-iframe .mfp-content, div.mosaic-iframe .mfp-content{max-width:968px; height:100%}
+.kcfinder-iframe .mfp-iframe-scaler, .mosaic-iframe .mfp-iframe-scaler{padding-top:50%;}
 
 .mfp-fade.mfp-bg,.mfp-fade.mfp-wrap .mfp-content,.mfp-fade .mfp-arrow{opacity:0;
     -moz-transition:all .2s ease-out;
@@ -813,3 +813,14 @@ div.kcfinder-iframe .mfp-content{max-width:968px; height:100%}
 .k_reverse_relation a, .k_securefile a, p.addRow a{text-decoration:underline;}
 a.unpublished, a.hidden-template span.nav-title{text-decoration: line-through;}
 .sep{clear:both; height:38px; padding:8px;}
+
+.field.k_relation select{overflow: auto;height: inherit;width: 100%;}
+.field.k_relation option{padding-left: 0; padding-bottom: 4px;}
+.field.k_relation .btn{height: 28px; line-height: 26px;margin-right: 0;}
+
+#k-modal-body{position: absolute;top: 0;left: 0;bottom: 60px;right: 0;overflow-y: auto;padding: 16px 30px 30px;border-top: 1px solid rgba(255, 255, 255, 0.65);}
+#k-modal-footer{position: absolute;right: 0;left: 0;bottom: 0;height: 60px;padding: 11px 10px 10px;border-top: 1px solid #c0c0c0;text-align: right;}
+#k-modal-body .ctrl-bot{ border: 0;height: 40px; }
+#k-modal-footer .btn{margin-right: 6px;}
+#k-modal-footer .btn.btn-primary{margin-right: 15px;}
+#k-modal-footer .alert.plain{position: absolute;margin-top: 5px;margin-left: 15px;padding: 0px 15px;}

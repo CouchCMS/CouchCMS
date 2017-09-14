@@ -105,17 +105,28 @@ COUCH.bindPopupGallery = function() {
  * @param {Function}      [callbackClosed]
  * @param {String}        [mainClass]
  */
-COUCH.bindPopupIframe = function( $elements, callbackOpen, callbackClosed, mainClass ) {
-    $elements.magnificPopup({
+COUCH.bindPopupIframe = function( $elements, callbackBeforeOpen, callbackClosed, mainClass, modal, iframe_name, callbackOpen ) {
+    var config = {
         callbacks: {
             afterClose: callbackClosed,
-            beforeOpen: callbackOpen
+            beforeOpen: callbackBeforeOpen,
+            open: callbackOpen
         },
         mainClass: mainClass ? mainClass : "",
         closeOnBgClick: false,
         preloader:      false,
-        type:           "iframe"
-    });
+        type:           "iframe",
+        modal: modal ? true : false,
+    };
+    if( modal ){
+        iframe_name = iframe_name ? iframe_name : 'k-iframe';
+        config.iframe = {
+                markup: '<div class="mfp-iframe-scaler">'+
+                        '<iframe class="mfp-iframe" name="'+iframe_name+'" frameborder="0" allowfullscreen>    </iframe>'+
+                        '</div>',
+            };
+    }
+    $elements.magnificPopup(config);
 };
 
 /**

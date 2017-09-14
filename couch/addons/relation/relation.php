@@ -56,6 +56,7 @@
                     'orderby'=>'', /* publish_date, page_title, page_name, weight */
                     'order_dir'=>'', /* desc, asc */
                     'no_gui'=>'0', /* for setting values only programmatically */
+                    'advanced_gui'=>'0',
                   ),
                 $params
             );
@@ -69,6 +70,7 @@
             $attr['orderby'] = strtolower( trim($attr['orderby']) );
             $attr['order_dir'] = strtolower( trim($attr['order_dir']) ); // 'order' is a 'core parameter' and will be stripped off
             $attr['no_gui'] = ( $attr['no_gui']==1 ) ? 1 : 0;
+            $attr['advanced_gui'] = ( $attr['advanced_gui']==1 ) ? 1 : 0;
 
             return $attr;
         }
@@ -97,13 +99,26 @@
         function _render( $input_name, $input_id, $extra='', $dynamic_insertion=0 ){
             global $FUNCS;
 
-            $html = $FUNCS->render( 'field_relation', $this, $input_name, $input_id, $extra, $dynamic_insertion );
+            if( $this->no_gui ){
+                $rows = $this->items_selected;
+                if( $this->has=='one' && count($rows)>1 ){
+                    array_splice( $rows, 1 );
+                }
+                foreach( $rows as $row_id ){
+                    $html .= '<input type="hidden" name="'.$input_name.'_chk[]" value="'.$row_id.'" />';
+                }
+
+                return $html;
+            }
+
+            $renderable = ( $this->advanced_gui ) ? 'field_relation_advanced' : 'field_relation';
+            $html = $FUNCS->render( $renderable, $this, $input_name, $input_id, $extra, $dynamic_insertion );
 
             return $html;
         }
 
         // Called from both _render and store_posted_changes
-        function _get_rows( $arr_posted=null ){
+        function _get_rows( $arr_posted=null, $for_render=null ){
             global $FUNCS, $DB;
 
             $rs = $DB->select( K_TBL_TEMPLATES, array('id'), "name='" . $DB->sanitize( $this->masterpage ). "'" );
@@ -113,8 +128,8 @@
             $rows = array();
             $str_posted_ids = '';
             if( is_array($arr_posted) ){
-                // called from store_posted_changes
-                $select_fields = 'id';
+                // called from store_posted_changes or advanced gui render
+                $select_fields = ( $for_render )? 'id, page_title' : 'id';
 
                 $arr_posted_sanitized = array();
                 foreach( $arr_posted as $id ){
@@ -133,6 +148,58 @@
             }
 
             // folder?
+            $fsql = $this->_get_folder_sql( $tpl_id );
+
+            // reverse has one?
+            if( $this->reverse_has=='one' ){
+                // show only pages that are not already selected by others of the same relation field
+                $rsql = $this->_get_reverse_has_one_sql();
+            }
+
+            $sql = "SELECT " . $select_fields . "\r\n";
+            $sql .= "FROM ".K_TBL_PAGES." p \r\n";
+            $sql .= "WHERE p.template_id='".$tpl_id."'"."\r\n";
+            $sql .= $rsql;
+            $sql .= $fsql;
+            $sql .= "AND NOT p.publish_date = '0000-00-00 00:00:00'"."\r\n";
+
+            if( is_array($arr_posted) ){
+                $sql .= "AND p.id IN (".$str_posted_ids.")"."\r\n";
+            }
+            if( !is_array($arr_posted) || $for_render ){
+                // order & orderby
+                $orderby = trim( $this->orderby );
+                if( $orderby!='publish_date' && $orderby!='page_title' && $orderby!='page_name' && $orderby!='weight' ) $orderby = 'publish_date';
+                if( $orderby == 'weight' ){ $orderby = 'k_order'; }
+                $order = trim( $this->order_dir );
+                if( $order!='desc' && $order!='asc' ) $order = 'desc';
+                $sql .= "ORDER BY p.".$orderby." ".$order."\r\n";
+            }
+
+            $result = @mysql_query( $sql, $DB->conn );
+            if( !$result ){
+                ob_end_clean();
+                die( "Could not successfully run query: " . mysql_error( $DB->conn ) );
+            }
+
+            if( is_array($arr_posted) && !$for_render ){
+                while( $row=mysql_fetch_row($result) ){
+                    $rows[] = $row[0];
+                }
+            }
+            else{
+                while( $row=mysql_fetch_row($result) ){
+                    $rows[$row[0]] = $row[1];
+                }
+            }
+            mysql_free_result( $result );
+
+            return $rows;
+        }
+
+        function _get_folder_sql( $tpl_id ){
+            global $FUNCS, $DB;
+
             $folder = trim( $this->folder );
             $include_subfolders = ( $this->include_subfolders==0 ) ? 0 : 1;
             if( $folder!='' ){
@@ -175,7 +242,7 @@
                 }
 
                 if( count($arr_folders) ){
-                    $fsql = "AND page_folder_id ";
+                    $fsql = "AND p.page_folder_id ";
                     if( $neg ) $fsql .= "NOT ";
                     $fsql .= "IN (";
                     $sep = "";
@@ -188,64 +255,24 @@
             }
             else{
                 if( !$include_subfolders ){
-                    $fsql .= "AND page_folder_id='-1' ";
+                    $fsql .= "AND p.page_folder_id='-1' ";
                 }
             }
 
-            if( $this->reverse_has=='one' ){
-                // show only pages that are not already selected by others of the same relation field
-                $pid = $this->page->id;
-                $fid = $this->id;
+            return $fsql;
+        }
 
-                $sql = "SELECT " . $select_fields . "\r\n";
-                $sql .= "FROM ".K_TBL_PAGES."\r\n";
-                $sql .= "WHERE template_id='".$tpl_id."'"."\r\n";
-                $sql .= "AND id NOT IN"."\r\n";
-                $sql .= "(SELECT rel.cid FROM ".K_TBL_RELATIONS." rel WHERE rel.fid = '".$fid."' AND rel.pid <> '".$pid."')"."\r\n";
-                $sql .= $fsql;
-                $sql .= "AND NOT publish_date = '0000-00-00 00:00:00'"."\r\n";
-            }
-            else{
-                // show all pages for selection
-                $sql = "SELECT " . $select_fields . "\r\n";
-                $sql .= "FROM ".K_TBL_PAGES."\r\n";
-                $sql .= "WHERE template_id='".$tpl_id."'"."\r\n";
-                $sql .= $fsql;
-                $sql .= "AND NOT publish_date = '0000-00-00 00:00:00'"."\r\n";
-            }
+        function _get_reverse_has_one_sql(){
+            $pid = ( $this->page->parent_id ) ? $this->page->parent_id : $this->page->id;
+            $fid = $this->id;
 
-            if( is_array($arr_posted) ){
-                $sql .= "AND id IN (".$str_posted_ids.")"."\r\n";
-            }
-            else{
-                // order & orderby
-                $orderby = trim( $this->orderby );
-                if( $orderby!='publish_date' && $orderby!='page_title' && $orderby!='page_name' && $orderby!='weight' ) $orderby = 'publish_date';
-                if( $orderby == 'weight' ){ $orderby = 'k_order'; }
-                $order = trim( $this->order_dir );
-                if( $order!='desc' && $order!='asc' ) $order = 'desc';
-                $sql .= "ORDER BY ".$orderby." ".$order."\r\n";
-            }
+            $sql = "AND p.id NOT IN"."\r\n";
+            $sql .= "(SELECT rel.cid FROM ".K_TBL_RELATIONS." rel WHERE rel.fid = '".$fid."' AND rel.pid <> '".$pid."'"."\r\n";
 
-            $result = @mysql_query( $sql, $DB->conn );
-            if( !$result ){
-                ob_end_clean();
-                die( "Could not successfully run query: " . mysql_error( $DB->conn ) );
-            }
+            // take drafts into consideration ..
+            $sql .= "AND rel.pid NOT IN (SELECT p2.id FROM couch_pages p2 WHERE p2.parent_id = '".$pid."'))"."\r\n";
 
-            if( is_array($arr_posted) ){
-                while( $row=mysql_fetch_row($result) ){
-                    $rows[] = $row[0];
-                }
-            }
-            else{
-                while( $row=mysql_fetch_row($result) ){
-                    $rows[$row[0]] = $row[1];
-                }
-            }
-            mysql_free_result( $result );
-
-            return $rows;
+            return $sql;
         }
 
         // Handle posted data
@@ -549,28 +576,45 @@
             return $html;
         }
 
+        // routes
+        static function register_routes(){
+            global $FUNCS;
+
+            $route = array(
+                'name'=>'list_view',
+                'path'=>'list/{:tpl_id}/{:field_name}/{:page_id}',
+                'constraints'=>array(
+                    'tpl_id'=>'([1-9]\d*)',
+                    'field_name'=>'([0-9a-z-_]+)',
+                    /*'page_id'=>'([1-9]\d*)?',*/
+                    'page_id'=>'((?:[1-9]\d*)?)',
+                ),
+                'include_file'=>K_ADDONS_DIR.'relation/edit-relation.php',
+                'filters'=>'KRelationAdmin::resolve_entities',
+                'class'=> 'KRelationAdmin',
+                'action'=>'list_action',
+                'module'=>'relation', /* owner module of this route */
+            );
+
+            $FUNCS->register_route( 'relation', $route );
+        }
+
         // renderable theme functions
         static function register_renderables(){
             global $FUNCS;
 
-            $FUNCS->register_render( 'field_relation', array('renderable'=>array('Relation', '_render_relation')) );
-            $FUNCS->register_render( 'field_reverse_relation', array('renderable'=>array('ReverseRelation', '_render_reverse_relation')) );
+            $FUNCS->register_render( 'field_relation',              array('renderable'=>array('Relation', '_render_relation')) );
+            $FUNCS->register_render( 'field_reverse_relation',      array('renderable'=>array('ReverseRelation', '_render_reverse_relation')) );
+            $FUNCS->register_render( 'field_relation_advanced',     array('template_path'=>K_ADDONS_DIR.'relation/theme/', 'template_ctx_setter'=>array('Relation', '_render_relation_advanced')) );
+
+            $FUNCS->register_render( 'content_list_relation',       array('template_path'=>K_ADDONS_DIR.'relation/theme/') );
+            $FUNCS->register_render( 'content_list_relation_inner', array('template_path'=>K_ADDONS_DIR.'relation/theme/') );
+            $FUNCS->register_render( 'content_list_relation_exit',  array('template_path'=>K_ADDONS_DIR.'relation/theme/') );
+            $FUNCS->register_render( 'relation_list_checkbox',      array('renderable'=>array('Relation', '_render_list_checkbox')) );
         }
 
         static function _render_relation( $f, $input_name, $input_id, $extra, $dynamic_insertion ){
             global $FUNCS, $CTX;
-
-            if( $f->no_gui ){
-                $rows = $f->items_selected;
-                if( $f->has=='one' && count($rows)>1 ){
-                    array_splice( $rows, 1 );
-                }
-                foreach( $rows as $row_id ){
-                    $html .= '<input type="hidden" name="'.$input_name.'_chk[]" value="'.$row_id.'" />';
-                }
-
-                return $html;
-            }
 
             define( 'RELATION_URL', K_ADMIN_URL . 'addons/relation/' );
             $FUNCS->load_css( RELATION_URL . 'relation.css' );
@@ -631,6 +675,71 @@
 
             return $html;
         }
+
+        static function _render_relation_advanced( $f, $input_name, $input_id, $extra, $dynamic_insertion ){
+            global $FUNCS, $CTX;
+            static $done=0;
+
+            KField::_set_common_vars( $f->k_type, $input_name, $input_id, $extra, $dynamic_insertion, $f->simple_mode );
+
+            $rows = array();
+            if( $f->has=='one' ){
+                $selected = array();
+                $selected[] = $f->items_selected[0]; // can have only one item selected
+                $rows = $f->_get_rows( $selected, 1 /*for render*/ );
+            }
+            else{
+                $rows = $f->_get_rows( $f->items_selected, 1 /*for render*/ );
+            }
+            if( $FUNCS->is_error($rows) ){ $rows=array(); };
+
+            $CTX->set( 'k_options', $rows );
+            $CTX->set( 'k_option_ids', trim(implode(',', array_keys($rows))) );
+            $CTX->set( 'k_has_one', ( $f->has=='one' ) ? '1' : '0' );
+
+            // set link
+            //$link = $FUNCS->generate_route( 'relation', 'list_view', array('tpl_id'=>$f->template_id, 'field_name'=>$f->name, 'page_id'=>$f->page->id=='-1'?'':$f->page->id) ); // won't work when rendered outside admin-panel (i.e. on front-end in dbf)
+            $link = K_ADMIN_URL . K_ADMIN_PAGE.'?o=relation&q=list/'.$f->template_id.'/'.$f->name.'/'.(($f->page->id=='-1')?'':$f->page->id);
+            $CTX->set( 'k_target_link', $link );
+
+            if( !$done ){
+                $CTX->set( 'k_add_js', '1' );
+                $done=1;
+            }
+            else{
+                $CTX->set( 'k_add_js', '0' );
+            }
+        }
+
+        static function _render_list_checkbox( $for_header=0, $text_label=0 ){
+            global $CTX, $FUNCS;
+
+            $page_id = $CTX->get( 'k_page_id' );
+            $selected = $CTX->get( 'row_is_selected' );
+            $has_one = $CTX->get( 'k_has_one' );
+
+            if( $for_header ){
+                $html = '<label class="ctrl checkbox">';
+                $html .= '<input class="checkbox-all" type="checkbox" name="check-all" />';
+                if( $has_one ){
+                    $html .= '<span class="ctrl-option"></span></label>';
+                }
+                else{
+                    $html .= '<span class="ctrl-option tt" title="'.$FUNCS->t('select-deselect').'"></span></label>';
+                }
+            }
+            else{
+                $html = '<label class="ctrl checkbox">';
+                $html .= '<input type="checkbox" value="'.$page_id.'" class="page-selector checkbox-item" name="page-id[]" id="page-selector-'.$page_id.'"';
+                if( $selected ){
+                    $html .= ' checked="checked"';
+                }
+                $html .= '/>';
+                $html .= '<span class="ctrl-option"></span></label>';
+            }
+
+            return $html;
+        }
     }
 
     // Register
@@ -638,6 +747,11 @@
     $FUNCS->register_tag( 'related_pages', array('Relation', 'related_pages_handler'), 1, 1 ); // The helper tag that shows the related pages
     $FUNCS->register_tag( 'reverse_related_pages', array('Relation', 'reverse_related_pages_handler'), 1, 1 ); // -do in reverse-
     $FUNCS->add_event_listener( 'register_renderables',  array('Relation', 'register_renderables') );
+
+    // routes
+    if( defined('K_ADMIN') ){
+        $FUNCS->add_event_listener( 'register_admin_routes',  array('Relation', 'register_routes') );
+    }
 
 
     // UDF for outputting a link that lists reverse related pages in admin-panel

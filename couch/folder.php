@@ -538,6 +538,10 @@
                 $arr_vars['k_folder_pos'] = $this->pos_ex; // position amongst siblings
                 $arr_vars['k_first_child'] = $this->first_pos;
                 $arr_vars['k_last_child'] = $this->last_pos;
+
+                $arr_vars['k_folder_immediate_children_ex'] = $this->immediate_children_ex;
+                $arr_vars['k_folder_totalchildren_ex'] = $this->total_children_ex;
+                $arr_vars['k_folder_totalsiblings_orig'] = $this->total_siblings;
             }
 
             $CTX->set_all( $arr_vars );
@@ -944,6 +948,10 @@
             $arr_vars['k_last_child'] = $this->last_pos;
             $arr_vars['k_total_siblings'] = $this->total_siblings_ex;
             $arr_vars['k_pos'] = $this->pos_ex;
+
+            $arr_vars['k_immediate_children_orig'] = $this->immediate_children;
+            $arr_vars['k_total_children_orig'] = $this->total_children;
+            $arr_vars['k_total_siblings_orig'] = $this->total_siblings;
 
             $arr_vars['k_nestedpage_link'] = K_SITE_URL . $this->get_link();
             $arr_vars['k_menu_link'] = ( $this->is_pointer && !$this->masquerades ) ? $this->pointer_link : $arr_vars['k_nestedpage_link'];
@@ -1448,6 +1456,10 @@
             $arr_vars['k_total_siblings'] = $this->total_siblings_ex;
             $arr_vars['k_pos'] = $this->pos_ex;
 
+            $arr_vars['k_immediate_children_orig'] = $this->immediate_children;
+            $arr_vars['k_total_children_orig'] = $this->total_children;
+            $arr_vars['k_total_siblings_orig'] = $this->total_siblings;
+
             $CTX->set_all( $arr_vars );
 
         }
@@ -1554,6 +1566,10 @@
             $arr_vars['k_last_child'] = $this->last_pos;
             $arr_vars['k_total_siblings'] = $this->total_siblings_ex;
             $arr_vars['k_pos'] = $this->pos_ex;
+
+            $arr_vars['k_immediate_children_orig'] = $this->immediate_children;
+            $arr_vars['k_total_children_orig'] = $this->total_children;
+            $arr_vars['k_total_siblings_orig'] = $this->total_siblings;
 
             $CTX->set_all( $arr_vars );
 

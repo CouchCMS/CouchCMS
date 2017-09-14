@@ -311,6 +311,8 @@
         $rs = $DB->select( K_TBL_TEMPLATES, array('*'), '1=1 ORDER BY id ASC' );
         if( count($rs) ){
             foreach( $rs as $tpl ){
+                if( $tpl['hidden'] > 1 ) continue;
+
                 $icon = trim( $tpl['icon'] );
                 $class = '';
                 $show = 1;
@@ -547,7 +549,7 @@
 
             $delete_prompt = $FUNCS->t( 'confirm_delete_folder' );
         }
-        else{ // pages module
+        elseif( $route->module=='pages' ){
             $page_id  = $CTX->get('k_page_id');
             $tpl_id   = $CTX->get('k_template_id');
             $tpl_name = $CTX->get('k_template_name');
@@ -680,7 +682,7 @@
         $query = strip_tags( trim($_GET['s']) );
 
         if( $query ){
-            $code = "<cms:search masterpage='".$PAGE->tpl_name."' ids_only='1' show_future_entries='1' qs_param='<' />"; // the dummy 'qs_param' will effectively make the cms:search tag ignore pagination
+            $code = "<cms:search masterpage='".$PAGE->tpl_name."' ids_only='1' show_future_entries='1' show_unpublished='1' qs_param='<' />"; // the dummy 'qs_param' will effectively make the cms:search tag ignore pagination
             $parser = new KParser( $code );
             $page_ids = $parser->get_HTML();
             if( !$page_ids ) $page_ids='0';

@@ -1,0 +1,126 @@
+<cms:if k_relation_exit_action>
+    <cms:render 'content_list_relation_exit' />
+<cms:else />
+    <cms:set my_paginator='' />
+    <cms:set my_paginator_label='' />
+    <cms:set my_filters="<cms:render 'filters' />" />
+    <cms:set my_list="<cms:render 'content_list_relation_inner' />" />
+
+    <div class="tab-pane fade active in" id="tab-pane-<cms:show k_route_module />">
+        <div id="k-modal-body">
+            <cms:if my_filters || my_paginator>
+                <div class="ctrl-top">
+
+                    <cms:show my_filters />
+
+                    <div class="ctrl-right">
+                        <cms:show my_paginator_label />
+                        <cms:show my_paginator />
+                    </div>
+                </div>
+
+                <cms:if "<cms:not my_filters />"><div class="sep">&nbsp;</div></cms:if>
+            </cms:if>
+
+            <form name="<cms:show k_cur_form />" id="<cms:show k_cur_form />" class="bulk-form" action="" method="post">
+
+                <div id="relation-list"><cms:show my_list /></div>
+
+                <cms:if my_paginator>
+                    <div class="ctrl-bot">
+                        <div class="ctrl-right">
+                            <cms:show my_paginator />
+                        </div>
+                    </div>
+                </cms:if>
+
+                <input type="hidden" id="deselected_ids" name="deselected_ids" value="">
+                <input type="hidden" id="nonce" name="nonce" value="<cms:create_nonce 'bulk_action_page' />">
+                <input type="hidden" id="k_bulk_action" name="k_bulk_action" value="">
+            </form>
+        </div>
+        <div id="k-modal-footer">
+            <cms:if k_relation_selected_ids_count>
+                <div class="alert alert-info plain">
+                    <strong><cms:show k_relation_selected_ids_count /> <cms:localize 'selected' /></strong>
+                </div>
+            </cms:if>
+            <cms:render 'batch_actions' />
+            <cms:render 'page_actions' />
+            <cms:render 'extended_actions' />
+        </div>
+        <div id="screen" style="display:none; position:absolute; width:100%; height:100%; top:0; left:0; background-color: black; opacity: 0.1;"></div>
+    </div>
+    <cms:admin_add_js>
+        $(function(){ 
+            form = $('#<cms:show k_cur_form />');
+            input = form.find('#deselected_ids');
+            list = $('#relation-list');
+            var checkboxes = list.find( ".checkbox-item" ).not( ":disabled" );
+            var checkboxAll = list.find( ".checkbox-all" );
+            var screen = $('#screen');
+            var has_one = <cms:show k_has_one />;
+
+            if( checkboxes.length && !has_one ){
+                if( checkboxes.length === checkboxes.filter( ":checked" ).length ){
+                    checkboxAll.prop( "checked", true );
+                }else{
+                    checkboxAll.prop( "checked", false );
+                }
+            }
+            else{
+                checkboxAll.prop( "disabled", true );
+            }
+
+            checkboxes.on( "change", function(e){
+                var $this = $( this );
+                var checked = $this.prop( "checked" );
+
+                if( !has_one ){
+                    if( checkboxes.length === checkboxes.filter( ":checked" ).length ){
+                        checkboxAll.prop( "checked", true );
+                    }else{
+                        checkboxAll.prop( "checked", false );
+                    }
+                }
+
+                if( checked ){
+                    $this.closest( "tr" ).addClass( "selected" );
+                }else{
+                    $this.closest( "tr" ).removeClass( "selected" );
+                }
+
+                if( !checked ){
+                    input.val( $this.val() );
+                }
+                screen.css( "display", "block" );
+                form.submit();
+            })
+            
+            checkboxAll.on( "change", function(e){
+                var $this = $( this );
+                var checked = $this.prop( "checked" );
+                checkboxes.prop( "checked", checked );
+                
+                if( !checked ){
+                    var ids = [];
+                    checkboxes.each(function(rowIndex){
+                        ids.push($(this).val());
+                    });
+                    ids = ids.join(", ");
+                    input.val( ids );
+                }
+                screen.css( "display", "block" );
+                form.submit();
+            });
+            
+            list.on( "click", "td", function( e ) {
+                if( e.target === this || /LI|DIV|STRONG/.test( e.target.nodeName ) ){
+                    $( this ).closest( "tr" ).find( ".checkbox-item" ).not( ":disabled" ).prop( "checked", function( i, val ){
+                        return !val;
+                    }).trigger( "change" );
+                }
+            });
+        });
+    </cms:admin_add_js>
+</cms:if>
