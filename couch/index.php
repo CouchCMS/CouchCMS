@@ -51,6 +51,7 @@
     }
 
     if( !$FUNCS->route_fully_rendered ){
+        if( !defined('K_OVERRIDING_RENDERABLES_DONE') ) $FUNCS->init_render();
         $html = $FUNCS->render( 'main', $html );
     }
 
@@ -59,6 +60,9 @@
         if( $DB->debug ){ $html .= " (in ".k_format_time($DB->query_time).")"; }
         $html .= " -->";
     }
+
+    // HOOK: alter_final_admin_page_output
+    $FUNCS->dispatch_event( 'alter_final_admin_page_output', array(&$html) );
 
     // final output
     $CTX->pop();

@@ -770,7 +770,7 @@
         }
 
         // Custom field validators
-        function validate_parent( $field ){
+        static function validate_parent( $field ){
             global $FUNCS, $PAGE;
 
             $proposed_parent_id = trim( $field->get_data() );
@@ -787,7 +787,7 @@
             }
         }
 
-        function name_unique( $field ){
+        static function name_unique( $field ){
             global $FUNCS, $DB, $PAGE;
 
             $rs = $DB->select( K_TBL_FOLDERS, array('id'), "name='" . $DB->sanitize( trim($field->get_data()) ). "' and NOT id='" . $DB->sanitize( $PAGE->folder_id ) . "' and template_id='" . $DB->sanitize( $PAGE->tpl_id ). "'" );

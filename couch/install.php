@@ -202,6 +202,7 @@
       file_meta            text,
       creation_IP          varchar(45),
       k_order            int DEFAULT '0',
+      ref_count          int DEFAULT '1',
 
       PRIMARY KEY (id)
     ) ENGINE = InnoDB CHARACTER SET utf8 COLLATE utf8_general_ci;";
@@ -233,6 +234,8 @@
       config_form      text,
       parent           varchar(255),
       icon             varchar(255),
+      deleted          int(1) DEFAULT '0',
+      has_globals      int(1) DEFAULT '0',
       PRIMARY KEY (id)
     ) ENGINE = InnoDB CHARACTER SET utf8 COLLATE utf8_general_ci;";
 
@@ -391,24 +394,35 @@
       (template_id, is_pointer, masquerades, pointer_link_detail(255));";
 
     $k_stmts[] = "CREATE INDEX `".K_TBL_PAGES."_Index14` ON `".K_TBL_PAGES."` (`template_id`, `file_name`(255));";
-
     $k_stmts[] = "CREATE INDEX `".K_TBL_PAGES."_Index15` ON `".K_TBL_PAGES."` (`template_id`, `page_folder_id`, `file_name`(255));";
-
     $k_stmts[] = "CREATE INDEX `".K_TBL_PAGES."_Index16` ON `".K_TBL_PAGES."` (`template_id`, `file_ext`(20), `file_name`(255));";
-
     $k_stmts[] = "CREATE INDEX `".K_TBL_PAGES."_Index17` ON `".K_TBL_PAGES."` (`template_id`, `page_folder_id`, `file_ext`(20), `file_name`(255));";
-
     $k_stmts[] = "CREATE INDEX `".K_TBL_PAGES."_Index18` ON `".K_TBL_PAGES."` (`template_id`, `file_size`);";
-
     $k_stmts[] = "CREATE INDEX `".K_TBL_PAGES."_Index19` ON `".K_TBL_PAGES."` (`template_id`, `page_folder_id`, `file_size`);";
-
     $k_stmts[] = "CREATE INDEX `".K_TBL_PAGES."_Index20` ON `".K_TBL_PAGES."` (`creation_IP`, `creation_date`);";
-
     $k_stmts[] = "CREATE INDEX `".K_TBL_PAGES."_index21` ON `".K_TBL_PAGES."` (`template_id`, `k_order`);";
-
     $k_stmts[] = "CREATE INDEX `".K_TBL_PAGES."_index22` ON `".K_TBL_PAGES."` (`template_id`, `page_folder_id`, `k_order`);";
-
     $k_stmts[] = "CREATE INDEX `".K_TBL_PAGES."_index23` ON `".K_TBL_PAGES."` (`k_order`);";
+    $k_stmts[] = "CREATE INDEX `".K_TBL_PAGES."_Index24` ON `".K_TBL_PAGES."` (`status`, `ref_count`, `modification_date`);";
+
+    $k_stmts[] = "CREATE INDEX `".K_TBL_PAGES."_index25` ON `".K_TBL_PAGES."` (`template_id`, `parent_id`, `publish_date`);";
+    $k_stmts[] = "CREATE INDEX `".K_TBL_PAGES."_index26` ON `".K_TBL_PAGES."` (`template_id`, `parent_id`, `page_name`);";
+    $k_stmts[] = "CREATE INDEX `".K_TBL_PAGES."_index27` ON `".K_TBL_PAGES."` (`template_id`, `parent_id`, `page_title`);";
+    $k_stmts[] = "CREATE INDEX `".K_TBL_PAGES."_index28` ON `".K_TBL_PAGES."` (`template_id`, `parent_id`, `modification_date`);";
+    $k_stmts[] = "CREATE INDEX `".K_TBL_PAGES."_index29` ON `".K_TBL_PAGES."` (`template_id`, `parent_id`, `comments_count`);";
+    $k_stmts[] = "CREATE INDEX `".K_TBL_PAGES."_index30` ON `".K_TBL_PAGES."` (`template_id`, `parent_id`, `file_name`(255));";
+    $k_stmts[] = "CREATE INDEX `".K_TBL_PAGES."_index31` ON `".K_TBL_PAGES."` (`template_id`, `parent_id`, `file_ext`, `file_name`(255));";
+    $k_stmts[] = "CREATE INDEX `".K_TBL_PAGES."_index32` ON `".K_TBL_PAGES."` (`template_id`, `parent_id`, `file_size`);";
+    $k_stmts[] = "CREATE INDEX `".K_TBL_PAGES."_index33` ON `".K_TBL_PAGES."` (`template_id`, `parent_id`, `k_order`);";
+    $k_stmts[] = "CREATE INDEX `".K_TBL_PAGES."_index34` ON `".K_TBL_PAGES."` (`template_id`, `parent_id`, `page_folder_id`, `publish_date`);";
+    $k_stmts[] = "CREATE INDEX `".K_TBL_PAGES."_index35` ON `".K_TBL_PAGES."` (`template_id`, `parent_id`, `page_folder_id`, `page_name`);";
+    $k_stmts[] = "CREATE INDEX `".K_TBL_PAGES."_index36` ON `".K_TBL_PAGES."` (`template_id`, `parent_id`, `page_folder_id`, `page_title`);";
+    $k_stmts[] = "CREATE INDEX `".K_TBL_PAGES."_index37` ON `".K_TBL_PAGES."` (`template_id`, `parent_id`, `page_folder_id`, `modification_date`);";
+    $k_stmts[] = "CREATE INDEX `".K_TBL_PAGES."_index38` ON `".K_TBL_PAGES."` (`template_id`, `parent_id`, `page_folder_id`, `comments_count`);";
+    $k_stmts[] = "CREATE INDEX `".K_TBL_PAGES."_index39` ON `".K_TBL_PAGES."` (`template_id`, `parent_id`, `page_folder_id`, `file_name`(255));";
+    $k_stmts[] = "CREATE INDEX `".K_TBL_PAGES."_index40` ON `".K_TBL_PAGES."` (`template_id`, `parent_id`, `page_folder_id`, `file_ext`, `file_name`(255));";
+    $k_stmts[] = "CREATE INDEX `".K_TBL_PAGES."_index41` ON `".K_TBL_PAGES."` (`template_id`, `parent_id`, `page_folder_id`, `file_size`);";
+    $k_stmts[] = "CREATE INDEX `".K_TBL_PAGES."_index42` ON `".K_TBL_PAGES."` (`template_id`, `parent_id`, `page_folder_id`, `k_order`);";
 
     $k_stmts[] = "CREATE UNIQUE INDEX ".K_TBL_TEMPLATES."_Index01
       ON ".K_TBL_TEMPLATES."

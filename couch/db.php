@@ -241,4 +241,46 @@
                 @mysql_query( "ROLLBACK", $this->conn );
             }
         }
+
+        /*
+            Process level lock.
+            Returns 1 if lock obtained else 0
+            Obtained lock will be freed by either explictly calling 'release_lock'
+            or automatically when the PHP script ends
+            Note: locks are not released when transactions commit or roll back.
+        */
+        function get_lock( $name ){
+            $name = trim( $name );
+            if( $name=='' ) return 0;
+
+            if( !$this->is_free_lock($name) ) return 0;
+
+            $sql = "SELECT GET_LOCK('".$this->sanitize( $name )."', 0) AS lck";
+            $rs = $this->raw_select( $sql );
+            $ret = ( count($rs) ) ? $rs[0]['lck'] : 0;
+
+            return (int)$ret;
+        }
+
+        function release_lock( $name ){
+            $name = trim( $name );
+            if( $name=='' ) return 0;
+
+            $sql = "SELECT RELEASE_LOCK('".$this->sanitize( $name )."') AS lck";
+            $rs = $this->raw_select( $sql );
+            $ret = ( count($rs) ) ? $rs[0]['lck'] : 0;
+
+            return (int)$ret;
+        }
+
+        function is_free_lock( $name ){
+            $name = trim( $name );
+            if( $name=='' ) return 0;
+
+            $sql = "SELECT IS_FREE_LOCK('".$this->sanitize( $name )."') AS lck";
+            $rs = $this->raw_select( $sql );
+            $ret = ( count($rs) ) ? $rs[0]['lck'] : 0;
+
+            return (int)$ret;
+        }
     }

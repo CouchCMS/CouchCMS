@@ -61,7 +61,7 @@
             // get down to business
             if( $node->name=='db_persist_form' ){
                 // can only be used used within a data-bound form.. page object wlll be provided by the form
-                $pg = &$CTX->get_object( 'bound_page', 'form' );
+                $pg = &$CTX->get_object( 'k_bound_page', 'form' );
                 if( is_null($pg) ){
                     die("ERROR: Tag \"".$node->name."\" needs to be within a Data-bound form");
                 }
@@ -334,7 +334,7 @@
                    );
 
             // get the page object bound to the form
-            $pg = &$CTX->get_object( 'bound_page', 'form' );
+            $pg = &$CTX->get_object( 'k_bound_page', 'form' );
             if( is_null($pg) ){
                 die( "ERROR: Tag \"".$node->name."\" needs to be within a Data-bound form" );
             }
@@ -410,31 +410,44 @@
                                'masterpage'=>'',
                                'page_name'=>'',
                                'names'=>'', /*name(s) of fields to fetch. Can have negation*/
+                               'types'=>'', /*type(s) of fields to fetch. Can have negation*/
                                'skip_system'=>'1',
-                               'skip_deleted'=>'1'
+                               'skip_deleted'=>'1',
+                               'bound'=>'0', /*use bound page*/
+                               'render_display'=>'0',
                               ),
                         $params)
                    );
 
             // sanitize params
             $masterpage = trim( $masterpage );
-            if( !$masterpage ){
-                die( "ERROR: Tag \"".$node->name."\": 'masterpage' attribute missing" );
-            }
             $page = trim( $page_name );
             $names = trim( $names );
+            $types = trim( $types );
             $skip_system = ( $skip_system==0 ) ? 0 : 1;
             $skip_deleted = ( $skip_deleted==0 ) ? 0 : 1;
+            $bound = ( $bound==1 ) ? 1 : 0;
+            $render_display = ( $render_display==1 ) ? 1 : 0;
 
-            if( $FUNCS->is_spl_template( $masterpage ) ){
-                $mode = 'edit';
-                $pg = $FUNCS->handle_spl_template( $masterpage, array('', $page, &$mode) );
+            if( !$bound ){
+                if( !$masterpage ){
+                    die( "ERROR: Tag \"".$node->name."\": 'masterpage' attribute missing" );
+                }
+
+                if( $FUNCS->is_spl_template( $masterpage ) ){
+                    $mode = 'edit';
+                    $pg = $FUNCS->handle_spl_template( $masterpage, array('', $page, &$mode) );
+                }
+                else{
+                    $rs = $DB->select( K_TBL_TEMPLATES, array('id', 'clonable'), "name='" . $DB->sanitize( $masterpage ). "'" );
+                    if( !count($rs) ) return;
+
+                    $pg = new KWebpage( $rs[0]['id'], 0, $page );
+                }
             }
             else{
-                $rs = $DB->select( K_TBL_TEMPLATES, array('id', 'clonable'), "name='" . $DB->sanitize( $masterpage ). "'" );
-                if( !count($rs) ) return;
-
-                $pg = new KWebpage( $rs[0]['id'], 0, $page );
+                $pg = &$CTX->get_object( 'k_bound_page' );
+                if( is_null($pg) ) return;
             }
 
             if( !$pg->error ){
@@ -449,6 +462,17 @@
                     $arr_names = array_map( "trim", explode( ',', $names ) );
                 }
 
+                if( $types ){
+                    // Negation?
+                    $neg_types = 0;
+                    $pos = strpos( strtoupper($types), 'NOT ' );
+                    if( $pos!==false && $pos==0 ){
+                        $neg_types = 1;
+                        $types = trim( substr($types, strpos($types, ' ')) );
+                    }
+                    $arr_types = array_map( "trim", explode( ',', $types ) );
+                }
+
                 $count = count( $pg->fields );
                 for( $x=0; $x<$count; $x++ ){
                     $f = &$pg->fields[$x];
@@ -457,7 +481,20 @@
                         continue;
                     }
 
-                    $f->resolve_dynamic_params();
+                    if( $arr_types ){
+                        if( $neg_types ){
+                            if( in_array($f->k_type, $arr_types) ){
+                                unset( $f );
+                                continue;
+                            }
+                        }
+                        else{
+                            if( !in_array($f->k_type, $arr_types) ){
+                                unset( $f );
+                                continue;
+                            }
+                        }
+                    }
 
                     if( $arr_names ){
                         if( $neg ){
@@ -474,6 +511,8 @@
                         }
                     }
 
+                    $f->resolve_dynamic_params();
+
                     $CTX->reset();
                     $vars = array();
                     $vars['id'] = $f->id;
@@ -485,7 +524,7 @@
                     $vars['hidden'] = $f->hidden;
                     $vars['search_type'] = $f->search_type;
                     $vars['order'] = $f->k_order;
-                    if( !$pg->tpl_is_clonable || ($pg->tpl_is_clonable && $page) ){
+                    if( !$pg->tpl_is_clonable || ($pg->tpl_is_clonable && ($page || $bound)) ){
                         $vars['data'] = $f->get_data();
                     }
                     else{
@@ -532,8 +571,15 @@
                             }
                         }
                     }
-                    unset( $f );
+                    $vars['k_caption'] = $f->label ? $f->label : $f->name;
                     $CTX->set_all( $vars );
+
+                    if( $render_display ){
+                        $display_html = $FUNCS->render( 'display_field_'.$f->k_type, $f );
+                        if( is_null($display_html) ) $display_html = $vars['data'];
+                        $CTX->set('k_display_html', $display_html);
+                    }
+                    unset( $f );
 
                     // call the children
                     foreach( $node->children as $child ){

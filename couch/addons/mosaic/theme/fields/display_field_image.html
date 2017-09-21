@@ -1,0 +1,12 @@
+<cms:if data >
+    <div class="img-preview">
+        <a class="img-popup" href="<cms:show data />">
+            <img
+                src="<cms:show data />" 
+                <cms:if preview_width>width="<cms:show preview_width />"</cms:if>
+                <cms:if preview_height>height="<cms:show preview_height />"</cms:if>
+                class="k_image_preview"
+            >
+        </a>
+    </div>
+</cms:if>

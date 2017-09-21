@@ -27,10 +27,12 @@
     setDefaults('hideInputs',   true,                options);
     setDefaults('rowStriping',  true,                options);
     setDefaults('addNewRows',   true,                options);
-    setDefaults('deletePrompt', 'Delete this row?',  options);
-    setDefaults('noDataMessage', '- No Data -',      options);
+    setDefaults('deletePrompt', (typeof COUCH=='object' && COUCH.t_confirm_delete_row) ? COUCH.t_confirm_delete_row : 'Delete this row?',  options);
+    setDefaults('noDataMessage', (typeof COUCH=='object' && COUCH.t_no_data_message) ? COUCH.t_no_data_message : '- No Data -',  options);
     setDefaults('addRowLabel',  'Add a Row',         options);
     setDefaults('limitAddedRows', 0,                 options);
+    setDefaults('addDefaultRow', 0,                  options);
+    setDefaults('stackLayout', 0,                    options);
 
     initialize(this);
 
@@ -78,16 +80,29 @@
         $('#addNewRow_' + id).hide();
         emptyRow = $('#newDataRow_' + id);
         addRow = $('#addRow_' + id);
-        $('a', addRow).on("click", function(event){
-             addNewRow();
+        $('a', addRow).on("click", function(event, arg1){
+             addNewRow(arg1);
         });
       }
 
       _sortorder = $('#_' + id + '_sortorder');
 
       _record_order();
-      if(!rows.length) addNewRow();
-
+      if(!rows.length){ (options.addDefaultRow) ? addNoDataRow() : addNewRow(); }
+      if(options.stackLayout){
+        table.on('click', '.col-up-down .up', function(){
+            var row = $(this).closest('tr');
+            var tbody = row.closest( 'tbody' );
+            row.prev().before(row);
+            tbody.trigger('_reorder');
+        });
+        table.on('click', '.col-up-down .down', function(){
+            var row = $(this).closest('tr');
+            var tbody = row.closest( 'tbody' );
+            row.next().after(row);
+            tbody.trigger('_reorder');
+        });
+      }
     }
 
     function requireElement(selector, el, error){
@@ -130,29 +145,32 @@
     function initializeRow(row, rowIndex){
       rows.push(row);
       addStripe(row, rowIndex);
-
-      $('td', row).each(function(columnIndex){
-
-        var cell = $(this);
-        var cellID = rowIndex + ":" + columnIndex;
-
-        var deleteCheckbox = $('input[name^=delete]', cell);
-        if(deleteCheckbox.length > 0){
-            var input = requireElement("input[type=checkbox]", cell, "An <input> checkbox element is required for deletable rows in cell " + cellID + '.\n(Name property should be "delete[]".)');
-            if(options.hideInputs) input.css("display", "none");
-
-            var label = $("label", cell);
-            if(label) label.css("display", "block");
-            cell.on("click", function(event){
-              event.preventDefault();
-              removeRow(row);
-            });
-        }
-      });
-
+      prepNewRow(row, rowIndex);
     }
 
-    function addNewRow(){
+    function prepNewRow(row, rowIndex){
+        $('td', row).each(function(columnIndex){
+
+            var cell = $(this);
+            var cellID = rowIndex + ":" + columnIndex;
+
+            var deleteCheckbox = $('input[name^=delete]', cell);
+            if(deleteCheckbox.length > 0){
+                var input = requireElement("input[type=checkbox]", cell, "An <input> checkbox element is required for deletable rows in cell " + cellID + '.\n(Name property should be "delete[]".)');
+                if(options.hideInputs) input.css("display", "none");
+
+                var label = $("label", cell);
+                if(label) label.css("display", "block");
+                var target = ( !options.stackLayout ) ? cell : $('.delete-row', cell);
+                target.on("click", function(event){
+                  event.preventDefault();
+                  removeRow(row);
+                });
+            }
+      });
+    }
+
+    function addNewRow( above ){
       $('.noDataRow', tbody).remove();
       var newRow = emptyRow.clone();
       newRow.removeAttr('style');
@@ -182,8 +200,18 @@
       });
 
       nextid++;
-      tbody.append(newRow);
-      initializeRow(newRow, rows.length);
+
+      if( above ){
+        $(tbody.find('#'+above)).before(newRow);
+        prepNewRow(newRow, rows.length);
+        update();
+        stripify();
+      }
+      else{
+        tbody.append(newRow);
+        initializeRow(newRow, rows.length);
+      }
+
       _record_order();
     }
 
@@ -194,14 +222,18 @@
       row.trigger('row_delete');
       row.remove();
       if(rows.length < 1){
+        addNoDataRow();
+      }
+      stripify();
+      _record_order();
+    }
+
+    function addNoDataRow(){
         var message = options.noDataMessage;
         var colspan = $('thead th:visible', table).length;
         var noDataRow = $('<tr class="noDataRow odd"><td align="center" colspan="'+colspan+'">'+message+'</td></tr>');
         tbody.append(noDataRow);
         addRow.show();
-      }
-      stripify();
-      _record_order();
     }
 
     function _reordered(){

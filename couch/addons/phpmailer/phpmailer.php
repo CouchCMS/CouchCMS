@@ -351,7 +351,7 @@
             return $html;
         }
 
-        function get_data( $for_ctx=0 ){
+        function get_data(){
             global $CTX;
 
             // Data not a simple string hence

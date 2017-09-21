@@ -52,7 +52,7 @@
         var $cached_files = array(); // for use of smart_embed tag
         var $cached_nested_pages = array();
         var $cached_pretty_tplnames = array();
-        var $cached_settings = array();
+        var $cached_settings = null;
 
         var $_t = array(); // translated strings
         var $_ti = array(); // translated icon names
@@ -1649,11 +1649,16 @@
 
         function get_link( $masterpage ){
             if( K_PRETTY_URLS ){
-                return K_SITE_URL . $this->get_pretty_template_link( $masterpage );
+                $link = K_SITE_URL . $this->get_pretty_template_link( $masterpage );
             }
             else{
-                return K_SITE_URL . $masterpage;
+                $link = K_SITE_URL . $masterpage;
             }
+
+            // HOOK: funcs_get_link
+            $FUNCS->dispatch_event( 'funcs_get_link', array($masterpage, &$link) );
+
+            return $link;
         }
 
         function get_qs_link( $link, $skip_qs=array() ){
@@ -2197,15 +2202,7 @@
             global $DB;
 
             if( K_CACHE_SETTINGS ){
-                if( !count($this->cached_settings) ){
-                    $rs = @mysql_query( 'select * from '.K_TBL_SETTINGS, $DB->conn );
-                    if( $rs ){
-                        while( $row = mysql_fetch_row($rs) ) {
-                            $this->cached_settings[$row[0]] = $row[1];
-                        }
-                        mysql_free_result( $rs );
-                    }
-                }
+                if( is_null($this->cached_settings) ) $this->_init_settings_cache();
 
                 if( key_exists($key, $this->cached_settings) ){
                     return $this->cached_settings[$key];
@@ -2235,6 +2232,7 @@
             }
 
             if( K_CACHE_SETTINGS ){
+                if( is_null($this->cached_settings) ) $this->_init_settings_cache();
                 $this->cached_settings[$key] = $value;
             }
         }
@@ -2246,7 +2244,35 @@
             if( $rs==-1 ) return KFuncs::raise_error( "Unable to remove setting from K_TBL_SETTINGS" );
 
             if( K_CACHE_SETTINGS ){
+                if( is_null($this->cached_settings) ) $this->_init_settings_cache();
                 unset( $this->cached_settings[$key] );
+            }
+        }
+
+        function get_setting_ex( $key, $default=null ){
+            $val = $this->get_setting( $key, $default );
+            $val = ( $val!==$default ) ? @unserialize( base64_decode($val) ) : $default;
+
+            return $val;
+        }
+
+        function set_setting_ex( $key, $value ){
+            global $DB;
+
+            $rs = $this->set_setting( $key, base64_encode(serialize($value)) );
+            return $rs;
+        }
+
+        function _init_settings_cache(){
+            global $DB;
+
+            $this->cached_settings = array();
+            $rs = @mysql_query( 'select * from '.K_TBL_SETTINGS, $DB->conn );
+            if( $rs ){
+                while( $row = mysql_fetch_row($rs) ) {
+                    $this->cached_settings[$row[0]] = $row[1];
+                }
+                mysql_free_result( $rs );
             }
         }
 
@@ -3754,6 +3780,9 @@ OUT;
             if( !$name ){ ob_end_clean(); die( "ERROR: function register_route(): Please provide a name for the route" ); }
             if( array_key_exists($name, $this->routes[$masterpage]) ){ ob_end_clean(); die( "ERROR: function register_route(): '$name' already registered for module '$masterpage'" ); }
             $path = trim( $path );
+
+            $module = trim( $module );
+            if( $module=='' ){ $module = $masterpage; }
 
             $route = new Route( $name, $masterpage, $path, $constraints, $values, $method, $secure, $routable, $is_match, $generate, $filters, $validators, $include_file, $class, $action, $access_callback, $access_callback_params, $module );
             $this->routes[$masterpage][$name] = $route;

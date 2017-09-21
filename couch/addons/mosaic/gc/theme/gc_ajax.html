@@ -1,0 +1,7 @@
+<cms:admin_add_js>
+    $(window).on('load', function(){
+        $.get("<cms:show url />", function(data){
+            console.log( "GC "+data );
+        });
+    });
+</cms:admin_add_js>

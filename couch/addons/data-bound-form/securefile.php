@@ -192,10 +192,12 @@
         function get_data( $for_ctx=0 ){
             global $CTX;
 
-            // Data not a simple string hence
-            // we'll store it into '_obj_' of CTX directly
-            // to be used by the auxilally tag which knows how to display it
-            $CTX->set_object( $this->name, $this->data );
+            if( $for_ctx ){
+                // Data not a simple string hence
+                // we'll store it into '_obj_' of CTX directly
+                // to be used by the auxilally tag which knows how to display it
+                $CTX->set_object( $this->name, $this->data );
+            }
 
             // and return only status for the normal context
             return ( count($this->data) ? 1 : 0 );

@@ -40,6 +40,7 @@
     class Repeatable extends KUserDefinedField{
         var $cells = array(); // array of fields representing each cell in a row
         var $rendered_data = null;
+        var $search_data = '';
         var $validation_errors = 0;
 
         function __construct( $row, &$page, &$siblings ){
@@ -92,7 +93,12 @@
                         die("ERROR: Tag \"".$node->name."\": a child region's 'name' attribute begins with 'k_'. Reserved for system fields only.");
                     }
 
-                    $schema[] = $TAGS->editable( $child_params, $child, 1 ); // piggyback on the real 'editable' tag to handle constituent fields
+                    $tmp = $TAGS->editable( $child_params, $child, 1 ); // piggyback on the real 'editable' tag to handle constituent fields
+                    foreach( $child->children as $grandchild ){
+                        $html .= $grandchild->get_HTML();
+                    }
+                    $tmp['default_data'] = $html;
+                    $schema[] = $tmp;
                 }
             }
 
@@ -145,11 +151,21 @@
             extract( $FUNCS->get_named_vars(
                     array( 'var'=>'',
                            'startcount'=>'',
+                           'limit'=>'',
+                           'offset'=>'',
+                           'order'=>'asc',
+                           'extended_info'=>'0',
                     ),
                 $params)
             );
             $var = trim( $var );
             $startcount = $FUNCS->is_int( $startcount ) ? intval( $startcount ) : 1;
+            $limit = $FUNCS->is_non_zero_natural( $limit ) ? intval( $limit ) : 1000;
+            $offset = $FUNCS->is_natural( $offset ) ? intval( $offset ) : 0;
+            $order = strtolower( trim($order) );
+            if( $order!='desc' && $order!='asc' ) $order='asc';
+            $extended_info = ( $extended_info==1 ) ? 1 : 0;
+
 
             if( $var ){
                 // get the data array from CTX
@@ -159,19 +175,30 @@
                     $cells = $obj['cells'];
                     $data = $obj['data'];
 
+                    if( $order=='desc' ){ $data = array_reverse($data); }
+
                     // loop through the rows..
-                    $total_rows = count($data);
+                    $total_rows = count($data) - $offset;
+                    if( $limit < $total_rows ) $total_rows = $limit;
+
                     for( $x=0; $x<$total_rows; $x++ ){
 
                         // .. set each cell's value in the row as a simple variable..
                         for( $y=0; $y<count($cells); $y++ ){
                             $c = &$cells[$y];
-                            $c->store_data_from_saved( $data[$x][$c->name] );
+                            $c->store_data_from_saved( $data[$x+$offset][$c->name] );
                             $CTX->set( $c->name, $c->get_data( 1 ) );
                             unset( $c );
                         }
                         $CTX->set( 'k_count', $x + $startcount );
-                        $CTX->set( 'k_total_records', $total_rows );
+                        $CTX->set( 'k_total_rows', $total_rows );
+                        $CTX->set( 'k_first_row', ($x==0) ? '1' : '0' );
+                        $CTX->set( 'k_last_row', ($x==$total_rows-1) ? '1' : '0' );
+                        if( $extended_info ){
+                            $pg = new StdClass(); /* a dummy container for fields */
+                            $pg->fields = $cells;
+                            $CTX->set_object( 'k_bound_page', $pg );
+                        }
 
                         // and call the children providing each row's data
                         foreach( $node->children as $child ){
@@ -190,12 +217,14 @@
             $attr = $FUNCS->get_named_vars(
                 array(  'schema'=>'',
                     'max_rows'=>'',
-                    'button_text'=>'Add a Row'
+                    'button_text'=>'Add a Row',
+                    'stacked_layout'=>'0',
                 ),
                 $params
             );
             $attr['max_rows'] = $FUNCS->is_natural( $attr['max_rows'] ) ? intval( $attr['max_rows'] ) : 0; //unused for now
             $attr['button_text'] = trim( $attr['button_text'] ); //unused for now
+            $attr['stacked_layout'] = ( $attr['stacked_layout']==1 ) ? 1 : 0;
             return $attr;
         }
 
@@ -236,74 +265,29 @@
         function _render( $input_name, $input_id, $extra='', $dynamic_insertion=0 ){
             global $FUNCS, $CTX, $AUTH;
 
-            /*
-            // calc paths to assets. Current script assumed to be somewhere within or below site's root (i.e. Couch's parent folder).
-            $path = str_replace( '\\', '/', dirname(realpath(__FILE__)).'/' );
-            if( (strpos($path, K_SITE_DIR)===0) && ($path != K_SITE_DIR) ){
-                $subdomain = substr( $path, strlen(K_SITE_DIR) );
-            }
-            if( !defined('REPEATABLE_URL') ) define( 'REPEATABLE_URL', K_SITE_URL . $subdomain );
-
-            $FUNCS->load_js( K_SITE_URL . $subdomain . 'tablegear/tablegear.js?kver=' . time() );
-            $FUNCS->load_js( K_SITE_URL . $subdomain . 'dg-arrange-table-rows/dg-arrange-table-rows.js?kver=' . time() );
-            $FUNCS->load_css( K_SITE_URL . $subdomain . 'tablegear/tablegear.css' );
-            $FUNCS->load_css( K_SITE_URL . $subdomain . 'dg-arrange-table-rows/dg-arrange-table-rows.css' );
-            */
-
-            if( !defined('REPEATABLE_URL') ){
-                define( 'REPEATABLE_URL', K_ADMIN_URL . 'addons/repeatable/' );
-                $FUNCS->load_js( REPEATABLE_URL . 'jquery-ui.min.js' );
-                $FUNCS->load_js( REPEATABLE_URL . 'tablegear/tablegear.js' );
-                $FUNCS->load_css( REPEATABLE_URL . 'tablegear/tablegear.css' );
-
-                ob_start();
-                ?>
-                    $(function(){
-                        $('table.rr tbody').sortable({
-                            axis: "y",
-                            handle: ".dg-arrange-table-rows-drag-icon",
-                            helper: function (e, ui) { // https://paulund.co.uk/fixed-width-sortable-tables
-                                ui.children().each(function() {
-                                    $(this).width($(this).width());
-                                });
-                                return ui;
-                            },
-                            update: function( event, ui ){
-                                var row = ui.item;
-                                var tbody = $( row ).closest( 'tbody' );
-                                tbody.trigger('_reorder');
-                            },
-                            start: function( event, ui ){
-                                var row = ui.item;
-                                row.trigger('_reorder_start');
-                              },
-                            stop: function( event, ui ){
-                                var row = ui.item;
-                                row.trigger('_reorder_stop');
-                            },
-                        });
-                    });
-                <?php
-                $js = ob_get_contents();
-                ob_end_clean();
-                $FUNCS->add_js( $js );
-            }
+            $FUNCS->render( 'repeatable_assets' ); // JS/CSS
 
             $arr_deleted_html = array();
             ob_start();
             ?>
-            <div class="tableholder">
+            <div class="<?php if( $this->stacked_layout ): ?>mosaic <?php endif; ?>repeatable-region tableholder">
                 <table class="rr" id="<?php echo $input_id; ?>">
                     <thead>
                         <tr>
                             <th class="dg-arrange-table-header">&nbsp;</th>
-                            <?php foreach( $this->cells as $c ) :  ?>
-                            <th <?php if($c->col_width){ echo 'style="width:'.$c->col_width.'px;"'; } ?>>
-                                <span><?php echo $c->label; ?></span>
-                                <span class="carat"></span>
-                            </th>
-                            <?php endforeach; ?>
-                            <th class="delete" style="padding:0; margin:0; width:28px;"></th>
+                            <?php if( $this->stacked_layout ) : ?>
+                                <th class="col-contents"><span>&nbsp;</span></th>
+                                <th class="col-up-down">&nbsp;</th>
+                                <th class="col-actions"></th>
+                            <?php else: ?>
+                                <?php foreach( $this->cells as $c ) :  ?>
+                                <th <?php if($c->col_width){ echo 'style="width:'.$c->col_width.'px;"'; } ?>>
+                                    <span><?php echo $c->label; ?></span>
+                                    <span class="carat"></span>
+                                </th>
+                                <?php endforeach; ?>
+                                <th class="delete" style="padding:0; margin:0; width:28px;"></th>
+                            <?php endif; ?>
                         </tr>
                     </thead>
                     <tbody>
@@ -324,6 +308,7 @@
                             <tr id="<?php echo $input_id; ?>-<?php echo $row_id; ?>">
                                 <td class="dg-arrange-table-rows-drag-icon">&nbsp;</td>
                                 <?php
+                                if( $this->stacked_layout ){ echo( '<td class="col-contents editable"><div class="mosaic-list">' ); };
                                 if( is_null($this->rendered_data) ){ // not handling posted data
                                     // move data into cells
                                     for( $y=0; $y<count($this->cells); $y++ ){
@@ -334,12 +319,30 @@
                                         // display
                                         $c_input_name = 'f_'. $this->name .'['. $row_id .']['. $c->name .']';
                                         $c_input_id = 'f_'. $this->name .'-'. $row_id .'-'. $c->name;
-                                        $html = '<td class="editable"><div style="position:relative;">';
-                                        $html .= $c->_render( $c_input_name, $c_input_id, '', false );
+                                        $field_html = $c->_render( $c_input_name, $c_input_id, '', false );
                                         if( $c->deleted && $AUTH->user->access_level >= K_ACCESS_LEVEL_SUPER_ADMIN && defined('K_ADMIN') ){
-                                            $html .= '<div class="k_cell_deleted">&nbsp;</div>';
+                                            $field_html .= '<div class="k_cell_deleted">&nbsp;</div>';
                                         }
-                                        $html .= '</div></td>';
+
+                                        if( $this->stacked_layout ){
+                                            $html = "
+                                            <div class=\"row\">
+                                                <div class=\"cell cell-label col-md-2\">
+                                                    <label>".$c->label."</label>
+                                                </div>
+                                                <div class=\"cell cell-content col-md-10\">
+                                                    <div class=\"field-content\">
+                                                        ".$field_html."
+                                                    </div>
+                                                </div>
+                                            </div>";
+                                        }
+                                        else{
+                                            $html = '<td class="editable"><div style="position:relative;">';
+                                            $html .= $field_html;
+                                            $html .= '</div></td>';
+                                        }
+
                                         echo $html;
 
                                         unset( $c );
@@ -350,20 +353,43 @@
                                         echo $data[$row_id][$c->name]; // pre-rendered with posted data
                                     }
                                 }
-                            ?>
+                                if( $this->stacked_layout ){
+                                    echo( '</div></td>' );
+                                    echo( '<td class="col-up-down">' );
+                                    echo( '    <a class="up icon" href="#" onclick="return false;" title="'.$FUNCS->t('up').'">'.$FUNCS->get_icon('chevron-top').'</a>' );
+                                    echo( '    <a class="down icon" href="#" onclick="return false;" title="'.$FUNCS->t('down').'">'.$FUNCS->get_icon('chevron-bottom').'</a>' );
+                                    echo( '</td>' );
 
-                            <td class="delete">
-                                <input type="checkbox" name="delete[]" value="<?php echo $row_id; ?>" id="delete<?php echo $row_id; ?>" />
-                                <label for="delete<?php echo $row_id; ?>">
-                                    <img src="<?php echo REPEATABLE_URL; ?>tablegear/delete.gif" alt="Delete Row" />
-                                </label>
-                            </td>
-                        </tr>
+                                    echo( '<td class="col-actions">' );
+                                    echo( '    <input type="checkbox" name="delete[]" value="" style="display: none;">' );
+                                    echo( '    <a class="icon add-row" data_mosaic_row="'.$input_id.'-'.$row_id.'" href="#" title="'.$FUNCS->t('add_above').'" onclick="return false;">'.$FUNCS->get_icon('plus').'</a>' );
+                                    echo( '    <a class="icon delete-row" title="'.$FUNCS->t('delete').'" href="#">'.$FUNCS->get_icon('trash').'</a>' );
+                                    echo( '</td>' );
+
+                                }
+                                else{
+                                    echo( '<td class="delete">' );
+                                    echo( '<input type="checkbox" name="delete[]" value="'.$row_id.'" id="delete'.$row_id.'" />' );
+                                    echo( '<label for="delete'.$row_id.'">' );
+                                    echo( '    <img src="'. REPEATABLE_URL .'tablegear/delete.gif" alt="Delete Row" />' );
+                                    echo( '</label>' );
+                                    echo( '</td>' );
+                                }
+                                ?>
+                            </tr>
                     <?php } ?>
                     </tbody>
                 </table>
                 <div>
-                <p class="addRow" id="addRow_<?php echo $input_id; ?>"><a><?php echo $FUNCS->t('add_row'); ?></a></p>
+                    <?php if( $this->stacked_layout ): ?>
+                        <div class="mosaic-buttons">
+                            <div class="btn-group" id="addRow_<?php echo $input_id; ?>">
+                                <a class="btn" onclick="this.blur();"><?php echo $FUNCS->get_icon('plus'); echo $FUNCS->t('add_row'); ?></a>
+                            </div>
+                        </div>
+                    <?php else: ?>
+                        <p class="addRow" id="addRow_<?php echo $input_id; ?>"><a><?php echo $FUNCS->t('add_row'); ?></a></p>
+                    <?php endif; ?>
                 </div>
                 <input type="hidden" name="_<?php echo $input_id; ?>_sortorder" id="_<?php echo $input_id; ?>_sortorder"/>
                 <div id="addNewRow_<?php echo $input_id; ?>" class="newRow">
@@ -371,26 +397,71 @@
                         <tbody>
                             <tr id="newDataRow_<?php echo $input_id; ?>" class="newRow even">
                                 <td class="dg-arrange-table-rows-drag-icon">&nbsp;</td>
-                                <?php foreach( $this->cells as $c ) {
+                                <?php
+                                if( $this->stacked_layout ){ echo( '<td class="col-contents editable"><div class="mosaic-list">' ); };
+                                foreach( $this->cells as $c ) {
                                     $c->data='';
-                                    $html = '<td class="editable"><div style="position:relative;">';
+
                                     $widget = $c->_render( 'data[xxx]['.$c->name.']', 'data-xxx-'.$c->name, '', 1 );
                                     // ID hack..innerHTML does not return 'id' so adding an 'idx' attribute with the same values.
                                     $widget = preg_replace('/(\sid)(\s*=\s*["\']data-xxx-[\w]+["\'])/is', '$1x$2$1$2', $widget);
-                                    $html .= $widget;
                                     if( $c->deleted && $AUTH->user->access_level >= K_ACCESS_LEVEL_SUPER_ADMIN && defined('K_ADMIN') ){
-                                        $html .= '<div class="k_cell_deleted">&nbsp;</div>';
+                                        $widget .= '<div class="k_cell_deleted">&nbsp;</div>';
                                         $arr_deleted_html[] = $c->_html;
                                     }
-                                    $html .= '</div></td>';
+
+                                    if( $this->stacked_layout ){
+                                        $html = "
+                                        <div class=\"row\">
+                                            <div class=\"cell cell-label col-md-2\">
+                                                <label>".$c->label."</label>
+                                            </div>
+                                            <div class=\"cell cell-content col-md-10\">
+                                                <div class=\"field-content\">
+                                                    ".$widget."
+                                                </div>
+                                            </div>
+                                        </div>";
+                                    }
+                                    else{
+                                        $html = '<td class="editable"><div style="position:relative;">';
+                                        $html .= $widget;
+                                        $html .= '</div></td>';
+                                    }
+
                                     echo $html;
-                                } ?>
-                                <td class="delete">
-                                    <input type="checkbox" name="delete[]" value="" id="deleteNULL_STRING" />
-                                    <label for="deleteNULL_STRING">
-                                        <img src="<?php echo REPEATABLE_URL; ?>tablegear/delete.gif" alt="Delete Row" />
-                                    </label>
-                                </td>
+                                }
+                                if( $this->stacked_layout ){
+                                    echo( '</div>' );
+                                    echo( '<img src="'.K_SYSTEM_THEME_URL.'assets/blank.gif" alt="" onload="
+                                        var el=$(\'#data-xxx-dummyimg\');
+                                        if(!el.attr(\'idx\')){
+                                            var row = el.closest(\'tr\');
+                                            var add_icon = row.find(\'.col-actions .add-row\');
+                                            add_icon.attr( \'data_mosaic_row\', row.attr(\'id\') );
+                                        }
+                                    " idx="data-xxx-dummyimg" id="data-xxx-dummyimg" />' );
+                                    echo( '</td>' );
+                                    echo( '<td class="col-up-down">' );
+                                    echo( '    <a class="up icon" href="#" onclick="return false;" title="'.$FUNCS->t('up').'">'. $FUNCS->get_icon('chevron-top') .'</a>' );
+                                    echo( '    <a class="down icon" href="#" onclick="return false;" title="'.$FUNCS->t('down').'">'. $FUNCS->get_icon('chevron-bottom') .'</a>' );
+                                    echo( '</td>' );
+
+                                    echo( '<td class="col-actions">' );
+                                    echo( '    <input type="checkbox" name="delete[]" value="" style="display: none;">' );
+                                    echo( '    <a class="icon add-row" data_mosaic_row="" href="#" title="'.$FUNCS->t('add_above').'" onclick="return false;">'.$FUNCS->get_icon('plus').'</a>' );
+                                    echo( '    <a class="icon delete-row" title="'.$FUNCS->t('delete').'" href="#">'.$FUNCS->get_icon('trash').'</a>' );
+                                    echo( '</td>' );
+                                }
+                                else{
+                                    echo( '<td class="delete">' );
+                                    echo( '<input type="checkbox" name="delete[]" value="" id="deleteNULL_STRING" />' );
+                                    echo( '<label for="deleteNULL_STRING">' );
+                                    echo( '    <img src="'. REPEATABLE_URL .'tablegear/delete.gif" alt="Delete Row" />' );
+                                    echo( '</label>' );
+                                    echo( '</td>' );
+                                }
+                                ?>
                             </tr>
                         </tbody>
                     </table>
@@ -398,7 +469,11 @@
             </div>
             <script type="text/javascript">
                 $(function(){
-                    $('#<?php echo $input_id; ?>').tableGear();
+                    <?php if( $this->stacked_layout ): ?>
+                        COUCH.rrInit('<?php echo $input_id; ?>');
+                    <?php else: ?>
+                        $('#<?php echo $input_id; ?>').tableGear();
+                    <?php endif; ?>
                 });
             </script>
             <?php
@@ -445,6 +520,7 @@
             $this->validation_errors = 0;
             $this->data = array();
             $this->rendered_data = array();
+            $this->search_data = '';
             $sep = '';
             for( $row=0; $row<count($data); $row++ ){
                 // recreate each row
@@ -520,16 +596,51 @@
                         $this->data[$row][$c->name] = $c->get_data_to_save();
                     }
 
+                    // get searchable data
+                    if( $c->search_type=='text' ){
+                        $search_data = '';
+
+                        if( $c->udf && $FUNCS->udfs[$c->k_type]['searchable'] && $c->searchable ){
+                            $search_data = $c->get_search_data();
+                        }
+                        else{ // core types
+                            if( (($c->k_type=='textarea' && !$c->no_xss_check) || $c->k_type=='richtext' || $c->k_type=='text') && $c->searchable){
+                                $search_data = $this->data[$row][$c->name];
+                            }
+                        }
+
+                        if( strlen($search_data) ){
+                            $this->search_data .= $FUNCS->strip_tags( $search_data ) . ' ';
+                        }
+                    }
+
                     // get rendered markup (will be used if validation errors occur)
                     $input_name = 'f_'. $this->name .'['. $row .']['. $c->name .']';
                     $input_id = 'f_'. $this->name .'-'. $row .'-'. $c->name;
                     $err_class = ( $c->err_msg ) ? ' highlite' : '';
-                    $html = '<td class="editable'.$err_class.'"><div style="position:relative;">';
-                    $html .= $c->_render( $input_name, $input_id, '', false );
+                    $field_html = $c->_render( $input_name, $input_id, '', false );
                     if( $c->deleted && $AUTH->user->access_level >= K_ACCESS_LEVEL_SUPER_ADMIN && defined('K_ADMIN') ){
-                        $html .= '<div class="k_cell_deleted">&nbsp;</div>';
+                        $field_html .= '<div class="k_cell_deleted">&nbsp;</div>';
                     }
-                    $html .= '</div></td>';
+                    if( $this->stacked_layout ){
+                        $html = "
+                        <div class=\"row\">
+                            <div class=\"cell cell-label col-md-2".$err_class."\">
+                                <label>".$c->label."</label>
+                            </div>
+                            <div class=\"cell cell-content col-md-10\">
+                                <div class=\"field-content".$err_class."\">
+                                    ".$field_html."
+                                </div>
+                            </div>
+                        </div>";
+                    }
+                    else{
+                        $html = '<td class="editable'.$err_class.'"><div style="position:relative;">';
+                        $html .= $field_html;
+                        $html .= '</div></td>';
+                    }
+
                     $this->rendered_data[$row][$c->name] = $html;
 
                     unset( $c );
@@ -551,11 +662,13 @@
         function get_data( $for_ctx=0 ){
             global $CTX;
 
-            // Data not a simple string hence
-            // we'll store it into '_obj_' of CTX directly
-            // to be used by the auxilally tag which knows how to display it
-            $arr = array( 'cells'=>$this->cells, 'data'=>$this->data );
-            $CTX->set_object( $this->name, $arr );
+            if( $for_ctx ){
+                // Data not a simple string hence
+                // we'll store it into '_obj_' of CTX directly
+                // to be used by the auxilally tag which knows how to display it
+                $arr = array( 'cells'=>$this->cells, 'data'=>$this->data );
+                $CTX->set_object( $this->name, $arr );
+            }
 
             // and return nothing for the normal context
             return;
@@ -570,7 +683,7 @@
 
         // Search value
         function get_search_data(){
-            return '';
+            return $this->search_data;
         }
 
         // renderable theme functions
@@ -578,6 +691,7 @@
             global $FUNCS;
 
             $FUNCS->register_render( 'repeatable_column_deleted', array('template_path'=>K_ADDONS_DIR.'repeatable/theme/', 'template_ctx_setter'=>array('Repeatable', '_render_repeatable_column_deleted')) );
+            $FUNCS->register_render( 'repeatable_assets', array('renderable'=>array('Repeatable', '_render_repeatable_assets')) );
         }
 
         static function _render_repeatable_column_deleted( $arr_deleted_html ){
@@ -596,6 +710,63 @@
                 $str_deleted_html .= $deleted_html . "\r\n\r\n";
             }
             $CTX->set( 'k_deleted_html', $FUNCS->escape_HTML($str_deleted_html) );
+        }
+
+        static function _render_repeatable_assets(){
+            global $FUNCS;
+
+            if( !defined('REPEATABLE_URL') ){
+                define( 'REPEATABLE_URL', K_ADMIN_URL . 'addons/repeatable/' );
+                $FUNCS->load_js( REPEATABLE_URL . 'jquery-ui.min.js' );
+                $FUNCS->load_js( REPEATABLE_URL . 'tablegear/tablegear.js' );
+                $FUNCS->load_css( REPEATABLE_URL . 'tablegear/tablegear.css' );
+                $FUNCS->load_css( K_ADMIN_URL . 'addons/bootstrap-grid/theme/grid12.css' );
+
+                ob_start();
+                ?>
+                    $(function(){
+                        $('table.rr tbody').sortable({
+                            axis: "y",
+                            handle: ".dg-arrange-table-rows-drag-icon",
+                            helper: function (e, ui) { // https://paulund.co.uk/fixed-width-sortable-tables
+                                ui.children().each(function() {
+                                    $(this).width($(this).width());
+                                });
+                                return ui;
+                            },
+                            update: function( event, ui ){
+                                var row = ui.item;
+                                var tbody = $( row ).closest( 'tbody' );
+                                tbody.trigger('_reorder');
+                            },
+                            start: function( event, ui ){
+                                var row = ui.item;
+                                row.trigger('_reorder_start');
+                              },
+                            stop: function( event, ui ){
+                                var row = ui.item;
+                                row.trigger('_reorder_stop');
+                            },
+                        });
+                    });
+
+                    COUCH.rrInit = function( field_id ){
+                        var $field = $('#'+field_id);
+                        $field.tableGear({stackLayout:1});
+                        $field.on('click', '.col-actions .add-row', function(){
+                            var $this = $(this);
+                            var row_id = $this.attr('data_mosaic_row');
+                            var add_btn = $('#addRow_'+field_id+' a');
+                            add_btn.trigger("click", [row_id]);
+                        });
+                    }
+                    COUCH.t_confirm_delete_row = "<?php echo $FUNCS->t('confirm_delete_row'); ?>";
+                    COUCH.t_no_data_message = "<?php echo $FUNCS->t('no_data_message'); ?>";
+                <?php
+                $js = ob_get_contents();
+                ob_end_clean();
+                $FUNCS->add_js( $js );
+            }
         }
 
     }// end class

@@ -1,0 +1,13 @@
+<cms:if k_field_no_wrapper>
+    <cms:show k_field_content />
+<cms:else />
+    <div id="<cms:show k_field_input_id />" class="row k_<cms:show k_field_type /> <cms:show k_field_class />" <cms:if k_field_hidden>style="display:none;"</cms:if>>
+        <cms:admin_form_fields childof=k_field_name depth='1'>
+            <cms:render 'form_row' />
+        </cms:admin_form_fields>
+    </div>
+</cms:if>
+
+<cms:if k_add_js_for_field_row >
+    <cms:admin_load_css "<cms:show k_admin_link />addons/bootstrap-grid/theme/grid12.css" />
+</cms:if>   

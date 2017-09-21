@@ -139,7 +139,7 @@
             $FUNCS->remove_event_listener( 'alter_comment_fields_info', array('KExtendedComments', 'add_custom_comment_fields') );
             $comment = new KComment( $comment_id );
 
-            $pg = &$CTX->get_object( 'bound_page', 'form' ); // is the form data-bound?
+            $pg = &$CTX->get_object( 'k_bound_page', 'form' ); // is the form data-bound?
             if( is_null($pg) ){
                 $pg = KExtendedComments::_get_associated_page( $comment );
                 if( !$pg ) return;

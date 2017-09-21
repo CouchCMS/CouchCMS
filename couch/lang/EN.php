@@ -253,3 +253,12 @@
     $t['selected'] = 'Selected';
     $t['add'] = 'Add';
     $t['remove'] = 'Remove';
+    // 2.1
+    $t['tiles_missing'] = 'Some tiles missing!';
+    $t['confirm_delete_tiles'] = 'Are you sure you want to permanently delete the missing tiles?';
+    $t['add_above'] = 'Add Above';
+    $t['confirm_delete_row'] = 'Delete this row?';
+    $t['no_data_message'] = '- No Data -';
+    $t['ok'] = 'OK';
+    $t['globals'] = 'Globals';
+    $t['manage_globals'] = 'Manage Globals';

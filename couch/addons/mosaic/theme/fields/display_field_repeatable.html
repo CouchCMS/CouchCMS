@@ -1,0 +1,23 @@
+<div class="rr_container">
+    <div class="table">
+        <cms:show_repeatable name extended_info='1'>
+            <cms:if k_count='1'>
+                <div class="tr">
+                    <cms:db_fields bound='1' render_display='1' types='NOT password'>
+                        <div class="th k_element_<cms:show name /> k_<cms:show type />">
+                            <cms:show k_caption />
+                        </div>
+                    </cms:db_fields>
+                </div>
+            </cms:if>
+
+            <div class="tr">
+                <cms:db_fields bound='1' render_display='1' types='NOT password'>
+                    <div class="td k_element_<cms:show name /> k_<cms:show type />">
+                        <cms:show k_display_html />
+                    </div>
+                </cms:db_fields>
+            </div>
+        </cms:show_repeatable>
+    </div>
+</div>

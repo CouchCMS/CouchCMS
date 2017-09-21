@@ -13,7 +13,7 @@
         }
 
         /////// 1. 'list' action ////////////////////////////////////////////////////
-        function list_action( $field, $data ){
+        function list_action_ex( $field, $data ){
             global $FUNCS;
 
             $this->field = $field;
@@ -77,7 +77,7 @@
             $CTX->set( 'k_relation_selected_ids_count', count($this->data->selected_ids), 'global' );
             $CTX->set( 'k_has_one', ( $this->field->has=='one' ) ? '1' : '0', 'global' );
 
-            $FUNCS->add_event_listener( 'alter_page_tag_query',  array($this, '_alter_page_tag_query_handler') );
+            $FUNCS->add_event_listener( 'alter_page_tag_query',  array($this, '_alter_relation_page_tag_query_handler') );
 
             $html = $FUNCS->render( 'content_list_relation' );
             $html = $FUNCS->render( 'main', $html, 1 );
@@ -118,7 +118,7 @@
             if( $this->field->has!='one' ){
                 $arr_actions['btn_submit'] =
                     array(
-                        'title'=>$FUNCS->t('save'),
+                        'title'=>$FUNCS->t('ok'),
                         'onclick'=>array(
                             "var form=$('#".$this->list_form_name."');",
                             "form.find('#k_bulk_action').val('exit_save');",
@@ -183,7 +183,7 @@
         }
 
         // event handlers
-        function _alter_page_tag_query_handler(&$distinct, &$count_query_field, &$count_query_field_as, &$query_fields, &$query_table, &$sql, &$group_by, &$having, &$order_sql, &$limit_sql, &$mode, $params, $node, $rec_tpl, $token){
+        function _alter_relation_page_tag_query_handler(&$distinct, &$count_query_field, &$count_query_field_as, &$query_fields, &$query_table, &$sql, &$group_by, &$having, &$order_sql, &$limit_sql, &$mode, $params, $node, $rec_tpl, $token){
             global $FUNCS, $CTX, $DB;
             if( $node->name!=='pages' || $token!==$CTX->get('k_cur_token') ){ return; }
 

@@ -760,6 +760,7 @@ COUCH.init = function() {
         COUCH.bindTableSelect();
         COUCH.addLeaveListener();
         COUCH.bindPopupAJAX( COUCH.el.$sidebar.find( ".popup-ajax" ), true );
+        COUCH.bindPopupInline( COUCH.el.$content.find( ".popup-inline" ) );
         if ( !COUCH.data.overflowScrolling ) COUCH.createRelationScrollbars();
     });
 };

@@ -1,0 +1,22 @@
+<div class="rr_container">
+    <div class="table">
+        <cms:show_repeatable name extended_info='1'>
+            <div class="tr">
+                <div class="td">
+                    <cms:db_fields bound='1' render_display='1' types='NOT password'>
+                        <div class="row k_element_<cms:show name /> k_<cms:show type />">
+                            <div class="cell cell-label col-md-2">
+                                <label><cms:show k_caption /></label>
+                            </div>
+                            <div class="cell cell-content col-md-10">
+                                <div class="field-content">
+                                    <cms:show k_display_html />
+                                </div>
+                            </div>
+                        </div>
+                     </cms:db_fields> 
+                 </div>   
+            </div>     
+        </cms:show_repeatable>
+    </div>
+</div>

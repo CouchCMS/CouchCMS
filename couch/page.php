@@ -41,7 +41,7 @@
     require_once( K_COUCH_DIR.'folder.php' );
 
     class KWebpage{
-        var $tpl_name;
+        var $tpl_name = null;
         var $tpl_title;
         var $tpl_id = null;
         var $tpl_desc;
@@ -57,6 +57,7 @@
         var $tpl_custom_params = array();
         var $tpl_handlers = array();
         var $tpl_type = '';
+        var $tpl_has_globals = 0;
 
         var $id = null;
         var $parent_id = 0;
@@ -118,7 +119,14 @@
             $page_id = trim( $page_id );
             $page_name = trim( $page_name );
 
-            if( $template_id ) $this->tpl_id = $template_id;
+            if( $template_id ){
+                if( $FUNCS->is_non_zero_natural($template_id) ){
+                    $this->tpl_id = $template_id;
+                }
+                else{
+                    $this->tpl_name = $template_id; // addons should take care to give non-numeric names to templates
+                }
+            }
             if( $page_id ) $this->id = $page_id;
             if( $page_name ) $this->page_name = $page_name;
             if( $html ) $this->html = $html;
@@ -142,6 +150,7 @@
 
             // release fields
             $this->fields = array();
+            $this->_fields = array();
 
             /*if( $this->tpl_nested_pages ){
                 if( array_key_exists($this->tpl_id, $FUNCS->cached_nested_pages) ){
@@ -155,7 +164,7 @@
         function _fill_template_info(){
             global $DB, $AUTH, $FUNCS;
 
-            if( is_null($this->tpl_id) ){
+            if( is_null($this->tpl_id) && is_null($this->tpl_name) ){
                 // can only happen when template accessed via URL in browser
                 $this->accessed_via_browser = 1;
 
@@ -194,7 +203,12 @@
                     $rec = $FUNCS->cached_templates[$this->tpl_id];
                 }
                 else{
-                    $rs = $DB->select( K_TBL_TEMPLATES, array('*'), "id='" . $DB->sanitize( $this->tpl_id ). "'" );
+                    if( !is_null($this->tpl_id) ){
+                        $rs = $DB->select( K_TBL_TEMPLATES, array('*'), "id='" . $DB->sanitize( $this->tpl_id ). "'" );
+                    }
+                    else{
+                        $rs = $DB->select( K_TBL_TEMPLATES, array('*'), "name='" . $DB->sanitize( $this->tpl_name ). "'" );
+                    }
                     if( !count($rs) ){
                         return $FUNCS->raise_error( "Failed to find record in K_TBL_TEMPLATES" );
                     }
@@ -241,6 +255,7 @@
             $this->tpl_type = $rec['type'];
             $this->tpl_parent = $rec['parent'];
             $this->tpl_icon = $rec['icon'];
+            $this->tpl_has_globals = $rec['has_globals'];
 
             // HOOK: alter_template_info
             // At this point only the template's info is available in the page object. Can be be manipulated.
@@ -1596,7 +1611,7 @@
         }
 
         // Custom field validator for nested pages
-        function validate_parent( $field ){
+        static function validate_parent( $field ){
             global $FUNCS/*, $PAGE*/;
 
             $PAGE = &$field->page;
@@ -1616,7 +1631,7 @@
         }
 
         // Custom field validator for nested pages
-        function validate_masquerade_link( $field ){
+        static function validate_masquerade_link( $field ){
             global $FUNCS, $DB/*, $PAGE*/;
 
             $PAGE = &$field->page;

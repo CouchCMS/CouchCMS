@@ -1,0 +1,14 @@
+<cms:show_securefile name >
+    <cms:if file_is_image >
+        <a href="<cms:cloak_url link=file_id />" target="_blank">
+            <cms:if thumb_width || thumb_height >
+                <img src="<cms:cloak_url link=file_id thumbnail='1' />" />
+            <cms:else />
+                <img src="<cms:cloak_url link=file_id  />" width="<cms:if max_width lt '250' ><cms:show max_width /><cms:else />250</cms:if>" />
+            </cms:if>    
+        </a><br />
+        <cms:show file_name /> (<cms:size_format file_size />)
+    <cms:else />
+        <a href="<cms:cloak_url link=file_id />" target="_blank"><cms:show file_name /></a> (<cms:size_format file_size />)
+    </cms:if>
+</cms:show_securefile> 

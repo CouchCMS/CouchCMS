@@ -14,10 +14,6 @@
 
 <cms:if k_add_js_for_repeatable_column_deleted>
     <cms:admin_add_js>
-        $(function(){
-            COUCH.bindPopupInline( COUCH.el.$content.find( ".popup-inline" ) );
-        });
-
         function k_delete_column( fid, nonce ){
             if( confirm('<cms:localize 'confirm_delete_columns' />') ){
                 var qs = 'ajax.php?act=delete-columns&fid='+fid+'&nonce='+encodeURIComponent( nonce );

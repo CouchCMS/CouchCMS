@@ -161,7 +161,7 @@
                         'path'=>'edit_folder/{:nonce}/{:fid}',
                         'constraints'=>array(
                             'nonce'=>'([a-fA-F0-9]{32})',
-                            'id'=>'(([1-9]\d*)?)',
+                            'fid'=>'(([1-9]\d*)?)',
                         ),
                         'include_file'=>K_COUCH_DIR.'edit-folders.php',
                         'filters'=>'KPagesAdmin::resolve_page=edit | KFoldersAdmin::set_ctx | KFoldersAdmin::resolve_folder=edit',

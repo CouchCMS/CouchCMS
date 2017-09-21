@@ -244,6 +244,20 @@
         $_sql = "CREATE INDEX `".K_TBL_PAGES."_index23` ON `".K_TBL_PAGES."` (`k_order`);";
         $DB->_query( $_sql );
     }
+    // upgrade to 2.1.beta
+    if( version_compare("2.1.beta", $_ver, ">") ){
+        $_sql = "ALTER TABLE `".K_TBL_PAGES."` ADD `ref_count` int DEFAULT '1';";
+        $DB->_query( $_sql );
+
+        $_sql = "ALTER TABLE `".K_TBL_TEMPLATES."` ADD `deleted` int(1) DEFAULT '0';";
+        $DB->_query( $_sql );
+
+        $_sql = "ALTER TABLE `".K_TBL_TEMPLATES."` ADD `has_globals` int(1) DEFAULT '0';";
+        $DB->_query( $_sql );
+
+        $_sql = "CREATE INDEX `".K_TBL_PAGES."_Index24` ON `".K_TBL_PAGES."` (`status`, `ref_count`, `modification_date`);";
+        $DB->_query( $_sql );
+    }
 
     // Finally update version number
     $_rs = $DB->update( K_TBL_SETTINGS, array('k_value'=>K_COUCH_VERSION), "k_key='k_couch_version'" );

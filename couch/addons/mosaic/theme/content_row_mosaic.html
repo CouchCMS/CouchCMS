@@ -1,0 +1,20 @@
+<div class="mosaic-list">
+    <cms:db_fields bound='1' render_display='1' types='NOT thumbnail, jcropthumb, reverse_relation, message, password, hidden'>
+        <cms:if type='group'>
+            <div class="group-heading">
+                <cms:show k_caption />
+            </div>
+        <cms:else />
+            <div class="row k_element_<cms:show name /> k_<cms:show type />">
+                <div class="cell cell-label col-md-2">
+                    <label><cms:show k_caption /></label>
+                </div>
+                <div class="cell cell-content col-md-10">
+                    <div class="field-content">
+                        <cms:show k_display_html />
+                    </div>
+                </div>
+            </div>
+        </cms:if>
+    </cms:db_fields>
+</div> 

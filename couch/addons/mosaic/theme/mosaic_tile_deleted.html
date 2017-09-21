@@ -1,0 +1,27 @@
+<cms:show_error heading="<cms:localize 'tiles_missing' />">
+    <a class="btn" href="javascript:k_delete_tile(<cms:show k_field_id />, '<cms:create_nonce "delete_tile_<cms:show k_field_id />" />')">
+        <cms:show_icon 'trash' /><cms:localize 'delete_permanently' />
+    </a>
+</cms:show_error>
+
+<cms:if k_add_js_for_mosaic_tile_deleted>
+    <cms:admin_add_js>
+        function k_delete_tile( fid, nonce ){
+            if( confirm('<cms:localize 'confirm_delete_tiles' />') ){
+                var qs = '?o=mosaic&q=delete_tile/'+nonce+'/'+fid;
+
+                $.ajax({
+                    dataType: "text",
+                    url:      qs
+                }).done(function( data ) {
+                    if( data === "OK" ){
+                        window.location.reload( true );
+                    }
+                    else{
+                        alert( data );
+                    }
+                });
+            }
+        }
+    </cms:admin_add_js>
+</cms:if>

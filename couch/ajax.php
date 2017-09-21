@@ -45,13 +45,14 @@
 
     $response = '';
     if( isset($_GET['act']{0}) ){
+        $nonce = ( isset($_GET['nonce']) ) ? $_GET['nonce'] : null;
+
         if( $_GET['act'] == 'crop' ){
             require_once( K_COUCH_DIR.'includes/timthumb.php' );
 
             $tpl_id = ( isset($_GET['tpl']) && $FUNCS->is_natural( $_GET['tpl'] ) ) ? (int)$_GET['tpl'] : null;
             $page_id = ( isset($_GET['p']) && $FUNCS->is_natural( $_GET['p']) ) ? (int)$_GET['p'] : null;
             $thumb_id = ( isset($_GET['tb']) ) ? $_GET['tb'] : null;
-            $nonce = ( isset($_GET['nonce']) ) ? $_GET['nonce'] : null;
             $crop_pos = ( isset($_GET['cp']) ) ? $_GET['cp'] : 'middle';
 
             if( $tpl_id && $page_id && $thumb_id && $nonce ){
@@ -120,7 +121,6 @@
         }
         elseif( $_GET['act'] == 'delete-tpl' ){
             $tpl_id = ( isset($_GET['tpl']) && $FUNCS->is_natural( $_GET['tpl'] ) ) ? (int)$_GET['tpl'] : null;
-            $nonce = ( isset($_GET['nonce']) ) ? $_GET['nonce'] : null;
             if( $tpl_id && $nonce ){
                 $FUNCS->validate_nonce( 'delete_tpl_' . $tpl_id );
 
@@ -176,7 +176,6 @@
         }
         elseif( $_GET['act'] == 'delete-field' ){
             $fid = ( isset($_GET['fid']) && $FUNCS->is_natural( $_GET['fid'] ) ) ? (int)$_GET['fid'] : null;
-            $nonce = ( isset($_GET['nonce']) ) ? $_GET['nonce'] : null;
             if( $fid && $nonce ){
                 $FUNCS->validate_nonce( 'delete_field_' . $fid );
 
@@ -229,7 +228,6 @@
         }
         elseif( $_GET['act'] == 'delete-columns' ){
             $fid = ( isset($_GET['fid']) && $FUNCS->is_natural( $_GET['fid'] ) ) ? (int)$_GET['fid'] : null;
-            $nonce = ( isset($_GET['nonce']) ) ? $_GET['nonce'] : null;
             if( $fid && $nonce ){
                 $FUNCS->validate_nonce( 'delete_column_' . $fid );
 
@@ -271,6 +269,13 @@
             }
             else{
                 die( 'Invalid parameters' );
+            }
+        }
+        else{
+            $ajax_action = 'ajax_action_' . $_GET['act'];
+            if( $FUNCS->check_nonce($ajax_action) ){
+                // HOOK: ajax_action_xxx
+                $FUNCS->dispatch_event( $ajax_action );
             }
         }
     }

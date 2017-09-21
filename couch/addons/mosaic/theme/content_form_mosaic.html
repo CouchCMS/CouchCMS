@@ -1,0 +1,86 @@
+<cms:if "<cms:get_flash 'submit_success' />" >
+    <cms:hide>
+        <cms:set mode="<cms:get_flash 'submit_success' />" />
+        <cms:php>
+            global $CTX, $PAGE, $FUNCS;
+
+            $link = $FUNCS->generate_route( $PAGE->tpl_name, 'edit_view', array('nonce'=>$FUNCS->create_nonce('edit_page_'.$PAGE->id), 'id'=>$PAGE->id) );
+            $CTX->set( 'update_link', $link );
+            $CTX->set_object( 'k_bound_page', $PAGE, 'global' );
+        </cms:php>
+            
+        <cms:admin_add_js>
+            $(function(){
+                if( window.parent && window.parent.KMosaic && window.parent.KMosaic.callBack ){
+                    var content = $('#mosaic_content');
+                    window.parent.KMosaic.callBack(content.html(), '<cms:show k_page_id/>', '<cms:show update_link />');
+                }
+            });
+        </cms:admin_add_js>
+    </cms:hide>
+    <div id='mosaic_content' style="display:none;">
+        <cms:php>echo KMosaic::_get_default_content( '<cms:show k_template_id />', 1 );</cms:php>
+    </div>
+<cms:else />
+    <div id="k-modal-body">
+        <cms:set my_filters="<cms:render 'filters' />" />
+        <cms:if "<cms:not_empty my_filters />" >
+            <div class="filter-actions">
+                <cms:show my_filters />
+            </div>
+        </cms:if>
+
+        <cms:form
+            masterpage = k_selected_masterpage
+            mode = k_selected_form_mode
+            page_id = k_selected_page_id
+            enctype = 'multipart/form-data'
+            method = 'post'
+            anchor = '0'
+            add_security_token = '0'
+            id = k_cur_form
+            name = k_cur_form
+            token = k_cur_token
+            action = k_form_target
+        >
+
+            <div class="tab-pane fade active in" id="tab-pane-<cms:show k_route_module />">
+
+                <cms:if k_success >
+
+                    <cms:db_persist_form
+                        _auto_title='1'
+                        _invalidate_cache='0'
+                        _token=k_cur_token
+                    />
+
+                    <cms:if k_success >
+                        <cms:if k_redirect_link >
+                            <cms:set_flash name='submit_success' value=k_cur_form_mode />
+                            <cms:redirect k_redirect_link />
+                        </cms:if>
+                    </cms:if>
+                </cms:if>
+
+                <cms:if k_error >
+                    <cms:show_error>
+                        <cms:each k_error >
+                            <cms:show item /><br>
+                        </cms:each>
+                    </cms:show_error>
+                </cms:if>
+
+                <!-- the editable regions -->
+                <cms:admin_form_fields depth='1'>
+                    <cms:render 'form_row' />
+                </cms:admin_form_fields>
+
+                <input type="hidden" id="k_custom_action" name="k_custom_action" value="">
+            </div>
+        </cms:form>
+    </div>
+    <div id="k-modal-footer">
+        <cms:render 'page_actions' />
+        <cms:render 'extended_actions' />
+    </div>
+</cms:if>

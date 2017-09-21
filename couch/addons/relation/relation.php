@@ -592,7 +592,7 @@
                 'include_file'=>K_ADDONS_DIR.'relation/edit-relation.php',
                 'filters'=>'KRelationAdmin::resolve_entities',
                 'class'=> 'KRelationAdmin',
-                'action'=>'list_action',
+                'action'=>'list_action_ex',
                 'module'=>'relation', /* owner module of this route */
             );
 

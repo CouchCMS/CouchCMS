@@ -1662,7 +1662,7 @@
         function get_data( $for_ctx=0 ){
             global $CTX;
 
-            if( count($CTX->ctx) ){
+            if( $for_ctx ){
                 // Data not a simple string hence
                 // we'll store it into '_obj_' of CTX directly
                 // to be used by the auxilally tag which knows how to display it

@@ -50,8 +50,8 @@
 
     if( !defined('K_COUCH_DIR') ) die(); // cannot be loaded directly
 
-    define( 'K_COUCH_VERSION', '2.0' ); // Changes with every release
-    define( 'K_COUCH_BUILD', '20170729' ); // YYYYMMDD - do -
+    define( 'K_COUCH_VERSION', '2.1.beta' ); // Changes with every release
+    define( 'K_COUCH_BUILD', '20170922' ); // YYYYMMDD - do -
 
     if( file_exists(K_COUCH_DIR.'config.php') ){
         require_once( K_COUCH_DIR.'config.php' );
@@ -378,6 +378,7 @@
     if ( defined('K_USE_ALTERNATIVE_MTA') && K_USE_ALTERNATIVE_MTA ){
         require_once( K_ADDONS_DIR . 'phpmailer/phpmailer.php' );
     }
+    require_once( K_COUCH_DIR.'addons/mosaic/mosaic.php' );
 
     // Current user's authentication info
     $AUTH = new KAuth( );
