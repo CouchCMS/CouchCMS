@@ -1648,6 +1648,8 @@
         }
 
         function get_link( $masterpage ){
+            global $FUNCS;
+            
             if( K_PRETTY_URLS ){
                 $link = K_SITE_URL . $this->get_pretty_template_link( $masterpage );
             }
