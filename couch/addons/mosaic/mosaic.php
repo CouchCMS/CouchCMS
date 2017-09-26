@@ -834,7 +834,7 @@
                 // copy to create a route for 'clone_view' ..
                 $tmp = $default_routes['edit_view'];
                 $tmp['path'] = 'clone/{:nonce}/{:id}';
-                $tmp['filters'] = 'KMosaicAdmin::resolve_page';
+                $tmp['filters'] = 'KMosaicAdmin::resolve_page=edit';
                 $default_routes['clone_view'] =  $tmp;
             }
 

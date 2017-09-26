@@ -76,7 +76,7 @@
         }
 
         // route filters
-        static function resolve_page( $route ){
+        static function resolve_page( $route, $act ){
             global $FUNCS, $DB, $PAGE, $CTX, $AUTH;
 
             $rs = $DB->select( K_TBL_TEMPLATES, array('*'), "name='" . $DB->sanitize( $route->masterpage ). "'" );
