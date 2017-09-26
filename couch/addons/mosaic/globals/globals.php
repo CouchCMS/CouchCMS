@@ -62,7 +62,7 @@
             $PAGE->globals_processed = 1;
         }
 
-        function get_global_handler( $params, $node ){
+        static function get_global_handler( $params, $node ){
             global $FUNCS, $PAGE, $TAGS;
 
             $attr = $FUNCS->get_named_vars(
@@ -88,7 +88,7 @@
             }
         }
 
-        function show_globals_handler( $params, $node ){
+        static function show_globals_handler( $params, $node ){
             global $CTX, $FUNCS, $PAGE;
 
             $attr = $FUNCS->get_named_vars(
