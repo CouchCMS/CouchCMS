@@ -1432,10 +1432,14 @@
                         }
                         if( confirm(msg) ){
                             $('body').css('cursor', 'wait');
+
+                            var form = $('#".$form_name."');
+                            var checkboxes = form.find( '.checkbox-item' ).not( ':disabled' );
+                            checkboxes.prop( 'checked', false );
+
                             var col = $('#page-selector-'+id);
                             col.prop( 'checked', true );
 
-                            var form = $('#".$form_name."');
                             form.find('#k_bulk_action').val('batch_delete');
                             form.submit();
                         }
