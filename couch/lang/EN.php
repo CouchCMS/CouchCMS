@@ -262,3 +262,4 @@
     $t['ok'] = 'OK';
     $t['globals'] = 'Globals';
     $t['manage_globals'] = 'Manage Globals';
+    $t['bulk_action_with_selected'] = 'Bulk action with selected';
