@@ -362,7 +362,7 @@ class phpExifReader {
      * @param string File name to be parsed.
      *
      */
-    function phpExifReader($file = "") {
+    function __construct($file = "") {
       $this->timeStart = $this->getmicrotime();
       if(!empty($file)) {
         $this->file = $file;
@@ -432,7 +432,7 @@ class phpExifReader {
     function processFile() {
         /** dont reparse the whole file. */
         if(!$this->newFile) return true;
-        
+
         if(!file_exists($this->file)) {
             echo "<br>Error: File ".($this->file)."does not exists!";
             exit;
