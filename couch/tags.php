@@ -5308,7 +5308,7 @@ FORM;
                     $charset = trim($params[$x]['rhs']);
                     continue;
                 }
-                elseif( $attr=='masterpage' || $attr=='page_id' || $attr=='mode' || $attr=='token' ){ // Data-bound form's parameters
+                elseif( $attr=='masterpage' || $attr=='page_id' || $attr=='mode' || $attr=='token' || $attr=='validate_bound' ){ // Data-bound form's parameters
                     $$attr = trim($params[$x]['rhs']);
                     continue;
                 }
@@ -5347,6 +5347,7 @@ FORM;
 
             $pg = null;
             $page_id = ( isset($page_id) && $FUNCS->is_non_zero_natural($page_id) ) ? (int)$page_id : null;
+            $validate_bound = ( $validate_bound==='1' ) ? 1 : 0;
 
             // check if the form is data-bound
             if( $masterpage ){
@@ -5482,7 +5483,7 @@ FORM;
 
                         foreach( $form as $k=>$v ){
                             $f = &$form[$k];
-                            if( !$f->module ){ // skip bound fields as they will be validated by the owner modules while subsequently saving the page
+                            if( !$f->module || $validate_bound ){ // if nor explicitly asked to, skip bound fields as they will be validated by the owner modules while subsequently saving the page
                                 if( !$f->validate() ){
                                     $CTX->set( 'k_error_'.$f->name, $f->err_msg );
                                     $errors[] = '<b>' . (($f->label) ? $f->label : $f->name) . ':</b> ' .$f->err_msg;
