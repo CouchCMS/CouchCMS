@@ -420,10 +420,5 @@
         unset( $t );
     }
 
-    // initialize theming (for the admin panel we'll defer this till the current route is selected)
-    if( !defined('K_ADMIN') ){
-        $FUNCS->init_render();
-    }
-
     // All addons loaded at this point
     $FUNCS->dispatch_event( 'init' );

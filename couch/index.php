@@ -28,7 +28,6 @@
     }
     else{
         // if no route specified in request, redirect to the first registered route (or show welcome msg if no route available)
-        $FUNCS->init_render();
         $html = $FUNCS->render( 'default_route' );
         $FUNCS->set_admin_title( $FUNCS->t('welcome') );
     }
@@ -51,7 +50,6 @@
     }
 
     if( !$FUNCS->route_fully_rendered ){
-        if( !defined('K_OVERRIDING_RENDERABLES_DONE') ) $FUNCS->init_render();
         $html = $FUNCS->render( 'main', $html );
     }
 

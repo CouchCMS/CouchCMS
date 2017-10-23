@@ -3549,6 +3549,8 @@ OUT;
         function init_render(){
             global $FUNCS;
 
+            if( defined('K_OVERRIDING_RENDERABLES_DONE') ) return;
+
             $FUNCS->renderables = array();
             $FUNCS->dispatch_event( 'register_renderables' );               // phase 1 - register all render functions
             define( 'K_REGISTER_RENDERABLES_DONE', '1' );
@@ -3620,6 +3622,8 @@ OUT;
 
         function render( $name ){
             global $FUNCS, $CTX;
+
+            if( !defined('K_OVERRIDING_RENDERABLES_DONE') ) $FUNCS->init_render();
 
             if( !is_array($this->renderables[$name]) || !count($this->renderables[$name]) ){
                 return;
@@ -3952,10 +3956,6 @@ OUT;
 
                         // HOOK: admin_pre_action
                         $FUNCS->dispatch_event( 'admin_pre_action', array($route, &$callable, &$args) );
-
-                        if( defined('K_ADMIN') ){
-                            $FUNCS->init_render();
-                        }
 
                         // and finally execute the main action ..
                         $html = call_user_func_array( $callable, $args );
