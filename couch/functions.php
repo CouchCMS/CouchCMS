@@ -3957,6 +3957,10 @@ OUT;
                         // HOOK: admin_pre_action
                         $FUNCS->dispatch_event( 'admin_pre_action', array($route, &$callable, &$args) );
 
+                        if( defined('K_ADMIN') ){
+                            $FUNCS->init_render();
+                        }
+
                         // and finally execute the main action ..
                         $html = call_user_func_array( $callable, $args );
 
