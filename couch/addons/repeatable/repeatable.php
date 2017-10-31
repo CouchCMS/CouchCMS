@@ -192,6 +192,7 @@
                         }
                         $CTX->set( 'k_count', $x + $startcount );
                         $CTX->set( 'k_total_rows', $total_rows );
+                        $CTX->set( 'k_total_records', $total_rows ); // backward compatibility
                         $CTX->set( 'k_first_row', ($x==0) ? '1' : '0' );
                         $CTX->set( 'k_last_row', ($x==$total_rows-1) ? '1' : '0' );
                         if( $extended_info ){
