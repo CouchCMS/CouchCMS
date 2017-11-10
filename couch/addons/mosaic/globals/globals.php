@@ -128,21 +128,35 @@
             return $path_parts['filename'];
         }
 
+        static function _delete_template( $tpl ){
+            global $DB, $FUNCS;
+
+            $global_tpl_name = KGlobals::_get_filename( $tpl ) . '__globals';
+            $DB->update( K_TBL_TEMPLATES, array('deleted'=>1), "name='" . $DB->sanitize( $global_tpl_name ). "'" );
+
+            // signal to GC (can piggyback on existing gc logic of mosaic)
+            $FUNCS->set_setting( 'gc_mosaic_is_dirty', 1 );
+        }
+
         // remove deleted globals template
         static function post_process_page(){
             global $DB, $PAGE, $FUNCS;
 
             if( $PAGE->tpl_has_globals && !$PAGE->globals_processed ){ // meaning <cms:globals> has been removed
-
                 // mark the globals template as deleted
-                $global_tpl_name = KGlobals::_get_filename( $PAGE->tpl_name ) . '__globals';
-                $DB->update( K_TBL_TEMPLATES, array('deleted'=>1), "name='" . $DB->sanitize( $global_tpl_name ). "'" );
-
-                // signal to GC (can piggyback on existing gc logic of mosaic)
-                $FUNCS->set_setting( 'gc_mosaic_is_dirty', 1 );
+                KGlobals::_delete_template( $PAGE->tpl_name );
 
                 // mark the current template as no longer having globals
                 $DB->update( K_TBL_TEMPLATES, array('has_globals'=>'0'), "id='" . $DB->sanitize( $PAGE->tpl_id ) . "'" );
+            }
+        }
+
+        static function delete_global_template( $rec ){
+            global $DB, $FUNCS;
+
+            if( $rec['has_globals'] ){
+                // mark the globals template as deleted
+                KGlobals::_delete_template( $rec['name'] );
             }
         }
 
@@ -190,6 +204,7 @@
     $FUNCS->register_tag( 'show_globals', array('KGlobals', 'show_globals_handler'), 1, 0 );
 
     $FUNCS->add_event_listener( 'post_process_page_end', array('KGlobals', 'post_process_page') );
+    $FUNCS->add_event_listener( 'template_deleted', array('KGlobals', 'delete_global_template') );
     if( defined('K_ADMIN') ){ // if admin-panel being displayed ..
         $FUNCS->add_event_listener( 'alter_pages_list_toolbar_actions', array('KGlobals', 'add_toolbar_button') );
         $FUNCS->add_event_listener( 'alter_register_pages_routes',  array('KGlobals', 'alter_register_routes') );
