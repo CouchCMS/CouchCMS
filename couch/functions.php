@@ -3935,7 +3935,7 @@ OUT;
                         $vars['k_route_name'] = $route->name;
                         $vars['k_route_module'] = $route->module;
                         $vars['k_route_masterpage'] = $route->masterpage;
-                        $vars['k_route_link'] = K_ADMIN_URL . K_ADMIN_PAGE . "?o=$masterpage";
+                        $vars['k_route_link'] = K_ADMIN_URL . K_ADMIN_PAGE . "?o=".urlencode($masterpage);
                         if( strlen($path) ){ $vars['k_route_link'] .= '&q=' . $path; }
                         $vars['k_qs_link'] = $FUNCS->get_qs_link( $vars['k_route_link'] ); // link with passed qs parameters
                         foreach( $route->values as $k=>$v ){
@@ -3990,7 +3990,7 @@ OUT;
             }
 
             $q = $route->generate( $values );
-            $link = K_ADMIN_URL . K_ADMIN_PAGE . "?o=$masterpage";
+            $link = K_ADMIN_URL . K_ADMIN_PAGE . "?o=".urlencode($masterpage);
             if( strlen($q) ){ $link .= '&q=' . $q; }
 
             return $link;
@@ -4057,7 +4057,7 @@ OUT;
         function add_meta( $meta ){
             static $sig = array();
 
-            $hash = MD5( $html );
+            $hash = MD5( $meta );
             if( !isset($sig[$hash]) ){
                 $this->admin_meta .= $meta . "\r\n";
                 $sig[$hash] = 1;
