@@ -1,6 +1,5 @@
-<cms:if "<cms:get_flash 'submit_success' />" >
+<cms:if "<cms:gpc 'close' method='get' />" >
     <cms:hide>
-        <cms:set mode="<cms:get_flash 'submit_success' />" />
         <cms:php>
             global $CTX, $PAGE, $FUNCS;
 
@@ -56,8 +55,7 @@
 
                     <cms:if k_success >
                         <cms:if k_redirect_link >
-                            <cms:set_flash name='submit_success' value=k_cur_form_mode />
-                            <cms:redirect k_redirect_link />
+                            <cms:redirect "<cms:add_querystring k_redirect_link 'close=1' />" />
                         </cms:if>
                     </cms:if>
                 </cms:if>
