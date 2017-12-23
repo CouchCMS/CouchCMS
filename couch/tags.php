@@ -4765,6 +4765,16 @@ FORM;
             $FUNCS->add_html( $code );
         }
 
+        function admin_add_meta( $params, $node ){
+            global $FUNCS;
+
+            foreach( $node->children as $child ){
+                $code .= $child->get_HTML();
+            }
+
+            $FUNCS->add_meta( $code );
+        }
+
         function admin_js( $params, $node ){
             global $FUNCS;
 
@@ -6189,6 +6199,7 @@ MAP;
                               'thumbnail'=>'0', /* valid for 'securefile' attachments only */
                               'cache_for'=>'0', /* -do- */
                               'count_hits'=>'0', /* -do- */
+                              'user_id'=>'0', /* takes precedence over access_level */
                               ),
                         $params)
                    );
@@ -6203,6 +6214,9 @@ MAP;
             if( !$FUNCS->is_natural($thumbnail) ) $thumbnail=0;
             if( !$FUNCS->is_natural($cache_for) ) $cache_for=0;
             $count_hits = ( $count_hits==1 ) ? 1 : 0;
+            $user_id = trim( $user_id );
+            if( !$FUNCS->is_non_zero_natural($user_id) ) $user_id=0;
+            if( $user_id ){ $access_level = 'i'.$user_id; }
 
             $action = 0;
             if( $redirect ) $action = 1;

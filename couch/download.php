@@ -67,6 +67,14 @@
 
     // Check if access level is ok
     if( $access_level ){
+        if( $access_level{0}==='i' ){ // user_id
+            $user_id = substr( $access_level, 1 );
+            $access_level = $AUTH->user->access_level;
+            if( $AUTH->user->id != $user_id ){
+                $access_level += 10; // fails the ensuing check
+            }
+        }
+
         $AUTH->check_access( $access_level, !$prompt_login );
     }
 
