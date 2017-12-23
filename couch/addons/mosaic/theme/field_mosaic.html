@@ -8,8 +8,6 @@
                 <th class="col-contents">
                     <span></span>
                 </th>
-                <th class="col-up-down">&nbsp;</th>
-                <th class="col-actions"></th>
             </tr>
         </thead>
         <tbody>
@@ -22,18 +20,19 @@
                             <cms:show k_content />
                         </div>
                         <input type="hidden" id="<cms:show k_field_input_id />-<cms:show k_count />-pid" name="<cms:show k_field_input_id />[<cms:show k_count />][pid]" value="<cms:show k_page_id />">
-                    </td>
-                    <td class="col-up-down">
-                        <cms:if k_tile_is_deleted><div class="delete-screen"></div></cms:if>
-                        <a class="up icon" href="#" onclick="return false;" title="<cms:localize 'up' />"><cms:show_icon 'chevron-top' /></a>
-                        <a class="down icon" href="#" onclick="return false;" title="<cms:localize 'down' />"><cms:show_icon 'chevron-bottom' /></a>
-                    </td>
-                    <td class="col-actions">
-                        <cms:if k_tile_is_deleted><div class="delete-screen"></div></cms:if>
-                        <input type="checkbox" name="delete[]" value="" style="display: none;">
-                        <a class="icon edit-row popup-iframe" title="<cms:localize 'edit' />" data-mfp-src="<cms:show k_edit_link />" data_mosaic_field="<cms:show k_field_input_id />" data_mosaic_row="<cms:show k_field_input_id />-<cms:show k_count />" href="#"><cms:show_icon 'pencil' /></a>
-                        <a class="icon add-row" data_mosaic_row="<cms:show k_field_input_id />-<cms:show k_count />" href="#" title="<cms:localize 'add_above' />" onclick="return false;"><cms:show_icon 'plus' /></a>
-                        <a class="icon delete-row" title="<cms:localize 'delete' />" href="#"><cms:show_icon 'trash' /></a>
+
+                        <div class="act-group">
+                            <div class="col-up-down">
+                                <a class="up icon" href="#" onclick="return false;" title="<cms:localize 'up' />"><cms:show_icon 'chevron-top' /></a>
+                                <a class="down icon" href="#" onclick="return false;" title="<cms:localize 'down' />"><cms:show_icon 'chevron-bottom' /></a>
+                            </div>
+                            <div class="col-actions">
+                                <input type="checkbox" name="delete[]" value="" style="display: none;">
+                                <a class="icon edit-row popup-iframe" title="<cms:localize 'edit' />" data-mfp-src="<cms:show k_edit_link />" data_mosaic_field="<cms:show k_field_input_id />" data_mosaic_row="<cms:show k_field_input_id />-<cms:show k_count />" href="#"><cms:show_icon 'pencil' /></a>
+                                <a class="icon add-row" data_mosaic_row="<cms:show k_field_input_id />-<cms:show k_count />" href="#" title="<cms:localize 'add_above' />" onclick="return false;"><cms:show_icon 'plus' /></a>
+                                <a class="icon delete-row" title="<cms:localize 'delete' />" href="#"><cms:show_icon 'trash' /></a>
+                            </div>
+                        </div>
                     </td>
                 </tr>
             </cms:show_mosaic>
@@ -54,16 +53,19 @@
                         </div>
                         <input type="hidden" idx="data-xxx-pid" id="data-xxx-pid" name="data[xxx][pid]" value="">
                         <img src="<cms:show k_system_theme_link />assets/blank.gif" alt="" onload="var el=$('#div_<cms:show k_field_input_id /> #data-xxx-pid'); if(!el.attr('idx')){ COUCH.mosaicActions(el, '<cms:show k_field_input_id />');}" />
-                    </td>
-                    <td class="col-up-down">
-                        <a class="up icon" href="#" onclick="return false;" title="<cms:localize 'up' />"><cms:show_icon 'chevron-top' /></a>
-                        <a class="down icon" href="#" onclick="return false;" title="<cms:localize 'down' />"><cms:show_icon 'chevron-bottom' /></a>
-                    </td>
-                    <td class="col-actions">
-                        <input type="checkbox" name="delete[]" value="">
-                        <a class="icon edit-row popup-iframe" title="<cms:localize 'edit' />" data-mfp-src="" data_mosaic_field="<cms:show k_field_input_id />" data_mosaic_row="" href="#"><cms:show_icon 'pencil' /></a>
-                        <a class="icon add-row" data_mosaic_row="" href="#" title="<cms:localize 'add_above' />" onclick="return false;"><cms:show_icon 'plus' /></a>
-                        <a class="icon delete-row" title="<cms:localize 'delete' />" href="#"><cms:show_icon 'trash' /></a>
+
+                        <div class="act-group">
+                            <div class="col-up-down">
+                                <a class="up icon" href="#" onclick="return false;" title="<cms:localize 'up' />"><cms:show_icon 'chevron-top' /></a>
+                                <a class="down icon" href="#" onclick="return false;" title="<cms:localize 'down' />"><cms:show_icon 'chevron-bottom' /></a>
+                            </div>
+                            <div class="col-actions">
+                                <input type="checkbox" name="delete[]" value="">
+                                <a class="icon edit-row popup-iframe" title="<cms:localize 'edit' />" data-mfp-src="" data_mosaic_field="<cms:show k_field_input_id />" data_mosaic_row="" href="#"><cms:show_icon 'pencil' /></a>
+                                <a class="icon add-row" data_mosaic_row="" href="#" title="<cms:localize 'add_above' />" onclick="return false;"><cms:show_icon 'plus' /></a>
+                                <a class="icon delete-row" title="<cms:localize 'delete' />" href="#"><cms:show_icon 'trash' /></a>
+                            </div>
+                        </div>
                     </td>
                 </tr>
             </tbody>
@@ -88,10 +90,6 @@
 <cms:if k_add_js >
     <cms:admin_load_js "<cms:show k_admin_link />addons/mosaic/theme/mosaic.js" />
     <cms:admin_add_js>
-        $( function(){
-            COUCH.bindPopupIframe( COUCH.el.$content.find( ".mosaic.tableholder .popup-iframe" ), COUCH.mosaicModalOpen, COUCH.mosaicModalClose, "mosaic-iframe", true );
-        });
-
         $('.mosaic.tableholder').magnificPopup({
             delegate: 'a.img-popup', // child items selector, by clicking on it popup will open
             type: 'image'

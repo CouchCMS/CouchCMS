@@ -44,9 +44,12 @@
         }
 
         static function alter_form_fields( &$arr_default_fields ){
+            global $FUNCS;
+
             if( array_key_exists('_system_fields_', $arr_default_fields) ){
                 $arr_default_fields['_system_fields_']['skip']=1;
             }
+            $FUNCS->dispatch_event( 'alter_mosaic_form_fields', array(&$arr_default_fields) );
         }
 
         function _default_form_page_actions(){

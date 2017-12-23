@@ -657,7 +657,8 @@ div.mfp-iframe-scaler iframe{background:#fff;}
 div.mfp-figure:after{background:#f5f5f5;}
 div.mfp-bottom-bar{text-shadow:0 1px 0 rgba(0,0,0,.6);}
 .plupload-iframe .mfp-iframe-scaler{padding-top:38%;}
-div.kcfinder-iframe .mfp-content, div.mosaic-iframe .mfp-content{max-width:968px; height:100%}
+div.kcfinder-iframe .mfp-content{max-width:968px; height:100%}
+div.mosaic-iframe .mfp-content{max-width:1068px; height:100%}
 .kcfinder-iframe .mfp-iframe-scaler, .mosaic-iframe .mfp-iframe-scaler{padding-top:50%;}
 
 .mfp-fade.mfp-bg,.mfp-fade.mfp-wrap .mfp-content,.mfp-fade .mfp-arrow{opacity:0;
@@ -828,7 +829,6 @@ a.unpublished, a.hidden-template span.nav-title{text-decoration: line-through;}
 .mosaic.tableholder{ position: relative; }
 .mosaic.tableholder table.rr td{ position: relative; }
 .mosaic-buttons .btn{height: 28px; line-height: 26px;}
-.mosaic .col-actions{width: 80px !important;}
 .mosaic.repeatable-region .col-actions {min-width: 60px; width: 60px !important;}
 .mosaic .col-actions>.icon{display:inline-block !important;}
 .mosaic .col-up-down{min-width: 32px !important; width: 32px !important; padding:6px 4px;}
@@ -869,3 +869,8 @@ a.unpublished, a.hidden-template span.nav-title{text-decoration: line-through;}
     .rr_container .th {min-width: 80px;}
 }
 .rr_container .th:first-child {border: 0;}
+.mosaic .act-group .col-actions, .mosaic .act-group .col-up-down{float: right; background-color: white; border: 1px solid #d3d3d3; -moz-border-radius: 3px; border-radius: 3px;}
+.mosaic .act-group .col-actions{margin-right: 6px; padding: 6px 0 3px 6px;}
+.mosaic .act-group .col-up-down{padding: 6px 5px 4px 5px;}
+.mosaic td.col-contents .act-group{position: absolute; top: 0; right: 0; margin: 10px;/*visibility: hidden;*/ opacity: 0;transition: visibility 0s linear 0.5s,opacity 0.5s linear; -webkit-transition: visibility 0s linear 0.5s,opacity 0.5s linear; -moz-transition: visibility 0s linear 0.5s,opacity 0.5s linear;}
+.mosaic td.col-contents:hover .act-group{visibility: visible; opacity: 1; transition-delay: 0s;}

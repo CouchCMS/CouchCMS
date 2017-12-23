@@ -112,3 +112,7 @@ COUCH.mosaicInit = function( field_id ){
     COUCH.mosaicPopover( $('#mosaic_hidden_selector_'+field_id), field_id );
     COUCH.mosaicPopover( $('#'+field_id).find('.col-actions .add-row'), field_id );
 }
+
+$( function(){
+    COUCH.bindPopupIframe( COUCH.el.$content.find( ".mosaic.tableholder .popup-iframe" ), COUCH.mosaicModalOpen, COUCH.mosaicModalClose, "mosaic-iframe", true );
+});

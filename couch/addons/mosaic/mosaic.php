@@ -50,7 +50,7 @@
             }
 
             // .. and execute them
-            $arr_config = array( 'orig_schema'=>$orig_schema, 'mod_schema'=>array() );
+            $arr_config = array( 'orig_schema'=>$orig_schema, 'mod_schema'=>array(), 'parent_field'=>$name, 'parent_tpl'=>$PAGE->tpl_name );
             $CTX->set_object( '__config', $arr_config );
             foreach( $tiles as $tile ){
                 $tile->get_HTML();
@@ -108,6 +108,24 @@
             }
             $rs = $DB->select( K_TBL_TEMPLATES, array('*'), "name='" . $DB->sanitize( $tpl_name ). "'" );
             if( !count($rs) ) die( "ERROR: Tag \"".$node->name."\" (".$name.") cannot find record in K_TBL_TEMPLATES" );
+
+            // custom params saved with the template..
+            $custom_params = array();
+            $custom_params['_tile_name'] = $name;
+            $custom_params['_tile_label'] = $label;
+            $custom_params['_parent_tpl'] = $arr_config['parent_tpl'];
+            $custom_params['_parent_field'] = $arr_config['parent_field'];
+            for( $x=0; $x<count($params); $x++ ){
+                $attr = strtolower(trim($params[$x]['lhs']));
+                if( $attr{0}=='_' ){ // prefixed by '_'
+                    $custom_params[$attr] = trim( $params[$x]['rhs'] );
+                }
+            }
+            $custom_params = $FUNCS->serialize($custom_params);
+            if( $custom_params != $rs[0]['custom_params'] ){
+                $rs2 = $DB->update( K_TBL_TEMPLATES, array('custom_params'=>$custom_params), "id='" . $DB->sanitize( $rs[0]['id'] ). "'" );
+                if( $rs2==-1 ) die( "ERROR: Tag: '.$node->name.' Unable to save modified template attribute" );
+            }
 
             // create page to hold the child editable regions
             $pg = new KWebpage( $rs[0]['id'], null );
@@ -182,7 +200,7 @@
 
                     if( $order=='desc' ){ $rows = array_reverse($rows); }
 
-                    if( $types ){
+                    if( $types && count($tiles) ){
                         // Negation?
                         $neg_types = 0;
                         $pos = strpos( strtoupper($types), 'NOT ' );
@@ -230,6 +248,7 @@
                     $total_rows = count($rows) - $offset;
                     if( $limit < $total_rows ) $total_rows = $limit;
 
+                    $tile_count = array();
                     for( $x=$offset; $x<$total_rows+$offset; $x++ ){
 
                         // .. and set each page representing the row in context
@@ -240,15 +259,27 @@
                                 $pg->set_context();
                                 $CTX->set_object( 'k_bound_page', $pg );
 
-                                $CTX->set( 'k_tile_name', $tiles[$pg->tpl_id]['name'] );
-                                $CTX->set( 'k_tile_label', $tiles[$pg->tpl_id]['label'] );
-                                $CTX->set( 'k_tile_is_deleted', $tiles[$pg->tpl_id]['deleted'] );
+                                if( count($tiles) ){
+                                    $CTX->set( 'k_tile_name', $tiles[$pg->tpl_id]['name'] );
+                                    $CTX->set( 'k_tile_label', $tiles[$pg->tpl_id]['label'] );
+                                    $CTX->set( 'k_tile_is_deleted', $tiles[$pg->tpl_id]['deleted'] );
+                                }
+                                else{
+                                    $CTX->set( 'k_tile_name', $pg->tpl__tile_name );
+                                    $CTX->set( 'k_tile_label', $pg->tpl__tile_label );
+                                    $CTX->set( 'k_tile_is_deleted', '0' );
+                                }
                                 $CTX->set( 'k_edit_link', K_ADMIN_URL . K_ADMIN_PAGE."?o=".$pg->tpl_name."&q=clone/".$FUNCS->create_nonce('edit_page_'.$pg->id)."/".$pg->id );
 
                                 $CTX->set( 'k_count', $x - $offset + $startcount );
                                 $CTX->set( 'k_total_rows', $total_rows );
                                 $CTX->set( 'k_first_row', ($x==$offset) ? '1' : '0' );
                                 $CTX->set( 'k_last_row', ($x==$total_rows+$offset-1) ? '1' : '0' );
+
+                                if( !array_key_exists($pg->tpl_id, $tile_count) ){
+                                    $tile_count[$pg->tpl_id] = 0;
+                                }
+                                $CTX->set( 'k_tile_count', $tile_count[$pg->tpl_id]++ );
 
                                 // get content to show ..
                                 $content = ( $render_content ) ? KMosaic::_get_default_content( $pg->tpl_id ) : '';
@@ -463,13 +494,14 @@
             global $DB;
 
             $search_data = '';
-            $page_ids = trim( implode(',', $this->items_selected) );
-            $sql = "SELECT ft.content FROM ".K_TBL_FULLTEXT." ft WHERE ft.page_id IN (".$page_ids.")";
-            $rs = $DB->raw_select( $sql );
-            foreach( $rs as $rec ){
-                $search_data .= $rec['content'] . ' ';
+            if( count($this->items_selected) ){
+                $page_ids = trim( implode(',', $this->items_selected) );
+                $sql = "SELECT ft.content FROM ".K_TBL_FULLTEXT." ft WHERE ft.page_id IN (".$page_ids.")";
+                $rs = $DB->raw_select( $sql );
+                foreach( $rs as $rec ){
+                    $search_data .= $rec['content'] . ' ';
+                }
             }
-
             return $search_data;
         }
 

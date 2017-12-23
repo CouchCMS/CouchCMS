@@ -1748,6 +1748,7 @@
                 $handler_name = 'k_template_handler_' . $handler;
                 $vars[$handler_name] = '1';
             }
+            $vars['k_template_type'] = $this->tpl_type;
             if( K_PRETTY_URLS ){
                 $vars['k_template_link'] = K_SITE_URL . $FUNCS->get_pretty_template_link( $this->tpl_name );
                 $vars['k_prettyurls'] = 1;
