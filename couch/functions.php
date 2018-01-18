@@ -90,7 +90,7 @@
 
         var $current_route = null;
         var $route_fully_rendered = 0;
-        var $route_content_type = '';
+        var $route_content_type = 'text/html';
 
         var $_ed;
         var $json = null;
