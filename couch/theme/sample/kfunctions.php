@@ -23,7 +23,14 @@
             $tmp_array = array();
             foreach( $candidate_templates as $tpl ){
                 $tmp_array[] = $tpl;
-                $tmp_array[] = $tpl . '_' . $cur_masterpage;
+
+                if( $cur_route->module=='folders' ){
+                    $tmp_array[] = $tpl . '__folder';
+                    $tmp_array[] = $tpl . '__folder_' . $cur_masterpage;
+                }
+                else{
+                    $tmp_array[] = $tpl . '_' . $cur_masterpage;
+                }
             }
 
             $candidate_templates = $tmp_array;
