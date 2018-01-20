@@ -94,6 +94,7 @@
                     }
 
                     $tmp = $TAGS->editable( $child_params, $child, 1 ); // piggyback on the real 'editable' tag to handle constituent fields
+                    $html = '';
                     foreach( $child->children as $grandchild ){
                         $html .= $grandchild->get_HTML();
                     }
