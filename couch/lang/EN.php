@@ -263,3 +263,15 @@
     $t['globals'] = 'Globals';
     $t['manage_globals'] = 'Manage Globals';
     $t['bulk_action_with_selected'] = 'Bulk action with selected';
+    $t['month01'] = 'January';
+    $t['month02'] = 'February';
+    $t['month03'] = 'March';
+    $t['month04'] = 'April';
+    $t['month05'] = 'May';
+    $t['month06'] = 'June';
+    $t['month07'] = 'July';
+    $t['month08'] = 'August';
+    $t['month09'] = 'September';
+    $t['month10'] = 'October';
+    $t['month11'] = 'November';
+    $t['month12'] = 'December';

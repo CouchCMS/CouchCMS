@@ -1523,10 +1523,9 @@
 
         function date_dropdowns( $date='', $simple_mode=0 ){
             global $FUNCS, $PAGE;
-            //TODO: allow localization
-            $arrMonths = array('01'=>'January',   '02'=>'February', '03'=>'March',    '04'=>'April',
-                               '05'=>'May',       '06'=>'June',     '07'=>'July',     '08'=>'August',
-                               '09'=>'September', '10'=>'October',  '11'=>'November', '12'=>'December');
+            $arrMonths = array('01'=>$FUNCS->t('month01'), '02'=>$FUNCS->t('month02'), '03'=>$FUNCS->t('month03'), '04'=>$FUNCS->t('month04'),
+                               '05'=>$FUNCS->t('month05'), '06'=>$FUNCS->t('month06'), '07'=>$FUNCS->t('month07'), '08'=>$FUNCS->t('month08'),
+                               '09'=>$FUNCS->t('month09'), '10'=>$FUNCS->t('month10'), '11'=>$FUNCS->t('month11'), '12'=>$FUNCS->t('month12'));
 
             if( !$date ) $date = $PAGE->publish_date;
             if( !$date || $date=='0000-00-00 00:00:00' ) $date = $this->get_current_desktop_time();
