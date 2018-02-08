@@ -5121,36 +5121,9 @@ FORM;
                         $params)
                    );
 
-            if( trim($date)=='' ) $date = $FUNCS->get_current_desktop_time();
-            $gmt = ( $gmt==1 ) ? 1 : 0;
-            $locale = trim( $locale );
-            $charset = trim( $charset );
+            $date = $FUNCS->date( $date, $format, $locale, $charset, $gmt );
 
-            //TODO: localization
-            $ts = ( $gmt ) ? @strtotime($date) - (K_GMT_OFFSET * 60 * 60) :  @strtotime($date);
-
-            if( strpos($format, "%")===FALSE ){
-                return @date( $format, $ts );
-            }
-            else{// use strftime
-                if( $locale ){
-                    $orig_locale = setlocale(LC_ALL, "0");
-                    @setlocale(LC_ALL, $locale);
-                }
-
-                $val = @strftime( $format, $ts );
-
-                if( $locale ){
-                    @setlocale(LC_ALL, $orig_locale);
-                }
-                if( $charset ){
-                    if( function_exists('iconv') ){
-                        $val = @iconv( $charset, 'UTF-8', $val );
-                    }
-                }
-
-                return $val;
-            }
+            return $date;
         }
 
         // Given a string containing an English date format in 'str', this tag will parse it and return a date in 'Y-m-d H:i:s' format

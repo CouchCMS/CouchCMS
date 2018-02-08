@@ -1646,6 +1646,41 @@
             return $this->cmp_date( $str_date1, $str_date2, 1 );
         }
 
+        // moved here from tags.php
+        function date( $date='', $format='F d, Y', $locale='', $charset='', $gmt=0 ){
+            global $FUNCS;
+
+            if( trim($date)=='' ) $date = $FUNCS->get_current_desktop_time();
+            $gmt = ( $gmt==1 ) ? 1 : 0;
+            $locale = trim( $locale );
+            $charset = trim( $charset );
+
+            $ts = ( $gmt ) ? @strtotime($date) - (K_GMT_OFFSET * 60 * 60) :  @strtotime($date);
+
+            if( strpos($format, "%")===FALSE ){
+                return @date( $format, $ts );
+            }
+            else{// use strftime
+                if( $locale ){
+                    $orig_locale = setlocale(LC_ALL, "0");
+                    @setlocale(LC_ALL, $locale);
+                }
+
+                $val = @strftime( $format, $ts );
+
+                if( $locale ){
+                    @setlocale(LC_ALL, $orig_locale);
+                }
+                if( $charset ){
+                    if( function_exists('iconv') ){
+                        $val = @iconv( $charset, 'UTF-8', $val );
+                    }
+                }
+
+                return $val;
+            }
+        }
+
         function get_link( $masterpage ){
             global $FUNCS;
 
