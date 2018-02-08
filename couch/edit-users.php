@@ -161,9 +161,6 @@
                 $where = 'u.access_level = lvl.k_level';
                 $orderby .= 'u.access_level DESC, u.name ASC';
 
-                // first query for pagination
-                $rs = $DB->select( $tables, array('count(u.id) as cnt'), $sql );
-
                 $sql = 'SELECT ' . $fields . ' FROM ' . $tables . ' WHERE ' . $where . ' ORDER BY ' . $orderby;
 
                 $CTX->set( 'k_selected_query', $sql );
