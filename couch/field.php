@@ -551,11 +551,11 @@
 
         // textarea
         static function _render_textarea( $f, $input_name, $input_id, $extra, $dynamic_insertion ){
-            global $CTX;
+            global $CTX, $FUNCS;
 
             KField::_set_common_vars( $f->k_type, $input_name, $input_id, $extra, $dynamic_insertion, $f->simple_mode );
             $arr_vars = array();
-            $arr_vars['k_field_value'] = htmlspecialchars( $f->get_data(), ENT_QUOTES, K_CHARSET );
+            $arr_vars['k_field_value'] = $FUNCS->escape_HTML( $f->get_data(), ENT_QUOTES, K_CHARSET );
             $arr_vars['k_field_rtl'] = ( $f->rtl ) ? '1' : '0';
             $arr_vars['k_field_height'] = $f->height;
             $arr_vars['k_field_width'] = $f->width;
@@ -930,11 +930,11 @@
 
         // text
         static function _render_text( $f, $input_name, $input_id, $extra, $dynamic_insertion ){
-            global $CTX;
+            global $CTX, $FUNCS;
 
             KField::_set_common_vars( $f->k_type, $input_name, $input_id, $extra, $dynamic_insertion, $f->simple_mode );
             $arr_vars = array();
-            $arr_vars['k_field_value'] = htmlspecialchars( $f->get_data(), ENT_QUOTES, K_CHARSET );
+            $arr_vars['k_field_value'] = $FUNCS->escape_HTML( $f->get_data(), ENT_QUOTES, K_CHARSET );
             $arr_vars['k_field_rtl'] = ( $f->rtl ) ? '1' : '0';
             $arr_vars['k_field_width'] = $f->width;
             $arr_vars['k_field_maxlength'] = $f->maxlength;
@@ -1040,10 +1040,10 @@
 
             $value = $this->get_data();
             if( $this->k_type=='text' || $this->k_type=='password' || $this->k_type=='submit' || $this->k_type=='hidden' ){
-                $html = '<input type="'.$this->k_type.'" name="'.$input_name.'"  id="'.$input_id.'" value="'.htmlspecialchars( $value, ENT_QUOTES, K_CHARSET ).'" '.$extra.'/>';
+                $html = '<input type="'.$this->k_type.'" name="'.$input_name.'"  id="'.$input_id.'" value="'.$FUNCS->escape_HTML( $value, ENT_QUOTES, K_CHARSET ).'" '.$extra.'/>';
             }
             elseif( $this->k_type=='textarea' ){
-                $html = '<textarea  name="'.$input_name.'"  id="'.$input_id.'" '.$extra.'>'.htmlspecialchars( $value, ENT_QUOTES, K_CHARSET ).'</textarea>';
+                $html = '<textarea  name="'.$input_name.'"  id="'.$input_id.'" '.$extra.'>'.$FUNCS->escape_HTML( $value, ENT_QUOTES, K_CHARSET ).'</textarea>';
             }
             elseif( $this->k_type=='radio' || $this->k_type=='checkbox' || $this->k_type=='dropdown' ){
                 $html = parent::_render( $input_name, $input_id, $extra, $dynamic_insertion );
