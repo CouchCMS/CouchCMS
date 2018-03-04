@@ -7260,11 +7260,14 @@ MAP;
                                'validator'=>'',
                                'separator'=>'',
                                'val_separator'=>'',
+                               'case_sensitive'=>'0',
                               ),
                         $params)
                    );
 
-            $validator = strtolower( trim($validator) );
+            $case_sensitive = ( $case_sensitive==1 ) ? 1 : 0;
+            $validator = trim( $validator );
+            if( !$case_sensitive ){ $validator = strtolower( $validator ); }
             if( !strlen($validator) ) {die("ERROR: Tag \"".$node->name."\" requires a 'validator' parameter");}
             $separator = trim( $separator );
             if( !strlen($separator) ) $separator = '|';
