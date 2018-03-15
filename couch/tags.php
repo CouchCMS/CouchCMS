@@ -732,6 +732,9 @@
                     $valid_files[] = 'default';
                 }
 
+                // HOOK: alter_valid_files
+                $FUNCS->dispatch_event( 'alter_valid_files', array(&$valid_files, $tplname) );
+
                 // Cache results
                 $FUNCS->cached_valid_files_for_view = $valid_files;
             }
