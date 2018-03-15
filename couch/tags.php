@@ -1895,8 +1895,11 @@
             $rs = $DB->select( K_TBL_TEMPLATES, array('*'), $sql );
             if( count($rs) ){
                 $count = count($rs);
+                $step = 0;
                 foreach( $rs as $rec ){
+                    $step++;
                     $CTX->set( 'k_total', $count );
+                    $CTX->set( 'k_count', $step );
                     $CTX->set( 'k_template_id', $rec['id'] );
                     $CTX->set( 'k_template_name', $rec['name'] );
                     $CTX->set( 'k_template_title', $rec['title'] );
@@ -1916,7 +1919,9 @@
                     else{
                         $CTX->set( 'k_template_link', K_SITE_URL . $rec['name'] );
                     }
-
+                    $CTX->set( 'k_paginated_top', ($step==1) ? 1 : 0 );
+                    $CTX->set( 'k_paginated_bottom', ($step==$count) ? 1 : 0 );
+                    
                     // call the children
                     foreach( $node->children as $child ){
                         $html .= $child->get_HTML();
