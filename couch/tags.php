@@ -7665,4 +7665,67 @@ MAP;
             return ( is_array($in) && array_key_exists($key, $in) ) ? '1' : '0';
         }
 
+        function func( $params, $node ){
+            global $FUNCS, $CTX;
+
+            $name = trim( $params[0]['rhs'] );
+            if( !$name ){ ob_end_clean(); die( "ERROR: tag &lt;cms:func /&gt;: Please provide a name for the function being defined" ); }
+            if( array_key_exists($name, $FUNCS->funcs) ){ ob_end_clean(); die( "ERROR: tag &lt;cms:func /&gt;: '$name' already registered" ); }
+
+            $func = array();
+            $func['code'] = ( count($node->children) ) ? $node->children : array();
+            $func['params'] = array();
+            for( $x=1; $x<count($params); $x++ ){
+                if( $params[$x]['op']=='=' && $params[$x]['lhs']){
+                    $func['params'][$params[$x]['lhs']]=$params[$x]['rhs'];
+                }
+            }
+
+            // register function
+            $FUNCS->funcs[$name] = $func;
+        }
+
+        function call( $params, $node ){
+            global $FUNCS, $CTX;
+
+            $name = trim( $params[0]['rhs'] );
+            if( !$name ) return;
+
+            $html = '';
+            if( !array_key_exists($name, $FUNCS->funcs) ){ //if function not registered, pass on processing to <cms:embed></cms:embed> ..
+                $node->name = 'embed';
+                $node->children[] = new KNode( K_NODE_TYPE_TEXT );
+                $html = $this->embed( $params, $node );
+            }
+            else{
+                // execute function ..
+                $CTX->push( '__call__', 1 /*no_check*/ );
+
+                $func = $FUNCS->funcs[$name];
+                array_shift( $params );
+                $vars = $FUNCS->get_named_vars( $func['params'], $params );
+                $CTX->set_all( $vars );
+
+                $args = $named_args = array();
+                for( $x=0; $x<count($params); $x++ ){
+                    if( $params[$x]['op']=='=' ){
+                        if( $params[$x]['lhs'] ){
+                            $named_args[$params[$x]['lhs']] = $params[$x]['rhs'];
+                        }
+                        $args[] = array( 'name'=>($params[$x]['lhs'])?$params[$x]['lhs']:'', 'val'=>$params[$x]['rhs'] );
+                    }
+                }
+                $CTX->set( 'k_args', $args );
+                $CTX->set( 'k_named_args', $named_args ); // make available original arguments
+
+                foreach( $func['code'] as $child ){
+                    $html .= $child->get_HTML();
+                }
+
+                $CTX->pop();
+            }
+
+            return $html;
+        }
+
     } //end class KTags

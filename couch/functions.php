@@ -69,6 +69,7 @@
         var $repeatable = array();
         var $renderables = array();
         var $routes = array();
+        var $funcs = array();
         var $spl_templates = array();
 
         var $admin_menuitems = array();
