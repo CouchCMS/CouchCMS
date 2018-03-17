@@ -378,6 +378,7 @@
                                'key'=>'',
                                'startcount'=>'0',
                                'token'=>'',
+                               'is_json'=>'0',
                               ),
                         $params)
                    );
@@ -386,6 +387,9 @@
             $key = trim( $key ); if( $key=='' ){ $key='key'; }
             $startcount = $FUNCS->is_int( $startcount ) ? intval( $startcount ) : 1;
             $token = trim( $token );
+            $is_json = ( $is_json==1 ) ? 1 : 0;
+
+            if( $is_json && !is_array($var) ){ $var = $FUNCS->json_decode( $var ); }
 
             if( !is_array($var) ){
                 if( !$sep ) $sep = '|';
@@ -731,6 +735,9 @@
                     $valid_files[] = $tplname . '-default';
                     $valid_files[] = 'default';
                 }
+
+                // HOOK: alter_smart_embed_valid_files
+                $FUNCS->dispatch_event( 'alter_smart_embed_valid_files', array(&$valid_files, $tplname, $view) );
 
                 // Cache results
                 $FUNCS->cached_valid_files_for_view = $valid_files;
@@ -7728,4 +7735,15 @@ MAP;
             return $html;
         }
 
+        function escape_json( $params, $node ){
+            global $FUNCS;
+
+            // call the children
+            foreach( $node->children as $child ){
+                $html .= $child->get_HTML();
+            }
+
+            $html = $FUNCS->json_encode( $html );
+            return $html;
+        }
     } //end class KTags

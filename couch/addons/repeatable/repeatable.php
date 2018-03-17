@@ -156,6 +156,7 @@
                            'offset'=>'',
                            'order'=>'asc',
                            'extended_info'=>'0',
+                           'as_json'=>'0',
                     ),
                 $params)
             );
@@ -166,6 +167,7 @@
             $order = strtolower( trim($order) );
             if( $order!='desc' && $order!='asc' ) $order='asc';
             $extended_info = ( $extended_info==1 ) ? 1 : 0;
+            $as_json = ( $as_json==1 ) ? 1 : 0;
 
 
             if( $var ){
@@ -175,6 +177,8 @@
                 if( $obj ){
                     $cells = $obj['cells'];
                     $data = $obj['data'];
+
+                    if( $as_json ){ return $FUNCS->json_encode($data); }
 
                     if( $order=='desc' ){ $data = array_reverse($data); }
 
@@ -509,6 +513,9 @@
                     }
                     $data = $tmp;
                 }
+                else{
+                    $set_explictly = 1; // as direct params of cms:db_persist
+                }
             }
 
             // dynamic params
@@ -535,6 +542,20 @@
                     $c->err_msg = '';
 
                     // pass posted data to each cell
+                    if( $set_explictly && $c->k_type== 'checkbox' ){
+                        // supplied static checkbox values are supposed to be comma-separated -
+                        // this needs to be changed to match the separator expected by page-field
+                        $separator = ( $c->k_separator ) ? $c->k_separator : '|';
+                        $sep2 = '';
+                        $str_val = '';
+                        $arr_tmp = explode(',', $data[$row][$c->name]);
+                        foreach( $arr_tmp as $v ){
+                            $str_val .= $sep2 . trim( $v );
+                            $sep2 = $separator;
+                        }
+                        $data[$row][$c->name] = $str_val;
+                    }
+
                     $c->store_posted_changes( $data[$row][$c->name] );
                     if( $c->modified ){
                         $this->modified = 1;
