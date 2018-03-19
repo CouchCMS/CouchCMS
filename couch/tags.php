@@ -7699,10 +7699,8 @@ MAP;
             if( !$name ) return;
 
             $html = '';
-            if( !array_key_exists($name, $FUNCS->funcs) ){ //if function not registered, pass on processing to <cms:embed></cms:embed> ..
-                $node->name = 'embed';
-                $node->children[] = new KNode( K_NODE_TYPE_TEXT );
-                $html = $this->embed( $params, $node );
+            if( !array_key_exists($name, $FUNCS->funcs) ){ // function not registered
+                $html = 'Error: &lt;cms:func /&gt;: "'.$name.'" not available';
             }
             else{
                 // execute function ..
@@ -7733,6 +7731,16 @@ MAP;
             }
 
             return $html;
+        }
+
+        function func_exists( $params, $node ){
+            global $FUNCS;
+            if( count($node->children) ) {die("ERROR: Tag \"".$node->name."\" is a self closing tag");}
+
+            $name = trim( $params[0]['rhs'] );
+            $res = ( array_key_exists($name, $FUNCS->funcs) ) ? '1' : '0';
+
+            return $res;
         }
 
         function escape_json( $params, $node ){
