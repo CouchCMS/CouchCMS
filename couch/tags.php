@@ -1977,6 +1977,7 @@
 
                                'base_link'=>'', /* replaces the default $PAGE->link used for paginator crumb links */
                                'token'=>'',
+                               'adjust'=>'0', /* to handle non-uniform pagination limit */
                               ),
                         $params);
 
@@ -2007,6 +2008,7 @@
             $aggregate_by = trim( $aggregate_by );
             $base_link = trim( $base_link );
             $token = trim( $token );
+            $adjust = $FUNCS->is_int( $adjust ) ? intval( $adjust ) : 0;
 
             $qs_param = trim( $qs_param );
             if( $qs_param=='' ){
@@ -2681,7 +2683,7 @@
             } // end mode==2 (comments)
 
             // limit
-            $limit_sql = sprintf( "%d, %d", (($pgn_pno - 1) * $limit)+$offset, $limit );
+            $limit_sql = sprintf( "%d, %d", (($pgn_pno - 1) * $limit)+$offset+$adjust, $limit );
 
 
             // We have the sql query here..
@@ -2827,6 +2829,7 @@
             }
 
             $total_rows -= $offset;
+            $total_rows -= $adjust;
             $total_pages = ceil( $total_rows/$limit );
 
             $count = count($rs);
@@ -2918,9 +2921,11 @@
 
                     // Pagination related variables
                     $first_record_on_page = ($limit * ($pgn_pno - 1)) + $startcount;
+                    if( $adjust ){ $first_record_on_page += $adjust; };
                     $total_records_on_page = ( $count<$limit ) ? $count : $limit;
                     $CTX->set( 'k_count', $x + $startcount );
-                    $CTX->set( 'k_total_records', $total_rows );
+                    $CTX->set( 'k_total_records', ( $adjust ) ? $total_rows+$adjust : $total_rows );
+                    $CTX->set( 'k_total_records_for_pagination', $total_rows );
                     $CTX->set( 'k_total_records_on_page', $total_records_on_page );
                     $CTX->set( 'k_current_record', $first_record_on_page + $x );
                     $CTX->set( 'k_absolute_count', $first_record_on_page + $x ); //same as current record
@@ -3577,6 +3582,7 @@ FORM;
             // set vars for 'paginator tag'
             $CTX->set( 'k_current_page', $node->_current_page );
             $CTX->set( 'k_total_records', $node->_total_records );
+            $CTX->set( 'k_total_records_for_pagination', $node->_total_records );
             $CTX->set( 'k_paginate_limit', $node->_paginate_limit );
             if( $x==1 ){
                 $CTX->set( 'k_paginated_top', 1 );
@@ -6354,7 +6360,7 @@ MAP;
             $qs_param = $CTX->get( 'k_qs_param' );
 
             $page = $CTX->get( 'k_current_page' );
-            $totalitems = $CTX->get( 'k_total_records' );
+            $totalitems = $CTX->get( 'k_total_records_for_pagination' );
             $limit = $CTX->get( 'k_paginate_limit' );
             $targetpage = $page_link;
             $pagestring = $sep . $qs_param . "=";
