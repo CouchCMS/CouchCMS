@@ -1351,7 +1351,7 @@
             $attr['assoc_field'] = trim( $attr['assoc_field'] );
             $attr['crop'] = abs( (int)$attr['crop'] );
             $attr['enforce_max'] = trim( $attr['enforce_max'] );
-            if( $attr['type']=='image' && ($attr['enforce_max']!='1' && $attr['enforce_max']!='0') ) $attr['enforce_max']=1;
+            if( ($attr['type']=='image' || $attr['type']=='securefile') && ($attr['enforce_max']!='1' && $attr['enforce_max']!='0') ) $attr['enforce_max']=1;
             if( $attr['type']=='thumbnail' && ($attr['enforce_max']!='1' && $attr['enforce_max']!='0') ) $attr['enforce_max']=0;
             $attr['enforce_max'] = abs( (int)$attr['enforce_max'] );
             $attr['quality'] = (int)$attr['quality'];
