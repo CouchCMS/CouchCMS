@@ -139,6 +139,7 @@ class dir {
             if( $options['not_pattern'] ){
                 if( preg_match($options['not_pattern'], $file) ) continue;
             }
+            if( $file=='.htaccess') continue;
 
             if (($options['types'] === "all") || ($type === $options['types']) ||
                 ((is_array($options['types'])) && in_array($type, $options['types']))
