@@ -5,7 +5,7 @@
         <cms:pages id=k_relation_selected_ids_string skip_custom_fields='0'>
             {
                 "id":"<cms:show k_page_id />",
-                "title":<cms:escape_json><cms:show k_page_title /></cms:escape_json>
+                "title":<cms:escape_json><cms:php>echo(str_replace('&quot;', '"', '<cms:show k_page_title />'));</cms:php></cms:escape_json>
             }
             <cms:if "<cms:not k_paginated_bottom/>">,</cms:if>
         </cms:pages>
