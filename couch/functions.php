@@ -1565,7 +1565,10 @@
         function sanitize_posted_date(){
             $year = intval( $_POST['f_k_year'] );
             if( $year <= 0 ) $year = date('Y');
-            if( $year < 1970 ) $year = '1970';
+            if( 2147483647 == PHP_INT_MAX ){ // 32bit PHP
+                if( $year < 1902 ) $year = '1902';
+                if( $year > 2037 ) $year = '2037';
+            }
 
             $month = intval( $_POST['f_k_month'] );
             if( $month <= 0 ) $month = date('n');

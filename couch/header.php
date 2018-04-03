@@ -175,8 +175,8 @@
     }
     if( !defined('K_HTML4_SELFCLOSING_TAGS') ) define( 'K_HTML4_SELFCLOSING_TAGS', 0 );
 
-    if( version_compare( '5.0.0', phpversion(), '>' ) ) {
-        die( 'You are using PHP version '. phpversion().' but the CMS requires at least 5.0' );
+    if( version_compare( '5.2.4', phpversion(), '>' ) ) {
+        die( 'You are using PHP version '. phpversion().' but the CMS requires at least 5.2.4' );
     }
 
     // Refuse to run on IIS
