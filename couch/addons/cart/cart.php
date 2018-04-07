@@ -669,7 +669,7 @@
         }
 
         function _is_option_text( $opt ){
-            return ( count($opt['values'])==1 && $opt['values'][0]['attr']='*TEXT*' ) ? true : false;
+            return ( count($opt['values'])==1 && $opt['values'][0]['attr']=='*TEXT*' ) ? true : false;
         }
 
         function payment_gateway( $params ){ // Used by cms:pp_payment_gateway tag
