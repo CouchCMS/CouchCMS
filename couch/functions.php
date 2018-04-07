@@ -3347,7 +3347,7 @@ OUT;
                 if( $neg ) $sep .= "NOT";
                 $sep .= "(";
                 foreach( $arr_elems as $elem ){
-                    if( $elem ){
+                    if( $elem!='' ){
                         $sql .= $sep . $field_name."='" . $DB->sanitize( $elem )."'";
                         $sep = " OR ";
                     }

@@ -837,7 +837,7 @@
             if( strlen($id) && !$FUNCS->is_non_zero_natural($id) ) $id='';
 
 
-            if( $name ){
+            if( $name!='' ){
                 $sql = "t.id = p.template_id and t.name='" . $DB->sanitize( $masterpage ) . "' and page_name='" . $DB->sanitize( $name ). "'";
             }
             else{ //id
@@ -872,7 +872,7 @@
             $id = trim( $id );
             if( strlen($id) && !$FUNCS->is_non_zero_natural($id) ) $id='';
 
-            if( $name ){
+            if( $name!='' ){
                 $sql = "t.id = f.template_id and t.name='" . $DB->sanitize( $masterpage ) . "' and f.name='" . $DB->sanitize( $name ). "'";
             }
             else{
@@ -915,7 +915,7 @@
             $month = trim( $month );
             $day = trim( $day );
 
-            if( $page ){
+            if( $page!='' ){
                 // page-view
                 $sql = "t.id = p.template_id and t.name='" . $DB->sanitize( $masterpage ) . "' and page_name='" . $DB->sanitize( $page ). "'";
                 $rs = $DB->select( K_TBL_TEMPLATES . ' t, ' . K_TBL_PAGES . ' p ', array('t.id as tid', 'p.id as pid'), $sql );
@@ -933,7 +933,7 @@
                     }
                 }
             }
-            elseif( $folder ){
+            elseif( $folder!='' ){
                 // folder-view
                 $sql = "t.id = f.template_id and t.name='" . $DB->sanitize( $masterpage ) . "' and f.name='" . $DB->sanitize( $folder ). "'";
                 $rs = $DB->select( K_TBL_TEMPLATES . ' t, ' . K_TBL_FOLDERS . ' f ', array('t.id as tid', 'f.id as fid', 'f.pid as pid'), $sql );
@@ -2082,12 +2082,12 @@
                 }
 
                 // name?
-                if( $page_name ){
+                if( $page_name!='' ){
                     $sql .= $FUNCS->gen_sql( $page_name, 'p.page_name');
                 }
 
                 // title?
-                if( $page_title ){
+                if( $page_title!='' ){
                     $sql .= $FUNCS->gen_sql( $page_title, 'p.page_title');
                 }
 
