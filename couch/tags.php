@@ -3856,7 +3856,7 @@ FORM;
             if( $orderby =='weight' ) $orderby ='weightx';
             $order = strtolower( trim($order) );
             if( $order!='desc' && $order!='asc' ) $order = 'asc';
-            $exclude = ( $exclude ) ? array_map( "trim", explode( ",", $exclude ) ) : array();
+            $exclude = ( $exclude!='' ) ? array_map( "trim", explode( ",", $exclude ) ) : array();
             $extended_info = ( $extended_info==1 ) ? 1 : 0;
             if( $variation==1 ) $extended_info = 1; // always 1 with 'menu'
             $ignore_show_in_menu = ( $ignore_show_in_menu==1 ) ? 1 : 0;
