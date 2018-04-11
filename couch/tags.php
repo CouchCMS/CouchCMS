@@ -405,6 +405,9 @@
                 elseif( $sep == '\t' ){
                     $sep = "\t";
                 }
+                elseif( $sep == '||' ){
+                    $sep = "||";
+                }                
                 else{
                     $use_preg=1;
                 }
