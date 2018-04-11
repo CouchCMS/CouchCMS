@@ -411,7 +411,7 @@
 
                 if( $var ){
                     if( $use_preg ){
-                        $arr_vars = array_map( "trim", preg_split( "/(?<!\\\)\\".$sep."/", $var ) ); // allows escaping of separator with a backslash
+                        $arr_vars = array_map( "trim", preg_split( "/(?<!\\\)".preg_quote($sep, '/')."/", $var ) ); // allows escaping of separator with a backslash
                     }
                     else{
                         $arr_vars = array_map( "trim", explode( $sep, $var ) );
