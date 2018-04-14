@@ -2643,7 +2643,7 @@
                 if( $page_id ){
                     $sql .= $FUNCS->gen_sql( $page_id, 'cc.page_id', 1);
                 }
-                if( $page_name ){
+                if( $page_name!='' ){
                     //$query_table .= "\n inner join couch_pages cp on cp.id=cc.page_id";
                     $sql .= $FUNCS->gen_sql( $page_name, 'cp.page_name');
                 }
