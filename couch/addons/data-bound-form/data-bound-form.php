@@ -522,6 +522,7 @@
                     $vars['desc'] = $f->k_desc;
                     $vars['type'] = $f->k_type;
                     $vars['hidden'] = $f->hidden;
+                    $vars['searchable'] = $f->searchable;
                     $vars['search_type'] = $f->search_type;
                     $vars['order'] = $f->k_order;
                     if( !$pg->tpl_is_clonable || ($pg->tpl_is_clonable && ($page || $bound)) ){
