@@ -7726,6 +7726,7 @@ MAP;
                         $args[] = array( 'name'=>($params[$x]['lhs'])?$params[$x]['lhs']:'', 'val'=>$params[$x]['rhs'] );
                     }
                 }
+                $CTX->set( 'k_func', $name );
                 $CTX->set( 'k_args', $args );
                 $CTX->set( 'k_named_args', $named_args ); // make available original arguments
 
