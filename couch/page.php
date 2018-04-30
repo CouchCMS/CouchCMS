@@ -1316,7 +1316,7 @@
             if( $rs!=1 ) return $FUNCS->raise_error( "Failed to insert record in K_TBL_PAGES" );
             $page_id = $DB->last_insert_id;
 
-            $res = $this->_create_fields( $page_id, $title );
+            $res = $this->_create_fields( $page_id, $arr_insert['page_title'] );
             if( $FUNCS->is_error($res) ) return $res;
 
             return $page_id;
