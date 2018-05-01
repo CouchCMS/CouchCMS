@@ -7737,7 +7737,7 @@ MAP;
                 $CTX->pop();
             }
 
-            return $html;
+            return trim($html);
         }
 
         function func_exists( $params, $node ){
