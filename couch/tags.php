@@ -797,7 +797,7 @@
 
         }
 
-        // checks for the existence of a file reative to the 'snippets' folder
+        // checks for the existence of a file relative to the 'snippets' folder
         function exists( $params, $node ){
             global $CTX;
             if( count($node->children) ) {die("ERROR: Tag \"".$node->name."\" is a self closing tag");}
