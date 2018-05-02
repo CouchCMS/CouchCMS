@@ -57,7 +57,7 @@
                     'title'=>$FUNCS->t( 'delete' ),
                     'confirmation_msg'=>$FUNCS->t( 'confirm_delete_selected_comments' ),
                     'weight'=>10,
-                    'listener'=>array( 'pages_list_bulk_action', array($this, _bulk_action_handler) ),
+                    'listener'=>array( 'pages_list_bulk_action', array($this, '_bulk_action_handler') ),
                 );
 
             $arr_actions['batch_approve'] =

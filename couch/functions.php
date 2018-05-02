@@ -1418,8 +1418,7 @@
                     }
                 }
 
-                $code = "return strcmp(\$a['weight'], \$b['weight']);";
-                usort( $this->admin_list_fields, create_function('$a,$b', $code) );
+                usort( $this->admin_list_fields, function($a,$b){ return strcmp($a['weight'], $b['weight']); } );
                 $done = 1;
             }
             return $this->admin_list_fields;

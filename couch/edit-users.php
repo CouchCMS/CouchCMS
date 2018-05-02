@@ -52,7 +52,7 @@
                     'title'=>$FUNCS->t( 'delete' ),
                     'confirmation_msg'=>$FUNCS->t( 'confirm_delete_selected_users' ),
                     'weight'=>10,
-                    'listener'=>array( 'pages_list_bulk_action', array($this, _delete_handler) ),
+                    'listener'=>array( 'pages_list_bulk_action', array($this, '_delete_handler') ),
                 );
 
             return $arr_actions;

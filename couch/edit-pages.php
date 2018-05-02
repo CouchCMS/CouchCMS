@@ -263,7 +263,7 @@
                     'title'=>$FUNCS->t( 'delete' ),
                     'confirmation_msg'=>$FUNCS->t('confirm_delete_selected_pages'),
                     'weight'=>10,
-                    'listener'=>array( 'pages_list_bulk_action', array($this, _delete_handler) ),
+                    'listener'=>array( 'pages_list_bulk_action', array($this, '_delete_handler') ),
                 );
 
             return $arr_actions;
@@ -350,7 +350,7 @@
                     'content'=>"<cms:render 'list_updown' />",
                     'sortable'=>'0',
                     'sort_name'=>'weight',
-                    'listener'=>array( 'pages_list_post_action', array($this, _updown_handler) ),
+                    'listener'=>array( 'pages_list_post_action', array($this, '_updown_handler') ),
                 );
 
             $arr_default_fields['k_actions'] =

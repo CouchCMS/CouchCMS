@@ -131,19 +131,17 @@
 
                 // replace numeric entities
                 $str = preg_replace_callback( '~&#x0{0,8}([0-9A-F]+);?~i',
-                                                create_function(
-                                                    '$matches',
-                                                    '$val = hexdec($matches[1]);
-                                                    return ( $val < 128 ) ? chr($val) : $matches[0];'
-                                                ),
+                                                function($matches){
+                                                    $val = hexdec($matches[1]);
+                                                    return ( $val < 128 ) ? chr($val) : $matches[0];
+                                                },
                                                 $str );
 
                 $str = preg_replace_callback( '~&#0{0,8}([0-9]+);?~i',
-                                                create_function(
-                                                    '$matches',
-                                                    '$val = $matches[1];
-                                                    return ( $val < 128 ) ? chr($val) : $matches[0];'
-                                                ),
+                                                function($matches){
+                                                    $val = $matches[1];
+                                                    return ( $val < 128 ) ? chr($val) : $matches[0];
+                                                },
                                                 $str );
                 $str = stripcslashes( $str );
 

@@ -76,7 +76,7 @@
                     'title'=>$FUNCS->t( 'delete' ),
                     'confirmation_msg'=>$FUNCS->t( 'confirm_delete_selected_drafts' ),
                     'weight'=>10,
-                    'listener'=>array( 'pages_list_bulk_action', array($this, _delete_handler) ),
+                    'listener'=>array( 'pages_list_bulk_action', array($this, '_delete_handler') ),
                 );
 
             $arr_actions['batch_update_original'] =
@@ -84,7 +84,7 @@
                     'title'=>$FUNCS->t( 'update_original' ),
                     'confirmation_msg'=>$FUNCS->t( 'confirm_apply_selected_drafts' ),
                     'weight'=>20,
-                    'listener'=>array( 'pages_list_bulk_action', array($this, _update_handler) ),
+                    'listener'=>array( 'pages_list_bulk_action', array($this, '_update_handler') ),
                 );
 
 
@@ -324,7 +324,7 @@
                 'content'=>"<cms:render 'draft_button' mode='update' />",
                 'group'=> '_advanced_settings_',
                 'order'=>0,
-                'listener'=>array( 'pages_form_custom_action', array($this, _update_handler) ),
+                'listener'=>array( 'pages_form_custom_action', array($this, '_update_handler') ),
             );
 
         }
