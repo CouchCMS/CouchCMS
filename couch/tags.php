@@ -295,6 +295,8 @@
                     $data = $pg->_fields[$var]->get_data( 1 );
                 }
 
+                $pg = NULL;
+                
                 if( count($node->children) ){
                     $CTX->set( 'k_field_name', $var );
                     $CTX->set( 'k_field_val', $data );
