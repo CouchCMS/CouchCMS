@@ -294,7 +294,10 @@
                 if( isset($pg->_fields[$var]) ){
                     $data = $pg->_fields[$var]->get_data( 1 );
                 }
-
+                
+                $pg->destroy();
+                unset( $pg );  
+                
                 if( count($node->children) ){
                     $CTX->set( 'k_field_name', $var );
                     $CTX->set( 'k_field_val', $data );
