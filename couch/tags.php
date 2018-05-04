@@ -1104,6 +1104,8 @@
             $cond = $FUNCS->resolve_condition( $node->attributes );
             while( $cond ){
                 if( ++$safety > 1000 ){ die("Infinite while loop"); }
+                
+                $CTX->set( 'k_count', $safety );
                 foreach( $children as $child ){
                     $html .= $child->get_HTML();
                 }
