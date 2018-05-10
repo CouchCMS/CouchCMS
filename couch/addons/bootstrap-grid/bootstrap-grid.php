@@ -81,6 +81,6 @@
 
     // Register
     $FUNCS->register_udf( 'row', 'KRow', 0/*repeatable*/ );
-    $FUNCS->add_event_listener( 'alter_editable', array(KRow, '_alter_editable') );
+    $FUNCS->add_event_listener( 'alter_editable', array('KRow', '_alter_editable') );
     $FUNCS->add_event_listener( 'override_renderables', array('KRow', '_override_renderables') );
     $FUNCS->add_event_listener( 'post_process_page_end', array('KRow', '_post_process_page') );
