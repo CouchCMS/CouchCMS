@@ -1,7 +1,7 @@
 <cms:if k_field_no_wrapper>
     <cms:show k_field_content />
 <cms:else />
-    <div id="<cms:show k_field_input_id />" class="group-wrapper k_group <cms:show k_field_class />" <cms:if k_field_hidden>style="display:none;"</cms:if>>
+    <div id="<cms:show k_field_wrapper_id />" class="group-wrapper k_group <cms:show k_field_class />" <cms:if k_field_hidden>style="display:none;"</cms:if>>
 
         <a class="panel-heading panel-toggle<cms:if k_field_is_collapsed> collapsed</cms:if>" href="#"><cms:show k_field_label /><cms:hide>
             </cms:hide><cms:if k_field_desc ><span class="k_desc desc">(<cms:show k_field_desc />)</span></cms:if>

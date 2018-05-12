@@ -104,7 +104,7 @@
         // Posted data
         function store_posted_changes( $post_val ){
             global $FUNCS;
-            if( $this->deleted ) return; // no need to store
+            if( $this->deleted || $this->k_inactive ) return; // no need to store
 
             if( is_null($this->orig_data) ) $this->orig_data = $this->data;
             if( $this->trust_mode==0 ){

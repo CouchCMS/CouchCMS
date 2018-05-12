@@ -526,7 +526,7 @@
                     $vars['search_type'] = $f->search_type;
                     $vars['order'] = $f->k_order;
                     if( !$pg->tpl_is_clonable || ($pg->tpl_is_clonable && ($page || $bound)) ){
-                        $vars['data'] = $f->get_data();
+                        $vars['data'] = $f->get_data( 1 );
                     }
                     else{
                         $vars['data'] = $f->default_data;
@@ -563,6 +563,9 @@
                     $vars['dynamic'] = $f->dynamic;
                     $vars['system'] = $f->system;
                     $vars['udf'] = $f->udf;
+                    $vars['modified'] = (int)$f->modified;
+                    $vars['orig_data'] = $f->orig_data;
+
                     // udf params
                     if( strlen($f->custom_params) ){
                         $arr_params = $FUNCS->unserialize($f->custom_params);

@@ -19,6 +19,8 @@ class KReCaptchaForm extends KUserDefinedFormField{
     }
 
     function validate(){
+        if( $this->k_inactive ) return true;
+
         if( empty($_REQUEST['g-recaptcha-response']) ){
             $this->err_msg = 'reCAPTCHA is incomplete'; // TODO: localize string
             return false;

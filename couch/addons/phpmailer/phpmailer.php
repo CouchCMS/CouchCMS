@@ -367,6 +367,7 @@
 
         function store_posted_changes( $post_val ){
             global $FUNCS;
+            if( $this->k_inactive ) return; // no need to store
 
             $secure_file_id = $this->_get_input_name( 'secure_file_id' );
             if( isset($_POST[$secure_file_id]) ){ // existing attachment
@@ -415,6 +416,7 @@
 
         function validate(){
             global $FUNCS;
+            if( $this->k_inactive ) return true;
 
             if( $this->err_msg_refresh ){
                 $this->err_msg = $this->err_msg_refresh;

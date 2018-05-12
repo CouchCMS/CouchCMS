@@ -72,6 +72,7 @@
         // This is where all the action lies
         function validate(){
             global $FUNCS, $DB, $CTX;
+            if( $this->k_inactive ) return true;
 
             $ip_addr = trim( $FUNCS->cleanXSS(strip_tags($_SERVER['REMOTE_ADDR'])) );
             $ts = strtotime( $FUNCS->get_current_desktop_time() ) - $this->interval;

@@ -254,7 +254,7 @@
         // Handle posted data
         function store_posted_changes( $post_val ){
             global $FUNCS;
-            if( $this->deleted ) return; // no need to store
+            if( $this->deleted || $this->k_inactive ) return; // no need to store
             if( is_null($this->orig_data) ) $this->orig_data = $this->data;
 
             if( is_array($post_val) ){
@@ -306,6 +306,7 @@
 
         function validate(){
             global $FUNCS;
+            if( $this->deleted || $this->k_inactive ) return true;
 
             if( $this->is_empty() ){
                 if( $this->required ){

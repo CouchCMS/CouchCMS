@@ -1548,6 +1548,7 @@
                 else{
                     $arr_vars['k_'.$label.'_wrapper_id'] = 'k_element_'.$f->name;
                 }
+                $arr_vars['k_'.$label.'_obj'] = $f;
 
                 unset( $f );
             }

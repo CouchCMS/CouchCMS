@@ -278,7 +278,7 @@
         // Handle posted data
         function store_posted_changes( $post_val ){
             global $FUNCS;
-            if( $this->deleted ) return; // no need to store
+            if( $this->deleted || $this->k_inactive ) return; // no need to store
 
             $input_name = 'f_'.$this->name.'_chk';
             $arr_posted = array();
@@ -329,6 +329,7 @@
         // before save
         function validate(){ // for now only checking for 'required'
             global $FUNCS;
+            if( $this->deleted || $this->k_inactive ) return true;
 
             if( $this->required && !count($this->items_selected) ){
                 $this->err_msg = $FUNCS->t('required_msg');

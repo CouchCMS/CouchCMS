@@ -174,6 +174,8 @@
                                'default'=>'',
                                'scope'=>null,
                                'as_json'=>'0',
+                               'into'=>'',
+                               'into_scope'=>'',
                               ),
                         $params)
                    );
@@ -182,6 +184,11 @@
             $tmp = ( $local_only==1 ) ? 1 : 0;
             $has_default = ( strlen($default) ) ? 1 : 0;
             $as_json = ( $as_json==1 ) ? 1 : 0;
+            $into = trim( $into );
+            $into_scope = strtolower( trim($into_scope) );
+            if( $into_scope != '' && ($into_scope!='parent' && $into_scope!='global' && $into_scope!='local') ){
+                die("ERROR: Tag \"".$node->name."\" has unknown into_scope '" . $into_scope. "'. Only 'global', 'local' or 'parent' are valid.");
+            }
 
             // v2.0 - this new parameter, if set, overrides 'local_only'
             if( !is_null($scope) ){
@@ -202,8 +209,13 @@
                     if( !$has_content )$value = $default;
                 }
 
-                if( $as_json && is_array($value) ){ $value = $FUNCS->json_encode( $value ); }
-                return $value;
+                if( $into!='' ){
+                    $CTX->set( $into, $value, $into_scope );
+                }
+                else{
+                    if( $as_json && is_array($value) ){ $value = $FUNCS->json_encode( $value ); }
+                    return $value;
+                }
             }
         }
 
@@ -1104,7 +1116,7 @@
             $cond = $FUNCS->resolve_condition( $node->attributes );
             while( $cond ){
                 if( ++$safety > 1000 ){ die("Infinite while loop"); }
-                
+
                 $CTX->set( 'k_count', $safety );
                 foreach( $children as $child ){
                     $html .= $child->get_HTML();
@@ -1276,6 +1288,7 @@
                 'disable_uploader'=>'0',
                 'dynamic'=>'',
                 'class'=>'',
+                'not_active'=>null,
 
                 /* used only by repeatable */
                 'col_width'=>'',
@@ -1307,7 +1320,7 @@
                                                       'k_order'=>'', 'k_group'=>'', 'k_separator'=>'', 'page'=>'', 'siblings'=>'', 'processed'=>'',
                                                       'system'=>'', 'err_msg'=>'', 'modified'=>'', 'udf'=>'',
                                                       'cached'=>'', 'refresh_form'=>'', 'err_msg_refresh'=>'', 'requires_multipart'=>'', 'trust_mode'=>'', 'no_js'=>'',
-                                                      'available_validators'=>'', 'available_buttons'=>'' ), $core_params );
+                                                      'available_validators'=>'', 'available_buttons'=>'', 'k_inactive'=>'' ), $core_params );
                     foreach( $attr_udf as $k=>$v ){
                         if( array_key_exists($k, $core_params) ){
                             unset( $attr_udf[$k] );
@@ -1369,6 +1382,9 @@
             $attr['dynamic'] = trim( $attr['dynamic'] );
             $attr['searchable'] = abs( (int)$attr['searchable'] );
             $attr['class'] = trim( $attr['class'] );
+            if( !is_null($attr['not_active']) ){
+                $attr['not_active'] =  base64_encode( serialize(array('val'=>$attr['not_active'])) );
+            }
 
             // Save a backup of all the parameters used to create this field.
             $tag = '<cms:editable';
@@ -1409,17 +1425,33 @@
 
             // if type 'group' used as a tag-pair, find all immediate child editable regions and set this as their parent
             if( $type=='group' && count($node->children) ){
+                $attr_not_active = null;
+                foreach( $node->attributes as $node_attr ){
+                    if( $node_attr['name']=='not_active' ){
+                        $attr_not_active = $node_attr;
+                        break;
+                    }
+                }
+
                 for( $x=0; $x<count($node->children); $x++ ){
                     $child = &$node->children[$x];
 
                     if( $child->type==K_NODE_TYPE_CODE && ($child->name=='editable' || $child->name=='repeatable') ){
                         $arr_tmp = array();
+                        $child_attr_not_active = null;
+
                         foreach( $child->attributes as $child_attr ){
                             if( $child_attr['name']!='group' ){
+                                if( $child_attr['name']=='not_active' ){
+                                    $child_attr_not_active = 1;
+                                }
                                 $arr_tmp[] = $child_attr;
                             }
                         }
                         $arr_tmp[] = array( name=>'group', op=>'=', quote_type=>"'", value=>$name, value_type=>K_VAL_TYPE_LITERAL);
+                        if( $attr_not_active && !$child_attr_not_active ){
+                            $arr_tmp[] = $attr_not_active;
+                        }
                         $child->attributes = $arr_tmp;
                     }
                     unset( $child );
@@ -1620,6 +1652,7 @@
                                        '_html' => $tag,
                                        'dynamic' => $attr['dynamic'],
                                        'class' => $attr['class'],
+                                       'not_active' => $attr['not_active'],
 
                                       );
                         if( $is_udf && count($attr_udf) ){
@@ -5551,6 +5584,7 @@ FORM;
                 foreach( $node->children as $child ){
                     $sub_html .= $child->get_HTML();
                 }
+
             }
 
             $html .= $sub_html;
@@ -5606,7 +5640,7 @@ FORM;
                                  'format', 'reload_text',
                                  'allowed_html_tags',
                                  'trust_mode', 'no_js', 'simple_mode',
-                                 'strip_tags',
+                                 'strip_tags', 'not_active',
                                  );
             $extra = '';
             $name = '';
@@ -5614,7 +5648,7 @@ FORM;
             for( $x=0; $x<count($params); $x++ ){
                 $attr = strtolower(trim($params[$x]['lhs']));
                 if( in_array($attr, $core_attr) ){
-                    $val = trim( $params[$x]['rhs'] );
+                    $val = ($attr=='not_active') ? $params[$x]['rhs'] : trim( $params[$x]['rhs'] );
                     $$attr = $val;
                     continue;
                 }
@@ -5718,6 +5752,7 @@ FORM;
                         'system' => '0',
                         'allowed_html_tags' => $allowed_html_tags,
                         'trust_mode' => $strip_tags ? 0 : 1,
+                        'not_active' => $not_active,
                     );
 
                     if( $is_udf ){
@@ -5746,11 +5781,16 @@ FORM;
 
                 // form submitted?
                 $submitted = ( $form_method=='post' ) ? isset($_POST['k_hid_'.$form]) : isset($_GET['k_hid_'.$form]);
+
+                // field conditionally inactive? (also generates JS for conditional logic)
+                $f->k_inactive = !$FUNCS->resolve_active( $f, $form, $submitted );
+
                 if( $submitted ){
                     $var_name = $name;
                     if( $type=='bound' ){
                         $var_name = 'f_'.$var_name; // hack for admin-panel's unfortunate naming of fields
                     }
+
                     ( $form_method=='post' ) ? $f->store_posted_changes($_POST[$var_name]) : $f->store_posted_changes($_GET[$var_name]);
                 }
             }
@@ -6516,6 +6556,21 @@ MAP;
 
             if( count($node->children) ) {die("ERROR: Tag \"".$node->name."\" is a self closing tag");}
             return $FUNCS->strlen( trim($params[0]['rhs']) );
+        }
+
+        function trim( $params, $node ){
+            global $FUNCS;
+
+            if( count($node->children) ){
+                foreach( $node->children as $child ){
+                    $html .= $child->get_HTML();
+                }
+            }
+            else{
+                $html = $params[0]['rhs'];
+            }
+
+            return trim( $html );
         }
 
         // Expects a full URL to redirect to (querystring should be urlencoded)
@@ -7661,6 +7716,11 @@ MAP;
             return ( is_array($in) && in_array($val, $in) ) ? '1' : '0';
         }
 
+        // shorter alias for cms:arr_val_exists e.g. <cms:is 'fr' in=rec />
+        function is( $params, $node ){
+            return $this->arr_val_exists( $params, $node );
+        }
+
         /*
             for associative arrays e.g.
             <cms:set rec='{"name":"John", "age":30, "cars":[ "Ford", "BMW", "Fiat" ]}' is_json='1' />
@@ -7683,61 +7743,94 @@ MAP;
         function func( $params, $node ){
             global $FUNCS, $CTX;
 
-            $name = trim( $params[0]['rhs'] );
-            if( !$name ){ ob_end_clean(); die( "ERROR: tag &lt;cms:func /&gt;: Please provide a name for the function being defined" ); }
-            if( array_key_exists($name, $FUNCS->funcs) ){ ob_end_clean(); die( "ERROR: tag &lt;cms:func /&gt;: '$name' already registered" ); }
+            if( !count($params) || !is_null($params[0]['lhs']) ){ // anonymous function
+                $anon = 1;
+                $_into = $_scope = '';
+                $tmp = array();
+                for( $x=0; $x<count($params); $x++ ){
+                    $attr = strtolower(trim($params[$x]['lhs']));
+                    if( in_array($attr, array('_into', '_scope')) ){
+                        $$attr = trim( $params[$x]['rhs'] );
+                    }
+                    else{
+                        $tmp[] = $params[$x];
+                    }
+                }
+                if( !$_into ){ return; }
+                $_scope = strtolower( $_scope );
+                if( $_scope != '' && ($_scope!='parent' && $_scope!='global' && $_scope!='local') ){
+                    die("ERROR: Tag \"".$node->name."\" has unknown scope '" . $_scope. "'. Only 'global', 'local' or 'parent' are valid.");
+                }
+
+                $params = $tmp;
+            }
+            else{
+                $name = trim( $params[0]['rhs'] );
+                if( !$name ){ ob_end_clean(); die( "ERROR: tag &lt;cms:func /&gt;: Please provide a name for the function being defined" ); }
+                if( array_key_exists($name, $FUNCS->funcs) ){ ob_end_clean(); die( "ERROR: tag &lt;cms:func /&gt;: '$name' already registered" ); }
+            }
 
             $func = array();
             $func['code'] = ( count($node->children) ) ? $node->children : array();
             $func['params'] = array();
-            for( $x=1; $x<count($params); $x++ ){
+            for( $x=($anon)?0:1; $x<count($params); $x++ ){
                 if( $params[$x]['op']=='=' && $params[$x]['lhs']){
                     $func['params'][$params[$x]['lhs']]=$params[$x]['rhs'];
                 }
             }
 
-            // register function
-            $FUNCS->funcs[$name] = $func;
+            if( $anon ){
+                $CTX->set( $_into, $func, $_scope );
+            }
+            else{
+                // register function
+                $FUNCS->funcs[$name] = $func;
+            }
         }
 
         function call( $params, $node ){
             global $FUNCS, $CTX;
 
-            $name = trim( $params[0]['rhs'] );
-            if( !$name ) return;
-
             $html = '';
-            if( !array_key_exists($name, $FUNCS->funcs) ){ // function not registered
-                $html = 'Error: &lt;cms:func /&gt;: "'.$name.'" not available';
+            if( is_array($params[0]['rhs']) && is_array($params[0]['rhs']['code']) && is_array($params[0]['rhs']['params']) ){ // anonymous function
+                $func = $params[0]['rhs'];
+                $name = 'anonymous';
             }
             else{
-                // execute function ..
-                $CTX->push( '__call__', 1 /*no_check*/ );
+                $name = trim( $params[0]['rhs'] );
+                if( !$name ) return;
 
+                if( !array_key_exists($name, $FUNCS->funcs) ){ // function not registered
+                    return 'Error: &lt;cms:func /&gt;: "'.$name.'" not available';
+                }
                 $func = $FUNCS->funcs[$name];
-                array_shift( $params );
-                $vars = $FUNCS->get_named_vars( $func['params'], $params );
-                $CTX->set_all( $vars );
-
-                $args = $named_args = array();
-                for( $x=0; $x<count($params); $x++ ){
-                    if( $params[$x]['op']=='=' ){
-                        if( $params[$x]['lhs'] ){
-                            $named_args[$params[$x]['lhs']] = $params[$x]['rhs'];
-                        }
-                        $args[] = array( 'name'=>($params[$x]['lhs'])?$params[$x]['lhs']:'', 'val'=>$params[$x]['rhs'] );
-                    }
-                }
-                $CTX->set( 'k_func', $name );
-                $CTX->set( 'k_args', $args );
-                $CTX->set( 'k_named_args', $named_args ); // make available original arguments
-
-                foreach( $func['code'] as $child ){
-                    $html .= $child->get_HTML();
-                }
-
-                $CTX->pop();
             }
+
+            // execute function ..
+            $CTX->push( '__call__', 1 /*no_check*/ );
+
+            array_shift( $params );
+            $vars = $FUNCS->get_named_vars( $func['params'], $params );
+            $CTX->set_all( $vars );
+
+            $args = $named_args = array();
+            for( $x=0; $x<count($params); $x++ ){
+                if( $params[$x]['op']=='=' ){
+                    if( $params[$x]['lhs'] ){
+                        $named_args[$params[$x]['lhs']] = $params[$x]['rhs'];
+                    }
+                    $args[] = array( 'name'=>($params[$x]['lhs'])?$params[$x]['lhs']:'', 'val'=>$params[$x]['rhs'] );
+                }
+            }
+            $CTX->set( 'k_func', $name );
+            $CTX->set( 'k_args', $args );
+            $CTX->set( 'k_named_args', $named_args ); // make available original arguments
+
+            foreach( $func['code'] as $child ){
+                $html .= $child->get_HTML();
+            }
+
+            $CTX->pop();
 
             return $html;
         }
@@ -7762,5 +7855,14 @@ MAP;
 
             $html = $FUNCS->json_encode( $html );
             return $html;
+        }
+
+        function conditional_js( $params, $node ){
+            global $FUNCS;
+            if( count($node->children) ) {die("ERROR: Tag \"".$node->name."\" is a self closing tag");}
+
+            $js = $FUNCS->gen_js_for_conditional_fields( 1 );
+
+            return $js;
         }
     } //end class KTags

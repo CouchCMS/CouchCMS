@@ -899,7 +899,7 @@
     }
 
     function _render_form_row(){
-        global $CTX;
+        global $CTX, $FUNCS;
 
         $field_type = $CTX->get( 'k_field_type' );
 
@@ -924,8 +924,13 @@
             }
         }
 
-        if( $field_type=='group' && $CTX->get('k_error')){ // if form error, expand all groups
-            $CTX->set( 'k_field_is_collapsed', '0' );
+        if( $field_type=='group' ){
+            $f = $CTX->get('k_field_obj');
+            $f->k_inactive = !$FUNCS->resolve_active( $f, $CTX->get('k_cur_form'), false );
+
+            if( $CTX->get('k_error') ){ // if form error, expand all groups
+                $CTX->set( 'k_field_is_collapsed', '0' );
+            }
         }
 
         // return an array of candidate templates
@@ -1624,6 +1629,7 @@
             }
 
             $user->populate_fields();
+            if( !is_object($PAGE) ){ $PAGE = new stdClass(); }
             return $user;
         }
         elseif( $masterpage=='comments' ){
@@ -1641,6 +1647,7 @@
                 return $FUNCS->raise_error( "mode '".$mode."' not supported for comments" );
             }
 
+            if( !is_object($PAGE) ){ $PAGE = new stdClass(); }
             return $comment;
         }
     }

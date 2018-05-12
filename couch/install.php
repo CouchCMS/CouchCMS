@@ -139,6 +139,7 @@
       custom_params     text,
       searchable        int(1) DEFAULT '1',
       class             tinytext,
+      not_active        text,
       PRIMARY KEY (id)
     ) ENGINE = InnoDB CHARACTER SET utf8 COLLATE utf8_general_ci;";
 

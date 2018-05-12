@@ -108,6 +108,10 @@
 
             $this->_ed = new EventDispatcher();
             $this->add_event_listener( 'alter_parsed_dom', array('KFuncs', '_handle_extends') );
+            if( defined('K_ADMIN') ){
+                $this->add_event_listener( 'add_admin_js', array($this, 'gen_js_for_conditional_fields') );
+                $this->add_event_listener( 'add_admin_css', array($this, 'gen_css_for_conditional_fields') );
+            }
         }
 
         static function raise_error( $err_msg ){
@@ -4579,6 +4583,172 @@ OUT;
             return $this->json->decode( $value );
         }
 
+        function get_checkbox_data( $f ){ // returns checkbox's data as array
+            $val = $f->get_data();
+            if( strlen($val) ){
+                $sep = ( $f->k_separator ) ? $f->k_separator : '|';
+                $val = array_map( function($item)use($sep){
+                    return trim( str_replace( '\\'.$sep, $sep, $item ) ); //unescape separator
+                }, preg_split( "/(?<!\\\)".preg_quote($sep, '/')."/", $val ) );
+            }
+            else{
+                $val = array();
+            }
+
+            return $val;
+        }
+
+        // applies conditional logic to figure out if a field is active or not in a form
+        function resolve_active( $f, $form_name, $form_submitted, $rr='', $rr_row=0, $rr_cell=0 ){
+            global $PAGE, $TAGS;
+            $active = 1; // by default the field is active
+            $cond_fields = array( 'checkbox', 'radio', 'dropdown' );
+            $rr = trim( $rr ); // field belongs to repeatable region
+
+            $func = $f->not_active;
+            if( $func ){
+                if( is_string($func) ){
+                    $func = @unserialize( base64_decode($func) );
+                    if( is_array($func) ){ $f->not_active = $func; }
+                }
+
+                if( is_array($func) ){
+                    if( isset($func['val']) ){ $func = $func['val']; } // bound field
+
+                    if( is_array($func) ){ // Couch code
+                        if( is_array($func['code']) && is_array($func['params']) ){
+
+                            // set params ..
+                            if( isset($PAGE->forms[$form_name]) ){
+                                $no_js = 0;
+                                $target = '';
+                                $tmp = array();
+                                foreach( $func['params'] as $k=>$v ){
+                                    if( $k=='_no_js' ){
+                                        $no_js = ( $v==1 ) ? 1 : 0;
+                                        continue;
+                                    }
+                                    if( $k=='_target' ){
+                                        $target = trim( $v );
+                                        continue;
+                                    }
+                                    $tmp[$k]=$v;
+                                }
+                                $func['params'] = $tmp;
+
+                                if( !$no_js && !is_array($PAGE->form_dependencies[$form_name]) ){
+                                    $PAGE->form_dependencies[$form_name]=array('control_fields'=>array(), 'dependent_fields'=>array());
+                                }
+
+                                $params = array();
+                                $params[] = array('lhs'=>null, 'op'=>'=', 'rhs'=>$func);
+
+                                foreach( $func['params'] as $k=>$v ){
+                                    if( $rr && strpos($k, 'parent-')!==0 ){
+                                        for( $x=0; $x<$rr_cell; $x++ ){
+                                            $f2 = $f->siblings[$x];
+                                            if( $f2->name==$k ){
+                                                $val = ( $f2->k_type=='checkbox' ) ? $this->get_checkbox_data($f2) : $f2->get_data( 1 );
+                                                $params[] = array('lhs'=>$k, 'op'=>'=', 'rhs'=>$val);
+
+                                                if( !$no_js && $rr_row==0 ){
+                                                    if( in_array($f2->k_type, $cond_fields) ){
+                                                        $f->_depends_on[]=$f2;
+                                                        $f2->_dependents[]=$f;
+
+                                                        $obj_id = spl_object_hash( $f2 );
+                                                        if( !array_key_exists($obj_id, $PAGE->form_dependencies[$form_name]['control_fields']) ){
+                                                            $PAGE->form_dependencies[$form_name]['control_fields'][$obj_id]=$f2;
+                                                        }
+                                                    }
+                                                }
+
+                                                unset( $f2 );
+                                                continue 2;
+                                            }
+                                            unset( $f2 );
+                                        }
+                                    }
+
+                                    $orig_k = $k;
+                                    if( strpos($k, 'parent-')===0 ){ $k = substr( $k, 7 ); }
+
+                                    if( array_key_exists($k, $PAGE->forms[$form_name]) ){
+                                        $f2 = &$PAGE->forms[$form_name][$k];
+                                        $val = ( $f2->k_type=='checkbox' ) ? $this->get_checkbox_data($f2) : $f2->get_data( 1 );
+                                        $params[] = array('lhs'=>$orig_k, 'op'=>'=', 'rhs'=>$val);
+
+                                        if( !$no_js ){
+                                            if( in_array($f2->k_type, $cond_fields) ){
+                                                if( !$rr || ($rr && $rr_row==0) ){
+                                                    $f->_depends_on[]=$f2;
+                                                    $f2->_dependents[]=$f;
+                                                }
+
+                                                $obj_id = spl_object_hash( $f2 );
+                                                if( !array_key_exists($obj_id, $PAGE->form_dependencies[$form_name]['control_fields']) ){
+                                                    $PAGE->form_dependencies[$form_name]['control_fields'][$obj_id]=$f2;
+                                                }
+                                            }
+                                        }
+
+                                        unset( $f2 );
+                                    }
+                                }
+
+                                if( is_array($f->_depends_on) && count($f->_depends_on) ){
+                                    $obj_id = spl_object_hash( $f );
+                                    if( !array_key_exists($obj_id, $PAGE->form_dependencies[$form_name]['dependent_fields']) ){
+                                        if( $target && !$rr ){ $f->_dependent_target = $target; }
+                                        $PAGE->form_dependencies[$form_name]['dependent_fields'][$obj_id]=$f;
+                                    }
+                                }
+                            }
+
+                            // and execute code (if processing a submitted form) ..
+                            if( $form_submitted ){
+                                $ret = $TAGS->call($params, new stdClass() );
+                                $ret = strtolower( trim($ret) );
+                                if( $ret==='1' || $ret==='true' || $ret==='yes' || $ret==='hide' ){ $active=0; } // make field inactive only if this func explicitly states so
+                            }
+                        }
+                    }
+                }
+            }
+
+            return $active;
+        }
+
+        function gen_js_for_conditional_fields( $return_js=0 ){
+            global $PAGE;
+
+            if( is_array($PAGE->form_dependencies) ){
+                if( !class_exists('KCondFields') ){ require_once( K_COUCH_DIR . 'conditional-fields.php' ); }
+                $js = KCondFields::gen_js();
+
+                if( $js ){
+                    if( $return_js ){
+                        return $js;
+                    }
+                    else{
+                        $this->add_js( $js );
+                    }
+                }
+            }
+        }
+
+        function gen_css_for_conditional_fields(){
+            global $PAGE;
+
+            if( is_array($PAGE->form_dependencies) ){
+                if( !class_exists('KCondFields') ){ require_once( K_COUCH_DIR . 'conditional-fields.php' ); }
+                $css = KCondFields::gen_css();
+
+                if( $css ){
+                    $this->add_css( $css );
+                }
+            }
+        }
     }// end class KFuncs
 
 
