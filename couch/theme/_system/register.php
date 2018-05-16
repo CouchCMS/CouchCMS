@@ -1416,11 +1416,11 @@
         static $done=0;
         $can_delete = $CTX->get( 'k_can_delete' );
         $page_id = $CTX->get( 'k_page_id' );
-        $page_title = $CTX->get( 'k_page_title' );
+        $page_title = $FUNCS->json_encode( str_replace("&quot;", '"', $CTX->get('k_page_title')) );
         $delete_prompt = str_replace( "'", "\'", $CTX->get('k_delete_prompt') );
 
         if( $can_delete ){
-            $html ='<a class="icon tt delete-list" href="#"  onclick="k_delete_single( \''.$page_id.'\', \''.$page_title.'\' ); return false;" title="'.$FUNCS->t('delete').'">'.$FUNCS->get_icon('trash').'</a>';
+            $html ='<a class="icon tt delete-list" href="#"  onclick=\'k_delete_single( "'.$page_id.'", '.$page_title.' ); return false;\' title="'.$FUNCS->t('delete').'">'.$FUNCS->get_icon('trash').'</a>';
 
             if( !$done ){
                 $done=1;
