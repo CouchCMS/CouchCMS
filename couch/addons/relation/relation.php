@@ -270,7 +270,7 @@
             $sql .= "(SELECT rel.cid FROM ".K_TBL_RELATIONS." rel WHERE rel.fid = '".$fid."' AND rel.pid <> '".$pid."'"."\r\n";
 
             // take drafts into consideration ..
-            $sql .= "AND rel.pid NOT IN (SELECT p2.id FROM couch_pages p2 WHERE p2.parent_id = '".$pid."'))"."\r\n";
+            $sql .= "AND rel.pid NOT IN (SELECT p2.id FROM ".K_TBL_PAGES." p2 WHERE p2.parent_id = '".$pid."'))"."\r\n";
 
             return $sql;
         }
