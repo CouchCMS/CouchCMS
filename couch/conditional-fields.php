@@ -387,7 +387,7 @@ echo("
             return $html;
         }
 
-        function resolve_parameters( $attributes ){
+        static function resolve_parameters( $attributes ){
             $params = array();
             foreach( $attributes as $attr ){
                 $param = array();
