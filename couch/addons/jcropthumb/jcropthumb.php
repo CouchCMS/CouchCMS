@@ -55,10 +55,6 @@
             return $attr;
         }
 
-        function store_posted_changes( $post_val ){
-            return;
-        }
-
         function get_data_to_save(){
             return $this->data;
         }
@@ -98,7 +94,7 @@
             global $FUNCS, $CTX, $Config;
 
             $assoc_image = $this->page->_fields[$this->assoc_field]->get_data();
-            $value = $this->get_data();
+            $value = $this->get_data().'?='.time();
             $tb_preview = $value ? $value : K_SYSTEM_THEME_URL . 'assets/upload-image.gif';
             $tb_preview_icon = $value ? $value : K_SYSTEM_THEME_URL . 'assets/upload-image.gif';
 
@@ -210,6 +206,8 @@
 
                                 $html .= '<div class="crop-group field"><a href="javascript:k_jcrop_thumb(\''.$input_id.'\', \''.$data.'\')" class="btn button">'.$FUNCS->t('crop').'</a></div>';
                                 $html .='</div>';
+
+                                $html .= '<input type="hidden" id="' . $input_id . '" name="'. $input_id .'" value="'. htmlspecialchars( $this->data, ENT_QUOTES, K_CHARSET ) .'" />';
 
                                 ob_start();
                                 ?>

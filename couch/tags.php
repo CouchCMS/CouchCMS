@@ -405,13 +405,8 @@
 
             if( !is_array($var) ){
                 if( !$sep ) $sep = '|';
-                if( $sep == '\r\n' ){
-                    $sep = "\n";
-                }
-                elseif( $sep == '\r' ){
-                    $sep = "\r";
-                }
-                elseif( $sep == '\n' ){
+                if( $sep == '\r\n' || $sep == '\r' || $sep == '\n' ){
+                    $var = str_replace( array("\r\n", "\r", "\n" ), "\n", $var );
                     $sep = "\n";
                 }
                 elseif( $sep == '\t' ){

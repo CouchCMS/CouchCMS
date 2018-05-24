@@ -1102,6 +1102,17 @@
                             for( $t=0; $t<count($this->fields); $t++ ){
                                 $tb = &$this->fields[$t];
                                 if( (!$tb->system) && $tb->k_type=='thumbnail' && $tb->assoc_field==$f->name ){
+                                    $existing_thumb = null;
+                                    if( strlen($tb->data) && strlen($f->data) ){
+                                        $path_parts = $FUNCS->pathinfo( $tb->data );
+                                        $match = preg_match("/^(.+)?-(?:\d+?)x(?:\d+?)$/i", $path_parts['filename'], $matches);
+                                        if( $match ){
+                                            if( $f->data == $path_parts['dirname'].'/'.$matches[1].'.'.$path_parts['extension'] ){
+                                                $existing_thumb = $path_parts['basename'];
+                                            }
+                                        }
+                                    }
+
                                     if( $resized ){
                                         // create thumbnail
                                         $dest = null;
@@ -1113,7 +1124,12 @@
                                         $crop = ( $enforce_max ) ? 0 : 1;
                                         $quality = $tb->quality;
 
-                                        $thumbnail = k_resize_image( $src, $dest, $w, $h, $crop, $enforce_max, $quality );
+                                        if( !$existing_thumb ){
+                                            $thumbnail = k_resize_image( $src, $dest, $w, $h, $crop, $enforce_max, $quality );
+                                        }
+                                        else{
+                                            $thumbnail = $existing_thumb;
+                                        }
                                         if( $FUNCS->is_error($thumbnail) ){
                                             //$tb->err_msg = $thumbnail->err_msg;
                                             //$errors++;
