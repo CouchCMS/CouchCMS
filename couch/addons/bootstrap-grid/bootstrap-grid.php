@@ -38,7 +38,7 @@
                                 $arr_tmp[] = $child_attr;
                             }
                         }
-                        $arr_tmp[] = array( name=>'group', op=>'=', quote_type=>"'", value=>$attr['name'], value_type=>K_VAL_TYPE_LITERAL);
+                        $arr_tmp[] = array( 'name'=>'group', 'op'=>'=', 'quote_type'=>"'", 'value'=>$attr['name'], 'value_type'=>K_VAL_TYPE_LITERAL);
                         $child->attributes = $arr_tmp;
                     }
                     unset( $child );

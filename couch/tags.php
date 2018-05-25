@@ -1443,7 +1443,7 @@
                                 $arr_tmp[] = $child_attr;
                             }
                         }
-                        $arr_tmp[] = array( name=>'group', op=>'=', quote_type=>"'", value=>$name, value_type=>K_VAL_TYPE_LITERAL);
+                        $arr_tmp[] = array( 'name'=>'group', 'op'=>'=', 'quote_type'=>"'", 'value'=>$name, 'value_type'=>K_VAL_TYPE_LITERAL);
                         if( $attr_not_active && !$child_attr_not_active ){
                             $arr_tmp[] = $attr_not_active;
                         }
