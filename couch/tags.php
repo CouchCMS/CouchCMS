@@ -5317,7 +5317,7 @@ FORM;
                     if( $method!='get' && $method!='post' ) $method = $params[$x]['rhs'] = 'get';
                 }
                 elseif( $attr=='action' ){
-                    $action = $params[$x]['rhs'];
+                    $action = trim($params[$x]['rhs']);
                     continue;
                 }
                 elseif( $attr=='separator' ){
@@ -5355,6 +5355,7 @@ FORM;
                 if( ($pos = strpos($action, '#'))!==false ){
                     $action = substr( $action, 0, $pos ); //strip off anchors. We'll add our own.
                 }
+                if( $action=='' ) $action = $PAGE->link;
                 $action .= '#'.$name;
             }
             $html .= ' ' .  'action="' . $action . '"';
