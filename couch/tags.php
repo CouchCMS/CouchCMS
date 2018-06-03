@@ -7860,4 +7860,8 @@ MAP;
 
             return $js;
         }
+
+        function alt_js( $params, $node ){
+            return;
+        }
     } //end class KTags

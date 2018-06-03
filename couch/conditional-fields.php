@@ -283,7 +283,23 @@ echo(
 
                 // js code for function ..
                 $code = ( isset($f->not_active['val']) ) ? $f->not_active['val']['code'] : $f->not_active['code'];
-                $js_code = self::get_js( $code );
+                $has_alt_js = 0;
+                $js_code = '';
+                if( is_array($code) ){
+                    foreach( $code as $child ){
+                        if( $child->type == K_NODE_TYPE_CODE && $child->name == 'alt_js' ){
+                            // execute alt_js tag to get the js
+                            foreach( $child->children as $grand_child ){
+                                $js_code .= $grand_child->get_HTML();
+                            }
+                            $has_alt_js = 1;
+                            break;
+                        }
+                    }
+                }
+                if( !$has_alt_js ){
+                    $js_code = self::get_js( $code );
+                }
 echo(
 "
 ".$js_code."
