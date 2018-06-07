@@ -52,8 +52,8 @@ class gd {
             $height = @imagesy($image);
 
         } elseif (is_array($image)) {
-            list($key, $width) = each($image);
-            list($key, $height) = each($image);
+            $width = $image[0];
+            $height = $image[1];
             $image = imagecreatetruecolor($width, $height);
             $bg_color = imagecolorallocate($image, 255, 255, 255);
             imagefill($image, 0, 0, $bg_color);

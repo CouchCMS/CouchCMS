@@ -414,7 +414,7 @@
         var $processed;
         var $consolidated_count=0; //includes all pages in child folders too
 
-        var $fields; // for admin form
+        var $fields = array(); // for admin form
 
         function __construct( $row, $template_name, &$root ){
             global $FUNCS, $Config;
@@ -556,7 +556,6 @@
 
             if( count($this->fields) ) return;
 
-            $this->fields = array();
             $fields = array(
                 'title'=>$FUNCS->t('title'),
                 'name'=>$FUNCS->t('name'),

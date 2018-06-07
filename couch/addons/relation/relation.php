@@ -634,7 +634,7 @@
                 }
                 $html .= '<option value="-">-- Select --</option>'; //TODO get label as parameter
 
-                while( list($key, $value) = each($rows) ){
+                foreach( $rows as $key=>$value ){
                     $html .= '<option value="'.$key.'"';
                     if( $selected && $key==$selected ) $html .= '  selected="selected"';
                     $html .= '>'.$value.'</option>';
@@ -656,7 +656,7 @@
                 $deleted = $f->deleted ? ' disabled="1"' : '';
                 $markup = !$f->simple_mode ? '<span class="ctrl-option"></span>' : '';
                 $x=0;
-                while( list($key, $value) = each($rows) ){
+                foreach( $rows as $key=>$value ){
                     $class = ( ($x+1)%2 ) ? ' class="alt"' : '';
                     $checked = $selected = '';
                     if( in_array($key, $f->items_selected) ){
