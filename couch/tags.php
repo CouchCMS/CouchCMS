@@ -904,6 +904,7 @@
                         array(
                                'masterpage'=>'',
                                'page'=>'',
+                               'page_id'=>'',
                                'folder'=>'',
                                'year'=>'',
                                'month'=>'',
@@ -917,20 +918,26 @@
             if( $masterpage=='' ){ return; } // No masterpage, no link
 
             $page = trim( $page );
+            $page_id = trim( $page_id );
             $folder = trim( $folder );
             $year = trim( $year );
             $month = trim( $month );
             $day = trim( $day );
 
-            if( $page!='' ){
+            if( $page!='' || $page_id!='' ){
                 // page-view
-                $sql = "t.id = p.template_id and t.name='" . $DB->sanitize( $masterpage ) . "' and page_name='" . $DB->sanitize( $page ). "'";
+                if( $page!='' ){
+                    $sql = "t.id = p.template_id and t.name='" . $DB->sanitize( $masterpage ) . "' and p.page_name='" . $DB->sanitize( $page ). "'";
+                }
+                else{
+                    $sql = "t.id = p.template_id and t.name='" . $DB->sanitize( $masterpage ) . "' and p.id='" . $DB->sanitize( $page_id ). "'";
+                }
                 $rs = $DB->select( K_TBL_TEMPLATES . ' t, ' . K_TBL_PAGES . ' p ', array('t.id as tid', 'p.id as pid'), $sql );
                 if( count($rs) ){
                     $tid = $rs[0]['tid'];
                     $pid = $rs[0]['pid'];
                     if( K_PRETTY_URLS ){
-                        $pg = new KWebpage( $tid, $pid );
+                        $pg = new KWebpage( $tid, $pid, 0, 0, 1 );
                         if( $pg->error ){ return; }
                         $pg->set_context();
                         return $CTX->get( 'k_page_link', 1 );
@@ -7859,9 +7866,5 @@ MAP;
             $js = $FUNCS->gen_js_for_conditional_fields( 1 );
 
             return $js;
-        }
-
-        function alt_js( $params, $node ){
-            return;
         }
     } //end class KTags
