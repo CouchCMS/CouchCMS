@@ -4336,11 +4336,23 @@ OUT;
                 $ch = curl_init();
                 curl_setopt( $ch, CURLOPT_URL, $url );
                 curl_setopt( $ch, CURLOPT_RETURNTRANSFER, 1 );
+                curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, 0 );
+                curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, 0 );
                 $html = curl_exec( $ch );
                 curl_close( $ch );
             }
             else{
-                $html = @file_get_contents( $url );
+                $urlparts = @parse_url( $url );
+                $opts = array();
+                if( $urlparts['scheme']=='https' ){
+                    $opts['ssl'] = array(
+                        'verify_peer' => false,
+                        'verify_host' => false,
+                        'capture_peer_cert' => false,
+                    );
+                }
+                $context = stream_context_create( $opts );
+                $html = @file_get_contents( $url, false, $context );
             }
             return $html;
         }
