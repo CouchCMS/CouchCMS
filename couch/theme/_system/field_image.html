@@ -86,6 +86,7 @@
 
         <cms:if "<cms:not k_field_use_kcfinder />" >
             function k_browse_result( id, fileurl ){
+                $("#" + id).val( fileurl ).trigger( "k_change" );
                 $("#" + id).val( fileurl ).trigger( "change" );
 
                 $("#" + id + "_preview").attr( "href", fileurl );

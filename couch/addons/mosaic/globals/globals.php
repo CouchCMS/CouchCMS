@@ -170,7 +170,7 @@
                     $global_tpl_name = KGlobals::_get_filename( $PAGE->tpl_name ) . '__globals';
                     $link = $FUNCS->generate_route( $PAGE->tpl_name, 'edit_globals', array('nonce'=>$FUNCS->create_nonce('edit_globals_'.$global_tpl_name)) );
 
-                    $arr_actions['btn_save_and_back'] =
+                    $arr_actions['btn_manage_globals'] =
                         array(
                             'title'=>$FUNCS->t('manage_globals'),
                             'href'=>$link,

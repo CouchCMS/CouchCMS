@@ -159,6 +159,7 @@ COUCH.bindPopupInline = function( $elements ) {
 COUCH.browseChooseFile = function( $button, file ) {
     var id = $button.attr( "data-kc-finder" );
 
+    $( "#" + id ).val( file ).trigger( "k_change" );
     $( "#" + id ).val( file ).trigger( "change" );
     $( "#" + id + "_preview" ).attr( "href", file );
     $( "#" + id + "_img_preview" ).attr( "src", file );

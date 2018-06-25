@@ -4717,12 +4717,10 @@ OUT;
                                 }
                             }
 
-                            // and execute code (if processing a submitted form) ..
-                            if( $form_submitted ){
-                                $ret = $TAGS->call($params, new stdClass() );
-                                $ret = strtolower( trim($ret) );
-                                if( $ret==='1' || $ret==='true' || $ret==='yes' || $ret==='hide' ){ $active=0; } // make field inactive only if this func explicitly states so
-                            }
+                            // and execute code
+                            $ret = $TAGS->call($params, new stdClass() );
+                            $ret = strtolower( trim($ret) );
+                            if( $ret==='1' || $ret==='true' || $ret==='yes' || $ret==='hide' ){ $active=0; } // make field inactive only if this func explicitly states so
                         }
                     }
                 }

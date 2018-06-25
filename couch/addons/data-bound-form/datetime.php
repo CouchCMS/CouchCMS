@@ -62,6 +62,8 @@
                                 'default_time'=>'', /* blank, a valid date( e.g. 2008-05-14 02:08:45) or '@current' */
                                 'minute_steps'=>'10',
                                 'show_labels'=>'1',
+                                'only_time'=>'0',
+                                'show_secs'=>'0',
                               ),
                         $params)
                    );
@@ -85,6 +87,7 @@
             }
 
             $allow_time = ( $allow_time==1 ) ? 1 : 0;
+            $only_time = ( $only_time==1 ) ? 1 : 0;
             $am_pm = ( $am_pm==1 ) ? 1 : 0;
 
             $default_time = trim( $default_time );
@@ -93,7 +96,7 @@
                     $default_time = '@current';
                 }
                 else{
-                    if( !KDateTime::_checkdate($default_time) ){
+                    if( !KDateTime::_checkdate($default_time, 0, $only_time) ){
                         die("ERROR: Tag \"datetime\" - Date given in 'default_time' attribute is invalid.");
                     }
                 }
@@ -101,6 +104,7 @@
 
             $minute_steps = $FUNCS->is_non_zero_natural( $minute_steps ) ? $minute_steps : 10;
             $show_labels = ( $show_labels==0 ) ? 0 : 1;
+            $show_secs = ( $show_secs==1 ) ? 1 : 0;
 
             // return back params
             $attr = array();
@@ -112,6 +116,8 @@
             $attr['default_time'] = $default_time;
             $attr['minute_steps'] = $minute_steps;
             $attr['show_labels'] = $show_labels;
+            $attr['only_time'] = $only_time;
+            $attr['show_secs'] = $show_secs;
 
             return $attr;
         }
@@ -122,59 +128,62 @@
             $FUNCS->load_css( K_ADMIN_URL . 'addons/data-bound-form/datetime.css' );
 
             $date = $this->data;
-            if( !strlen($date) && !isset($_POST[$input_name.'_year'])){
+            if( !strlen($date) ){
                 if( strlen($this->default_time) ){
                     $date = ($this->default_time=='@current') ? $FUNCS->get_current_desktop_time() : $this->default_time;
                 }
             }
 
-            if( $this->months ){
-                $arrMonths = explode( ',', $this->months );
-            }
-            else{
-                $arrMonths = array( 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-                                    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec');
+            $html='';
+            if( !$this->only_time ){
+                if( $this->months ){
+                    $arrMonths = explode( ',', $this->months );
+                }
+                else{
+                    $arrMonths = array( 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                                        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec');
+                }
+
+                if( strlen($date) ){
+                    $yy = substr( $date, 0, 4 );
+                    $mm = substr( $date, 5, 2 );
+                    $dd = substr( $date, 8, 2 );
+                }
+
+                $year = '<span class="dt_element dt_year"><input type="text" id="'.$input_id.'_year" name="'.$input_name.'[year]" value="' . $yy . '" size="4" maxlength="4" autocomplete="off" />';
+                $month = "<span class=\"dt_element dt_month\"><select id=\"".$input_id."_month\" name=\"".$input_name."[month]\" >\n";
+                $month .= '<option></option>';
+                for( $xx=1; $xx<=12; $xx++ ){
+                    $month .= "<option value=\"".$xx."\"";
+                    $month .= ( $xx==$mm ) ? ' selected="selected"' : '';
+                    $month .= ">".$arrMonths[$xx-1]."</option>";
+                }
+                $month .= "</select>";
+                $day = '<span class="dt_element dt_day"><input type="text" id="'.$input_id.'_day" name="'.$input_name.'[day]" value="' . $dd . '" size="2" maxlength="2" autocomplete="off" />';
+                if( $this->show_labels ){
+                    $year .= '<label class="dt_label" for="'.$input_name.'_year" id="label_'.$input_id.'_year"> YYYY </label>';
+                    $month .= '<label class="dt_label" for="'.$input_name.'_month" id="label_'.$input_id.'_month"> MM </label>';
+                    $day .= '<label class="dt_label" for="'.$input_name.'_day" id="label_'.$input_id.'_day"> DD </label>';
+                }
+                $year .= '</span>';
+                $month .= '</span>';
+                $day .= '</span>';
+
+                $sep = '<span class="dt_element dt_sep">' . $this->fields_separator . '</span>';
+                switch( $this->format ){
+                    case 'dmy':
+                        $html .= $day . $sep . $month . $sep . $year;
+                        break;
+                    case 'ymd':
+                        $html .= $year . $sep . $month . $sep . $day;
+                        break;
+                    case 'mdy':
+                        $html .= $month . $sep . $day . $sep . $year;
+                }
             }
 
-            if( strlen($date) ){
-                $yy = substr( $date, 0, 4 );
-                $mm = substr( $date, 5, 2 );
-                $dd = substr( $date, 8, 2 );
-            }
-
-            $year = '<span class="dt_element dt_year"><input type="text" id="'.$input_id.'_year" name="'.$input_name.'[year]" value="' . $yy . '" size="4" maxlength="4" autocomplete="off" />';
-            $month = "<span class=\"dt_element dt_month\"><select id=\"".$input_id."_month\" name=\"".$input_name."[month]\" >\n";
-            $month .= '<option></option>';
-            for( $xx=1; $xx<=12; $xx++ ){
-                $month .= "<option value=\"".$xx."\"";
-                $month .= ( $xx==$mm ) ? ' selected="selected"' : '';
-                $month .= ">".$arrMonths[$xx-1]."</option>";
-            }
-            $month .= "</select>";
-            $day = '<span class="dt_element dt_day"><input type="text" id="'.$input_id.'_day" name="'.$input_name.'[day]" value="' . $dd . '" size="2" maxlength="2" autocomplete="off" />';
-            if( $this->show_labels ){
-                $year .= '<label class="dt_label" for="'.$input_name.'_year" id="label_'.$input_id.'_year"> YYYY </label>';
-                $month .= '<label class="dt_label" for="'.$input_name.'_month" id="label_'.$input_id.'_month"> MM </label>';
-                $day .= '<label class="dt_label" for="'.$input_name.'_day" id="label_'.$input_id.'_day"> DD </label>';
-            }
-            $year .= '</span>';
-            $month .= '</span>';
-            $day .= '</span>';
-
-            $sep = '<span class="dt_element dt_sep">' . $this->fields_separator . '</span>';
-            switch( $this->format ){
-                case 'dmy':
-                    $html = $day . $sep . $month . $sep . $year;
-                    break;
-                case 'ymd':
-                    $html = $year . $sep . $month . $sep . $day;
-                    break;
-                case 'mdy':
-                    $html = $month . $sep . $day . $sep . $year;
-            }
-
-            // Append time?
-            if( $this->allow_time ){
+            // Show time?
+            if( $this->allow_time || $this->only_time ){
                 if( strlen($date) ){
                     $h = substr( $date, 11, 2 );
                     $m = substr( $date, 14, 2 );
@@ -219,14 +228,37 @@
                 }
                 $min .= "</select>";
 
+                if( $this->show_secs ){
+                    $sec = "<span class=\"dt_element dt_sec\"><select id=\"".$input_id."_sec\" name=\"".$input_name."[sec]\" >\n";
+                    $sec .= '<option></option>';
+                    for( $xx=0; $xx<60; $xx++ ){
+                        $sec .= "<option value=\"".$xx."\"";
+                        $sec .= ( $xx==$s ) ? ' selected="selected"' : '';
+                        $sec .= ">".sprintf('%02d', $xx)."</option>";
+                    }
+                    $sec .= "</select>";
+                }
+
                 if( $this->show_labels ){
                     $hour .= '<label class="dt_label" for="'.$input_name.'_hour" id="label_'.$input_id.'_hour"> HH </label>';
                     $min .= '<label class="dt_label" for="'.$input_name.'_min" id="label_'.$input_id.'_min"> MM </label>';
+                    if( $this->show_secs ){
+                        $sec .= '<label class="dt_label" for="'.$input_name.'_sec" id="label_'.$input_id.'_sec"> SS </label>';
+                    }
                 }
                 $hour .= '</span>';
                 $min .= '</span>';
+                if( $this->show_secs ){
+                    $sec .= '</span>';
+                }
 
-                $html .= '<span class="dt_element dt_sep">@</span>' . $hour . '<span class="dt_element dt_sep">:</span>' . $min;
+                if( !$this->only_time ){
+                    $html .= '<span class="dt_element dt_sep">@</span>';
+                }
+                $html .= $hour . '<span class="dt_element dt_sep">:</span>' . $min;
+                if( $this->show_secs ){
+                    $html .= '<span class="dt_element dt_sep">:</span>' . $sec;
+                }
 
                 if( $this->am_pm ){
                     $am_pm = "<span class=\"dt_element dt_am_pm\"><select id=\"".$input_id."_am_pm\" name=\"".$input_name."[am_pm]\" >\n";
@@ -277,12 +309,27 @@
                 $sec    = substr( $post_val, 17, 2 );
             }
 
+            if( $this->only_time ){ $year = $month = $day = ''; }
+
             // check if empty date submitted
             if( !strlen($year) && !strlen($month) && !strlen($day) && !strlen($hour) && !strlen($min) && !strlen($sec) ){
-                $post_val = '';
+                if( strlen($this->default_time) ){
+                    $post_val = ($this->default_time=='@current') ? $FUNCS->get_current_desktop_time() : $this->default_time;
+                    if( $this->only_time ){
+                        $post_val = '1970-01-01 ' . substr( $post_val, 11, 8 );
+                    }
+                }
+                else{
+                    $post_val = '';
+                }
             }
             else{
                 // piece together the date from submitted components
+                if( $this->only_time ){
+                    $year='1970';
+                    $month='01';
+                    $day = '01';
+                }
                 $year   = sprintf( "%04d", $year );
                 $month  = sprintf( "%02d", $month );
                 $day    = sprintf( "%02d", $day );
@@ -292,6 +339,7 @@
 
                 if( $this->am_pm && $am_pm ){
                     $am_pm  = ( in_array($am_pm, array('am', 'pm')) ) ? strtoupper($am_pm) : 'AM';
+                    if( $hour=='0' ){ $hour='12'; }
                     list( $hour, $min ) = explode( ":", @date("H:i", strtotime("$hour:$min $am_pm")) );
                     $hour   = sprintf( "%02d", $hour ); // being paranoid :)
                     $min    = sprintf( "%02d", $min );
@@ -318,7 +366,7 @@
             }
 
             // Validate date
-            if( KDateTime::_checkdate($this->data) ){
+            if( KDateTime::_checkdate($this->data, 0, $this->only_time) ){
                 // date is ok. Let parent handle custom validators, if any
                 return parent::validate();
             }
@@ -327,11 +375,18 @@
             return false;
         }
 
-        static function _checkdate( $date, $with_time=0 ){
+        static function _checkdate( $date, $with_time=0, $only_time=0 ){
             $date = trim( $date );
+            if( $only_time ){ $with_time=1; }
+
             $pattern = ( $with_time ) ? '/^(\d{4})-(\d{2})-(\d{2}) ([01][0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9])$/' : '/^(\d{4})-(\d{2})-(\d{2})( ([01][0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9]))?$/';
             if( preg_match( $pattern, $date, $matches ) ){
-                return checkdate($matches[2], $matches[3], $matches[1]);
+                if( $only_time ){
+                    return true;
+                }
+                else{
+                    return checkdate($matches[2], $matches[3], $matches[1]);
+                }
             }
             return false;
         }

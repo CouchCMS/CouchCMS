@@ -638,6 +638,7 @@
     $html = ob_get_contents();
     ob_end_clean();
 
+    if( !defined('K_THEME_NAME') ) define( 'K_THEME_NAME', '' );
     $parser = new KParser( $html );
     echo $parser->get_HTML();
     die();

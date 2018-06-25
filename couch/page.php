@@ -1107,8 +1107,11 @@
                                         $path_parts = $FUNCS->pathinfo( $tb->data );
                                         $match = preg_match("/^(.+)?-(?:\d+?)x(?:\d+?)$/i", $path_parts['filename'], $matches);
                                         if( $match ){
-                                            if( $f->data == $path_parts['dirname'].'/'.$matches[1].'.'.$path_parts['extension'] ){
+                                            $path_parts['dirname'] = ( $path_parts['dirname']=='.' || $path_parts['dirname']=='' ) ? '' : $path_parts['dirname'].'/';
+                                            $match = $path_parts['dirname'].$matches[1].'.'.$path_parts['extension'];
+                                            if( $f->data == $match ){
                                                 $existing_thumb = $path_parts['basename'];
+                                                if( $existing_thumb{0}==':' ) $existing_thumb = substr( $existing_thumb, 1 );
                                             }
                                         }
                                     }
