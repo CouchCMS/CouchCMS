@@ -9,7 +9,7 @@
     // Header
     $t['greeting'] = 'Hola';
     $t['view_site'] = 'Ver p&aacute;gina';
-    $t['logout'] = 'Cerrar sesi&oacute;n';
+    $t['logout'] = 'Salir';
     $t['javascript_msg'] = 'JavaScript est&aacute; deshabilitado o no es compatible con su navegador.<br/>
                             Actualice su navegador o <a href="https://support.google.com/answer/23852" target="_blank">habilite JavaScript</a> para usar el Panel de administraci&oacute;n.';
     $t['add_new'] = 'A&ntilde;adir';
