@@ -1999,12 +1999,12 @@
             $link = trim( $link );
             if( strpos($link, K_SITE_URL)!==0 ){ return; }
 
-            $link = substr( $link, strlen(K_SITE_URL) );
+            $link = trim( substr($link, strlen(K_SITE_URL)) );
             $link2 = explode( '#', $link ); // strip off querystring etc. for prettyURLs check
             $link2 = explode( '?', $link2[0] );
             $link2 = $link2[0];
 
-            $rs = $DB->select( K_TBL_TEMPLATES, array('name'), '1=1' );
+            $rs = $DB->select( K_TBL_TEMPLATES, array('name'), "ISNULL(type) || type=''" );
             if( count($rs) ){
                 foreach( $rs as $key=>$val ){
                     $is_index = 0;
@@ -2055,6 +2055,11 @@
                         $replacement = 'masterpage='.$val['name'].'&is_home=1';
                         $ret = @preg_replace( $pattern, $replacement, $link2 );
                         if( $ret!=$link2 ){ return $ret; }
+                    }
+                    else{
+                        if( $link2=='' ){
+                            return 'masterpage=index.php&is_home=1';
+                        }
                     }
 
                     // 6. page-view
