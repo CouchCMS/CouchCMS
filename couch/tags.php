@@ -1416,6 +1416,9 @@
             extract( $attr );
 
             if( !$name ) {die("ERROR: Tag \"".$node->name."\" needs a 'name' attribute");}
+            if( !$FUNCS->is_title_clean($name) ){
+                die( "ERROR: Tag \"".$node->name."\": 'name' attribute ({$name}) contains invalid characters. (Only lowercase[a-z], numerals[0-9], hyphen and underscore permitted.)" );
+            }
             $found = 0;
             for( $x=0; $x<count($PAGE->fields); $x++ ){
                 $field = &$PAGE->fields[$x];
@@ -5368,7 +5371,7 @@ FORM;
             $html .= ' ' .  'accept-charset="' . $charset . '"';
 
             if( !$FUNCS->is_title_clean($name) ){
-                die( "ERROR: Tag \"".$node->name."\" 'name' contains invalid characters. (Only lowercase[a-z], numerals[0-9] hyphen and underscore permitted" );
+                die( "ERROR: Tag \"".$node->name."\": 'name' attribute ({$name}) contains invalid characters. (Only lowercase[a-z], numerals[0-9], hyphen and underscore permitted.)" );
             }
             $CTX->set( 'k_cur_form', $name );
             $CTX->set( 'k_cur_form_method', $method );
@@ -5672,7 +5675,7 @@ FORM;
             }
             if( !$name ){ die("ERROR: Tag \"".$node->name."\" needs a 'name' attribute"); }
             if( !$FUNCS->is_title_clean($name) ){
-                die( "ERROR: Tag \"".$node->name."\" 'name' contains invalid characters. (Only lowercase[a-z], numerals[0-9] hyphen and underscore permitted" );
+                die( "ERROR: Tag \"".$node->name."\": 'name' attribute ({$name}) contains invalid characters. (Only lowercase[a-z], numerals[0-9], hyphen and underscore permitted.)" );
             }
             if( !$id ){ $id = $name; }
 

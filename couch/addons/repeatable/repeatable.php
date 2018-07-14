@@ -87,8 +87,8 @@
 
                         $child_name = trim($attr['name']);
                         if( !$child_name ) {die("ERROR: Tag \"".$node->name."\" a child region's 'name' attribute is missing");}
-                        if( !$FUNCS->is_variable_clean($child_name) ){
-                            die( "ERROR: Tag \"".$node->name."\": a child region's 'name' attribute contains invalid characters. (Only lowercase[a-z], numerals[0-9] and underscore permitted. The first character cannot be a numeral)" );
+                        if( !$FUNCS->is_title_clean($child_name) && !$FUNCS->is_variable_clean($child_name) ){ // retaining is_variable_clean() check for backward compatibility
+                            die( "ERROR: Tag \"".$node->name."\": a child region's 'name' attribute ({$child_name}) contains invalid characters. (Only lowercase[a-z], numerals[0-9], hyphen and underscore permitted.)" );
                         }
                         if( substr($child_name, 0, 2)=='k_' ){
                             die("ERROR: Tag \"".$node->name."\": a child region's 'name' attribute begins with 'k_'. Reserved for system fields only.");
