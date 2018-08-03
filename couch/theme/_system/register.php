@@ -1345,7 +1345,7 @@
                         },
                     })
                     .done(function( data ){
-                        $( '#listing' ).replaceWith( $( $.parseHTML( data, document ) ).find( '#listing' ) );
+                        $( '#listing' ).replaceWith( $( $.parseHTML( data, document ) ).find( '#listing' ).first() );
                     })
                     .always(function() {
                         $('#k_overlay').css('display', 'none');
