@@ -797,7 +797,6 @@
         function _render( $input_name, $input_id, $extra='', $dynamic_insertion=0 ){
             $this->k_type = 'password';
             return KField::_render( $input_name, $input_id, $extra, $dynamic_insertion ); // Calling grandparent statically! Not a bug: https://bugs.php.net/bug.php?id=42016
-            return $html;
         }
 
         // Save to database
