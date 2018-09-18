@@ -847,7 +847,7 @@
 
             if( count($rs) ){
                 foreach( $rs as $rec ){
-                    for( $x=0; $x<count($this->fields); $x++ ){
+                    for( $x=0, $count = count($this->fields); $x<$count; $x++ ){
                         $dest = &$this->fields[$x];
                         if( $dest->id == $rec['field_id'] && !$dest->system ){
                             $dest->store_data_from_saved( $rec['value'] );
