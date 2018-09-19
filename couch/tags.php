@@ -6543,8 +6543,13 @@ MAP;
         function html_encode( $params, $node ){
             global $FUNCS;
 
-            foreach( $node->children as $child ){
-                $html .= $child->get_HTML();
+            if( count($node->children) ){
+                foreach( $node->children as $child ){
+                    $html .= $child->get_HTML();
+                }
+            }
+            else{
+                $html = $params[0]['rhs'];
             }
             return htmlspecialchars( $html, ENT_QUOTES, K_CHARSET );
         }
