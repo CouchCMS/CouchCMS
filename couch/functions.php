@@ -1716,6 +1716,7 @@
 
                 if( is_array($qv) ){ //checkboxes
                     foreach( $qv as $qvv ){
+                        if( is_array($qvv) ) continue;
                         $qs .= $sep . $qk . '[]=' . urlencode($qvv);
                         $sep = '&';
                     }
