@@ -186,6 +186,10 @@
             $this->siblings = &$siblings;
         }
 
+        public function __toString(){
+            return get_class();
+        }
+
         // Invoked only while editing a page where all parameters of a field (instead of just the usual data) are needed.
         function resolve_dynamic_params(){
             if( !$this->system && $this->dynamic ){

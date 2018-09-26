@@ -34,7 +34,7 @@
             foreach( $children as $child ){
                 if( $child->type==K_NODE_TYPE_CODE ){
                     $child_name = strtolower( $child->name );
-                    if( in_array($child_name, array('editable', 'repeatable', 'mosaic', 'config_form_view')) ){ //supported tags
+                    if( in_array($child_name, array('editable', 'repeatable', 'mosaic', 'config_form_view', 'func')) ){ //supported tags
 
                         // set 'order' according to occurance
                         $arr_tmp = array();
