@@ -304,7 +304,7 @@
             }
 
             if( $this->auto_refresh ){
-                if( $f && !$f->_jcropthumb_done && !$this->deleted && !$this->k_inactive && !$f->deleted && !$f->k_inactive ){
+                if( $f && !$f->_jcropthumb_done && !$this->deleted && !$f->deleted ){
                     $f->_jcropthumb_done = 1;
                     $html .= '<input type="hidden" id="f_' . $this->assoc_field . '_refresh" name="f_'. $this->assoc_field .'_refresh" value="0" />';
                     ob_start();
