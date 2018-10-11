@@ -363,10 +363,10 @@
                 foreach( $arr_brackets as $bracket ){
                     if( $basis=='0' ){ // basis is cost
                         // convert to absolute value if in percentage
-                        $charge += ( $scale['is_percent'] ) ? round( ($bracket['value']/100)*$bracket['range'], 2 ) : $bracket[value];
+                        $charge += ( $scale['is_percent'] ) ? round( ($bracket['value']/100)*$bracket['range'], 2 ) : $bracket['value'];
                     }
                     else{ //basis is count so percentage does not make sense
-                        $charge += $bracket[value];
+                        $charge += $bracket['value'];
                     }
                 }
             }
