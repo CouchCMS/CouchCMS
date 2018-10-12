@@ -128,8 +128,8 @@
                 }
             }
             if( $page_id ) $this->id = $page_id;
-            if( $page_name ) $this->page_name = $page_name;
-            if( $html ) $this->html = $html;
+            if( $page_name != '' ) $this->page_name = $page_name;
+            if( $html != '' ) $this->html = $html;
 
             $rs = $this->_fill_template_info();
             if( $FUNCS->is_error($rs) ){ $this->error=1; $this->err_msg=$rs->err_msg; return; }
