@@ -28,17 +28,33 @@
 
             // find all immediate child editable regions and set this 'row' as their parent
             if( count($node->children) ){
+                $attr_not_active = null;
+                foreach( $node->attributes as $node_attr ){
+                    if( $node_attr['name']=='not_active' ){
+                        $attr_not_active = $node_attr;
+                        break;
+                    }
+                }
+
                 for( $x=0; $x<count($node->children); $x++ ){
                     $child = &$node->children[$x];
 
                     if( $child->type==K_NODE_TYPE_CODE && ($child->name=='editable' || $child->name=='repeatable') ){
                         $arr_tmp = array();
+                        $child_attr_not_active = null;
+
                         foreach( $child->attributes as $child_attr ){
                             if( $child_attr['name']!='group' ){
+                                if( $child_attr['name']=='not_active' ){
+                                    $child_attr_not_active = 1;
+                                }
                                 $arr_tmp[] = $child_attr;
                             }
                         }
                         $arr_tmp[] = array( 'name'=>'group', 'op'=>'=', 'quote_type'=>"'", 'value'=>$attr['name'], 'value_type'=>K_VAL_TYPE_LITERAL);
+                        if( $attr_not_active && !$child_attr_not_active ){
+                            $arr_tmp[] = $attr_not_active;
+                        }
                         $child->attributes = $arr_tmp;
                     }
                     unset( $child );
