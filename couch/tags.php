@@ -1441,7 +1441,7 @@
                 for( $x=0; $x<count($node->children); $x++ ){
                     $child = &$node->children[$x];
 
-                    if( $child->type==K_NODE_TYPE_CODE && ($child->name=='editable' || $child->name=='repeatable') ){
+                    if( $child->type==K_NODE_TYPE_CODE && ($child->name=='editable' || $child->name=='repeatable' || $child->name=='mosaic') ){
                         $arr_tmp = array();
                         $child_attr_not_active = null;
 
