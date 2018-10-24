@@ -395,7 +395,7 @@
                                 }
                                 else{
                                     echo( '<td class="delete">' );
-                                    echo( '<input type="checkbox" name="delete[]" value="'.$row_id.'" id="delete'.$row_id.'" />' );
+                                    echo( '<input type="checkbox" name="delete[]" value="'.$row_id.'" id="delete'.$row_id.'" style="display: none;"/>' );
                                     echo( '<label for="delete'.$row_id.'">' );
                                     echo( '    <img src="'. REPEATABLE_URL .'tablegear/delete.gif" alt="Delete Row" />' );
                                     echo( '</label>' );
@@ -418,7 +418,7 @@
                     <?php endif; ?>
                 </div>
                 <input type="hidden" name="_<?php echo $input_id; ?>_sortorder" id="_<?php echo $input_id; ?>_sortorder"/>
-                <div id="addNewRow_<?php echo $input_id; ?>" class="newRow">
+                <div id="addNewRow_<?php echo $input_id; ?>" class="newRow" style="display:none;">
                     <table>
                         <tbody>
                             <tr id="newDataRow_<?php echo $input_id; ?>" class="newRow even">
@@ -488,7 +488,7 @@
                                 }
                                 else{
                                     echo( '<td class="delete">' );
-                                    echo( '<input type="checkbox" name="delete[]" value="" id="deleteNULL_STRING" />' );
+                                    echo( '<input type="checkbox" name="delete[]" value="" id="deleteNULL_STRING" style="display: none;"/>' );
                                     echo( '<label for="deleteNULL_STRING">' );
                                     echo( '    <img src="'. REPEATABLE_URL .'tablegear/delete.gif" alt="Delete Row" />' );
                                     echo( '</label>' );
@@ -558,6 +558,7 @@
             $this->rendered_data = array();
             $this->search_data = '';
             $sep = '';
+            $without_form = ( func_num_args()>1 ) ? 1 : 0;
             for( $row=0; $row<count($data); $row++ ){
                 // recreate each row
                 for( $y=0; $y<count($this->cells); $y++ ){
@@ -585,7 +586,12 @@
                     }
 
                     // field conditionally inactive? Control fields can be siblings less than $y
-                    $c->k_inactive = !$FUNCS->resolve_active( $c, $CTX->get('k_cur_form'), true, $this->name, $row, $y );
+                    if( $without_form ){
+                        $c->k_inactive = !$FUNCS->resolve_active_without_form( $c, $this->page, true, $y );
+                    }
+                    else{
+                        $c->k_inactive = !$FUNCS->resolve_active( $c, $CTX->get('k_cur_form'), true, $this->name, $row, $y );
+                    }
 
                     $c->store_posted_changes( $data[$row][$c->name] );
                     if( $c->modified ){

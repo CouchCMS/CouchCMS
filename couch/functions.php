@@ -108,6 +108,7 @@
 
             $this->_ed = new EventDispatcher();
             $this->add_event_listener( 'alter_parsed_dom', array('KFuncs', '_handle_extends') );
+            $this->add_event_listener( 'page_prevalidate', array($this, 'resolve_active_fallback') );
             if( defined('K_ADMIN') ){
                 $this->add_event_listener( 'add_admin_js', array($this, 'gen_js_for_conditional_fields') );
                 $this->add_event_listener( 'add_admin_css', array($this, 'gen_css_for_conditional_fields') );
@@ -4720,6 +4721,88 @@ OUT;
                                         if( $target && !$rr ){ $f->_dependent_target = $target; }
                                         $PAGE->form_dependencies[$form_name]['dependent_fields'][$obj_id]=$f;
                                     }
+                                }
+                            }
+
+                            // and execute code
+                            $ret = $TAGS->call($params, new stdClass() );
+                            $ret = strtolower( trim($ret) );
+                            if( $ret==='1' || $ret==='true' || $ret==='yes' || $ret==='hide' ){ $active=0; } // make field inactive only if this func explicitly states so
+                        }
+                    }
+                }
+            }
+
+            return $active;
+        }
+
+        // fallback for pages saved without using a form
+        function resolve_active_fallback( &$fields, &$pg ){
+            if( !count($pg->__args) || $pg->__args[0]=='db_persist' ){
+                for( $x=0; $x<count($pg->fields); $x++ ){
+                    $f = &$pg->fields[$x];
+                    if( $f->not_active ){
+                        $f->k_inactive = !$this->resolve_active_without_form( $f, $pg );
+                    }
+                    unset( $f );
+                }
+            }
+        }
+
+        function resolve_active_without_form( $f, $pg, $rr=false, $rr_cell=0 ){
+            global $TAGS;
+            $active = 1; // by default the field is active
+
+            $func = $f->not_active;
+            if( $func ){
+                if( is_string($func) ){
+                    $func = @unserialize( base64_decode($func) );
+                    if( is_array($func) ){ $f->not_active = $func; }
+                }
+
+                if( is_array($func) ){
+                    if( isset($func['val']) ){ $func = $func['val']; } // bound field
+
+                    if( is_array($func) ){ // Couch code
+                        if( is_array($func['code']) && is_array($func['params']) ){
+
+                            // set params ..
+                            $tmp = array();
+                            foreach( $func['params'] as $k=>$v ){
+                                if( $k=='_no_js' || $k=='_target' ){
+                                    continue;
+                                }
+                                $tmp[$k]=$v;
+                            }
+                            $func['params'] = $tmp;
+
+                            $params = array();
+                            $params[] = array('lhs'=>null, 'op'=>'=', 'rhs'=>$func);
+
+                            foreach( $func['params'] as $k=>$v ){
+                                if( $rr && strpos($k, 'parent-')!==0 ){
+                                    for( $x=0; $x<$rr_cell; $x++ ){
+                                        $f2 = $f->siblings[$x];
+                                        if( $f2->name==$k ){
+                                            $val = ( $f2->k_type=='checkbox' ) ? $this->get_checkbox_data($f2) : $f2->get_data( 1 );
+                                            $params[] = array('lhs'=>$k, 'op'=>'=', 'rhs'=>$val);
+
+                                            unset( $f2 );
+                                            continue 2;
+                                        }
+                                        unset( $f2 );
+                                    }
+                                }
+
+                                $orig_k = $k;
+                                if( strpos($k, 'parent-')===0 ){ $k = substr( $k, 7 ); }
+
+                                if( array_key_exists($k, $pg->_fields) ){
+                                    $f2 = &$pg->_fields[$k];
+                                    $val = ( $f2->k_type=='checkbox' ) ? $this->get_checkbox_data($f2) : $f2->get_data( 1 );
+                                    $params[] = array('lhs'=>$orig_k, 'op'=>'=', 'rhs'=>$val);
+
+                                    unset( $f2 );
                                 }
                             }
 

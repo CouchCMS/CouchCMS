@@ -350,7 +350,7 @@ echo("
                         }
                         else{
                             //$arr[] = ( $f->_dependent_target ) ? $f->_dependent_target : '#k_element_'.$f->name;
-                            if( !$f->_dependent_target ) $arr[] = '#k_element_'.$f->name;
+                            if( !$f->_dependent_target && $f->k_inactive ) $arr[] = '#k_element_'.$f->name;
                         }
                     }
                 }

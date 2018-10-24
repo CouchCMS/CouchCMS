@@ -881,6 +881,8 @@
 
             $DB->begin();
 
+            $this->__args = func_get_args();
+
             // HOOK: page_presave
             // the save process is about to begin.
             // Field values can be adjusted before subjecting them to the save routine.

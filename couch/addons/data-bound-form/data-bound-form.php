@@ -148,7 +148,7 @@
                             $f->store_posted_changes( $str_val );
                         }
                         else{
-                            $f->store_posted_changes( $fields[$f->name] );
+                            $f->store_posted_changes( $fields[$f->name], $node->name );
                         }
                     }
                     unset( $f );
@@ -182,7 +182,7 @@
             }
 
             // Save..
-            $errors = $pg->save();
+            $errors = $pg->save( $node->name );
 
             // HOOK: db_xxx_postsave
             if( $_token ){
