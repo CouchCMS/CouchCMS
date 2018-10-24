@@ -937,6 +937,7 @@
                 $arr_vars['k_masqueraded_template'] = $this->pointer_link_detail['masterpage'];
                 $arr_vars['k_masqueraded_links'] = $this->get_admin_link();
             }
+            $arr_vars['k_access_level'] = $this->access_level;
 
             // Dynamically calculated
             $arr_vars['k_is_active'] = $this->is_current;
