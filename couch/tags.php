@@ -6136,10 +6136,10 @@ MAP;
             $header .= "POST /cgi-bin/webscr HTTP/1.1\r\n";
             $header .= "Content-Type: application/x-www-form-urlencoded\r\n";
             if( K_PAYPAL_USE_SANDBOX ){
-                $host = 'www.sandbox.paypal.com';
+                $host = 'ipnpb.sandbox.paypal.com';
             }
             else{
-                $host = 'www.paypal.com';
+                $host = 'ipnpb.paypal.com';
             }
             $header .= "Host: " . $host . "\r\n";
             $header .= "Connection: close\r\n";
