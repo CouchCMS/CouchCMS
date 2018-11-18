@@ -98,7 +98,8 @@
         // a shim function now to accomodate dot syntax
         function set( $varname, $value, $scope='', $obj_to_array=0 ){
             global $FUNCS;
-
+            
+            if( is_null($value) ){ $value = ''; }
             if( is_bool($value) ){ $value = (int)$value; }
             if( $obj_to_array && (is_array($value) || is_object($value)) ){
                 $value = $FUNCS->json_decode( $FUNCS->json_encode($value) ); // recursively converts all objects to arrays
