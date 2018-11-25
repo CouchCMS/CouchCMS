@@ -5,7 +5,7 @@
         <cms:pages id=k_relation_selected_ids_string show_future_entries='1' skip_custom_fields='0'>
             {
                 "id":"<cms:show k_page_id />",
-                "title":<cms:escape_json><cms:php>echo(str_replace('&quot;', '"', '<cms:show k_page_title />'));</cms:php></cms:escape_json>
+                "title":<cms:escape_json><cms:php>echo(str_replace('&quot;', '"', strip_tags('<cms:show k_page_title />')));</cms:php></cms:escape_json>
             }
             <cms:if "<cms:not k_paginated_bottom/>">,</cms:if>
         </cms:pages>
@@ -18,7 +18,7 @@
     $(function(){
         if( window.parent && window.parent.KRelation && window.parent.KRelation.callBack ){
             var content = $('#json_content');
-            window.parent.KRelation.callBack(content.html(), '<cms:show k_relation_exit_action />');
+            window.parent.KRelation.callBack(content.text(), '<cms:show k_relation_exit_action />');
         }
     });
 </cms:admin_add_js>

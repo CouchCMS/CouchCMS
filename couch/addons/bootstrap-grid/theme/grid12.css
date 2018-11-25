@@ -912,6 +912,12 @@
   box-sizing: border-box;
 }
 
-.panel-body>.row:last-of-type{padding-bottom:20px;}
-@media(max-height:700px){ .panel-toggle+.panel-body>.row:last-of-type{padding-bottom:45px;} }
-@media(max-width:950px){ .panel-toggle+.panel-body>.row:last-of-type{padding-bottom:45px;} }
+fieldset.row_fieldset{border:1px solid #d3d3d3;padding:5px 10px 10px;}
+fieldset.row_fieldset legend{font-size: 12px; font-weight:bold; cursor:pointer; position:relative; padding-left: 22px;}
+fieldset.row_fieldset legend:after{content: "\2013"; display: block; position: absolute; top: 2px; left: 2px; width: 18px; height: 16px;    line-height: 14px; border-radius: 3px; text-align: center; font-family: Arial,sans-serif; font-size: 14px; color: #555; text-shadow: inherit;}
+fieldset.row_fieldset legend:hover:after, fieldset.row_fieldset legend:focus:after{background-color: #555; color: #e8e8e8; text-shadow: none; box-shadow: 0 1px 0 #fff;}
+fieldset.row_fieldset.collapsed legend:after{ content: "\002B"; line-height: 16px;}
+fieldset.row_fieldset.collapsed { border:0; border-top:1px solid #d3d3d3}
+.k_row.has_fieldset{padding-top:15px;}
+.col-no-pad{padding-left:0;}
+.col-break{clear:both;}

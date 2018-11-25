@@ -2392,9 +2392,6 @@
                     $callable = explode( '::', $callable );
                 }
             }
-            elseif( !is_array($callable) ){
-                return false;
-            }
 
             return ( is_callable($callable, $syntax_only) ) ? $callable : false;
         }

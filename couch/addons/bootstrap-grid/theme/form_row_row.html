@@ -1,13 +1,39 @@
 <cms:if k_field_no_wrapper>
     <cms:show k_field_content />
 <cms:else />
-    <div id="<cms:show k_field_input_id />" class="row k_<cms:show k_field_type /> <cms:show k_field_class />" <cms:if k_field_hidden>style="display:none;"</cms:if>>
-        <cms:admin_form_fields childof=k_field_name depth='1'>
-            <cms:render 'form_row' />
-        </cms:admin_form_fields>
-    </div>
+    <cms:if k_field_is_collapsible >
+        <div id="<cms:show k_field_wrapper_id />" class="k_row <cms:show k_field_class /> has_fieldset" <cms:if k_field_hidden>style="display:none;"</cms:if>>
+            <fieldset class="row_fieldset<cms:if k_field_is_collapsed> collapsed</cms:if>">
+                <legend><cms:show k_field_label /><cms:if k_field_desc ><span class="k_desc desc">(<cms:show k_field_desc />)</span></cms:if></legend>
+                <div class="row"<cms:if k_field_is_collapsed> style="display:none;"</cms:if>>
+                    <cms:admin_form_fields childof=k_field_name depth='1'>
+                        <cms:render 'form_row' />
+                    </cms:admin_form_fields>
+                </div>
+            </fieldset>
+        </div>
+    <cms:else />
+        <div id="<cms:show k_field_wrapper_id />" class="row k_<cms:show k_field_type /> <cms:show k_field_class />" <cms:if k_field_hidden>style="display:none;"</cms:if>>
+            <cms:admin_form_fields childof=k_field_name depth='1'>
+                <cms:render 'form_row' />
+            </cms:admin_form_fields>
+        </div>
+    </cms:if>
 </cms:if>
 
 <cms:if k_add_js_for_field_row >
     <cms:admin_load_css "<cms:show k_admin_link />addons/bootstrap-grid/theme/grid12.css" />
+    <cms:admin_add_js>
+        $( function() {
+            COUCH.el.$content.find('fieldset.row_fieldset legend').on( "click", $.debounce(function( e ) {
+                var $heading = $(this).blur().parent();
+
+                e.preventDefault();
+
+                $heading.toggleClass( "collapsed" ).find('.row').animate({
+                    height: "toggle"
+                }, 200 );
+            }, 200, true ));
+        });
+    </cms:admin_add_js>
 </cms:if>   

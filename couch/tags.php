@@ -1450,6 +1450,9 @@
                                 if( $child_attr['name']=='not_active' ){
                                     $child_attr_not_active = 1;
                                 }
+                                elseif( $child_attr['name']=='type' && $child_attr['value']=='group' ){
+                                    die( "ERROR: Type 'group' editable cannot have another 'group' nested within it." );
+                                }
                                 $arr_tmp[] = $child_attr;
                             }
                         }

@@ -48,6 +48,9 @@
                                 if( $child_attr['name']=='not_active' ){
                                     $child_attr_not_active = 1;
                                 }
+                                elseif( $child_attr['name']=='type' && ($child_attr['value']=='row' || $child_attr['value']=='group') ){
+                                    die( "ERROR: Type 'row' editable cannot have  '".$child_attr['value']."' nested within it." );
+                                }
                                 $arr_tmp[] = $child_attr;
                             }
                         }
@@ -90,7 +93,37 @@
         static function _override_renderables(){
             global $FUNCS;
 
-            $FUNCS->override_render( 'form_row', array('template_path'=>K_ADDONS_DIR.'bootstrap-grid/theme/') );
+            $FUNCS->override_render( 'form_row', array('template_path'=>K_ADDONS_DIR.'bootstrap-grid/theme/', 'template_ctx_setter'=>array('KRow', '_render_form_row')) );
+        }
+
+        function _render_form_row(){
+            global $FUNCS, $CTX;
+
+            if( $CTX->get('k_field_type')!='row' ) return;
+
+            $f = $CTX->get('k_field_obj');
+            if( $f->collapsed !='-1' ){
+                $CTX->set( 'k_field_is_collapsible', '1' );
+
+                if( $CTX->get('k_error') ){ // if form error, expand containing row
+                    $tree = &$FUNCS->get_admin_form_fields( 'weight', 'asc' );
+                    $f = &$tree->find( $f->name );
+                    if( $f ){
+                        $count = count($f->children);
+                        for( $x=0; $x<$count; $x++ ){
+                            if( $f->children[$x]->obj->err_msg ){
+                                $CTX->set( 'k_field_is_collapsed', '0' );
+                                break;
+                            }
+                        }
+                        unset( $f );
+                    }
+                    unset( $tree );
+                }
+            }
+            else{
+                $CTX->set( 'k_field_is_collapsible', '0' );
+            }
         }
 
     } // end class KRow

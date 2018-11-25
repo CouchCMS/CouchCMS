@@ -928,8 +928,29 @@
             $f = $CTX->get('k_field_obj');
             $f->k_inactive = !$FUNCS->resolve_active( $f, $CTX->get('k_cur_form'), false );
 
-            if( $CTX->get('k_error') ){ // if form error, expand all groups
-                $CTX->set( 'k_field_is_collapsed', '0' );
+            if( $CTX->get('k_error') ){ // if form error, expand containing group
+                $tree = &$FUNCS->get_admin_form_fields( 'weight', 'asc' );
+                $f = &$tree->find( $f->name );
+                if( $f ){
+                    $count = count($f->children);
+                    for( $x=0; $x<$count; $x++ ){
+                        $count2 = count( $f->children[$x]->children );
+                        if( $count2 ){ // nested row
+                            for( $x2=0; $x2<$count2; $x2++ ){
+                                if( $f->children[$x]->children[$x2]->obj->err_msg ){
+                                    $CTX->set( 'k_field_is_collapsed', '0' );
+                                    break 2;
+                                }
+                            }
+                        }
+                        elseif( $f->children[$x]->obj->err_msg ){
+                            $CTX->set( 'k_field_is_collapsed', '0' );
+                            break;
+                        }
+                    }
+                    unset( $f );
+                }
+                unset( $tree );
             }
         }
 

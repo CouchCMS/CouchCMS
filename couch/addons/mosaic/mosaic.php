@@ -149,7 +149,7 @@
                                     $arr_tmp[] = $child_attr;
                                 }
                             }
-                            $arr_tmp[] = array( name=>'order', op=>'=', quote_type=>"'", value=>$order++, value_type=>K_VAL_TYPE_LITERAL);
+                            $arr_tmp[] = array( 'name'=>'order', 'op'=>'=', 'quote_type'=>"'", 'value'=>$order++, 'value_type'=>K_VAL_TYPE_LITERAL);
                             $child->attributes = $arr_tmp;
                         }
 
