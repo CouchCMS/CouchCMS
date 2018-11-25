@@ -256,7 +256,9 @@
                                 $nonce = $FUNCS->create_nonce( 'jcrop_image_'.$data );
                                 $data = $data . '|' . $nonce;
 
-                                $html .= '<div class="crop-group field"><a href="javascript:k_jcrop_thumb(\''.$input_id.'\', \''.$data.'\')" class="btn button">'.$FUNCS->t('crop').'</a></div>';
+                                $html .= '<div class="crop-group field"><a href="javascript:k_jcrop_thumb(\''.$input_id.'\', \''.$data.'\')" class="btn button">'.$FUNCS->t('crop').'</a>';
+                                $html .= '<span id="' .$input_id. '_wh"></span> x ';
+                                $html .= '</div>';
                                 $html .='</div>';
 
                                 $html .= '<input type="hidden" id="' . $input_id . '" name="'. $input_id .'" value="'. htmlspecialchars( $this->data, ENT_QUOTES, K_CHARSET ) .'" />';
@@ -270,6 +272,7 @@
                                             $('#<?php echo $input_id;?>_y').val(c.y);
                                             $('#<?php echo $input_id;?>_w').val(c.w);
                                             $('#<?php echo $input_id;?>_h').val(c.h);
+                                            $('#<?php echo $input_id;?>_wh').html('w: ' + parseInt(c.w) + '&nbsp;&nbsp;h: ' + parseInt(c.h));
                                         },
                                         aspectRatio: <?php echo $aspect_ratio; ?>,
                                         setSelect:   [ <?php echo $src_x; ?>, <?php echo $src_y; ?>, <?php echo $src_x2; ?>, <?php echo $src_y2; ?> ],
