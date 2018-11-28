@@ -1856,7 +1856,7 @@
                             if( $k=='clonable' && $rec[$k]=='1' ){
                                 // Making a clonable template non-clonable..
                                 // Test if no cloned pages already exist (apart from the default page)
-                                $rs2 = $DB->select( K_TBL_PAGES, array('*'), "template_id='" . $DB->sanitize( $PAGE->tpl_id ). "' AND is_master<>'1'" );
+                                $rs2 = $DB->select( K_TBL_PAGES, array('count(id)'), "template_id='" . $DB->sanitize( $PAGE->tpl_id ). "' AND is_master<>'1'" );
                                 if( count($rs2) ){
                                     die( 'ERROR: Tag: '.$node->name.' Cannot make template non-clonable. Cloned pages exist.' );
                                 };
