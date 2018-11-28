@@ -911,7 +911,15 @@
   -moz-box-sizing: border-box;
   box-sizing: border-box;
 }
-
+.row-eq-height {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display:         flex;
+}
+.row-wrap {
+    flex-wrap: wrap
+}
 fieldset.row_fieldset{border:1px solid #d3d3d3;padding:5px 10px 10px;}
 fieldset.row_fieldset legend{font-size: 12px; font-weight:bold; cursor:pointer; position:relative; padding-left: 22px;}
 fieldset.row_fieldset legend:after{content: "\2013"; display: block; position: absolute; top: 2px; left: 2px; width: 18px; height: 16px;    line-height: 14px; border-radius: 3px; text-align: center; font-family: Arial,sans-serif; font-size: 14px; color: #555; text-shadow: inherit;}

@@ -96,7 +96,7 @@
             $FUNCS->override_render( 'form_row', array('template_path'=>K_ADDONS_DIR.'bootstrap-grid/theme/', 'template_ctx_setter'=>array('KRow', '_render_form_row')) );
         }
 
-        function _render_form_row(){
+        static function _render_form_row(){
             global $FUNCS, $CTX;
 
             if( $CTX->get('k_field_type')!='row' ) return;
