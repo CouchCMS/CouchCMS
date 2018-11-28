@@ -391,6 +391,7 @@
                                'startcount'=>'0',
                                'token'=>'',
                                'is_json'=>'0',
+                               'skip_empty'=>'0',                              
                               ),
                         $params)
                    );
@@ -400,6 +401,7 @@
             $startcount = $FUNCS->is_int( $startcount ) ? intval( $startcount ) : 1;
             $token = trim( $token );
             $is_json = ( $is_json==1 ) ? 1 : 0;
+            $skip_empty = ( $skip_empty==1 ) ? 1 : 0;
 
             if( $is_json && !is_array($var) ){ $var = $FUNCS->json_decode( $var ); }
 
@@ -426,6 +428,7 @@
 
                 }
 
+                if( $skip_empty ) $arr_vars = array_filter($arr_vars, 'strlen');
                 $cnt_arr = count($arr_vars);
                 $CTX->set( 'k_total_items', $cnt_arr );
                 $children = $node->children;
@@ -462,6 +465,7 @@
                 }
             }
             else{
+                if( $skip_empty ) $var = array_filter($var, 'strlen');
                 $cnt_arr = count($var);
                 $CTX->set( 'k_total_items', $cnt_arr );
                 $children = $node->children;
