@@ -251,7 +251,7 @@
       registration_date  datetime,
       access_level       int DEFAULT '0',
       disabled           int DEFAULT '0',
-      system             int DEFAULT '0',
+      `system`           int DEFAULT '0',
       last_failed        bigint(11) DEFAULT '0',
       failed_logins      int DEFAULT '0',
       PRIMARY KEY (id)
@@ -542,7 +542,7 @@
             $pwd = $DB->sanitize( $pwd );
             $email = $DB->sanitize( $email );
             $creation_time = $FUNCS->get_current_desktop_time();
-            $k_stmts[] = "INSERT INTO ".K_TBL_USERS." (id, name, title, password, email, activation_key, password_reset_key, registration_date, access_level, disabled, system, last_failed, failed_logins) VALUES (1, '".$name."', '".$name."', '".$pwd."', '".$email."', '', '', '".$creation_time."', 10, 0, 1, 0, 0);";
+            $k_stmts[] = "INSERT INTO ".K_TBL_USERS." (id, name, title, password, email, activation_key, password_reset_key, registration_date, access_level, disabled, `system`, last_failed, failed_logins) VALUES (1, '".$name."', '".$name."', '".$pwd."', '".$email."', '', '', '".$creation_time."', 10, 0, 1, 0, 0);";
 
             foreach( $k_stmts as $sql ){
                 @mysql_query( $sql );
