@@ -7748,6 +7748,19 @@ MAP;
             return ( is_array($in) && array_key_exists($key, $in) ) ? '1' : '0';
         }
 
+        function arr_count( $params, $node ){
+            global $FUNCS;
+            if( count($node->children) ) {die("ERROR: Tag \"".$node->name."\" is a self closing tag");}
+
+            extract( $FUNCS->get_named_vars(
+                        array( 'var'=>'',
+                              ),
+                        $params)
+                   );
+
+            return ( is_array($var) ) ? count($var) : '';
+        }
+
         function func( $params, $node ){
             global $FUNCS, $CTX;
 

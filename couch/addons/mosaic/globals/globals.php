@@ -9,7 +9,7 @@
             if( $AUTH->user->access_level < K_ACCESS_LEVEL_SUPER_ADMIN || defined('K_ADMIN') ){ return; } // nop within admin panel
 
             // check if the current template has an associated globals template..
-            $global_tpl_name = KGlobals::_get_filename( $PAGE->tpl_name ) . '__globals';
+            $global_tpl_name = KGlobals::_get_filename( $PAGE->tpl_name );
             $rs = $DB->select( K_TBL_TEMPLATES, array('*'), "name='" . $DB->sanitize( $global_tpl_name ). "'" );
 
             // .. if not, create one
@@ -34,17 +34,19 @@
             foreach( $children as $child ){
                 if( $child->type==K_NODE_TYPE_CODE ){
                     $child_name = strtolower( $child->name );
-                    if( in_array($child_name, array('editable', 'repeatable', 'mosaic', 'config_form_view', 'func')) ){ //supported tags
+                    if( in_array($child_name, array('editable', 'repeatable', 'mosaic', 'config_form_view', 'func', 'embed')) ){ //supported tags
 
                         // set 'order' according to occurance
-                        $arr_tmp = array();
-                        foreach( $child->attributes as $child_attr ){
-                            if( $child_attr['name']!='order' ){
-                                $arr_tmp[] = $child_attr;
+                        if( $child_name=='editable' || $child_name=='repeatable' || $child_name=='mosaic' ){
+                            $arr_tmp = array();
+                            foreach( $child->attributes as $child_attr ){
+                                if( $child_attr['name']!='order' ){
+                                    $arr_tmp[] = $child_attr;
+                                }
                             }
+                            $arr_tmp[] = array( 'name'=>'order', 'op'=>'=', 'quote_type'=>"'", 'value'=>$order++, 'value_type'=>K_VAL_TYPE_LITERAL);
+                            $child->attributes = $arr_tmp;
                         }
-                        $arr_tmp[] = array( 'name'=>'order', 'op'=>'=', 'quote_type'=>"'", 'value'=>$order++, 'value_type'=>K_VAL_TYPE_LITERAL);
-                        $child->attributes = $arr_tmp;
 
                         $child->get_HTML();
                     }
@@ -78,7 +80,7 @@
                     // use the current template
                     $masterpage = $PAGE->tpl_name;
                 }
-                $global_tpl_name = KGlobals::_get_filename( $masterpage ) . '__globals';
+                $global_tpl_name = KGlobals::_get_filename( $masterpage );
 
                 // delegate to cms:get_field
                 $params = array();
@@ -102,7 +104,7 @@
                 // use the current template
                 $masterpage = $PAGE->tpl_name;
             }
-            $global_tpl_name = KGlobals::_get_filename( $masterpage ) . '__globals';
+            $global_tpl_name = KGlobals::_get_filename( $masterpage );
 
             $pg = new KWebpage( $global_tpl_name );
             if( $pg->error ) return;
@@ -121,17 +123,14 @@
             return $html;
         }
 
-        static function _get_filename( $path ){
-            global $FUNCS;
-
-            $path_parts = $FUNCS->pathinfo( $path );
-            return $path_parts['filename'];
+        static function _get_filename( $tpl ){
+            return  $tpl . '__globals';
         }
 
         static function _delete_template( $tpl ){
             global $DB, $FUNCS;
 
-            $global_tpl_name = KGlobals::_get_filename( $tpl ) . '__globals';
+            $global_tpl_name = KGlobals::_get_filename( $tpl );
             $DB->update( K_TBL_TEMPLATES, array('deleted'=>1), "name='" . $DB->sanitize( $global_tpl_name ). "'" );
 
             // signal to GC (can piggyback on existing gc logic of mosaic)
@@ -167,7 +166,7 @@
             if( is_object($route) && $route->module=='pages' ){
 
                 if( $PAGE->tpl_has_globals && $PAGE->tpl_is_clonable ){ // if template is clonable and has globals, add the new button to toolbar
-                    $global_tpl_name = KGlobals::_get_filename( $PAGE->tpl_name ) . '__globals';
+                    $global_tpl_name = KGlobals::_get_filename( $PAGE->tpl_name );
                     $link = $FUNCS->generate_route( $PAGE->tpl_name, 'edit_globals', array('nonce'=>$FUNCS->create_nonce('edit_globals_'.$global_tpl_name)) );
 
                     $arr_actions['btn_manage_globals'] =

@@ -263,6 +263,24 @@
         $_sql = "ALTER TABLE `".K_TBL_FIELDS."` ADD `not_active` text;";
         $DB->_query( $_sql );
     }
+    // upgrade to 2.2RC1
+    if( version_compare("2.2RC1", $_ver, ">") ){
+        $__fix_globals = function(){
+            global $FUNCS, $DB;
+
+            $rs = $DB->select( K_TBL_TEMPLATES, array('name'), 'has_globals=1' );
+            if( count($rs) ){
+                foreach( $rs as $rec ){
+                    $pi = $FUNCS->pathinfo( $rec['name'] );
+                    $old_name = $pi['filename'] . '__globals';
+                    $new_name = $rec['name'] . '__globals';
+
+                    $rs2 = $DB->update( K_TBL_TEMPLATES, array('name'=>$new_name), "name='" . $DB->sanitize( $old_name ). "'" );
+                }
+            }
+        };
+        $__fix_globals();
+    }
 
     // Finally update version number
     $_rs = $DB->update( K_TBL_SETTINGS, array('k_value'=>K_COUCH_VERSION), "k_key='k_couch_version'" );

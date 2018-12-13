@@ -67,7 +67,7 @@
         static function resolve_page( $route, $act ){
             global $FUNCS, $DB, $PAGE, $CTX;
 
-            $global_tpl_name = KGlobals::_get_filename( $route->masterpage ) . '__globals';
+            $global_tpl_name = KGlobals::_get_filename( $route->masterpage );
             $rs = $DB->select( K_TBL_TEMPLATES, array('*'), "name='" . $DB->sanitize( $global_tpl_name ). "'" );
             if( !count($rs) ){
                 return $FUNCS->raise_error( ROUTE_NOT_FOUND );
