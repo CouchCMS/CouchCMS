@@ -42,16 +42,15 @@
         error_reporting(E_ALL & ~E_NOTICE); // Report all errors except notices
     }
     // Since PHP 5.1.0 every call to a date/time function generates a E_NOTICE if the timezone isn't valid,
-    if( version_compare( phpversion(), '5.1.0', '>=' ) ){
-        date_default_timezone_set("America/New_York");
+    if( !ini_get('date.timezone') || !date_default_timezone_set(ini_get('date.timezone')) ){
+        date_default_timezone_set( "America/New_York" );
     }
-
 
 
     if( !defined('K_COUCH_DIR') ) die(); // cannot be loaded directly
 
     define( 'K_COUCH_VERSION', '2.2RC1' ); // Changes with every release
-    define( 'K_COUCH_BUILD', '20181213' ); // YYYYMMDD - do -
+    define( 'K_COUCH_BUILD', '20190113' ); // YYYYMMDD - do -
 
     if( file_exists(K_COUCH_DIR.'config.php') ){
         require_once( K_COUCH_DIR.'config.php' );

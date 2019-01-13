@@ -345,7 +345,7 @@
         // Used primarily for display on front-end (by feeding the content of this field into $CTX ) but is
         // also used by _render() of built-in fields to render the field in admin panel.
         function get_data(){
-            global $Config;
+            global $Config, $CTX;
 
             if( !$this->data ){
                 // make sure it is not numeric 0
@@ -370,6 +370,16 @@
                         $domain_prefix = $Config['k_append_url'] . $Config['UserFilesPath'] . $folder . '/';
                         $data = $domain_prefix . $data;
                     }
+                }
+                elseif( $this->k_type=='checkbox' ){
+                    $arr_data = array();
+                    if( strlen($data) ){
+                        $sep = ( $this->k_separator ) ? $this->k_separator : '|';
+                        $arr_data = array_map( function($item)use($sep){
+                            return trim( str_replace( '\\'.$sep, $sep, $item ) ); //unescape separator
+                        }, preg_split( "/(?<!\\\)".preg_quote($sep, '/')."/", $data ) );
+                    }
+                    $CTX->set( '__'.$this->name, $arr_data );
                 }
             }
 

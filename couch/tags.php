@@ -2849,7 +2849,7 @@
                     return $html;
                 }
                 else{
-                    $sql .= ' ORDER BY ' . $order_sql;
+                    if( strlen($order_sql) ) $sql .= ' ORDER BY ' . $order_sql;
                     $sql .= ' LIMIT ' . $limit_sql;
                     $rs = $DB->select( $query_table, $query_fields, $sql, $distinct );
                 }

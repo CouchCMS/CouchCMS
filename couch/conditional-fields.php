@@ -93,15 +93,34 @@ $(function(){
         }
 
         // wire up each control field to respond to change
+        var tblsx = [];
         $.each(dependencies.control_fields, function(key, val){
             if(val.obj){
                 val.obj.on( "change", processor);
+                if( val.dependents ){
+                    var tbls = [];
+                    $.each(val.dependents, function(name){
+                        if(name.indexOf(":")!=-1){ //nested
+                            var arr = name.split(':');
+                            if($.inArray(arr[0], tbls)==-1){
+                                tbls.push(arr[0]);
+                                $( "table#"+arr[0]+" tbody" ).on('_insert', function(e, row){
+                                    val.obj.trigger('change');
+                                });
+                            }
+                        }
+                    });
+                }
+
                 val.obj.trigger('change');
             }
             else{
                 // repeatable fields
                 key = key.split(':');
-                $( "table#"+key[0] ).on( "change", {rr:1}, processor);
+                if($.inArray(key[0], tblsx)==-1){
+                    tblsx.push(key[0]);
+                    $( "table#"+key[0] ).on( "change", {rr:1}, processor);
+                }
 
                 var arr_row_ids = $form.find('#_'+key[0]+'_sortorder').val().split(',');
                 refresh( key[0], key[1], arr_row_ids);
