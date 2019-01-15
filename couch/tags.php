@@ -282,7 +282,7 @@
                     $pg = $cache[$key];
                 }
                 else{
-                    if( $page ){
+                    if( $page!=='' ){
                         $pg = new KWebpage( $masterpage, 0, $page );
                     }
                     elseif( $id ){
