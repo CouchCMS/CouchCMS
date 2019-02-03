@@ -856,7 +856,7 @@
             $arr_opts = $CART->_parse_options( $CTX->get('pp_options') );
 
             // Return if only count asked for
-            if( $count_only ) return count( $arr_options );
+            if( $count_only ) return count( $arr_opts );
 
             if( count($arr_opts) ){
                 for($y=0; $y<count($arr_opts); $y++){ // create a dropdown for each set of options
