@@ -8,7 +8,7 @@
 .rr tr.even { background-color: #F3F9FE; } /*#f5f5f5*/
 .rr tr.even td{ background-color: transparent; }
 .rr tr:hover td { background: #FFFFE0 }
-.rr thead tr:hover td { background: url(th-bg.png) repeat-x 0 0; }
+.rr thead tr:hover td { background: url(th-bg.png) repeat-x 0 100%; }
 .rr td { border-top: 1px solid #fff; padding: 6px 8px; vertical-align:top }
 .rr th:first-child { -moz-border-radius: 5px 0 0; border-radius: 5px 0 0 }
 .rr th:last-child { -moz-border-radius: 0 5px 0 0; border-radius: 0 5px 0 0 }
