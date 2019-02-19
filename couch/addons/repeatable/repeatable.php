@@ -137,9 +137,10 @@
                         $arr_deleted[] = $cells[$x];
                     }
                 }
+
+                // preserve  the deleted columns in schema (just mark them as deleted)
+                if( count($arr_deleted) ) $schema = array_merge( $arr_deleted, $schema );
             }
-            // preserve  the deleted columns in schema (just mark them as deleted)
-            if( count($arr_deleted) ) $schema = array_merge( $arr_deleted, $schema );
 
             // create an editable region of type 'repeatable' with data of constituent fields as its custom_param
             $custom_params = $FUNCS->serialize( $schema );

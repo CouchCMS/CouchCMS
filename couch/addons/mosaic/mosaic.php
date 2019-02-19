@@ -198,6 +198,7 @@
 
                 if( $obj ){
                     $rows = $obj['ids'];
+                    if( !count($rows) ){ return; }
                     $tiles = $obj['tiles'];
 
                     if( $order=='desc' ){ $rows = array_reverse($rows); }

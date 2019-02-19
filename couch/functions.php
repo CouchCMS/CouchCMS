@@ -201,7 +201,7 @@
                             $s .= "'" . addslashes( $attr['value'] ) . "'";
                             break;
                         case K_VAL_TYPE_VARIABLE:
-                            $s .= "'" . addslashes( $CTX->get($attr['value']) ) . "'";
+                            $s .= "'" . @addslashes( $CTX->get($attr['value']) ) . "'";
                             break;
                         case K_VAL_TYPE_SPECIAL:
                             $s .= "'" . addslashes( $attr['value']->get_HTML() ) . "'";

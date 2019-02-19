@@ -426,37 +426,39 @@
 
                 }
 
-                $cnt_arr = count($arr_vars);
-                $CTX->set( 'k_total_items', $cnt_arr );
-                $children = $node->children;
+                if( is_array($arr_vars) ){
+                    $cnt_arr = count($arr_vars);
+                    $CTX->set( 'k_total_items', $cnt_arr );
+                    $children = $node->children;
 
-                for( $x=0; $x<count($arr_vars); $x++ ){
-                    $CTX->set( 'k_count', $x + $startcount );
-                    $CTX->set( 'k_first_item', ($x==0) ? '1' : '0' );
-                    $CTX->set( 'k_last_item', ($x==$cnt_arr-1) ? '1' : '0' );
-                    $CTX->set( $key, $x );
-                    if( $use_preg ){
-                        $CTX->set( $as, str_replace( '\\'.$sep, $sep, $arr_vars[$x] ) ); //unescape separator
-                    }
-                    else{
-                        $CTX->set( $as, $arr_vars[$x] );
-                    }
+                    for( $x=0; $x<count($arr_vars); $x++ ){
+                        $CTX->set( 'k_count', $x + $startcount );
+                        $CTX->set( 'k_first_item', ($x==0) ? '1' : '0' );
+                        $CTX->set( 'k_last_item', ($x==$cnt_arr-1) ? '1' : '0' );
+                        $CTX->set( $key, $x );
+                        if( $use_preg ){
+                            $CTX->set( $as, str_replace( '\\'.$sep, $sep, $arr_vars[$x] ) ); //unescape separator
+                        }
+                        else{
+                            $CTX->set( $as, $arr_vars[$x] );
+                        }
 
-                    // setup a way for the child nodes to signal 'break' or 'continue'
-                    $arr_config = array( 'break'=>0, 'continue'=>0 );
-                    $CTX->set_object( '__config', $arr_config );
+                        // setup a way for the child nodes to signal 'break' or 'continue'
+                        $arr_config = array( 'break'=>0, 'continue'=>0 );
+                        $CTX->set_object( '__config', $arr_config );
 
-                    // HOOK: each_alter_ctx_xxx
-                    if( $token ){
-                        $FUNCS->dispatch_event( 'each_alter_ctx_'.$token, array($x /*key*/, $arr_vars[$x] /*value*/, $params, $node) );
-                    }
+                        // HOOK: each_alter_ctx_xxx
+                        if( $token ){
+                            $FUNCS->dispatch_event( 'each_alter_ctx_'.$token, array($x /*key*/, $arr_vars[$x] /*value*/, $params, $node) );
+                        }
 
-                    foreach( $children as $child ){
-                        $html .= $child->get_HTML();
+                        foreach( $children as $child ){
+                            $html .= $child->get_HTML();
 
-                        if( $child->type==K_NODE_TYPE_CODE){
-                            if( $arr_config['break'] ){ $count++; break 2; }
-                            if( $arr_config['continue'] ){ $count++; continue 2; }
+                            if( $child->type==K_NODE_TYPE_CODE){
+                                if( $arr_config['break'] ){ $count++; break 2; }
+                                if( $arr_config['continue'] ){ $count++; continue 2; }
+                            }
                         }
                     }
                 }
@@ -1420,12 +1422,9 @@
                 die( "ERROR: Tag \"".$node->name."\": 'name' attribute ({$name}) contains invalid characters. (Only lowercase[a-z], numerals[0-9], hyphen and underscore permitted.)" );
             }
             $found = 0;
-            for( $x=0; $x<count($PAGE->fields); $x++ ){
-                $field = &$PAGE->fields[$x];
-                if( strtoupper($field->name) == strtoupper($name) ){
-                    $found = 1;
-                    break;
-                }
+            if( isset($PAGE->_fields[$name]) ){
+                $found = 1;
+                $field = $PAGE->_fields[$name];
             }
 
             // if type 'group' used as a tag-pair, find all immediate child editable regions and set this as their parent
@@ -1687,6 +1686,7 @@
                     }
                     $f->processed = 1;
                     $PAGE->fields[] = $f;
+                    $PAGE->_fields[$attr['name']] = $f;
 
                     // ** Following portion of the code can cause the script to timeout if there are too many existing pages to add the data fields to **
 
@@ -6556,14 +6556,14 @@ MAP;
             global $FUNCS;
 
             if( count($node->children) ) {die("ERROR: Tag \"".$node->name."\" is a self closing tag");}
-            return $FUNCS->strlen( trim(strip_tags($params[0]['rhs'])) ) ? 1 : 0;
+            return $FUNCS->strlen( trim(@strip_tags($params[0]['rhs'])) ) ? 1 : 0;
         }
 
         function strlen( $params, $node ){
             global $FUNCS;
 
             if( count($node->children) ) {die("ERROR: Tag \"".$node->name."\" is a self closing tag");}
-            return $FUNCS->strlen( trim($params[0]['rhs']) );
+            return $FUNCS->strlen( @trim($params[0]['rhs']) );
         }
 
         function trim( $params, $node ){
