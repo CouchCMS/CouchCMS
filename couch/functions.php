@@ -185,7 +185,7 @@
             $s="";
             foreach( $attributes as $attr ){
                 if( isset($attr['name']) ){
-                    $s .= "'" . addslashes($CTX->get( $attr['name'] )) . "'";
+                    $s .= "'" . @addslashes($CTX->get( $attr['name'] )) . "'";
                 }
                 if( isset($attr['op']) ){
                     $op = $attr['op'];
