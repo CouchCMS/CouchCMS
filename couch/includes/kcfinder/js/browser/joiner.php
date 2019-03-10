@@ -16,11 +16,21 @@ chdir(".."); // For compatibality
 chdir("..");
 require "lib/helper_httpCache.php";
 require "lib/helper_dir.php";
-$files = dir::content("js/browser", array(
+/*$files = dir::content("js/browser", array(
     'types' => "file",
     'pattern' => '/^.*\.js$/'
-));
-
+));*/
+$files = array(
+    'js/browser/_0bject.js',
+    'js/browser/clipboard.js',
+    'js/browser/dropUpload.js',
+    'js/browser/files.js',
+    'js/browser/folders.js',
+    'js/browser/init.js',
+    'js/browser/misc.js',
+    'js/browser/settings.js',
+    'js/browser/toolbar.js',
+);
 foreach ($files as $file) {
     $fmtime = filemtime($file);
     if (!isset($mtime) || ($fmtime > $mtime))
