@@ -90,12 +90,14 @@
                         array(
                               'name'=>'',
                               'label'=>'',
+                              'auto_order'=>'1',
                               ),
                         $params)
                    );
             $name = trim( $name );
             if( !$name ){ die("ERROR: Tag \"".$node->name."\" needs a 'name' attribute"); }
             $label = trim( $label );
+            $auto_order = ( $auto_order==0 ) ? 0 : 1;
 
             // find associated template
             if( array_key_exists($name, $arr_config['orig_schema']) ){
@@ -141,8 +143,8 @@
                     $child_name = strtolower( $child->name );
                     if( in_array($child_name, array('editable', 'repeatable', 'config_list_view', 'config_form_view', 'func', 'embed')) ){ //supported tags
 
-                        // set 'order' according to occurance
-                        if( $child_name=='editable' || $child_name=='repeatable' ){
+                        // set 'order' according to occurance (if not explicitly forbidden)
+                        if( $auto_order && ($child_name=='editable' || $child_name=='repeatable') ){
                             $arr_tmp = array();
                             foreach( $child->attributes as $child_attr ){
                                 if( $child_attr['name']!='order' ){
