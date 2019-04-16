@@ -207,6 +207,8 @@
                  'onhashchange', 'onmessage', 'onoffline', 'ononline', 'onpagehide', 'onpageshow', 'onpopstate', 'onstorage', 'onundo', 'onredo',
                  'oninvalid', 'onsearch', 'onwheel', 'oncanplay', 'oncuechange', 'ondurationchange', 'onemptied', 'onplay', 'onratechange',
                  'onstalled', 'onsuspend', 'ontimeupdate', 'onvolumechange', 'onwaiting', 'onshow', 'ontoggle',
+                 'onanimation', 'onauxclick', 'onfullscreen', 'ongotpointercapture', 'onlostpointercapture', 'onpointer', 'onorientationchange',
+                 'ontouch', 'ontransition', 'onvisibilitychange', 'onwebkit', 'onmoz',
                  );
 
             for( $i = 0; $i < count($ra2); $i++ ){
