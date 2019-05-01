@@ -900,7 +900,22 @@
                     }
                 }
                 else{
-                    $strlen = strlen( utf8_decode($str_utf) );
+                    if( function_exists('utf8_decode') ){
+                        $strlen = strlen( utf8_decode($str_utf) );
+                    }
+                    else{
+                        // adapted from Symfony Polyfill (https://github.com/symfony/polyfill)
+                        $ulen_mask = array( "\xC0" => 2, "\xD0" => 2, "\xE0" => 3, "\xF0" => 4 );
+                        $i = $j = 0;
+                        $len = strlen( $str_utf );
+                        while( $i < $len ){
+                            $u = $str_utf[$i] & "\xF0";
+                            $i += isset($ulen_mask[$u]) ? $ulen_mask[$u] : 1;
+                            ++$j;
+                        }
+                        $strlen = $j;
+                    }
+
                     if( $count < $strlen ){
                         $pattern = '#^(.{'.$count.'})#us';
                         @preg_match( $pattern, $str_utf, $matches );
