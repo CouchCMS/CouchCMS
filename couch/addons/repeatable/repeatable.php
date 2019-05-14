@@ -75,7 +75,7 @@
                         $attr = $FUNCS->get_named_vars( array('type'=>'', 'name'=>''), $child_params );
                         $child_type = strtolower( trim($attr['type']) );
                         if( $FUNCS->is_core_type($child_type) ){
-                            if( in_array($child_type, array('thumbnail', 'hidden', 'message', 'group')) ){ //unsupported types
+                            if( in_array($child_type, array('thumbnail', 'hidden', 'group')) ){ //unsupported types
                                 continue;
                             }
                         }
@@ -165,6 +165,7 @@
                            'as_json'=>'0',
                            'into'=>'',
                            'scope'=>'',
+                           'token'=>'',
                     ),
                 $params)
             );
@@ -178,6 +179,7 @@
             $as_json = ( $as_json==1 ) ? 1 : 0;
             $into = trim( $into );
             $scope = strtolower( trim($scope) );
+            $token = trim( $token );
 
             if( $var ){
                 // get the data array from CTX
@@ -220,6 +222,11 @@
                             $pg = new StdClass(); /* a dummy container for fields */
                             $pg->fields = $cells;
                             $CTX->set_object( 'k_bound_page', $pg );
+                        }
+
+                        // HOOK: rr_alter_ctx_xxx
+                        if( $token ){
+                            $FUNCS->dispatch_event( 'rr_alter_ctx_'.$token, array($params, $node) );
                         }
 
                         // and call the children providing each row's data

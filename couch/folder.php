@@ -1541,7 +1541,7 @@
                 $arr_vars['k_'.$label.'_is_collapsed'] = $f->collapsed;
                 $arr_vars['k_'.$label.'_data'] = $f->get_data( 1 );
                 $arr_vars['k_'.$label.'_definition'] = $FUNCS->escape_HTML( $f->_html );
-                $arr_vars['k_'.$label.'_err_msg'] = $CTX->get( 'k_error_'.$f->name );
+                $arr_vars['k_'.$label.'_err_msg'] = $f->err_msg;
                 if($f->system){
                     $arr_vars['k_'.$label.'_wrapper_id'] = $f->name;
                 }

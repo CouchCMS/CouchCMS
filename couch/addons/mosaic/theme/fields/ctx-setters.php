@@ -46,7 +46,7 @@
                             $formatted_date .= "@$h:$m";
                         }
                     }
-                    
+
                     if( $f->only_time ){
                         $h = substr( $date, 11, 2 );
                         $m = substr( $date, 14, 2 );
@@ -60,7 +60,7 @@
                             $formatted_date = "$h:$m";
                         }
                     }
-                    
+
                     $CTX->set( 'k_date_formatted', $formatted_date );
                 }
             }
