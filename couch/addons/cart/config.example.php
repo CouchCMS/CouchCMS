@@ -5,12 +5,43 @@
     // /////////////////////////////////// Core config values ////////////////////////////////////////////
     $pp['tpl_cart'] = 'cart.php';
     $pp['tpl_checkout'] = 'checkout.php';
-    $pp['paypal_use_sandbox'] = 0;
-    $pp['paypal_email'] = '';
     $pp['currency'] = 'USD';
     $pp['currency_symbol'] = '$';
     $pp['allow_decimal_qty'] = 0;
+    $pp['gateway'] = 'payeezy'; // gateway name, default 'paypal'. Possible values: 'paypal', 'payeezy'
 
+    ////////////////////////////////////// PayPal config values /////////////////////////////////////////
+    // used only for PayPal gateway
+    $pp['paypal_use_sandbox'] = 0;
+    $pp['paypal_email'] = '';
+
+    ////////////////////////////////////// Payeezy config values ////////////////////////////////////////
+    // used only for payeezy gateway
+    $pp['payeezy_trans_key'] = 'my_trans_key';
+    $pp['payeezy_login'] = 'WSP-123456789'; // the payment page id from Payeezy Gateway Payment Pages interface
+    $pp['payeezy_gateway_id'] = ''; // If the payment page is set up to use all terminals, this value must be given to specify the desired terminal
+/*
+ Instructions for Payeezy Gateway
+*/
+// Set $pp['gateway'] in 'Core config values' above to 'payeezy'
+// Set 'payeezy_trans_id' and 'payeezy_login' in the Payeezy config values section above
+// Set 'payeezy_gateway_id' to the correct gateway id (only necessary if you have set up your payment page to use all terminals)
+
+// When using payeezy gateway, you must use a 'checkout.php' page. It is not optional, as it is for PayPal gateway
+// This is because checkout.php needs to calculate a security hash that is submitted, via POST, to the payeezy gateway. This authenticates
+// the transaction AND prevents users from altering the form values (specifcally the total amount to charge).
+//
+// For Payeezy gateway, the same 'pp_payment_gateway' cart tag is used. This tag will be replaced by the form with the hidden variables
+//  needed by Payeezy NOTE THAT THEN FORM TAGS ARE ALSO GENERATED. This differs from the behavior when used for PayPal gateway.
+// The generated html includes, or course, the submit button.  If you want to supply your own button html, pass that as a parameter (see below).
+/*
+ The possible parameters for couch cart tag pp_payment_gateway when using Payeezy gateway are:
+*/
+// shipping_address: 0= address not required, 1=get address at Payeezy site, 2=get address from session
+// relay_response: If TRUE (case-sensitive), Payeezy posts info to merchant's server, then displays html response to customer. You can leave empty for FALSE.
+// button_html: html to display submit button. The default is: <div class="check-box"><input name="payeezy-submit" class="button checkout-button"
+//     type="submit" value="Continue to Payment" /></div>
+// empty_cart: same as when using PayPal gateway
 
     /////////////////////////////////////// Custom config values ////////////////////////////////////////
     $pp['tpl_ajax_cart'] = 'cart-modal.php';

@@ -88,6 +88,7 @@
             $FUNCS->register_tag( 'pp_cart_items', array('KCart', 'cart_items_handler'), 1, 1 ); // iterates through line-items in the cart
             $FUNCS->register_tag( 'pp_selected_options', array('KCart', 'selected_options_handler'), 1, 1 ); // creates list of options selected for a line_item
             $FUNCS->register_tag( 'pp_payment_gateway', array('KCart', 'gateway_handler') );
+//            $FUNCS->register_tag( 'pp_payeezy_form', array('KCart', 'payeezy_handler') );
 
             $FUNCS->register_tag( 'pp_count_items', array('KCart', 'cart_vars_handler'), 0, 0 );
             $FUNCS->register_tag( 'pp_count_unique_items', array('KCart', 'cart_vars_handler'), 0, 0 );
@@ -673,6 +674,12 @@
         }
 
         function payment_gateway( $params ){ // Used by cms:pp_payment_gateway tag
+	    if ($this->get_config('gateway') == 'paypal') return $this->paypal_gateway($params);
+	    else if ($this->get_config('gateway') == 'payeezy') return $this->payeezy_gateway($params);
+	    else die("ERROR: required cart config 'gateway' setting not recognized");
+	}
+
+	function paypal_gateway($params) {
             global $FUNCS, $KSESSION;
 
             extract( $FUNCS->get_named_vars(
@@ -698,6 +705,7 @@
             // get to work
             $items = $this->items;
             if( is_array($items) ){
+
 
                 // general info
                 if( $this->get_config('paypal_use_sandbox') ){
@@ -782,6 +790,100 @@
                 header( 'Location: ' . $paypal_url . $qs );
             }
 
+        }
+        function payeezy_gateway( $params ) {
+            global $FUNCS, $KSESSION;
+            extract( $FUNCS->get_named_vars(
+                        array(
+			'shipping_address'=>'1', /* 1=get address at Payeezy site, 2=get address from session */
+                              'relay_response'=>'', // if set, must be TRUE (uppercase). Payeezy gateway posts info to server, then displays html response to customer.
+                              'button_html' => '',
+                              'empty_cart'=>'1'
+                              ),
+                        $params)
+                   );
+              if (!$this->get_config('payeezy_login') or !$this->get_config('payeezy_trans_key')) {die("ERROR: cart config file settings 'payeezy_login' and 'payeezy_trans_key' are required");}
+            if( $shipping_address!=1 && $shipping_address!=2 ) $shipping_address=0;
+// The following values are set in the Payeezy payment pages configuration
+//            $logo = trim( $logo );
+//            $return_url = trim( $return_url );
+//            $cancel_url = trim( $cancel_url );
+            if( $empty_cart!=0 ) $empty_cart=1;
+            // get to work
+            $items = $this->items;
+            if( is_array($items) ) {
+		$html = "";
+                // general info
+                $seq = rand(1,99999);
+		$tstamp = time();
+		$pzhash = hash_hmac("sha1",$this->get_config('payeezy_login') . '^' . $seq . '^' . $tstamp . '^' . number_format($this->total,2,'.','') . '^' . $this->get_config('currency'), $this->get_config('payeezy_trans_key'));
+		$html = "<form method='post' action='https://checkout.globalgatewaye4.firstdata.com/payment' name='payeezyform' id='payeezyform' anchor='0'>\n";
+		$html .= "<input type='hidden' name='x_login' id='x_login' value='" . $this->get_config('payeezy_login') . "' />\n";
+		$html .= "<input type='hidden' name='x_fp_sequence' id='x_fp_sequence' value='$seq' />\n";
+		$html .= "<input type='hidden' name='x_fp_timestamp' id='x_fp_timestamp' value='$tstamp' />\n";
+		$html .= "<input type='hidden' name='x_fp_hash' id='x_fp_hash' value='$pzhash' />\n";
+		$html .= "<input type='hidden' name='x_currency_code' value='" . $this->get_config('currency') . "'/>\n";
+		$html .= "<input type='hidden' name='x_show_form' value='PAYMENT_FORM' />\n";
+		$html .= "<input type='hidden' name='x_amount' id='x_amount' value='" . number_format($this->total,2,'.','') . "' />\n";
+		if ($this->get_config('payeezy_gateway_id')) {
+			$html .= "<input type='hidden' name='x_gateway_id' value='" . $this->get_config('payeezy_gateway_id') . "'/>\n";
+		}
+		if( $KSESSION->get_var('contact_email') ) {
+			$html .= "<input type='hidden' name='x_reference_3' id='x_reference_3' value='" . $KSESSION->get_var('contact_email') . "' />\n";
+		}
+                // add items
+                $item_count = 1;
+                foreach( $items as $item ) {
+			$desc = $item['title'];
+			foreach($item['options'] as $k=>$v) {
+				$desc .= ", $k: $v";
+			}
+			$awork = array ($item['id'],$desc,$desc,$item['quantity'],number_format($item['price'],2,'.',''),"","","","","","","","","",sprintf("%.2f", $item['quantity'] * $item['price']));
+			$html .= "<input type='hidden' name='x_line_item' value='" . implode('<|>',$awork) . "' />\n";
+		}
+						
+                // discount
+                if( $this->discount ){ // On complete cart. Will override per item discounts, if any
+			$html .= "<input type='hidden' name='discount_amount' id='discount_amount' value='" . $this->discount . "' />\n";
+                }
+
+                // shipping
+                if( $this->shipping ){ //and shipping amount is non-zero x_freight
+			$html .= "<input type='hidden' name='x_freight' id='x_freight' value='" . $this->shipping . "' />\n";
+                }
+
+                // shipping address
+                if( $shipping_address==2 ){
+                    // pass captured address to payeezy
+                    $html .= "<input type='hidden' name='x_ship_to_first_name' id='x_ship_to_first_name' value='" . substr($KSESSION->get_var('shipping_first_name'), 0, 25) . "' />\n";
+                    $html .= "<input type='hidden' name='x_ship_to_last_name' id='x_ship_to_last_name' value='" . substr($KSESSION->get_var('shipping_last_name'), 0, 25) . "' />\n";
+                    $html .= "<input type='hidden' name='x_ship_to_address' id='x_ship_to_address' value='" . substr($KSESSION->get_var('shipping_address1'), 0, 100) . "/n" . substr($KSESSION->get_var('shipping_address2'), 0, 100) . "' />\n";
+                    $html .= "<input type='hidden' name='x_ship_to_city' id='x_ship_to_city' value='" . substr($KSESSION->get_var('shipping_city'), 0, 40) . "' />\n";
+                    $html .= "<input type='hidden' name='x_ship_to_state' id='x_ship_to_state' value='" . $KSESSION->get_var('shipping_state_code') . "' />\n";
+                    $html .= "<input type='hidden' name='x_ship_to_country' id='x_ship_to_country' value='" . $KSESSION->get_var('shipping_country_code') . "' />\n";
+                    $html .= "<input type='hidden' name='x_ship_to_zip' id='x_ship_to_zip' value='" . substr($KSESSION->get_var('shipping_zip'), 0, 32) . "' />\n";
+                }
+
+                // taxes
+                if( $this->taxes ){ // On complete cart. Will override per item taxes, if any
+			$html .= "<input type='hidden' name='x_tax' id='x_tax' value='" . $this->taxes . "' />\n";
+			$html .= "<input type='hidden' name='x_tax_exempt' id='x_tax_exempt' value='FALSE' />\n";
+		} else {
+			$html .= "<input type='hidden' name='x_tax_exempt' id='x_tax_exempt' value='TRUE' />\n";
+		}
+		if ($button_html) $html .= $button_html;
+		else {
+			$html .= '<div class="checkout-box">
+<input name="payeezy-submit" class="button checkout-button" type="submit" value="Continue to Payment" />
+</div>';
+		}
+                $html .= '</form>';
+                if( $empty_cart ){
+                    $this->items = array();
+                    $this->serialize();
+                }
+                return $html;
+            }
         }
 
         ///////////////////////////////////////////// tag handlers//////////////
@@ -1145,7 +1247,6 @@
 
             return $CART->payment_gateway( $params );
         }
-
     } // end class
 
     if( file_exists(K_ADDONS_DIR.'cart/cart_ex.php') ){
