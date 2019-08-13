@@ -281,6 +281,11 @@
         };
         $__fix_globals();
     }
+    // upgrade to 2.2.1
+    if( version_compare("2.2.1", $_ver, ">") ){
+        $_sql = "ALTER TABLE `".K_TBL_FIELDS."` MODIFY `custom_params` mediumtext;";
+        $DB->_query( $_sql );
+    }
 
     // Finally update version number
     $_rs = $DB->update( K_TBL_SETTINGS, array('k_value'=>K_COUCH_VERSION), "k_key='k_couch_version'" );

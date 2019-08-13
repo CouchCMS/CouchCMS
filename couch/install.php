@@ -136,7 +136,7 @@
       disable_uploader  int(1) DEFAULT '0',
       _html             text COMMENT 'Internal',
       dynamic           text,
-      custom_params     text,
+      custom_params     mediumtext,
       searchable        int(1) DEFAULT '1',
       class             tinytext,
       not_active        text,

@@ -175,3 +175,19 @@
 
         // 99c. Footer content (Company name and link)
         //define( 'K_ADMIN_FOOTER', '<a href="http://www.yourcompany.com">COMPANY NAME</a>' );
+
+    // 100.
+    // VERY IMPORTANT!
+    // If you wish to use this software under the free open source license, it is mandatory to have an attribution link
+    // on all pages rendered by the software. By default, a footer link will be automatically added if you do not
+    // have a commercial license for the site this file is being used on.
+    //
+    // Set the following to '1' if you want to prevent the link from being automatically added.
+    // You are, however, then REQUIRED to manually add the following link in the output of all pages rendered by this software.
+    // You are free to style the link in any manner so long as it remains legible and unobscured.
+    //
+    // <div id="copyright">Powered by
+    // <a href="https://www.couchcms.com/" title="CouchCMS - Simple Open-Source Content Management">CouchCMS</a></div>
+    //
+    // Failing to do so will constitute a violation of the CPAL license this software is provided under.
+    define( 'K_REMOVE_FOOTER_LINK', 0 );
