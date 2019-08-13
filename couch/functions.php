@@ -4037,7 +4037,7 @@ OUT;
 
         }
 
-        function generate_route( $masterpage, $name, $values=array() ){
+        function generate_route( $masterpage, $name, $values=array(), $qs='' ){
             $masterpage = trim( $masterpage );
             $name = trim( $name );
 
@@ -4052,6 +4052,7 @@ OUT;
             $q = $route->generate( $values );
             $link = K_ADMIN_URL . K_ADMIN_PAGE . "?o=".urlencode($masterpage);
             if( strlen($q) ){ $link .= '&q=' . $q; }
+            if( strlen($qs) ){ $link .= '&' . $qs; }
 
             return $link;
         }

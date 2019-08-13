@@ -62,7 +62,7 @@
             $this->hasher = new PasswordHash(8, TRUE);
 
             $cookie_path = '/';
-            if( ($pos = strpos(K_SITE_URL, $_SERVER['HTTP_HOST'])) !==false ){
+            if( !empty($_SERVER['HTTP_HOST']) && (($pos = strpos(K_SITE_URL, $_SERVER['HTTP_HOST'])) !==false) ){
                 $given_site_dir = substr( K_SITE_URL, $pos + strlen($_SERVER['HTTP_HOST']) );
                 if( substr(K_SITE_DIR, -(strlen($given_site_dir))) == $given_site_dir ){
                     $cookie_path = $given_site_dir;

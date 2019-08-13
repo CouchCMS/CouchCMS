@@ -1412,7 +1412,7 @@
                 if( !is_array($this->route['params']) )$this->route['params'] = array();
 
                 if( strlen($this->route['masterpage']) && strlen($this->route['name']) ){
-                    $this->href = $FUNCS->generate_route( $this->route['masterpage'], $this->route['name'], $this->route['params'] );
+                    $this->href = $FUNCS->generate_route( $this->route['masterpage'], $this->route['name'], $this->route['params'], $this->route['qs'] );
                     $this->is_internal_link = 1;
                 }
             }
