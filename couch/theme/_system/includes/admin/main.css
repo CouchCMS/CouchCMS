@@ -270,6 +270,7 @@ div.simple-heading{border-width:0 0 1px 0;margin-top:0;cursor:default;}
 #scroll-sidebar{position:absolute;right:0;bottom:84px;left:0;overflow-y:auto;}
 #nav{padding:0;list-style-type:none;}
 .nav-group>ul{padding-left:0;}
+.nav-group>ul>li{display:block;}
 #nav>li>a,.nav-group>ul>li>a{display:block;position:relative;height:32px;padding:0 15px;color:#aaa;fill:#aaa;font-size:0;font-weight:normal;text-shadow:0 1px 0 rgba(0,0,0,.6);}
 #nav>li>a:hover,#nav>li>a:focus,.nav-group>ul>li>a:hover,.nav-group>ul>li>a:focus{background-color:#1a1a1a;color:#eee;fill:#eee;}
 .nav-active{box-shadow:0 1px 0 rgba(255,255,255,.1) inset,0 1px 0 rgba(0,0,0,.15);}
