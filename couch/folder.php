@@ -363,6 +363,7 @@
                     $CTX->set( 'k_level', $level );
 
                     if( $extended_info ){
+                        $this->children[$x]->set_in_context();
                         $CTX->set( 'k_element_end', 1 ); //e.g. </LI>
                         call_user_func_array( $callback, array(&$this->children[$x], &$param0, &$param1) );
                         $CTX->set( 'k_element_end', 0 );
