@@ -149,6 +149,9 @@
       }
 
       public static function mysql_fetch_array($result,$resulttype=MYSQLI_BOTH){
+            if( $resulttype==MYSQL_ASSOC ){ $resulttype=MYSQLI_ASSOC; }
+            elseif( $resulttype==MYSQL_NUM ){ $resulttype=MYSQLI_NUM; }
+            elseif( $resulttype==MYSQL_BOTH ){ $resulttype=MYSQLI_BOTH; }
 
           return mysqli_fetch_array($result,$resulttype);
 

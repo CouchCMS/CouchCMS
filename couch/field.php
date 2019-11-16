@@ -347,6 +347,8 @@
         function get_data(){
             global $Config, $CTX;
 
+            if( $this->k_type=='message' ){ return $this->default_data; }
+
             if( !$this->data ){
                 // make sure it is not numeric 0
                 $data = ( is_numeric($this->data) ) ? (string)$this->data : $this->default_data;

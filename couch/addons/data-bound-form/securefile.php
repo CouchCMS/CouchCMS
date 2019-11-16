@@ -46,7 +46,7 @@
             // call parent
             parent::__construct( $row, $page, $siblings );
 
-            $this->orig_data = array();
+            $this->orig_data = $this->data = array();
             $this->requires_multipart = 1;
         }
 
