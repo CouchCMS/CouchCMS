@@ -2906,6 +2906,10 @@
             if( $count ){
                 for( $x=0; $x<$count; $x++ ){
                     $rec = $rs[$x];
+
+                    // HOOK: pre_alter_page_tag_context
+                    $FUNCS->dispatch_event( 'pre_alter_page_tag_context', array($rec, $mode, $params, $node, $rec_tpl, $token, $x, $count) );
+
                     if( $mode==2 ){ //Comments
                         $CTX->set( 'k_comment_id', $rec['id'] );
                         $CTX->set( 'k_comment_page_id', $rec['page_id'] );
@@ -3015,6 +3019,9 @@
                     foreach( $node->children as $child ){
                         $html .= $child->get_HTML();
                     }
+
+                    // HOOK: post_alter_page_tag_context
+                    $FUNCS->dispatch_event( 'post_alter_page_tag_context', array($rec, $mode, $params, $node, $rec_tpl, $token, $x, $count) );
                 }
             }
             else{ // find and execute 'no_results' tag
