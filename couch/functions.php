@@ -1876,7 +1876,7 @@
             global $DB, $FUNCS;
 
             //$rs = $DB->select( K_TBL_TEMPLATES, array('name'), 'clonable=1 AND executable=1' );
-            $rs = $DB->select( K_TBL_TEMPLATES, array('name', 'custom_params'), "hidden < 2 and ISNULL(type) || type=''" );
+            $rs = $DB->select( K_TBL_TEMPLATES, array('name', 'custom_params'), "hidden < 2 and (ISNULL(type) || type='')" );
             if( count($rs) ){
                 foreach( $rs as $key=>$val ){
                     $is_index = 0;

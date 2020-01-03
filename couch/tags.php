@@ -1941,7 +1941,7 @@
 
             // query
             if( !$show_hidden ) $sql = 'hidden < 1 and ';
-            $sql .= 'ISNULL(type) || type=\'\' ORDER BY '.$orderby.' '.$order.', id '. $order;
+            $sql .= '(ISNULL(type) || type=\'\') ORDER BY '.$orderby.' '.$order.', id '. $order;
             $rs = $DB->select( K_TBL_TEMPLATES, array('*'), $sql );
             if( count($rs) ){
                 $count = count($rs);
