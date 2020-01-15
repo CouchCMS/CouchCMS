@@ -796,7 +796,7 @@
                 ?>
                     if ( !window.COUCH ) var COUCH = {};
                     $(function(){
-                        $('table.rr tbody').sortable({
+                        $('table.rr > tbody').sortable({
                             axis: "y",
                             handle: ".dg-arrange-table-rows-drag-icon",
                             helper: function (e, ui) { // https://paulund.co.uk/fixed-width-sortable-tables

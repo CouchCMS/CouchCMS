@@ -50,7 +50,7 @@
     if( !defined('K_COUCH_DIR') ) die(); // cannot be loaded directly
 
     define( 'K_COUCH_VERSION', '2.2.1' ); // Changes with every release
-    define( 'K_COUCH_BUILD', '20190417' ); // YYYYMMDD - do -
+    define( 'K_COUCH_BUILD', '20200110' ); // YYYYMMDD - do -
 
     if( file_exists(K_COUCH_DIR.'config.php') ){
         require_once( K_COUCH_DIR.'config.php' );
