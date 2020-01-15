@@ -50,7 +50,7 @@
     if( !defined('K_COUCH_DIR') ) die(); // cannot be loaded directly
 
     define( 'K_COUCH_VERSION', '2.2.1' ); // Changes with every release
-    define( 'K_COUCH_BUILD', '20200110' ); // YYYYMMDD - do -
+    define( 'K_COUCH_BUILD', '20200116' ); // YYYYMMDD - do -
 
     if( file_exists(K_COUCH_DIR.'config.php') ){
         require_once( K_COUCH_DIR.'config.php' );
@@ -214,7 +214,7 @@
         }
         else{
             $path = str_replace( '\\', '/', $_SERVER['DOCUMENT_ROOT'] );
-            if( $path{strlen($path)-1}=='/' ){
+            if( $path[strlen($path)-1]=='/' ){
                 $path = substr( $path, 0, strlen($path)-1);
             }
 
@@ -238,12 +238,12 @@
                     $path = $_SERVER['SCRIPT_NAME'];
                 }
                 $path = str_replace( '\\', '/', trim($path) );
-                if( $path{strlen($path)-1}=='/' ){
+                if( $path[strlen($path)-1]=='/' ){
                     $path = substr( $path, 0, strlen($path)-1);
                 }
 
                 $path2 = str_replace( '\\', '/', realpath('./') );
-                if( $path2{strlen($path2)-1}=='/' ){
+                if( $path2[strlen($path2)-1]=='/' ){
                     $path2 = substr( $path2, 0, strlen($path2)-1);
                 }
 
@@ -298,10 +298,12 @@
     }
     unset( $t );
 
-    if( get_magic_quotes_gpc() ){
-        $_GET = $FUNCS->stripslashes_deep( $_GET );
-        $_POST = $FUNCS->stripslashes_deep( $_POST );
-        $_COOKIE = $FUNCS->stripslashes_deep( $_COOKIE );
+    if( version_compare(phpversion(), "5.4.0", "<") ){
+        if( get_magic_quotes_gpc() ){
+            $_GET = $FUNCS->stripslashes_deep( $_GET );
+            $_POST = $FUNCS->stripslashes_deep( $_POST );
+            $_COOKIE = $FUNCS->stripslashes_deep( $_COOKIE );
+        }
     }
     $__GET = $_GET; // save a pristine copy of $_GET before sanitizing the values
     $_GET = $FUNCS->sanitize_deep( $_GET );

@@ -2129,7 +2129,7 @@
             $key = '';
             for( $i = 0; $i < $len; $i++ ){
                 $pos = rand(0, strlen($chars)-1);
-                $key .= $chars{$pos};
+                $key .= $chars[$pos];
             }
             return $key;
         }
@@ -2232,7 +2232,7 @@
             $keylen = strlen( $key );
             $j = 0;
             for( $i = 0; $i < 256; $i++ ){
-                $j = ( $j + $S[$i] + ord($key{$i % $keylen}) ) % 256;
+                $j = ( $j + $S[$i] + ord($key[$i % $keylen]) ) % 256;
                 // swap
                 $tmp = $S[$i];
                 $S[$i] = $S[$j];

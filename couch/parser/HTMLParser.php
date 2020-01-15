@@ -61,7 +61,7 @@
         function __construct( $type, $name='', $attr='', $text='', $cleanXSS=0, $for_comments=0, $safe_tags=null ){
             global $FUNCS;
 
-            if( $name{0}=='/' ){
+            if( $name[0]=='/' ){
                 $this->is_end_tag = 1;
                 $name = trim( substr($name, 1) );
             }

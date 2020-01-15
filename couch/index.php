@@ -23,7 +23,7 @@
     }
 
     // and process the current request
-    if( isset($_GET['o']{0}) ){
+    if( isset($_GET['o'][0]) ){
         $html = $FUNCS->process_route( $FUNCS->unhtmlentities($_GET['o'], K_CHARSET), $_GET['q'] );
     }
     else{
