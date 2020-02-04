@@ -487,8 +487,13 @@
                         }
                         else{
                             // after search in installed modules..
-                            ob_end_clean();
-                            die( 'ERROR! Unknown tag: "'. $this->name . '"' );
+                            // HOOK: tag_unknown
+                            $skip = $FUNCS->dispatch_event( 'tag_unknown', array($this->name, &$this, &$html) );
+                            if( !$skip ){
+                                ob_end_clean();
+                                $err_msg = strlen( trim($html) ) ? $html : 'ERROR! Unknown tag: "'. $this->name . '"';
+                                die( $err_msg );
+                            }
                         }
                     }
                     break;
