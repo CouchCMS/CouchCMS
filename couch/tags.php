@@ -391,6 +391,7 @@
                                'startcount'=>'0',
                                'token'=>'',
                                'is_json'=>'0',
+                               'is_regex'=>'0',
                               ),
                         $params)
                    );
@@ -400,30 +401,38 @@
             $startcount = $FUNCS->is_int( $startcount ) ? intval( $startcount ) : 1;
             $token = trim( $token );
             $is_json = ( $is_json==1 ) ? 1 : 0;
+            $is_regex = ( $is_regex==1 ) ? 1 : 0;
 
             if( $is_json && !is_array($var) ){ $var = $FUNCS->json_decode( $var ); }
 
             if( !is_array($var) ){
-                if( !$sep ) $sep = '|';
-                if( $sep == '\r\n' || $sep == '\r' || $sep == '\n' ){
-                    $var = str_replace( array("\r\n", "\r", "\n" ), "\n", $var );
-                    $sep = "\n";
-                }
-                elseif( $sep == '\t' ){
-                    $sep = "\t";
+                if( $is_regex ){
+                    $regex = $sep;
                 }
                 else{
-                    $use_preg=1;
+                    if( !$sep ) $sep = '|';
+                    if( $sep == '\r\n' || $sep == '\r' || $sep == '\n' ){
+                        $var = str_replace( array("\r\n", "\r", "\n" ), "\n", $var );
+                        $sep = "\n";
+                    }
+                    elseif( $sep == '\t' ){
+                        $sep = "\t";
+                    }
+                    else{
+                        $use_preg=1;
+                    }
                 }
 
                 if( $var ){
-                    if( $use_preg ){
+                    if( $regex ){
+                        $arr_vars = array_map( "trim", preg_split( $regex, $var ) );
+                    }
+                    elseif( $use_preg ){
                         $arr_vars = array_map( "trim", preg_split( "/(?<!\\\)".preg_quote($sep, '/')."/", $var ) ); // allows escaping of separator with a backslash
                     }
                     else{
                         $arr_vars = array_map( "trim", explode( $sep, $var ) );
                     }
-
                 }
 
                 if( is_array($arr_vars) ){
