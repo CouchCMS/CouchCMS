@@ -1122,7 +1122,7 @@
         }
 
         function k_while( $params, $node ){
-            global $FUNCS;
+            global $FUNCS, $CTX;
             $children = $node->children;
 
             $safety = 0;
