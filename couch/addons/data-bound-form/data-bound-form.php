@@ -45,7 +45,7 @@
             if( $node->name=='db_persist_form' && count($node->children) ) {die("ERROR: Tag \"".$node->name."\" is a self closing tag");}
 
             // handle params
-            $arr_known_params = array( '_invalidate_cache'=>'0', '_auto_title'=>'0', '_token'=>'' );
+            $arr_known_params = array( '_invalidate_cache'=>'0', '_auto_title'=>'0', '_token'=>'', '_fields'=>'' );
             if( $node->name=='db_persist' ){
                 $arr_known_params = array_merge( $arr_known_params, array('_masterpage'=>'', '_mode'=>'', '_page_id'=>'', '_separator'=>'|', '_set_errors_in_context'=>'0') );
             }
@@ -57,6 +57,7 @@
             $_auto_title = ( $_auto_title==1 ) ? 1 : 0;
             $_token = trim( $_token  );
             $_set_errors_in_context = ( $_set_errors_in_context==1 ) ? 1 : 0;
+            $_fields = ( is_array($_fields) ) ? $_fields : array();
 
             // get down to business
             if( $node->name=='db_persist_form' ){
@@ -118,7 +119,7 @@
             }
 
             // gather static values provided as parameters of this tag
-            $fields = array();
+            $fields = count( $_fields ) ? $_fields : array();
             foreach( $params as $param ){
                 $pname = strtolower( trim($param['lhs']) );
                 if( array_key_exists($pname, $arr_known_params) ) continue;
