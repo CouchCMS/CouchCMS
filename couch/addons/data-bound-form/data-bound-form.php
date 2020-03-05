@@ -132,27 +132,52 @@
             }
 
             if( count($fields) ){
-                for( $x=0; $x<count($pg->fields); $x++ ){
-                    $f = &$pg->fields[$x];
-                    if( isset($fields[$f->name]) ){
-                        if( $f->k_type== 'checkbox' ){
-                            // supplied static checkbox values are supposed to be comma-separated -
-                            // this needs to be changed to match the separator expected by page-field
-                            $separator = ( $f->k_separator ) ? $f->k_separator : '|';
-                            $sep = '';
-                            $str_val = '';
-                            $fields[$f->name] = explode(',', $fields[$f->name]);
-                            foreach( $fields[$f->name] as $v ){
-                                $str_val .= $sep . trim( $v );
-                                $sep = $separator;
+                if( $pg instanceof KWebpage ){
+                    foreach( $fields as $key=>$val ){
+                        if( array_key_exists($key, $pg->_fields) ){
+                            $f = &$pg->_fields[$key];
+                            if( $f->k_type== 'checkbox' ){
+                                // supplied static checkbox values are supposed to be comma-separated -
+                                // this needs to be changed to match the separator expected by page-field
+                                $separator = ( $f->k_separator ) ? $f->k_separator : '|';
+                                $sep = '';
+                                $str_val = '';
+                                $val = explode(',', $val);
+                                foreach( $val as $v ){
+                                    $str_val .= $sep . trim( $v );
+                                    $sep = $separator;
+                                }
+                                $f->store_posted_changes( $str_val );
                             }
-                            $f->store_posted_changes( $str_val );
-                        }
-                        else{
-                            $f->store_posted_changes( $fields[$f->name], $node->name );
+                            else{
+                                $f->store_posted_changes( $val, $node->name );
+                            }
                         }
                     }
-                    unset( $f );
+                }
+                else{
+                    for( $x=0; $x<count($pg->fields); $x++ ){
+                        $f = &$pg->fields[$x];
+                        if( isset($fields[$f->name]) ){
+                            if( $f->k_type== 'checkbox' ){
+                                // supplied static checkbox values are supposed to be comma-separated -
+                                // this needs to be changed to match the separator expected by page-field
+                                $separator = ( $f->k_separator ) ? $f->k_separator : '|';
+                                $sep = '';
+                                $str_val = '';
+                                $fields[$f->name] = explode(',', $fields[$f->name]);
+                                foreach( $fields[$f->name] as $v ){
+                                    $str_val .= $sep . trim( $v );
+                                    $sep = $separator;
+                                }
+                                $f->store_posted_changes( $str_val );
+                            }
+                            else{
+                                $f->store_posted_changes( $fields[$f->name], $node->name );
+                            }
+                        }
+                        unset( $f );
+                    }
                 }
             }
 
