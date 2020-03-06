@@ -275,3 +275,36 @@
     $t['month10'] = 'October';
     $t['month11'] = 'November';
     $t['month12'] = 'December';
+	
+	// New additions
+	// Short month names
+    $t['s_month01'] = 'Jan';
+    $t['s_month02'] = 'Feb';
+    $t['s_month03'] = 'Mrt';
+    $t['s_month04'] = 'Apr';
+    $t['s_month05'] = 'May';
+    $t['s_month06'] = 'Jun';
+    $t['s_month07'] = 'Jul';
+    $t['s_month08'] = 'Aug';
+    $t['s_month09'] = 'Sep';
+    $t['s_month10'] = 'Oct';
+    $t['s_month11'] = 'Nov';
+    $t['s_month12'] = 'Dec';
+	// Days of the week names
+	$t['day0'] = 'Sunday'; // When using w parameter for date
+	$t['day1'] = 'Monday';
+	$t['day2'] = 'Tuesday';
+	$t['day3'] = 'Wednesday';
+	$t['day4'] = 'Thursday';
+	$t['day5'] = 'Friday';
+	$t['day6'] = 'Saterday';
+	$t['day7'] = 'Sunday'; // When using N parameter for date
+	// Short day of the week names
+	$t['s_day0'] = 'Sun'; // When using w parameter for date
+	$t['s_day1'] = 'Mon';
+	$t['s_day2'] = 'Tue';
+	$t['s_day3'] = 'Wed';
+	$t['s_day4'] = 'Thu';
+	$t['s_day5'] = 'Fri';
+	$t['s_day6'] = 'Sat';
+	$t['s_day7'] = 'Sun'; // When using N parameter for date
