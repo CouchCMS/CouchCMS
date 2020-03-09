@@ -3430,17 +3430,17 @@ OUT;
 				if ($case == 0) {
 					return $arrMonths[$monthNum];
 				} else if ($case < 0) {
-					return lowercase($arrMonths[$monthNum]);
+					return strtolower($arrMonths[$monthNum]);
 				} else {
-					return uppercase($arrMonths[$monthNum]);
+					return strtoupper($arrMonths[$monthNum]);
 				}
 			} else {
 				if ($case == 0) {
 					return $arrS_Months[$monthNum];
 				} else if ($case < 0) {
-					return lowercase($arrS_Months[$monthNum]);
+					return strtolower($arrS_Months[$monthNum]);
 				} else {
-					return uppercase($arrS_Months[$monthNum]);
+					return strtoupper($arrS_Months[$monthNum]);
 				}
 			}
 		}
@@ -3463,17 +3463,17 @@ OUT;
 				if ($case == 0) {
 					return $arrDays[$dayNum];
 				} else if ($case < 0) {
-					return lowercase($arrDays[$dayNum]);
+					return strtolower($arrDays[$dayNum]);
 				} else {
-					return uppercase($arrDays[$dayNum]);
+					return strtoupper($arrDays[$dayNum]);
 				}
 			} else {
 				if ($case == 0) {
 					return $arrS_Days[$dayNum];
 				} else if ($case < 0) {
-					return lowercase($arrS_Days[$dayNum]);
+					return strtolower($arrS_Days[$dayNum]);
 				} else {
-					return uppercase($arrS_Days[$dayNum]);
+					return strtoupper($arrS_Days[$dayNum]);
 				}
 			}
 		}
