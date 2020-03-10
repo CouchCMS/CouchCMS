@@ -61,7 +61,7 @@
     $t['title_desc'] = 'Laat dit veld leeg om het systeem een naam op basis van de titel te laten genereren';
     $t['required'] = 'verplicht'; // Required field
     $t['required_msg'] = 'Een verplicht veld kan niet leeg zijn';
-    $t['browse_server'] = 'Blader op de server';
+    $t['browse_server'] = 'Bladeren';
     $t['view_image'] = 'Bekijk afbeelding';
     $t['thumb_created_auto'] = 'Wordt automatisch aangemaakt';
     $t['recreate'] = 'Opnieuw aanmaken';
