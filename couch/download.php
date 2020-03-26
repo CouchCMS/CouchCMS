@@ -40,7 +40,7 @@
     if ( !defined('K_COUCH_DIR') ) define( 'K_COUCH_DIR', str_replace( '\\', '/', dirname(realpath(__FILE__) ).'/') );
     require_once( K_COUCH_DIR.'header.php' );
 
-    if( !isset($_GET['auth']{0}) ) { ob_end_clean(); die; }
+    if( !isset($_GET['auth'][0]) ) { ob_end_clean(); die; }
 
     $data = $_GET['auth'];
     $data = str_replace( ' ', '+', $data ); // for some reason, '+' is getting converted to space in $_GET. (happens when urldecode is used on '+')
@@ -67,7 +67,7 @@
 
     // Check if access level is ok
     if( $access_level ){
-        if( $access_level{0}==='i' ){ // user_id
+        if( $access_level[0]==='i' ){ // user_id
             $user_id = substr( $access_level, 1 );
             $access_level = $AUTH->user->access_level;
             if( $AUTH->user->id != $user_id ){

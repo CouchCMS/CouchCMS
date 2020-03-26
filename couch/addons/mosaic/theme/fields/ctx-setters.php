@@ -66,7 +66,7 @@
             }
             elseif( $f->k_type=='file' ){
                 $data = $f->data;
-                if( $data{0}==':' ){ // if local marker
+                if( $data[0]==':' ){ // if local marker
                     $data = substr( $data, 1 );
                 }
                 $CTX->set( 'k_file_name', $data );

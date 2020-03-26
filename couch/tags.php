@@ -3964,7 +3964,7 @@ FORM;
             // @current-1, @current-2 etc. - start from parent of most current item at x level above it.
             if( $root || $childof ){ // root takes precedence over childof
                 $special = ( $root ) ? $root : $childof;
-                if( $special{0}=='@' ){
+                if( $special[0]=='@' ){
                     $special = substr( $special, 1 );
 
                     // find the most current item
@@ -4435,7 +4435,7 @@ FORM;
             // @current-1, @current-2 etc. - start from parent of most current item at x level above it.
             if( $root || $childof ){ // root takes precedence over childof
                 $special = ( $root ) ? $root : $childof;
-                if( $special{0}=='@' ){
+                if( $special[0]=='@' ){
                     $special = substr( $special, 1 );
 
                     // find the most current item
@@ -6125,7 +6125,7 @@ MAP;
         function paypal_processor( $params, $node ){
             global $CTX, $FUNCS, $PAGE;
 
-            if( !isset($_GET['paypal_ipn']{0}) ) return; //not being called from PayPal with IPN
+            if( !isset($_GET['paypal_ipn'][0]) ) return; //not being called from PayPal with IPN
 
             extract( $FUNCS->get_named_vars(
                         array(
@@ -7099,7 +7099,7 @@ MAP;
             $name = trim( $name );
             $has_default = ( strlen($default) ) ? 1 : 0;
 
-            if( isset($_COOKIE[$name]{0}) ){
+            if( isset($_COOKIE[$name][0]) ){
                 $val = $FUNCS->cleanXSS( $_COOKIE[$name] );
             }
             if( $has_default && !strlen($val) ){ $val = $default; }
@@ -7706,7 +7706,7 @@ MAP;
 
                 // resolve values that point to PHP objects (always begin with a '$')
                 for( $x=0; $x<count($args); $x++ ){
-                    if( $args[$x]{0}=='$' ){
+                    if( $args[$x][0]=='$' ){
                         $obj = $CTX->get_object( substr($args[$x], 1) );
                         if( $obj ) $args[$x] = $obj;
                     }

@@ -60,7 +60,7 @@
             $showonlymsg = 1;
         }
     }
-    elseif( isset($_GET['act']{0}) && $_GET['act'] == 'reset' ){
+    elseif( isset($_GET['act'][0]) && $_GET['act'] == 'reset' ){
         $rs = reset_password();
         if( $FUNCS->is_error($rs) ){
             $msg = $rs->err_msg;

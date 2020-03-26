@@ -27,7 +27,7 @@
 
                 $redirect_dest = $CTX->get( 'k_qs_link' );
 
-                if( isset($_POST['k_bulk_action']{0}) ){
+                if( isset($_POST['k_bulk_action'][0]) ){
                     $FUNCS->validate_nonce( 'bulk_action_page' );
                     $FUNCS->dispatch_event( 'pages_list_bulk_action', array($_POST['k_bulk_action'], &$redirect_dest, $this) );
                 }
@@ -443,7 +443,7 @@
             $redirect_dest = $this->_get_form_redirect_link( $pg, $_mode );
 
             // give a chance to addons to step in (and perhaps modify the redirect destination)
-            if( isset($_POST['k_custom_action']{0}) ){
+            if( isset($_POST['k_custom_action'][0]) ){
                 $FUNCS->dispatch_event( 'pages_form_custom_action', array($_POST['k_custom_action'], &$redirect_dest, &$pg, $_mode, $this) );
             }
             else{

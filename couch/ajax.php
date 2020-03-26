@@ -44,7 +44,7 @@
     $AUTH->check_access( K_ACCESS_LEVEL_ADMIN, 1 );
 
     $response = '';
-    if( isset($_GET['act']{0}) ){
+    if( isset($_GET['act'][0]) ){
         $nonce = ( isset($_GET['nonce']) ) ? $_GET['nonce'] : null;
 
         if( $_GET['act'] == 'crop' ){

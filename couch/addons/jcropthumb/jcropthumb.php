@@ -73,7 +73,7 @@
         $data = trim( $this->data );
         if( !strlen($data) ) $data = trim( $this->default_data );
 
-        if( $data{0}==':' ){ // if marker
+        if( $data[0]==':' ){ // if marker
         $data = substr( $data, 1 );
         $folder = ( $this->k_type=='jcropthumb' ) ? 'image' : $this->k_type;
         $domain_prefix = $Config['k_append_url'] . $Config['UserFilesPath'] . $folder . '/';

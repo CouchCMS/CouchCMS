@@ -119,7 +119,7 @@
             $custom_params['_parent_field'] = $arr_config['parent_field'];
             for( $x=0; $x<count($params); $x++ ){
                 $attr = strtolower(trim($params[$x]['lhs']));
-                if( $attr{0}=='_' ){ // prefixed by '_'
+                if( $attr[0]=='_' ){ // prefixed by '_'
                     $custom_params[$attr] = trim( $params[$x]['rhs'] );
                 }
             }

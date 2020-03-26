@@ -1108,7 +1108,7 @@
                                             $match = $path_parts['dirname'].$matches[1].'.'.$path_parts['extension'];
                                             if( $f->data == $match ){
                                                 $existing_thumb = $path_parts['basename'];
-                                                if( $existing_thumb{0}==':' ) $existing_thumb = substr( $existing_thumb, 1 );
+                                                if( $existing_thumb[0]==':' ) $existing_thumb = substr( $existing_thumb, 1 );
                                             }
                                         }
                                     }
@@ -1453,7 +1453,7 @@
                             $orig_img = $f->data;
                             $cur_img = $this->fields[$x]->data;
                                 if( $orig_img != $cur_img ){
-                                    if( $orig_img{0}==':' ){ // if local
+                                    if( $orig_img[0]==':' ){ // if local
                                     $orig_img = $Config['UserFilesAbsolutePath'] . 'image/' . substr( $orig_img, 1 );
                                     @unlink( $orig_img );
                                 }
@@ -1602,7 +1602,7 @@
                         $f = $this->fields[$x];
                         if( (!$f->system) && (($f->k_type=='image' && $f->name=='gg_image')||($f->k_type=='thumbnail' && $f->assoc_field=='gg_image')) ){
                             $src = $f->data;
-                            if( $src{0}==':' ){ // if local
+                            if( $src[0]==':' ){ // if local
                                 $src = $Config['UserFilesAbsolutePath'] . 'image/' . substr( $src, 1 );
                                 @unlink( $src );
                             }

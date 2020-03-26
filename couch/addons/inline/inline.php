@@ -119,7 +119,7 @@
                 if( strlen($custom_styles) ){
                     list( $custom_style_name, $custom_style_file ) = array_map( "trim", explode( '=', $custom_styles ) );
                     if( strpos($custom_style_file, '://')===false ){
-                        $custom_style_file = K_SITE_URL . (( $custom_style_file{0}=='/' ) ? substr($custom_style_file, 1) : $custom_style_file);
+                        $custom_style_file = K_SITE_URL . (( $custom_style_file[0]=='/' ) ? substr($custom_style_file, 1) : $custom_style_file);
                     }
                     $custom_styles = $custom_style_name . ':' . $custom_style_file;
                     $html .= "data-k-custom-styles='$custom_styles' ";

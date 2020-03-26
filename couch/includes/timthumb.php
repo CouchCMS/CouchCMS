@@ -99,7 +99,7 @@ function k_resize_image( $src, $dest=0, $new_width=0, $new_height=0, $zoom_crop=
 
             if( $new_width > $max_width ){
                 if( !$zoom_crop ){
-                    $ratio = (real)($max_width / $new_width);
+                    $ratio = (float)($max_width / $new_width);
                     $new_width = ((int)($new_width * $ratio));
                     $new_height = ((int)($new_height * $ratio));
                 }
@@ -111,7 +111,7 @@ function k_resize_image( $src, $dest=0, $new_width=0, $new_height=0, $zoom_crop=
             // if new height still overshoots maximum value
             if( $new_height > $max_height ){
                 if( !$zoom_crop ){
-                    $ratio = (real)($max_height / $new_height);
+                    $ratio = (float)($max_height / $new_height);
                     $new_width = ((int)($new_width * $ratio));
                     $new_height = ((int)($new_height * $ratio));
                 }

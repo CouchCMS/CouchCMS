@@ -366,7 +366,7 @@
             else{
                 // add domain info to uploaded items
                 if( $this->k_type=='image' || $this->k_type=='thumbnail' || $this->k_type=='file' ){
-                    if( $data{0}==':' ){ // if marker
+                    if( $data[0]==':' ){ // if marker
                         $data = substr( $data, 1 );
                         $folder = ( $this->k_type=='thumbnail' ) ? 'image' : $this->k_type;
                         $domain_prefix = $Config['k_append_url'] . $Config['UserFilesPath'] . $folder . '/';
@@ -647,7 +647,7 @@
                 $arr_custom_css = array_map( "trim", explode( $separator, $f->css ) );
                 foreach( $arr_custom_css as $css ){
                     if( strpos($css, '://')===false ){
-                        $css = K_SITE_URL . (( $css{0}=='/' ) ? substr($css, 1) : $css);
+                        $css = K_SITE_URL . (( $css[0]=='/' ) ? substr($css, 1) : $css);
                     }
                     $arr_css[] = $css;
                 }
@@ -659,7 +659,7 @@
             if( $f->custom_styles ){
                 list( $custom_style_name, $custom_style_file ) = array_map( "trim", explode( $val_separator, $f->custom_styles ) );
                 if( strpos($custom_style_file, '://')===false ){
-                    $custom_style_file = K_SITE_URL . (( $custom_style_file{0}=='/' ) ? substr($custom_style_file, 1) : $custom_style_file);
+                    $custom_style_file = K_SITE_URL . (( $custom_style_file[0]=='/' ) ? substr($custom_style_file, 1) : $custom_style_file);
                 }
                 $config['stylesCombo_stylesSet'] = $custom_style_name . ':' . $custom_style_file;
             }
@@ -1069,7 +1069,7 @@
             elseif( $this->k_type=='captcha' ){
                 $fmt = $this->captcha_format;
                 for( $x=0; $x<7; $x++ ){
-                    switch( @$fmt{$x} ){
+                    switch( @$fmt[$x] ){
                         case '-':
                             $html .= '<br>';
                             break;
@@ -1446,7 +1446,7 @@
             $data = $this->data;
 
             // add domain info to internal links
-            if( $data{0}==':' ){ // if marker
+            if( $data[0]==':' ){ // if marker
                 $data = substr( $data, 1 );
                 $data = K_SITE_URL . $data;
             }

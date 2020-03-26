@@ -47,7 +47,7 @@
 
     if( $AUTH->user->id != -1 ){ // if user logged-in
         // check if logout requested
-        if( isset($_GET['act']{0}) && $_GET['act'] == 'logout' ){
+        if( isset($_GET['act'][0]) && $_GET['act'] == 'logout' ){
             $AUTH->logout();
         }
         $AUTH->redirect( $dest );

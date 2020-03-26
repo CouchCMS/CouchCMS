@@ -428,7 +428,7 @@
 
             if( $this->image ){
                 $data = $this->image;
-                if( $data{0}==':' ){ // if marker
+                if( $data[0]==':' ){ // if marker
                     $data = substr( $data, 1 );
                     $domain_prefix = $Config['k_append_url'] . $Config['UserFilesPath'] . 'image/';
                     $data = $domain_prefix . $data;
@@ -869,7 +869,7 @@
 
                 // add domain info to internal links
                 $data = $this->pointer_link;
-                if( $data{0}==':' ){ // if marker, it is an internal link
+                if( $data[0]==':' ){ // if marker, it is an internal link
                     $this->is_internal_link = 1;
 
                     $data = substr( $data, 1 );
