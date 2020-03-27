@@ -199,7 +199,7 @@
                         $dyn_param = 'k_'.$dyn_param;
                     }
 
-                    if( array_key_exists($dyn_param, $this) && $this->$dyn_param ){
+                    if( property_exists($this, $dyn_param) && $this->$dyn_param ){
                         if( defined('K_SNIPPETS_DIR') ){ // always defined relative to the site
                             $base_snippets_dir = K_SITE_DIR . K_SNIPPETS_DIR . '/';
                         }

@@ -35,7 +35,7 @@ class input {
     protected $magic_quotes_sybase;
 
     public function __construct() {
-        $this->magic_quotes_gpc = function_exists('get_magic_quotes_gpc') && get_magic_quotes_gpc();
+        $this->magic_quotes_gpc = version_compare(phpversion(), "5.4.0", "<") && function_exists('get_magic_quotes_gpc') && get_magic_quotes_gpc();
         $this->magic_quotes_sybase = ini_get('magic_quotes_sybase');
         $this->magic_quotes_sybase = $this->magic_quotes_sybase
             ? !in_array(strtolower(trim($this->magic_quotes_sybase)),
