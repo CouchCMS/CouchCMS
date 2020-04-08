@@ -465,9 +465,8 @@
                     elseif( $k=='k_pointer_link' ){
                         $field_info['required'] = '0';
                         $field_info['k_desc'] = $FUNCS->t('link_url_desc');
-                        $field_info['validator'] = 'regex=/^\s*(?:http:\/\/|https:\/\/)/i # KWebpage::validate_masquerade_link';
+                        $field_info['validator'] = 'KWebpage::validate_masquerade_link';
                         $field_info['k_separator'] ='#';
-                        $field_info['validator_msg'] ='regex=Must begin with http:// or https://';
                         $arr_sys_fields[] = new KLinkUrlField( $field_info, $this, $this->fields );
                     }
                     elseif( $k=='k_file_meta' ){
