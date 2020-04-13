@@ -661,7 +661,7 @@
 
             // What are the candidate file names for the current view?
             // First check cache
-            if( array_key_exists('cached_valid_files_for_view', $FUNCS) ){
+            if( property_exists($FUNCS, 'cached_valid_files_for_view') ){
                 $valid_files = $FUNCS->cached_valid_files_for_view;
             }
             else{
