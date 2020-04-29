@@ -314,7 +314,7 @@
 
         static function handle_params( $params, $node ){
             // piggyback on securefile ..
-            $attr = SecureFile::handle_params( $params, $node );
+            $attr = SecureFile::_handle_params( $params );
 
             // remove parameters no applicable ..
             $nop = array( 'thumb_width', 'thumb_height', 'thumb_enforce_max', 'thumb_quality', 'use_thumb_for_preview' );

@@ -51,8 +51,14 @@
         }
 
         static function handle_params( $params ){
-            global $FUNCS, $AUTH;
+            global $AUTH;
             if( $AUTH->user->access_level < K_ACCESS_LEVEL_SUPER_ADMIN ) return;
+
+            return SecureFile::_handle_params( $params );
+        }
+
+        static function _handle_params( $params ){
+            global $FUNCS;
 
             // Default values for params
             $default_allowed_ext = array(
