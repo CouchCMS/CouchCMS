@@ -3,7 +3,7 @@
 <script src="js/jquery.drag.js" type="text/javascript"></script>
 <script src="js/helper.js" type="text/javascript"></script>
 <script src="js/jquery.finger.min.js" type="text/javascript"></script>
-<script src="js/browser/joiner.php?v=3.12e" type="text/javascript"></script>
+<script src="js/browser/joiner.php?v=3.12g" type="text/javascript"></script>
 <script src="js_localize.php?lng=<?php echo $this->lang ?>&nonce=<?php echo $this->nonce ?>" type="text/javascript"></script>
 <?php IF (isset($this->opener['TinyMCE']) && $this->opener['TinyMCE']): ?>
 <script src="<?php echo $this->config['_tinyMCEPath'] ?>/tiny_mce_popup.js" type="text/javascript"></script>

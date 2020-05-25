@@ -151,6 +151,7 @@ browser.uploadFile = function(form) {
     form.submit();
     $('#uploadResponse').load(function() {
         var response = $(this).contents().find('body').html();
+        if( !response.trim().length ){ return; }
         $('#loading').css('display', 'none');
         response = response.split("\n");
         var selected = [], errors = [];
@@ -163,7 +164,7 @@ browser.uploadFile = function(form) {
         if (errors.length)
             browser.alert(errors.join("\n"));
         if (!selected.length)
-            selected = null
+            selected = undefined
         browser.refresh(selected);
         $('#upload').detach();
         setTimeout(function() {
