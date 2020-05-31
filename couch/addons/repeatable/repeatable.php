@@ -617,8 +617,8 @@
                     if( !$c->validate() ){
                         $this->validation_errors++;
                         $err_row = $row + 1;
-                        $this->err_msg .= $sep . 'Row ' . $err_row . ' - '.$c->label.': ' . $c->err_msg;
                         $sep = '<br>';
+                        $this->err_msg .= $sep . 'Row ' . $err_row . ' - '.$c->label.': ' . $c->err_msg;
                     }
 
                     // Process
