@@ -5326,6 +5326,7 @@ FORM;
 
         function form( $params, $node ){
             global $CTX, $FUNCS, $PAGE, $DB;
+            if( !is_object($PAGE) ){ $PAGE = new stdClass(); }
 
             $html = '<form ';
 
