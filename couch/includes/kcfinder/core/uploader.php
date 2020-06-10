@@ -371,7 +371,7 @@ class uploader {
         if( $pos!==false ){
             $ext = trim( substr($sNewFileName, $pos+1) );
             if( $ext ){
-                $ext = '.' . $ext;
+                $ext = '.' . strtolower( $ext );
                 $sNewFileName = substr( $sNewFileName, 0, $pos );
             }
         }
