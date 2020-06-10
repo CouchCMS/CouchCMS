@@ -41,13 +41,22 @@
 
         function test( $params, $node ){
             global $FUNCS, $CTX;
-            $children = $node->children;
 
-            foreach( $children as $child ){
+            extract( $FUNCS->get_named_vars(
+                        array(
+                               'ignore'=>'0',
+                               'hide'=>'0',
+                              ),
+                        $params)
+                   );
+            $ignore = ( $ignore==1 ) ? 1 : 0;
+            if( $ignore ) return;
+            $hide = ( $hide==1 ) ? 1 : 0;
+
+            foreach( $node->children as $child ){
                 $html .= $child->get_HTML();
             }
-            return $html;
-
+            return ( $hide )? '' : $html;
         }
 
         // Dumps all variables present in all the contexts starting from root upto the context the tag was invoked from.
