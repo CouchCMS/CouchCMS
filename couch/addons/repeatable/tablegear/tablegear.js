@@ -3,7 +3,7 @@
  *  TableGear (Dynamic table data in HTML)
  *
  *  Version: 1.6 for jQuery
- *  Documentation: AndrewPlummer.com (http://www.andrewplummer.com/code/tablegear/)
+ *  Documentation: AndrewPlummer.com (https://github.com/andrewplummer/TableGear)
  *  Inspired by: TableKit for Prototype (http://www.millstream.com.au/view/code/tablekit/)
  *  Written for: jQuery 1.4
  *  License: MIT-style License
