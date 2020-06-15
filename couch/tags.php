@@ -7364,7 +7364,7 @@ MAP;
                                'validator'=>'',
                                'separator'=>'',
                                'val_separator'=>'',
-                               'case_sensitive'=>'0',
+                               'case_sensitive'=>'1',
                               ),
                         $params)
                    );
