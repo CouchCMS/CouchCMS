@@ -262,17 +262,15 @@
         $errors = $pg->save();
         if( $errors ){
             $sep = '';
-            if( count($errors) ){
-                $str_err = '';
-                for( $x=0; $x<count($pg->fields); $x++ ){
-                    $f = &$pg->fields[$x];
-                    if( $f->err_msg ){
-                        $str_err .= $sep . '<b>' . $f->name . ':</b> ' . $f->err_msg;
-                        $sep = '<br/>';
-                    }
+            $str_err = '';
+            for( $x=0; $x<count($pg->fields); $x++ ){
+                $f = &$pg->fields[$x];
+                if( $f->err_msg ){
+                    $str_err .= $sep . '<b>' . $f->name . ':</b> ' . $f->err_msg;
+                    $sep = '<br/>';
                 }
-                return $FUNCS->raise_error( $str_err );
             }
+            return $FUNCS->raise_error( $str_err );
         }
         $page_id = $pg->id;
         $pg->destroy();
