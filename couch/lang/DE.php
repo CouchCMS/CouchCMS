@@ -9,7 +9,7 @@
 
     // Header
     $t['greeting'] = 'Hallo';
-    $t['view_site'] = 'Seite ansehen';
+    $t['view_site'] = 'Zeige Site';
     $t['logout'] = 'Abmelden';
     $t['javascript_msg'] = 'JavaScript ist deaktiviert oder wird von Ihrem Browser nicht unterst&uuml;tzt.<br/>
                             Bitte aktualisieren Sie Ihren Browser oder <a href="https://support.google.com/answer/23852" target="_blank">aktivieren Sie JavaScript</a> um das Admin Panel zu verwenden.';
@@ -64,7 +64,7 @@
     $t['title_desc'] = 'Lassen Sie dieses Feld leer um den vom System generierten Titel zu verwenden';
     $t['required'] = 'ben&ouml;tigt'; // Required field
     $t['required_msg'] = 'Ben&ouml;tigtes Feld kann nicht leer gelassen werden';
-    $t['browse_server'] = 'Server durchsuchen';
+    $t['browse_server'] = 'Dateiliste';
     $t['view_image'] = 'Bild ansehen';
     $t['thumb_created_auto'] = 'Wird automatisch generiert';
     $t['recreate'] = 'Neu generieren';
