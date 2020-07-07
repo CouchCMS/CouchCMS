@@ -9,7 +9,7 @@
 
     // Header
     $t['greeting'] = 'Hallo';
-    $t['view_site'] = 'Vorschau';
+    $t['view_site'] = 'Zeige Site';
     $t['logout'] = 'Abmelden';
     $t['javascript_msg'] = 'JavaScript ist deaktiviert oder wird von Ihrem Browser nicht unterst&uuml;tzt.<br/>
                             Bitte aktualisieren Sie Ihren Browser oder <a href="https://support.google.com/answer/23852" target="_blank">aktivieren Sie JavaScript</a> um das Admin Panel zu verwenden.';
