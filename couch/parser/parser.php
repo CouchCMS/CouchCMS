@@ -455,7 +455,7 @@
                     $func = $this->name;
                     if( $this->name=='if' || $this->name=='else' || $this->name=='while' || $this->name=='extends' || $this->name=='break' || $this->name=='continue' ) $func = 'k_'.$func;
 
-                    if( method_exists($TAGS, $func) ){
+                    if( $func[0]!=='_' && method_exists($TAGS, $func) ){
                         if( !($this->name=='if' || $this->name=='while' || $this->name=='not' || $this->name=='else_if') ){
                             $params = $FUNCS->resolve_parameters( $this->attributes );
                         }

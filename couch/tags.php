@@ -7892,6 +7892,18 @@ MAP;
             return $res;
         }
 
+        function tag_exists( $params, $node ){
+            global $FUNCS, $TAGS;
+            if( count($node->children) ) {die("ERROR: Tag \"".$node->name."\" is a self closing tag");}
+
+            $name = trim( $params[0]['rhs'] );
+            if( $name=='if' || $name=='else' || $name=='while' || $name=='extends' || $name=='break' || $name=='continue' ) $name = 'k_'.$name;
+
+            $res = ( $name[0]!=='_' && method_exists($TAGS, $name) || array_key_exists($name, $FUNCS->tags) ) ? '1' : '0';
+
+            return $res;
+        }
+
         function escape_json( $params, $node ){
             global $FUNCS;
 
