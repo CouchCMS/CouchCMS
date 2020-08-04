@@ -248,12 +248,14 @@
                     'max_rows'=>'',
                     'button_text'=>'Add a Row',
                     'stacked_layout'=>'0',
+                    'no_default_row'=>'0',
                 ),
                 $params
             );
             $attr['max_rows'] = $FUNCS->is_natural( $attr['max_rows'] ) ? intval( $attr['max_rows'] ) : 0; //unused for now
             $attr['button_text'] = trim( $attr['button_text'] ); //unused for now
             $attr['stacked_layout'] = ( $attr['stacked_layout']==1 ) ? 1 : 0;
+            $attr['no_default_row'] = ( $attr['no_default_row']==1 ) ? 1 : 0;
             return $attr;
         }
 
@@ -511,9 +513,9 @@
             <script type="text/javascript">
                 $(function(){
                     <?php if( $this->stacked_layout ): ?>
-                        COUCH.rrInit('<?php echo $input_id; ?>');
+                        COUCH.rrInit('<?php echo $input_id; ?>', <?php echo( intval($this->no_default_row) ); ?>);
                     <?php else: ?>
-                        $('#<?php echo $input_id; ?>').tableGear();
+                        $('#<?php echo $input_id; ?>').tableGear({addDefaultRow:<?php echo( intval($this->no_default_row) ); ?>});
                     <?php endif; ?>
                 });
             </script>
@@ -821,9 +823,9 @@
                         });
                     });
 
-                    COUCH.rrInit = function( field_id ){
+                    COUCH.rrInit = function( field_id, default_row ){
                         var $field = $('#'+field_id);
-                        $field.tableGear({stackLayout:1});
+                        $field.tableGear({addDefaultRow:default_row, stackLayout:1});
                         $field.on('click', '.col-actions .add-row', function(){
                             var $this = $(this);
                             var row_id = $this.attr('data_mosaic_row');
