@@ -383,6 +383,9 @@
                                        'requires_shipping' => ( $pp_requires_shipping ) ? 1 : 0,
                                     );
 
+                                    // HOOK: cart_alter_custom_fields
+                                    $FUNCS->dispatch_event( 'cart_alter_custom_fields', array(&$arr_custom_fields, &$pg, &$this) );
+
                                     // Add custom attributes if any
                                     foreach( $arr_custom_fields as $k=>$v ){
                                         $this->items[$sorting_key][$k]=$v;
