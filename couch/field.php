@@ -744,6 +744,9 @@
                 );
             }
 
+            // HOOK: ckeditor_alter_config
+            $FUNCS->dispatch_event( 'ckeditor_alter_config', array(&$config, $f, $input_name, $input_id, $dynamic_insertion) );
+
             if( $repeatable ){
                 ob_start();
                 ?>
@@ -828,7 +831,7 @@
 
                 }
                 else{ /* not dynamically inserted but is being rendered within repeatable regions */
-                    $config['removePlugins']='resize';
+                    $config['removePlugins'] = ( trim($config['removePlugins'])!='' ) ? $config['removePlugins'].',resize' : 'resize';
 
                     static $done=0;
                     if( !$done ){
