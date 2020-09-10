@@ -2695,6 +2695,12 @@
         }
 
         function invalidate_cache(){
+            global $FUNCS;
+
+            // HOOK: invalidate_cache
+            $skip = $FUNCS->dispatch_event( 'invalidate_cache' );
+            if( $skip ) return;
+
             // Invalidate cache
             $file = K_COUCH_DIR . 'cache/' . 'cache_invalidate.dat';
             if( file_exists($file) ) @unlink( $file );
