@@ -1643,6 +1643,7 @@
                                        'k_type'=>$attr['type'],
                                        'hidden'=>$attr['hidden'],
                                        'search_type'=>$attr['search_type'],
+                                       'searchable'=>$attr['searchable'],
                                        'k_order'=>$attr['order'],
                                        'default_data'=>$html,
                                        'required'=>$attr['required'],
