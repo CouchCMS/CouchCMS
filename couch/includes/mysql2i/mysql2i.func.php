@@ -4,6 +4,11 @@ mysql2i.func.php rev 1
 member of mysql2i.class.php ver 1.0
 */
 if ( defined('K_COUCH_DIR') ){
+
+define('MYSQL_BOTH', MYSQLI_BOTH);
+define('MYSQL_NUM', MYSQLI_NUM);
+define('MYSQL_ASSOC', MYSQLI_ASSOC);
+
 function mysql_affected_rows($link=null){
 
     return mysql2i::mysql_affected_rows($link);
