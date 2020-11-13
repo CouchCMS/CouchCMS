@@ -620,7 +620,7 @@
                 $f->page->CKEditor->config['height'] = 240;
 
             }
-            $f->page->CKEditor->textareaAttributes = array("style" => "visibility:hidden", "id" => $input_id, "cols" => 80, "rows" => 15);
+            $f->page->CKEditor->textareaAttributes = array("style" => "visibility:hidden", "class" => "ckeditor", "id" => $input_id, "cols" => 80, "rows" => 15);
 
             //$config['baseHref'] = K_SITE_URL;
             // RTL

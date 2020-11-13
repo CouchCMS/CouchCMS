@@ -20,7 +20,7 @@ COUCH.addLeaveListener = function() {
         var form = COUCH.el.$content.find( "#k_admin_frm" );
         if( form.length ){
             COUCH.updateRichTextContent();
-            COUCH.data.formOriginal = form.serialize();
+            var orig_data = form.find( ":input:not(.ckeditor)" ).serialize();
 
             form.on( "submit", function() {
                 window.onbeforeunload = null;
@@ -28,8 +28,22 @@ COUCH.addLeaveListener = function() {
 
             window.onbeforeunload = function() {
                 COUCH.updateRichTextContent();
-                var cur_data = form.serialize();
-                if ( COUCH.data.formOriginal !== cur_data ) return COUCH.lang.leave;
+                var cur_data = form.find( ":input:not(.ckeditor)" ).serialize();
+
+                var ckeditor_dirty;
+                if ( window.CKEDITOR ) {
+                    var key, obj;
+
+                    for ( key in CKEDITOR.instances ) {
+                        obj = CKEDITOR.instances[ key ];
+                        if( obj.checkDirty() ){
+                            ckeditor_dirty = 1;
+                            break;
+                        }
+                    }
+                }
+
+                if ( orig_data !== cur_data || ckeditor_dirty ) return COUCH.lang.leave;
             };
         }
     });

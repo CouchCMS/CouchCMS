@@ -437,7 +437,7 @@
                                 if( $this->stacked_layout ){ echo( '<td class="col-contents editable"><div class="mosaic-list">' ); };
                                 $y=0;
                                 foreach( $this->cells as $c ){
-                                    $c->data='';
+                                    $c->data = is_array($c->data) ? array() : '';
 
                                     if( !count($data) ){// no saved rows
                                         // generate JS for conditional fields
