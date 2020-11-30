@@ -506,9 +506,12 @@
 
                 // HOOK: alter_fields_info
                 // All the field objects (system as well as custom) are ready and accessible by names.
-                $FUNCS->dispatch_event( 'alter_fields_info', array(&$this->_fields, &$this) );
+                $skip_cache = 0;
+                $FUNCS->dispatch_event( 'alter_fields_info', array(&$this->_fields, &$this, &$skip_cache) );
 
-                $FUNCS->cached_fields[$this->tpl_id] = $this->fields;
+                if( !$skip_cache ){
+                    $FUNCS->cached_fields[$this->tpl_id] = $this->fields;
+                }
             }
         }
 
