@@ -891,8 +891,13 @@
             // If name empty, we create it from title field if set
             $title = trim( $this->_fields['k_page_title']->get_data() );
             $name = trim( $this->_fields['k_page_name']->get_data() );
-            if( $this->tpl_nested_pages || $this->_fields['k_page_name']->modified || ($name=='' && $title!='') ){
-                $this->_lock_template(); // serialize access.. lock template
+
+            // HOOK: lock_template
+            $skip = $FUNCS->dispatch_event( 'lock_template', array(&$this) );
+            if( !$skip ){
+                if( $this->tpl_nested_pages || $this->_fields['k_page_name']->modified || ($name=='' && $title!='') ){
+                    $this->_lock_template(); // serialize access.. lock template
+                }
             }
 
             if( $name=='' && $title!='' ){
