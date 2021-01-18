@@ -338,6 +338,12 @@
             return true;
         }
 
+        function get_data( $for_ctx=0 ){
+            if( $for_ctx ){
+                return implode( ',', $this->items_selected );
+            }
+        }
+
         // Save to database.
         function get_data_to_save(){
             global $DB;
