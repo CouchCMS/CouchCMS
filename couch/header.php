@@ -60,7 +60,7 @@
     }
     if( function_exists('mb_internal_encoding') ) mb_internal_encoding( K_CHARSET );
     define( 'K_CACHE_OPCODES', '1' );
-    define( 'K_CACHE_SETTINGS', '1' );
+    define( 'K_CACHE_SETTINGS', '0' );
 
     // Check license
     // Ultra-simplified now that there is no IonCube involved :)
