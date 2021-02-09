@@ -41,6 +41,7 @@
     require_once( K_COUCH_DIR.'header.php' );
 
     define( 'K_ADMIN', 1 );
+    if( !defined('K_SQL_DUMP_USE_EXTENDED_INSERTS') ) define( 'K_SQL_DUMP_USE_EXTENDED_INSERTS', 0 );
 
     if( $AUTH->user->access_level < K_ACCESS_LEVEL_ADMIN ) die( '<h3>Please login as admin.</h3>' );
 
@@ -55,69 +56,155 @@
     $tbls[K_TBL_COMMENTS] = 'K_TBL_COMMENTS';
     $tbls[K_TBL_RELATIONS] = 'K_TBL_RELATIONS';
 
+    $use_extended_inserts = K_SQL_DUMP_USE_EXTENDED_INSERTS || $FUNCS->dispatch_event( 'sql_dump_use_extended_inserts' );
+    $filename = ( $use_extended_inserts ) ? 'install-ex2.php' : 'install-ex.php';
+
     /* output header */
     header( "Expires: Fri, 01 Jan 1990 00:00:00 GMT" );
     header( "Cache-Control: must-revalidate, post-check=0, pre-check=0" );
     header( "Pragma: no-cache" );
     header( "Content-Type: application/octet-stream" );
-    header( "Content-Disposition: attachment; filename=install-ex.php" );
-    echo '<';
-    echo "?php\n";
-    echo "if ( !defined('K_INSTALLATION_IN_PROGRESS') ) die(); // cannot be loaded directly\n";
+    header( "Content-Disposition: attachment; filename=".$filename );
+
+    // HOOK: alter_gen_dump_tables
+    $FUNCS->dispatch_event( 'alter_gen_dump_tables', array(&$tbls) );
 
     /* loop through each core table */
     @set_time_limit( 0 );
-    foreach( $tbls as $tbl_name=>$tbl_alias ){
-        echo "\n/* " . $tbl_name . " (";
-        $result = mysql_query( 'select * from '. $tbl_name );
-        if( !$result ){
-            die('Query failed: ' . mysql_error());
-        }
+    if( !$use_extended_inserts ){
+        echo '<';
+        echo "?php\n";
+        echo "if ( !defined('K_INSTALLATION_IN_PROGRESS') ) die(); // cannot be loaded directly\n";
 
-        /* get column metadata */
-        $i = 0;
-        $meta_fields = array();
-        $cnt_fields = mysql_num_fields($result);
-        $sep = '';
-        while( $i < $cnt_fields ){
-            $meta_fields[] = mysql_fetch_field( $result, $i );
-            echo $sep . $meta_fields[$i]->name;
-            $sep = ', ';
-            $i++;
-        }
-        echo ") */\n";
-        echo '$k_stmt_pre = "INSERT INTO ".'.$tbl_alias.'." VALUES ";'."\n";
-        $stmt_pre = '$k_stmts[] = $k_stmt_pre."(';
+        foreach( $tbls as $tbl_name=>$tbl_alias ){
+            // HOOK: gen_dump_table_where
+            $where = array();
+            $FUNCS->dispatch_event( 'gen_dump_table_where', array(&$where, $tbl_name, $tbl_alias) );
+            $where = count( $where ) ? ' where ' . implode( ' || ', $where ) : '';
 
+            echo "\n/* " . $tbl_name . " (";
+            $result = mysql_query( 'select * from '. $tbl_name . $where );
+            if( !$result ){
+                die('Query failed: ' . mysql_error());
+            }
 
-        /* get the column values */
-        $val_from = array( "\'", '$' );
-        $val_to = array( "'", '\$' );
-        while( $row = mysql_fetch_row($result) ){
+            /* get column metadata */
+            $i = 0;
+            $meta_fields = array();
+            $cnt_fields = mysql_num_fields($result);
             $sep = '';
-            $stmt = $stmt_pre;
-            for( $i=0; $i<$cnt_fields; $i++ ){
-                if( is_null($row[$i]) || !isset($row[$i]) ){
-                    $val = 'NULL';
+            while( $i < $cnt_fields ){
+                $meta_fields[] = mysql_fetch_field( $result, $i );
+                echo $sep . $meta_fields[$i]->name;
+                $sep = ', ';
+                $i++;
+            }
+            echo ") */\n";
+            echo '$k_stmt_pre = "INSERT INTO ".'.$tbl_alias.'." VALUES ";'."\n";
+            $stmt_pre = '$k_stmts[] = $k_stmt_pre."(';
+
+
+            /* get the column values */
+            $val_from = array( "\'", '$' );
+            $val_to = array( "'", '\$' );
+            while( $row = mysql_fetch_row($result) ){
+                $sep = '';
+                $stmt = $stmt_pre;
+                for( $i=0; $i<$cnt_fields; $i++ ){
+                    if( is_null($row[$i]) || !isset($row[$i]) ){
+                        $val = 'NULL';
+                    }
+                    elseif( $meta_fields[$i]->numeric ){
+                        $val = $row[$i];
+                    }
+                    else{
+                        // Sanitize will add slashes to backslash, quote, doubleqoute, newline and return chars.
+                        // We need to slash all of them again for PHP, except the single quote.
+                        // Plus slash any dollar char that misleads PHP into thinking it is dealing with a variable.
+                        $val = '\'' . str_replace($val_from, $val_to, addslashes($DB->sanitize($row[$i]))) . '\'';
+                    }
+                    $stmt .= $sep . $val;
+                    $sep = ', ';
                 }
-                elseif( $meta_fields[$i]->numeric ){
-                    $val = $row[$i];
+                $stmt .= ');";' . "\n";
+
+                /* output the complete statement  */
+                echo $stmt;
+            }
+            /* clean up */
+            mysql_free_result($result);
+
+        }
+    }
+    else{
+        echo '<';
+        echo "?php ";
+        echo "exit('Access denied'); __halt_compiler(); ?";
+        echo ">\n";
+
+        foreach( $tbls as $tbl_name=>$tbl_alias ){
+
+            // HOOK: gen_dump_table_where
+            $where = array();
+            $FUNCS->dispatch_event( 'gen_dump_table_where', array(&$where, $tbl_name, $tbl_alias) );
+            $where = count( $where ) ? ' where ' . implode( ' || ', $where ) : '';
+
+            echo "\n--\n-- Dumping data for table `".$tbl_name."`\n--\n";
+            $result = mysql_query( 'select * from '. $tbl_name . $where );
+            if( !$result ){
+                die('Query failed: ' . mysql_error());
+            }
+
+            /* get column metadata */
+            $i = 0;
+            $meta_fields = array();
+            $cnt_fields = mysql_num_fields($result);
+            while( $i < $cnt_fields ){
+                $meta_fields[] = mysql_fetch_field( $result, $i );
+                $i++;
+            }
+
+            /* get the column values */
+            $query = '';
+            $separator = ',';
+            $end = ";\n";
+            $insert = "INSERT INTO `{".$tbl_alias."}` VALUES ";
+            while( $row = mysql_fetch_row($result) ){
+                $sep = '';
+                $values = '(';
+                for( $i=0; $i<$cnt_fields; $i++ ){
+                    if( is_null($row[$i]) || !isset($row[$i]) ){
+                        $val = 'NULL';
+                    }
+                    elseif( $meta_fields[$i]->numeric ){
+                        $val = $row[$i];
+                    }
+                    else{
+                        $val = "'" . $DB->sanitize($row[$i]) . "'";
+                    }
+                    $values .= $sep . $val;
+                    $sep = ',';
+                }
+                $values .= ')';
+
+                if( $query=='' ){
+                    $query = $insert . $values;
+                }
+                elseif( (strlen($query) + strlen($separator) + strlen($values) + strlen($end)) < 1000000 ){ // max size
+                    $query .= $separator . $values;
                 }
                 else{
-                    // Sanitize will add slashes to backslash, quote, doubleqoute, newline and return chars.
-                    // We need to slash all of them again for PHP, except the single quote.
-                    // Plus slash any dollar char that misleads PHP into thinking it is dealing with a variable.
-                    $val = '\'' . str_replace($val_from, $val_to, addslashes($DB->sanitize($row[$i]))) . '\'';
+                    $query .= $end;
+                    echo $query;
+                    $query = $insert . $values;
                 }
-                $stmt .= $sep . $val;
-                $sep = ', ';
             }
-            $stmt .= ');";' . "\n";
+            if( $query ){
+                $query .= $end;
+                echo $query;
+            }
 
-            /* output the complete statement  */
-            echo $stmt;
+            /* clean up */
+            mysql_free_result($result);
         }
-        /* clean up */
-        mysql_free_result($result);
-
     }

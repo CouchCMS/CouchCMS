@@ -493,7 +493,7 @@
     }
 
     function k_install( $name, $pwd, $email ){
-        global $CTX, $DB, $FUNCS, $k_couch_tables, $k_stmts;
+        global $CTX, $DB, $FUNCS, $AUTH, $k_couch_tables, $k_stmts;
         $err = '';
 
         // First check if any of the tables to be created do not already exist
@@ -555,6 +555,13 @@
 
         if( !$err ){
             @mysql_query( "COMMIT" );
+            $FUNCS->dispatch_event( 'install_complete' );
+
+            // if dump file (extended inserts) available, redirect to it..
+            if( file_exists(K_COUCH_DIR . 'install-ex2.php') ){
+              $dest = K_ADMIN_URL.'restore_dump.php?offset=0&lines=0&splash=1&nonce='.$FUNCS->create_nonce( 'restore_dump_0_0' );
+              $AUTH->redirect( $dest );
+            }
         }
         else{
             @mysql_query( "ROLLBACK" );

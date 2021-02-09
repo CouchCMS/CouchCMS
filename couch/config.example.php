@@ -160,6 +160,10 @@
     define( 'K_RECAPTCHA_SITE_KEY', '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI' );
     define( 'K_RECAPTCHA_SECRET_KEY', '6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe' );
 
+    // 28.
+    // Set this to '1' for gen_dump.php utilty to work with dump files of very large sizes
+    define( 'K_SQL_DUMP_USE_EXTENDED_INSERTS', 0 );
+
     // 99.
     // VERY IMPORTANT!
     // Set the following to '1' ONLY IF YOU HAVE BOUGHT A COMMERCIAL LICENSE for the site you are using this file on.
