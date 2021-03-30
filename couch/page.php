@@ -286,6 +286,7 @@
                     $f->siblings = &$this->fields;
                     unset( $f->data );
                     unset( $f->orig_data );
+                    unset( $f->k_inactive );
 
                     $f->_prep_cached();
 
