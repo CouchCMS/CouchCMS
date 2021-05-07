@@ -2908,7 +2908,7 @@ OUT;
         // Original Pagination code from:
         // http://www.strangerstudios.com/sandbox/pagination/diggstyle.php
         // strangerstudios.com
-        function getPaginationString( $page = 1, $totalitems, $limit = 15, $adjacents = 1, $targetpage = "/", $pagestring = "?page=", $prev_text, $next_text, $simple ){
+        function getPaginationString( $page, $totalitems, $limit, $adjacents, $targetpage, $pagestring, $prev_text, $next_text, $simple ){
             //defaults
             if( !$adjacents ) $adjacents = 1;
             if( !$limit ) $limit = 15;
@@ -3015,7 +3015,7 @@ OUT;
             return $pagination;
         }
 
-        function getPaginationArray( $page = 1, $totalitems, $limit = 15, $adjacents = 1, $targetpage = "/", $pagestring = "?page=", $prev_text, $next_text, $simple ){
+        function getPaginationArray( $page, $totalitems, $limit, $adjacents, $targetpage, $pagestring, $prev_text, $next_text, $simple ){
             //defaults
             if( !$adjacents ) $adjacents = 1;
             if( !$limit ) $limit = 15;
