@@ -274,9 +274,7 @@
 
       public static function mysql_get_client_info(){
 
-          $link = self::$currObj;
-
-          return mysqli_get_client_info($link);
+          return mysqli_get_client_info();
       }
 
       public static function mysql_get_host_info($link=null){
