@@ -199,7 +199,7 @@
                     }
 
                     if( $order=='desc' ){ $data = array_reverse($data); }
-                    if ($order == 'random') { shuffle($data); }
+                    elseif( $order=='random' ){ shuffle($data); }
 
                     // loop through the rows..
                     $total_rows = count($data) - $offset;
