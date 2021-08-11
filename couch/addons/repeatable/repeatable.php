@@ -174,7 +174,7 @@
             $limit = $FUNCS->is_non_zero_natural( $limit ) ? intval( $limit ) : 1000;
             $offset = $FUNCS->is_natural( $offset ) ? intval( $offset ) : 0;
             $order = strtolower( trim($order) );
-            if( $order!='desc' && $order!='asc' ) $order='asc';
+            if( $order!='desc' && $order!='asc' && $order!='random') $order='asc';
             $extended_info = ( $extended_info==1 ) ? 1 : 0;
             $as_json = ( $as_json==1 ) ? 1 : 0;
             $into = trim( $into );
@@ -199,6 +199,7 @@
                     }
 
                     if( $order=='desc' ){ $data = array_reverse($data); }
+                    elseif( $order=='random' ){ shuffle($data); }
 
                     // loop through the rows..
                     $total_rows = count($data) - $offset;
