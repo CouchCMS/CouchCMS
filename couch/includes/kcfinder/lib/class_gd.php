@@ -47,7 +47,7 @@ class gd {
             $height = $image->get_height();
             $image = $image->get_image();
 
-        } elseif (is_resource($image) && (get_resource_type($image) == "gd")) {
+        } elseif ((is_resource($image) && (get_resource_type($image) == "gd")) || $image instanceof \GdImage) {
             $width = @imagesx($image);
             $height = @imagesy($image);
 
@@ -73,8 +73,8 @@ class gd {
         }
 
         $return = (
-            is_resource($image) &&
-            (get_resource_type($image) == "gd") &&
+            ((is_resource($image) &&
+            (get_resource_type($image) == "gd")) || $image instanceof \GdImage) &&
             isset($width) &&
             isset($height) &&
             (preg_match('/^[1-9][0-9]*$/', $width) !== false) &&
