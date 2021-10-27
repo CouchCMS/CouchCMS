@@ -249,8 +249,9 @@ function mysql_query($query,$link=null){
 }
 
 function mysql_real_escape_string($escapestr,$link=null){
-return mysqli_real_escape_string($link,$escapestr);
-    return mysql2i::mysqli_real_escape_string($escapestr,$link);
+
+    return mysqli_real_escape_string($link,$escapestr);
+    //return mysql2i::mysqli_real_escape_string($escapestr,$link);
 
 }
 

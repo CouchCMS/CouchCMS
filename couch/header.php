@@ -36,7 +36,7 @@
     */
 
     if( defined('E_STRICT') ){
-        error_reporting(E_ALL & ~(E_NOTICE | E_STRICT)); // Report all errors except notices and strict standard warnings
+        error_reporting(E_ALL & ~(E_NOTICE | E_STRICT | E_WARNING)); // Report all errors except notices and strict standard warnings
     }
     else{
         error_reporting(E_ALL & ~E_NOTICE); // Report all errors except notices

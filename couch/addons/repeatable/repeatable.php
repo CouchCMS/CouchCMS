@@ -48,7 +48,7 @@
             parent::__construct( $row, $page, $siblings );
 
             // now for own logic
-            $this->orig_data = array();
+            $this->orig_data = $this->data = array();
             $this->_fill_cells_info();
 
         }
@@ -657,6 +657,7 @@
                                 }
                             }
                         }
+                        $this->modified = 1;
                     }
 
                     // get data to save (will be used if no validation errors occur)
