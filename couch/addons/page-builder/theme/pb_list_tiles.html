@@ -1,0 +1,91 @@
+<cms:func 'pb_list_tiles' with_title='0'>
+    <li>
+        <cms:show k_content />
+
+        <div class="btn-group">
+            <a class="btn" href="#" onclick="this.blur(); k_pb_select('<cms:show k_create_link />'); return false;">
+                <cms:show_icon 'plus' /> <cms:localize 'add' />
+            </a>
+        </div>
+        <cms:if with_title><div class="label-group"><cms:show k_page_title /></div></cms:if>
+    </li>
+</cms:func>
+<div class="tab-pane fade active in" id="tab-pane-<cms:show k_route_module />">
+    <div id="k-modal-body">
+        <form name="k_pb_frm" id="k_pb_frm" class="bulk-form" action="" method="post">
+            <ul id="pb-list">
+                <cms:if k_mosaic eq '@'>
+                    <cms:pages masterpage=k_masterpage folder=k_tiles limit=k_limit offset=k_offset orderby='weight' order=k_order startcount='0' skip_custom_fields='1' token='pb_list_tiles'>
+                        <cms:call 'pb_list_tiles' '1' />
+                    </cms:pages>
+                <cms:else />
+                    <cms:show_mosaic_ex k_mosaic tiles=k_tiles limit=k_limit offset=k_offset order=k_order startcount='0' show_overlay='1'>
+                        <cms:call 'pb_list_tiles' />
+                    </cms:show_mosaic_ex>
+                </cms:if>
+            </ul>
+        </form>
+    </div>
+    <div id="k-modal-footer">
+        <cms:render 'page_actions' />
+    </div>
+    <div id="screen" style="display:none; position:absolute; width:100%; height:100%; top:0; left:0; background-color: black; opacity: 0.1;"></div>
+</div>
+
+<cms:admin_load_js "<cms:show k_admin_link />addons/page-builder/theme/lazyload.min.js" />
+<cms:admin_add_js>
+    function k_pb_select( link ){
+        var form=$('#k_pb_frm');
+        form.attr( "action", link );
+        $('#screen').css( "display", "block" );
+        form.submit();
+    }
+
+    function k_pb_iframe( el ){
+        var $iframe = $(el);
+        var height = el.contentWindow.document.body.scrollHeight;
+        $iframe.css('visibility', 'hidden');
+        $iframe.height(0);
+        $iframe.height(height+"px");
+        $iframe.parent().height(height+"px");
+        $iframe.css('visibility', 'visible');
+    }
+
+    $(function(){
+        COUCH.lazyload = new LazyLoad({
+            elements_selector: ".lazy",
+            container: document.getElementById('k-modal-body'),
+            callback_enter: function (element) {
+                //console.log("ENTERED " + element.getAttribute('data-src'));
+            }
+        });
+    });
+</cms:admin_add_js>
+
+<cms:admin_add_css>
+    ul#pb-list{ margin: 0px; padding: 0px; list-style: none; list-style-type: none; }
+    ul#pb-list li{ position: relative; margin-bottom: 20px;
+        border-radius: 5px 6px 6px 5px; -moz-border-radius: 5px 6px 6px 5px; -webkit-border-radius: 5px 6px 6px 5px;
+        box-shadow: 5px 8.7px 22px rgba(64,69,73,0.4); -moz-box-shadow: 5px 8.7px 22px rgba(64,69,73,0.4); -webkit-box-shadow: 5px 8.7px 22px rgba(64,69,73,0.4);
+    }
+    ul#pb-list li .btn-group{
+        position: absolute; top: 0; right: 0; margin: 10px;
+    }
+    ul#pb-list li .label-group{
+        position: absolute; top: 0; left: 0; margin: 2px;
+        background-color: #fff;
+        color: #666;
+        display: inline-block;
+        padding: 0 3px;
+        font-size: 12px;
+    }
+    ul#pb-list li .btn-group, ul#pb-list li .label-group{
+        visibility: hidden; opacity: 0;
+        transition: visibility 0s linear 0.5s,opacity 0.5s linear;
+        -webkit-transition: visibility 0s linear 0.5s,opacity 0.5s linear;
+        -moz-transition: visibility 0s linear 0.5s,opacity 0.5s linear;
+    }
+    ul#pb-list li:hover .btn-group, ul#pb-list li:hover .label-group{
+        visibility: visible; opacity: 1; transition-delay: 0s;
+    }
+</cms:admin_add_css>

@@ -5351,6 +5351,7 @@ FORM;
                 $attr = strtolower(trim($params[$x]['lhs']));
                 if( $attr=='name' ){
                     $name = trim( $params[$x]['rhs'] );
+                    if( !$name ){ continue; }
                 }
                 elseif( $attr=='method' ){
                     $method = strtolower( trim($params[$x]['rhs']) );

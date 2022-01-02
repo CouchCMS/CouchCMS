@@ -1,0 +1,112 @@
+<cms:set my_freeze_page="<cms:if k_user_access_level ne '10' && k_user_name ne kaleido_settings.super_user && freeze_page eq 'yes'>1<cms:else />0</cms:if>" />
+<cms:if my_freeze_page><style>.col-actions { min-width: 34px; }</style></cms:if>
+<cms:if k_has_deleted_tile><cms:render 'mosaic_tile_deleted' /></cms:if>
+<div class="mosaic tableholder" id="div_<cms:show k_field_input_id />">
+    <cms:if k_field_is_deleted><div class="delete-screen"></div></cms:if>
+    <table class="rr" id="<cms:show k_field_input_id />">
+        <thead>
+            <tr>
+                <th class="dg-arrange-table-header">&nbsp;</th>
+                <th class="col-contents">
+                    <span></span>
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            <cms:show_mosaic_ex k_field_name startcount='0'>
+                <tr id="<cms:show k_field_input_id />-<cms:show k_count />">
+                    <td class="dg-arrange-table-rows-drag-icon">&nbsp;</td>
+                    <td class="col-contents editable">
+                        <cms:if k_tile_is_deleted><div class="delete-screen"></div></cms:if>
+                        <div class="mosaic_contents <cms:show k_tile_name />" style="position:relative;">
+                            <cms:show k_content />
+                        </div>
+                        <input type="hidden" id="<cms:show k_field_input_id />-<cms:show k_count />-pid" name="<cms:show k_field_input_id />[<cms:show k_count />][pid]" value="<cms:show k_page_id />">
+
+                        <div class="act-group">
+                            <cms:if my_freeze_page ne '1'>
+                                <div class="col-up-down">
+                                    <a class="up icon" href="#" onclick="return false;" title="<cms:localize 'up' />"><cms:show_icon 'chevron-top' /></a>
+                                    <a class="down icon" href="#" onclick="return false;" title="<cms:localize 'down' />"><cms:show_icon 'chevron-bottom' /></a>
+                                </div>
+                            </cms:if>
+                            <div class="col-actions">
+                                <input type="checkbox" name="delete[]" value="" style="display: none;">
+                                <a class="icon edit-row popup-iframe" title="<cms:localize 'edit' />" data-mfp-src="<cms:show k_edit_link />" data_mosaic_field="<cms:show k_field_input_id />" data_mosaic_row="<cms:show k_field_input_id />-<cms:show k_count />" href="#"><cms:show_icon 'pencil' /></a>
+                                <cms:if my_freeze_page ne '1'>
+                                    <a class="icon add-row" data_mosaic_row="<cms:show k_field_input_id />-<cms:show k_count />" href="#" title="<cms:localize 'add_above' />" onclick="return false;"><cms:show_icon 'plus' /></a>
+                                    <a class="icon delete-row" title="<cms:localize 'delete' />" href="#"><cms:show_icon 'trash' /></a>
+                                </cms:if>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            </cms:show_mosaic_ex>
+        </tbody>
+    </table>
+    <div style="display: none;">
+        <p class="addRow" id="addRow_<cms:show k_field_input_id />"><a>Add a Row</a></p>
+    </div>
+    <input type="hidden" name="_<cms:show k_field_input_id />_sortorder" id="_<cms:show k_field_input_id />_sortorder" value="">
+    <div id="addNewRow_<cms:show k_field_input_id />" class="newRow" style="display: none;">
+        <table>
+            <tbody>
+                <tr id="newDataRow_<cms:show k_field_input_id />" class="newRow even">
+                    <td class="dg-arrange-table-rows-drag-icon">&nbsp;</td>
+                    <td class="col-contents editable">
+                        <div class="mosaic_contents" style="position:relative;">
+
+                        </div>
+                        <input type="hidden" idx="data-xxx-pid" id="data-xxx-pid" name="data[xxx][pid]" value="">
+                        <img src="<cms:show k_system_theme_link />assets/blank.gif" alt="" onload="var el=$('#div_<cms:show k_field_input_id /> #data-xxx-pid'); if(!el.attr('idx')){ COUCH.mosaicActions(el, '<cms:show k_field_input_id />');}" />
+
+                        <div class="act-group">
+                            <div class="col-up-down">
+                                <a class="up icon" href="#" onclick="return false;" title="<cms:localize 'up' />"><cms:show_icon 'chevron-top' /></a>
+                                <a class="down icon" href="#" onclick="return false;" title="<cms:localize 'down' />"><cms:show_icon 'chevron-bottom' /></a>
+                            </div>
+                            <div class="col-actions">
+                                <input type="checkbox" name="delete[]" value="">
+                                <a class="icon edit-row popup-iframe" title="<cms:localize 'edit' />" data-mfp-src="" data_mosaic_field="<cms:show k_field_input_id />" data_mosaic_row="" href="#"><cms:show_icon 'pencil' /></a>
+                                <a class="icon add-row" data_mosaic_row="" href="#" title="<cms:localize 'add_above' />" onclick="return false;"><cms:show_icon 'plus' /></a>
+                                <a class="icon delete-row" title="<cms:localize 'delete' />" href="#"><cms:show_icon 'trash' /></a>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <cms:if my_freeze_page ne '1'>
+        <div class="mosaic-buttons">
+            <div class="btn-group selector" id="mosaic_selector_<cms:show k_field_input_id />">
+                <cms:each templates as='template' startcount='1'>
+                <a class="btn<cms:if template.deleted> disabled<cms:else /> popup-iframe</cms:if> " href="#" tabindex="<cms:show k_count />" data-mfp-src="<cms:show template.link />" data_mosaic_field="<cms:show k_field_input_id />" onclick="this.blur();">
+                    <cms:if k_first_item><cms:show_icon 'plus' /></cms:if>
+                    <cms:show template.label />
+                </a>
+                </cms:each>
+            </div>
+            <div class="btn-group hidden_selector" style="display:none;">
+                <a class="btn" id="mosaic_hidden_selector_<cms:show k_field_input_id />" role="button" tabindex="0"><cms:show_icon 'plus' /> Add a Row</a>
+            </div>
+        </div>
+    </cms:if>
+</div>
+
+<cms:if k_add_js >
+    <cms:admin_load_js "<cms:show k_admin_link />addons/mosaic/theme/mosaic.js" />
+    <cms:admin_add_js>
+        $('.mosaic.tableholder').magnificPopup({
+            delegate: 'a.img-popup', // child items selector, by clicking on it popup will open
+            type: 'image'
+        });
+    </cms:admin_add_js>
+</cms:if>
+
+<cms:admin_add_js>
+    $(function(){
+        COUCH.mosaicInit('<cms:show k_field_input_id />');
+    });
+</cms:admin_add_js>

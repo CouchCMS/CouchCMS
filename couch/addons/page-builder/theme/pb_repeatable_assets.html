@@ -1,0 +1,43 @@
+<cms:if k_add_js >
+    <cms:admin_add_meta>
+    <script type="text/javascript">//<![CDATA[
+        function k_pb_iframe( el ){
+            var $iframe = $(el);
+            var $td = $iframe.closest('td.col-contents');
+            $td.css({
+                padding: 0,
+                borderTop: 0,
+                borderBottom: 0,
+            });
+
+            var $table = $iframe.closest('table.rr');
+            $table.css({borderSpacing: 0,});
+
+            var height = el.contentWindow.document.body.scrollHeight;
+            //if($iframe.height() < height){
+                $iframe.css('visibility', 'hidden');
+                $iframe.height(0);
+                $iframe.height(height+"px");
+                $iframe.parent().height(height+"px");
+                $iframe.css('visibility', 'visible');
+            //}
+
+            if ( COUCH.lazyload ){
+                COUCH.lazyload.update();
+            }
+        }
+    //]]></script>
+    </cms:admin_add_meta>
+    <cms:admin_load_js "<cms:show k_admin_link />addons/page-builder/theme/lazyload.min.js" />
+    <cms:admin_add_js>
+        $(function(){
+            COUCH.lazyload = new LazyLoad({
+                elements_selector: ".lazy",
+                container: document.getElementById('scroll-content'),
+                callback_enter: function (element) {
+					//console.log("ENTERED " + element.getAttribute('data-src'));
+				}
+            });
+        });
+    </cms:admin_add_js>
+</cms:if>

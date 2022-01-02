@@ -1,0 +1,22 @@
+<cms:hide>
+    <cms:php>
+        global $CTX, $PAGE, $FUNCS;
+
+        $route = ( $PAGE->tpl_type=='tile' ) ? 'edit_view' : 'edit_view_ex';
+        $link = $FUNCS->generate_route( $PAGE->tpl_name, $route, array('nonce'=>$FUNCS->create_nonce('edit_page_'.$PAGE->id), 'id'=>$PAGE->id) );
+        $CTX->set( 'update_link', $link );
+        $CTX->set_object( 'k_bound_page', $PAGE, 'global' );
+    </cms:php>
+
+    <cms:admin_add_js>
+        $(function(){
+            if( window.parent && window.parent.KMosaic && window.parent.KMosaic.callBack ){
+                var content = $('#mosaic_content');
+                window.parent.KMosaic.callBack(content.html(), '<cms:show k_page_id/>', '<cms:show update_link />');
+            }
+        });
+    </cms:admin_add_js>
+</cms:hide>
+<div id='mosaic_content' style="display:none;">
+    <cms:php>echo $FUNCS->render( 'pb_show_tile', 0 /*no cache*/ );</cms:php>
+</div>
