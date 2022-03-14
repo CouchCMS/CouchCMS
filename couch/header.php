@@ -36,7 +36,7 @@
     */
 
     if( defined('E_STRICT') ){
-        error_reporting(E_ALL & ~(E_NOTICE | E_STRICT | E_WARNING)); // Report all errors except notices and strict standard warnings
+        error_reporting(E_ALL & ~(E_NOTICE | E_STRICT | E_WARNING | E_DEPRECATED)); // Report all errors except notices and strict standard warnings
     }
     else{
         error_reporting(E_ALL & ~E_NOTICE); // Report all errors except notices
@@ -316,7 +316,10 @@
     }
 
     // get Couch's version
-    $_rs = @mysql_query( "select k_value from ".K_TBL_SETTINGS." where k_key='k_couch_version'", $DB->conn );
+    try{
+        $_rs = @mysql_query( "select k_value from ".K_TBL_SETTINGS." where k_key='k_couch_version'", $DB->conn );
+    }
+    catch( Exception $e ){}
     if( $_rs && ($_row = mysql_fetch_row( $_rs )) ){
         $_ver = $_row[0];
         if( version_compare(K_COUCH_VERSION, $_ver, ">") ){ // Upgrade required
