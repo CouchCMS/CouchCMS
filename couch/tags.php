@@ -3043,17 +3043,8 @@
                     $FUNCS->dispatch_event( 'post_alter_page_tag_context', array($rec, $mode, $params, $node, $rec_tpl, $token, $x, $count) );
                 }
             }
-            else{ // find and execute 'no_results' tag
-                $html = '';
-                foreach( $node->children as $child ){
-                    if( $child->type == K_NODE_TYPE_CODE && $child->name == 'no_results' ){
-                        // call the children of no_results
-                        foreach( $child->children as $grand_child ){
-                            $html .= $grand_child->get_HTML();
-                        }
-                        break;
-                    }
-                }
+            else{
+                $html = $this->_no_results( $node );
             }
 
             return $html;
@@ -3119,6 +3110,26 @@
         function no_results( $params, $node ){
 
             return;
+        }
+
+        function _no_results( $node, $execute_tag=1 ){
+            $html = '';
+
+            if( $execute_tag ){
+
+                // find and execute 'no_results' tag
+                foreach( $node->children as $child ){
+                    if( $child->type == K_NODE_TYPE_CODE && $child->name == 'no_results' ){
+                        // call the children of no_results
+                        foreach( $child->children as $grand_child ){
+                            $html .= $grand_child->get_HTML();
+                        }
+                        break;
+                    }
+                }
+            }
+
+            return $html;
         }
 
         function search_form( $params, $node ){
@@ -3461,7 +3472,7 @@ FORM;
             // root takes precedence over childof
             if( $root!='' ){
                 $f = &$folders->find( $root );
-                if( !$f ) return;
+                if( !$f ) return $this->_no_results( $node, $paginate );
                 unset( $folders );
                 $folders = new KFolder( array('id'=>'-1', 'name'=>'_root_', 'pid'=>'-1'), $tpl_name, new KError('dummy') );
                 $folders->set_sort( $orderby, $order );
@@ -3470,7 +3481,7 @@ FORM;
             }
             elseif( $childof!='' ){
                 $f = &$folders->find( $childof );
-                if( !$f || !count($f->children) ) return;
+                if( !$f || !count($f->children) ) return $this->_no_results( $node, $paginate );
                 unset( $folders );
                 $folders = new KFolder( array('id'=>'-1', 'name'=>'_root_', 'pid'=>'-1'), $tpl_name, new KError('dummy') );
                 $folders->set_sort( $orderby, $order );
@@ -3492,18 +3503,7 @@ FORM;
 
                 $total_rows = $folders->total_children_ex - $offset;
                 if( $total_rows < 1 ){
-                    // find and execute 'no_results' tag
-                    $html = '';
-                    foreach( $node->children as $child ){
-                        if( $child->type == K_NODE_TYPE_CODE && $child->name == 'no_results' ){
-                            // call the children of no_results
-                            foreach( $child->children as $grand_child ){
-                                $html .= $grand_child->get_HTML();
-                            }
-                            break;
-                        }
-                    }
-                    return $html;
+                    return $this->_no_results( $node, $paginate );
                 }
 
                 $total_pages = ceil( $total_rows/$limit );
@@ -4023,7 +4023,7 @@ FORM;
             // root takes precedence over childof
             if( $root!='' ){
                 $f = &$tree->find( $root );
-                if( !$f ) return;
+                if( !$f ) return $this->_no_results( $node, $paginate );
                 unset( $tree );
                 $tree = new KNestedPage( array('id'=>'-1', 'name'=>'_root_', 'pid'=>'-1'), $tpl_name, new KError()/*dummy*/ );
                 $tree->set_sort( $orderby, $order );
@@ -4032,7 +4032,7 @@ FORM;
             }
             elseif( $childof!='' ){
                 $f = &$tree->find( $childof );
-                if( !$f || !count($f->children) ) return;
+                if( !$f || !count($f->children) ) return $this->_no_results( $node, $paginate );
                 unset( $tree );
                 $tree = new KNestedPage( array('id'=>'-1', 'name'=>'_root_', 'pid'=>'-1'), $tpl_name, new KError()/*dummy*/ );
                 $tree->set_sort( $orderby, $order );
@@ -4056,18 +4056,7 @@ FORM;
 
                 $total_rows = $tree->total_children_ex - $offset;
                 if( $total_rows < 1 ){
-                    // find and execute 'no_results' tag
-                    $html = '';
-                    foreach( $node->children as $child ){
-                        if( $child->type == K_NODE_TYPE_CODE && $child->name == 'no_results' ){
-                            // call the children of no_results
-                            foreach( $child->children as $grand_child ){
-                                $html .= $grand_child->get_HTML();
-                            }
-                            break;
-                        }
-                    }
-                    return $html;
+                    return $this->_no_results( $node, $paginate );
                 }
 
                 $total_pages = ceil( $total_rows/$limit );
