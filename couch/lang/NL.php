@@ -53,7 +53,7 @@
     $t['superadmin'] = 'Super Admin';
     $t['admin'] = 'Administrator';
     $t['authenticated_user_special'] = 'Authentieke Gebruiker (Speciaal)';
-    $t['authenticated_user'] = 'Authentieke Gebruiker';
+    $t['authenitcated_user'] = 'Authentieke Gebruiker';
     $t['unauthenticated_user'] = 'Iedereen';
     $t['allow_comments'] = 'Gebruikerscommentaar toestaan';
     $t['status'] = 'Status';

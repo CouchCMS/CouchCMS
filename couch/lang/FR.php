@@ -55,7 +55,7 @@
     $t['superadmin'] = 'Super Admin';
     $t['admin'] = 'Administrateur';
     $t['authenticated_user_special'] = 'Utilisateur authentifié (Spécial)';
-    $t['authenticated_user'] = 'Utilisateur authentifié';
+    $t['authenitcated_user'] = 'Utilisateur authentifié';
     $t['unauthenticated_user'] = 'Tout le monde';
     $t['allow_comments'] = 'Autoriser l\'utilisateur à commenter';
     $t['status'] = 'Statut';

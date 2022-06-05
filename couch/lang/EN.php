@@ -53,7 +53,7 @@
     $t['superadmin'] = 'Super Admin';
     $t['admin'] = 'Administrator';
     $t['authenticated_user_special'] = 'Authenticated User (Special)';
-    $t['authenticated_user'] = 'Authenticated User';
+    $t['authenitcated_user'] = 'Authenticated User';
     $t['unauthenticated_user'] = 'Everybody';
     $t['allow_comments'] = 'Allow users to comment';
     $t['status'] = 'Status';
