@@ -484,7 +484,7 @@
     $k_stmts[] = "INSERT INTO ".K_TBL_USER_LEVELS." (id, name, title, k_level, disabled) VALUES (1, 'superadmin', 'Super Admin', 10, 0);";
     $k_stmts[] = "INSERT INTO ".K_TBL_USER_LEVELS." (id, name, title, k_level, disabled) VALUES (2, 'admin', 'Administrator', 7, 0);";
     $k_stmts[] = "INSERT INTO ".K_TBL_USER_LEVELS." (id, name, title, k_level, disabled) VALUES (3, 'authenticated_user_special', 'Authenticated User (Special)', 4, 0);";
-    $k_stmts[] = "INSERT INTO ".K_TBL_USER_LEVELS." (id, name, title, k_level, disabled) VALUES (4, 'authenitcated_user', 'Authenticated User', 2, 0);";
+    $k_stmts[] = "INSERT INTO ".K_TBL_USER_LEVELS." (id, name, title, k_level, disabled) VALUES (4, 'authenticated_user', 'Authenticated User', 2, 0);";
     $k_stmts[] = "INSERT INTO ".K_TBL_USER_LEVELS." (id, name, title, k_level, disabled) VALUES (5, 'unauthenticated_user', 'Everybody', 0, 0);";
 
     // Load dump file for importing data
