@@ -20,7 +20,7 @@ COUCH.addLeaveListener = function() {
         var form = COUCH.el.$content.find( "#k_admin_frm" );
         if( form.length ){
             COUCH.updateRichTextContent();
-            var orig_data = form.find( ":input:not(.ckeditor)" ).serialize();
+            var orig_data = form.find( ":input:not(.ckeditorx)" ).serialize();
 
             form.on( "submit", function() {
                 window.onbeforeunload = null;
@@ -28,7 +28,7 @@ COUCH.addLeaveListener = function() {
 
             window.onbeforeunload = function() {
                 COUCH.updateRichTextContent();
-                var cur_data = form.find( ":input:not(.ckeditor)" ).serialize();
+                var cur_data = form.find( ":input:not(.ckeditorx)" ).serialize();
 
                 var ckeditor_dirty;
                 if ( window.CKEDITOR ) {
