@@ -27,7 +27,7 @@
                     dataType: "text",
                     url:      qs
                 }).done(function( data ) {
-                    if( data === "OK" ){
+                    if( data.trim() === "OK" ){
                         var $field = $('#k_element_'+fname);
 
                         COUCH.slideFadeHide( $field, 400, function() {
