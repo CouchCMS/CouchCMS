@@ -369,12 +369,16 @@
                                     $this->items[$sorting_key]['quantity'] += $quantity;
                                 }
                                 else{
+                                    // HOOK: cart_get_item_link
+                                    $link = K_SITE_URL . $pg->get_page_view_link();
+                                    $FUNCS->dispatch_event( 'cart_get_item_link', array($pg->tpl_name, &$link) );
+
                                     $this->items[$sorting_key] = array(
                                        'line_id' => $unique_key,
                                        'id' => $pg->id,
                                        'name' => $pg->page_name,
                                        'title' => $pg->page_title,
-                                       'link' => K_SITE_URL . $pg->get_page_view_link(),
+                                       'link' => $link,
                                        'price' => $pp_price,
                                        'quantity' => $quantity,
                                        'line_total' => 0,
@@ -623,16 +627,24 @@
             if( $tpl==1 ){ // cart template
                 if( !$this->link_cart_template ){
                     $tpl = $this->get_config('tpl_cart');
-                    $link = ( K_PRETTY_URLS ) ? $FUNCS->get_pretty_template_link( $tpl ) : $tpl;
-                    $this->link_cart_template = K_SITE_URL . $link;
+                    $link = K_SITE_URL . (( K_PRETTY_URLS ) ? $FUNCS->get_pretty_template_link( $tpl ) : $tpl);
+
+                    // HOOK: cart_get_template_link
+                    $FUNCS->dispatch_event( 'cart_get_template_link', array($tpl, &$link) );
+
+                    $this->link_cart_template = $link;
                 }
                 return $this->link_cart_template;
             }
             elseif( $tpl==2 ){ // checkout template
                 if( !$this->link_checkout_template ){
                     $tpl = $this->get_config('tpl_checkout');
-                    $link = ( K_PRETTY_URLS ) ? $FUNCS->get_pretty_template_link( $tpl ) : $tpl;
-                    $this->link_checkout_template = K_SITE_URL . $link;
+                    $link = K_SITE_URL . (( K_PRETTY_URLS ) ? $FUNCS->get_pretty_template_link( $tpl ) : $tpl);
+
+                    // HOOK: cart_get_template_link
+                    $FUNCS->dispatch_event( 'cart_get_template_link', array($tpl, &$link) );
+
+                    $this->link_checkout_template = $link;
                 }
                 return $this->link_checkout_template;
             }
@@ -805,7 +817,7 @@
             //..
             //</form>
 
-            $html = '<form action="' . $CART->_get_template_link( 1 ) . '?kcart_action=' . ($action=($node->name=='pp_product_form') ? '1' : '2');
+            $html = '<form action="' . $CART->get_link( 1, 'kcart_action=' . ($action=($node->name=='pp_product_form') ? '1' : '2') );
             $redirect = '';
             $extra = '';
             for( $x=0; $x<count($params); $x++ ){
@@ -1120,19 +1132,19 @@
                     $html = $CART->_get_template_link( 1 );
                     break;
                 case 'pp_add_item_link':
-                    $html = $CART->_get_template_link( 1 ) . '?kcart_action=1';
+                    $html = $CART->get_link( 1, 'kcart_action=1' );
                     break;
                 case 'pp_update_item_link':
-                    $html = $CART->_get_template_link( 1 ) . '?kcart_action=2';
+                    $html = $CART->get_link( 1, 'kcart_action=2' );
                     break;
                 case 'pp_remove_item_link':
-                    $html = $CART->_get_template_link( 1 ) . '?kcart_action=3&amp;line_id=' . $CTX->get( 'line_id' );
+                    $html = $CART->get_link( 1, 'kcart_action=3&amp;line_id=' . $CTX->get('line_id') );
                     break;
                 case 'pp_empty_cart_link':
-                    $html = $CART->_get_template_link( 1 ) . '?kcart_action=4';
+                    $html = $CART->get_link( 1, 'kcart_action=4' );
                     break;
                 case 'pp_checkout_link':
-                    $html = $CART->_get_template_link( 1 ) . '?kcart_action=5';
+                    $html = $CART->get_link( 1, 'kcart_action=5' );
                     break;
                 case 'pp_empty_cart':
                     $CART->items = array();
@@ -1141,6 +1153,18 @@
             }
 
             return $html;
+        }
+
+        function get_link( $tpl, $querystring ){
+            $link = $this->_get_template_link( $tpl );
+            if( $link ){
+                $querystring = trim( $querystring );
+                if( $querystring ){
+                    $sep = ( strpos($link, '?')===false ) ? '?' : '&';
+                    $link = $link . $sep . $querystring;
+                }
+            }
+            return $link;
         }
 
         static function gateway_handler( $params, $node ){

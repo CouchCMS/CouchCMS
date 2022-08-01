@@ -7873,6 +7873,13 @@ MAP;
             return $html;
         }
 
+        // same as call() above but trims the output.. useful while setting variables
+        function call_ex( $params, $node ){
+            $html = $this->call( $params, $node );
+
+            return trim( $html );
+        }
+
         function func_exists( $params, $node ){
             global $FUNCS;
             if( count($node->children) ) {die("ERROR: Tag \"".$node->name."\" is a self closing tag");}
