@@ -192,7 +192,14 @@
 
         // Invoked only while editing a page where all parameters of a field (instead of just the usual data) are needed.
         function resolve_dynamic_params(){
+            global $FUNCS;
+
             if( !$this->system && $this->dynamic ){
+
+                // HOOK: resolve_dynamic_params
+                $skip = $FUNCS->dispatch_event( 'resolve_dynamic_params', array(&$this) );
+                if( $skip ) return;
+
                 $arr_dynamic = array_map( "trim", explode( '|', $this->dynamic ) );
                 foreach( $arr_dynamic as $dyn_param ){
                     if( in_array($dyn_param, array( 'desc', 'type', 'order', 'group', 'separator' )) ){
@@ -214,6 +221,10 @@
                                 $parser = new KParser( $html );
                                 $this->$dyn_param = $parser->get_HTML();
                             }
+                        }
+                        else{
+                            // HOOK: resolve_dynamic_param (individual)
+                            $FUNCS->dispatch_event( 'resolve_dynamic_param', array(&$this, $dyn_param) );
                         }
                     }
                 }
