@@ -20,6 +20,9 @@
 
                 // mark the current template as having globals
                 $DB->update( K_TBL_TEMPLATES, array('has_globals'=>'1'), "id='" . $DB->sanitize( $PAGE->tpl_id ) . "'" );
+
+                // HOOK: globals_template_inserted
+                $FUNCS->dispatch_event( 'globals_template_inserted', array($PAGE->tpl_name, $rs[0]) );
             }
 
             // get page to hold the child editable regions
@@ -128,13 +131,20 @@
         }
 
         static function _delete_template( $tpl ){
-            global $DB, $FUNCS;
+            global $DB, $FUNCS, $AUTH;
 
             $global_tpl_name = KGlobals::_get_filename( $tpl );
-            $DB->update( K_TBL_TEMPLATES, array('deleted'=>1), "name='" . $DB->sanitize( $global_tpl_name ). "'" );
+            $rs = $DB->select( K_TBL_TEMPLATES, array('*'), "name='" . $DB->sanitize( $global_tpl_name ). "' LIMIT 1" );
+            if( count($rs) ){
+                $tmp_name = $global_tpl_name . '_' . md5( $AUTH->hasher->get_random_bytes(16) );
+                $DB->update( K_TBL_TEMPLATES, array('name'=>$tmp_name, 'deleted'=>1), "name='" . $DB->sanitize( $global_tpl_name ). "'" );
 
-            // signal to GC (can piggyback on existing gc logic of mosaic)
-            $FUNCS->set_setting( 'gc_mosaic_is_dirty', 1 );
+                // HOOK: globals_template_deleted
+                $FUNCS->dispatch_event( 'globals_template_deleted', array($tpl, $rs[0]) );
+
+                // signal to GC (can piggyback on existing gc logic of mosaic)
+                $FUNCS->set_setting( 'gc_mosaic_is_dirty', 1 );
+            }
         }
 
         // remove deleted globals template
