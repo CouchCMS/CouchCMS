@@ -45,13 +45,14 @@
             $port = $db_host[1];
         }
 
+        try{
           $link = mysqli_connect($host,$username,$passwd, '', $port);
-          /*if (!$link) {
-            echo "Error: Unable to connect to MySQL." . PHP_EOL;
-            echo "Debugging errno: " . mysqli_connect_errno() . PHP_EOL;
-            echo "Debugging error: " . mysqli_connect_error() . PHP_EOL;
-            exit;
-          }*/
+        }
+        catch( Exception $e ){}
+
+          if (!$link) {
+            die( '<h1>Could not connect to database</h1>' . mysqli_connect_error() );
+          }
           self::$currObj = $link;
 
           return $link;
