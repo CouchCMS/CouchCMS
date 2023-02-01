@@ -463,6 +463,12 @@
             return;
         }
 
+        function _prep_cached(){
+            $this->items_selected = array();
+            $this->items_deleted = array();
+            $this->items_inserted = array();
+        }
+
         //////////////// Tags //////////////////////////////////////////////////
         static function related_pages_handler( $params, $node ){
             global $CTX, $FUNCS, $TAGS, $PAGE, $DB;
