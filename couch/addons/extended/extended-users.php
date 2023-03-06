@@ -737,7 +737,9 @@
             if( strlen($this->login_tpl) ){
                 if( $AUTH->user->id == -1 ){
                     if( !strlen($redirect) ){ $redirect = $_SERVER["REQUEST_URI"]; }
-                    $link = $FUNCS->get_link( $this->login_tpl ).'?redirect='.urlencode( $redirect );
+                    $link = $FUNCS->get_link( $this->login_tpl );
+                    $sep = ( strpos($link, '?')===false ) ? '?' : '&';
+                    $link .= $sep . 'redirect='.urlencode( $redirect );
                 }
                 else{
                     $link = 'javascript:void(0)';
@@ -752,7 +754,9 @@
                 if( $AUTH->user->id != -1 ){
                     $nonce = $FUNCS->create_nonce( 'logout'.$AUTH->user->id, $AUTH->user->name );
                     if( !strlen($redirect) ){ $redirect = $_SERVER["REQUEST_URI"]; }
-                    $link = $FUNCS->get_link( $this->login_tpl ).'?act=logout&nonce='.$nonce. '&redirect='.urlencode( $redirect );
+                    $link = $FUNCS->get_link( $this->login_tpl );
+                    $sep = ( strpos($link, '?')===false ) ? '?' : '&';
+                    $link .= $sep . 'act=logout&nonce='.$nonce. '&redirect='.urlencode( $redirect );
                 }
                 else{
                     $link = 'javascript:void(0)';
