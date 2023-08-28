@@ -2673,13 +2673,16 @@
                     if( $only_local ){ // don't allow redirects external to our site
                         if( !strlen($default) ) $default=K_SITE_URL;
 
-                        if( strpos($url, '//')!==false ){
-                            if( strpos($url, K_SITE_URL)!==0 ){
+                        // only absolute paths allowed..
+                        if( strpos($url,'/')===0 ){ // either beginning with '/' with the following exceptions..
+                            if( strpos($url,'//')===0 || strpos($url, '/\\')===0 || strpos($url, '/http:')===0 || strpos($url, '/https:')===0 || strpos($url, '//')!==false){
                                 $url = $default;
                             }
                         }
-                        elseif( strpos($url, '/\\')===0 ){
-                            $url = $default;
+                        else{
+                            if( strpos($url, K_SITE_URL)!==0 ){ // or beginning with full URL of the site
+                                $url = $default;
+                            }
                         }
                     }
                 }
