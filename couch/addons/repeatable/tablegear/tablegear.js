@@ -213,7 +213,7 @@
       }
 
       _record_order();
-       tbody.trigger("_insert", newRow);
+       tbody.trigger("_insert", [newRow, above]);
     }
 
     function removeRow(row){

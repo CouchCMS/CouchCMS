@@ -303,17 +303,15 @@
             ob_start();
             ?>
             <div class="<?php if( $this->stacked_layout ): ?>mosaic <?php endif; ?>repeatable-region tableholder">
-                <table class="rr" id="<?php echo $input_id; ?>">
+                <table class="rr<?php if( $this->stacked_layout ): ?> stacked<?php endif; ?>" id="<?php echo $input_id; ?>">
                     <thead>
                         <tr>
                             <th class="dg-arrange-table-header">&nbsp;</th>
                             <?php if( $this->stacked_layout ) : ?>
                                 <th class="col-contents"><span>&nbsp;</span></th>
-                                <th class="col-up-down">&nbsp;</th>
-                                <th class="col-actions"></th>
                             <?php else: ?>
                                 <?php foreach( $this->cells as $c ) :  ?>
-                                <th class="k_element_<?php echo $c->name; ?>" <?php if($c->col_width){ echo 'style="width:'.$c->col_width.'px;"'; } ?>>
+                                <th class="k_element_<?php echo $c->name; ?> k_<?php echo $c->k_type; ?>" <?php if($c->col_width){ echo 'style="width:'.$c->col_width.'px;"'; } ?>>
                                     <span><?php echo $c->label; ?></span>
                                     <span class="carat"></span>
                                 </th>
@@ -340,7 +338,7 @@
                             <tr id="<?php echo $input_id; ?>-<?php echo $row_id; ?>">
                                 <td class="dg-arrange-table-rows-drag-icon">&nbsp;</td>
                                 <?php
-                                if( $this->stacked_layout ){ echo( '<td class="col-contents editable"><div class="mosaic-list">' ); };
+                                if( $this->stacked_layout ){ echo( '<td class="col-contents editable"><div class="mosaic_contents" style="position:relative;"><div class="mosaic-list">' ); };
                                 if( is_null($this->rendered_data) ){ // not handling posted data
                                     // move data into cells
                                     for( $y=0; $y<count($this->cells); $y++ ){
@@ -363,7 +361,7 @@
 
                                         if( $this->stacked_layout ){
                                             $html = "
-                                            <div class=\"row k_element_".$c->name."\">
+                                            <div class=\"row k_element_".$c->name." k_element k_".$c->k_type."\">
                                                 <div class=\"cell cell-label col-md-2\">
                                                     <label>".$c->label."</label>
                                                 </div>
@@ -375,7 +373,7 @@
                                             </div>";
                                         }
                                         else{
-                                            $html = '<td class="editable k_element_'.$c->name.'"><div style="position:relative;">';
+                                            $html = '<td class="editable k_element_'.$c->name.' k_element k_'.$c->k_type.'"><div style="position:relative;">';
                                             $html .= $field_html;
                                             $html .= '</div></td>';
                                         }
@@ -391,18 +389,18 @@
                                     }
                                 }
                                 if( $this->stacked_layout ){
-                                    echo( '</div></td>' );
-                                    echo( '<td class="col-up-down">' );
+                                    echo( '</div></div>' );
+                                    echo( '<div class="act-group"><div class="col-up-down">' );
                                     echo( '    <a class="up icon" href="#" onclick="return false;" title="'.$FUNCS->t('up').'">'.$FUNCS->get_icon('chevron-top').'</a>' );
                                     echo( '    <a class="down icon" href="#" onclick="return false;" title="'.$FUNCS->t('down').'">'.$FUNCS->get_icon('chevron-bottom').'</a>' );
-                                    echo( '</td>' );
+                                    echo( '</div>' );
 
-                                    echo( '<td class="col-actions">' );
+                                    echo( '<div class="col-actions">' );
                                     echo( '    <input type="checkbox" name="delete[]" value="" style="display: none;">' );
                                     echo( '    <a class="icon add-row" data_mosaic_row="'.$input_id.'-'.$row_id.'" href="#" title="'.$FUNCS->t('add_above').'" onclick="return false;">'.$FUNCS->get_icon('plus').'</a>' );
                                     echo( '    <a class="icon delete-row" title="'.$FUNCS->t('delete').'" href="#">'.$FUNCS->get_icon('trash').'</a>' );
+                                    echo( '</div></div>' );
                                     echo( '</td>' );
-
                                 }
                                 else{
                                     echo( '<td class="delete">' );
@@ -435,7 +433,7 @@
                             <tr id="newDataRow_<?php echo $input_id; ?>" class="newRow even">
                                 <td class="dg-arrange-table-rows-drag-icon">&nbsp;</td>
                                 <?php
-                                if( $this->stacked_layout ){ echo( '<td class="col-contents editable"><div class="mosaic-list">' ); };
+                                if( $this->stacked_layout ){ echo( '<td class="col-contents editable"><div class="mosaic_contents" style="position:relative;"><div class="mosaic-list">' ); };
                                 $y=0;
                                 foreach( $this->cells as $c ){
                                     $c->data = is_array($c->data) ? array() : '';
@@ -455,7 +453,7 @@
 
                                     if( $this->stacked_layout ){
                                         $html = "
-                                        <div class=\"row k_element_".$c->name."\">
+                                        <div class=\"row k_element_".$c->name." k_element k_".$c->k_type."\">
                                             <div class=\"cell cell-label col-md-2\">
                                                 <label>".$c->label."</label>
                                             </div>
@@ -467,7 +465,7 @@
                                         </div>";
                                     }
                                     else{
-                                        $html = '<td class="editable k_element_'.$c->name.'"><div style="position:relative;">';
+                                        $html = '<td class="editable k_element_'.$c->name.' k_element k_'.$c->k_type.'"><div style="position:relative;">';
                                         $html .= $widget;
                                         $html .= '</div></td>';
                                     }
@@ -485,16 +483,17 @@
                                             add_icon.attr( \'data_mosaic_row\', row.attr(\'id\') );
                                         }
                                     " idx="data-xxx-dummyimg" id="data-xxx-dummyimg" />' );
-                                    echo( '</td>' );
-                                    echo( '<td class="col-up-down">' );
+                                    echo( '</div>' );
+                                    echo( '<div class="act-group"><div class="col-up-down">' );
                                     echo( '    <a class="up icon" href="#" onclick="return false;" title="'.$FUNCS->t('up').'">'. $FUNCS->get_icon('chevron-top') .'</a>' );
                                     echo( '    <a class="down icon" href="#" onclick="return false;" title="'.$FUNCS->t('down').'">'. $FUNCS->get_icon('chevron-bottom') .'</a>' );
-                                    echo( '</td>' );
+                                    echo( '</div>' );
 
-                                    echo( '<td class="col-actions">' );
+                                    echo( '<div class="col-actions">' );
                                     echo( '    <input type="checkbox" name="delete[]" value="" style="display: none;">' );
                                     echo( '    <a class="icon add-row" data_mosaic_row="" href="#" title="'.$FUNCS->t('add_above').'" onclick="return false;">'.$FUNCS->get_icon('plus').'</a>' );
                                     echo( '    <a class="icon delete-row" title="'.$FUNCS->t('delete').'" href="#">'.$FUNCS->get_icon('trash').'</a>' );
+                                    echo( '</div></div>' );
                                     echo( '</td>' );
                                 }
                                 else{
@@ -696,7 +695,7 @@
                     }
                     if( $this->stacked_layout ){
                         $html = "
-                        <div class=\"row k_element_".$c->name."\">
+                        <div class=\"row k_element_".$c->name." k_element k_".$c->k_type."\">
                             <div class=\"cell cell-label col-md-2".$err_class."\">
                                 <label>".$c->label."</label>
                             </div>
@@ -708,7 +707,7 @@
                         </div>";
                     }
                     else{
-                        $html = '<td class="editable k_element_'.$c->name.$err_class.'"><div style="position:relative;">';
+                        $html = '<td class="editable k_element_'.$c->name.$err_class.' k_element k_'.$c->k_type.'"><div style="position:relative;">';
                         $html .= $field_html;
                         $html .= '</div></td>';
                     }

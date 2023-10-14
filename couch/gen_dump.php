@@ -55,6 +55,7 @@
     $tbls[K_TBL_FULLTEXT] = 'K_TBL_FULLTEXT';
     $tbls[K_TBL_COMMENTS] = 'K_TBL_COMMENTS';
     $tbls[K_TBL_RELATIONS] = 'K_TBL_RELATIONS';
+    $tbls[K_TBL_SUB_TEMPLATES] = 'K_TBL_SUB_TEMPLATES';
 
     $use_extended_inserts = K_SQL_DUMP_USE_EXTENDED_INSERTS || $FUNCS->dispatch_event( 'sql_dump_use_extended_inserts' );
     $filename = ( $use_extended_inserts ) ? 'install-ex2.php' : 'install-ex.php';

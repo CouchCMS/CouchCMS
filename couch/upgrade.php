@@ -286,6 +286,24 @@
         $_sql = "ALTER TABLE `".K_TBL_FIELDS."` MODIFY `custom_params` mediumtext;";
         $DB->_query( $_sql );
     }
+    // upgrade to 2.4
+    if( version_compare("2.4", $_ver, ">") ){
+        $_sql = "CREATE TABLE `".K_TBL_SUB_TEMPLATES."` (
+            `template_id`     int NOT NULL,
+            `sub_template_id` int NOT NULL,
+            `field_id`        int NOT NULL,
+            `is_stub`         int,
+            `filter_type`     decimal(5,2),
+            PRIMARY KEY (`template_id`, `sub_template_id`, `field_id`)
+          ) ENGINE = InnoDB CHARACTER SET utf8 COLLATE utf8_general_ci;";
+        $DB->_query( $_sql );
+
+        $_sql = "CREATE INDEX `".K_TBL_SUB_TEMPLATES."_index01` ON `".K_TBL_SUB_TEMPLATES."` (`field_id`);";
+        $DB->_query( $_sql );
+
+        $_sql = "CREATE UNIQUE INDEX `".K_TBL_FIELDS."_index03` ON `".K_TBL_FIELDS."` (`template_id`, `name`);";
+        $DB->_query( $_sql );
+    }
 
     // Finally update version number
     $_rs = $DB->update( K_TBL_SETTINGS, array('k_value'=>K_COUCH_VERSION), "k_key='k_couch_version'" );

@@ -44,7 +44,7 @@
         var $items_inserted = array();
 
         static function handle_params( $params ){
-            global $FUNCS, $AUTH;
+            global $FUNCS, $AUTH, $PAGE;
             if( $AUTH->user->access_level < K_ACCESS_LEVEL_SUPER_ADMIN ) return;
 
             $attr = $FUNCS->get_named_vars(
@@ -57,9 +57,23 @@
                     'order_dir'=>'', /* desc, asc */
                     'no_gui'=>'0', /* for setting values only programmatically */
                     'advanced_gui'=>'0',
+                    'create_auto'=>'0', /* for creating the masterpage automatically */
+                    'template_code'=>'', /* for the auto-created masterpage above */
+                    'show_manage'=>'0', /* shows a link for managing the masterpage */
+                    'name'=>'',
+                    'label'=>'',
                   ),
                 $params
             );
+            $attr['create_auto'] = ( $attr['create_auto']==1 ) ? 1 : 0;
+            if( $attr['create_auto'] ){
+                $name = trim( $attr['name'] );
+                $label = trim( $attr['label'] );
+                $attr['template_code'] = trim( $attr['template_code'] );
+                $attr['masterpage'] = $name . '_' . $PAGE->tpl_id . '__auto';
+
+                self::process_auto_create( $attr['masterpage'], $label, $attr['template_code'] );
+            }
             $attr['masterpage'] = trim( $attr['masterpage'] );
             if( !strlen($attr['masterpage']) ) die("ERROR: Editable 'relation' type requires a 'masterpage' parameter.");
             $attr['has'] = strtolower( trim($attr['has']) );
@@ -71,6 +85,9 @@
             $attr['order_dir'] = strtolower( trim($attr['order_dir']) ); // 'order' is a 'core parameter' and will be stripped off
             $attr['no_gui'] = ( $attr['no_gui']==1 ) ? 1 : 0;
             $attr['advanced_gui'] = ( $attr['advanced_gui']==1 ) ? 1 : 0;
+            $attr['show_manage'] = ( $attr['create_auto']==1 ) ? 1 : (( $attr['show_manage']==1 ) ? 1 : 0);
+            unset( $attr['label'] );
+            unset( $attr['name'] );
 
             return $attr;
         }
@@ -326,16 +343,8 @@
             $this->items_selected = $arr_posted;
         }
 
-        // before save
-        function validate(){ // for now only checking for 'required'
-            global $FUNCS;
-            if( $this->deleted || $this->k_inactive ) return true;
-
-            if( $this->required && !count($this->items_selected) ){
-                $this->err_msg = $FUNCS->t('required_msg');
-                return false;
-            }
-            return true;
+        function is_empty(){
+            return !count($this->items_selected);
         }
 
         function get_data( $for_ctx=0 ){
@@ -404,6 +413,10 @@
                 // Remove all records from the relation table for this field
                 $rs = $DB->delete( K_TBL_RELATIONS, "fid='" . $this->id . "'" );
                 if( $rs==-1 ) die( "ERROR: Unable to delete records from K_TBL_RELATIONS" );
+
+                if( $this->create_auto ){
+                    $this->delete_auto_created();
+                }
             }
             else{
                 // Remove all records from the relation table for the page being deleted
@@ -413,6 +426,7 @@
                 $rs = $DB->delete( K_TBL_RELATIONS, "cid='" . $DB->sanitize( $page_id ). "' AND fid='".$this->id."'" );
                 if( $rs==-1 ) die( "ERROR: Unable to delete records from K_TBL_RELATIONS" );
             }
+
             return;
         }
 
@@ -467,6 +481,13 @@
             $this->items_selected = array();
             $this->items_deleted = array();
             $this->items_inserted = array();
+        }
+
+        static function delete_related_pages( &$pg ){
+            global $DB;
+
+            $rs = $DB->delete( K_TBL_RELATIONS, "cid='" . $DB->sanitize( $pg->id ). "'" );
+            if( $rs==-1 ) die( "ERROR: Unable to delete records from K_TBL_RELATIONS" );
         }
 
         //////////////// Tags //////////////////////////////////////////////////
@@ -589,6 +610,96 @@
             return $html;
         }
 
+        static function process_auto_create( $masterpage, $label, $template_code='' ){
+            global $FUNCS, $DB, $PAGE;
+
+            $rs = $DB->select( K_TBL_TEMPLATES, array('id', 'title', 'hidden'), "name='" . $DB->sanitize( $masterpage ). "'" );
+            if( count($rs) ){
+                if( $rs[0]['hidden']!='2' ){ // a 'regular' template already exists
+                    return;
+                }
+            }
+            else{
+                // create template
+                $rs = $DB->insert( K_TBL_TEMPLATES, array('name'=>$masterpage, 'description'=>'', 'title'=>$label, 'clonable'=>1, 'executable'=>0, 'hidden'=>2) );
+                $rs = $DB->select( K_TBL_TEMPLATES, array('id', 'title', 'hidden'), "name='" . $DB->sanitize( $masterpage ). "' AND hidden='2'" );
+                if( !count($rs) ) die( "ERROR: 'cannot create record in K_TBL_TEMPLATES for relation 'auto_create' masterpage" );
+
+                // create and unpublish default page
+                $arr_insert = array( 'template_id'=>$rs[0]['id'], 'page_title'=>'Default Page', 'page_name'=>'default-page', 'is_master'=>'1', 'publish_date'=>'0000-00-00 00:00:00' );
+                $rs2 = $DB->insert( K_TBL_PAGES, $arr_insert );
+                if( $rs2!=1 ) die( "ERROR: 'cannot create record in K_TBL_PAGES for relation 'auto_create' masterpage" );
+            }
+
+            // check if label modified
+            if( $label != $rs[0]['title'] ){
+                $DB->update( K_TBL_TEMPLATES, array('title'=>$label), "id='" . $DB->sanitize( $rs[0]['id'] ) . "'" );
+            }
+
+            // finally execute any template code if specified
+            if( $template_code!='' ){
+                if( defined('K_SNIPPETS_DIR') ){ // always defined relative to the site
+                    $base_snippets_dir = K_SITE_DIR . K_SNIPPETS_DIR . '/';
+                }
+                else{
+                    $base_snippets_dir = K_COUCH_DIR . 'snippets/';
+                }
+                $filepath = $base_snippets_dir . ltrim( trim($template_code), '/\\' );
+
+                if( file_exists($filepath) ){
+                    $html = @file_get_contents($filepath);
+                    if( strlen($html) ){
+
+                        // create page object to be the target of ensuing code
+                        $pg = new KWebpage( $rs[0]['id'], null );
+                        if( $pg->error ) die( "ERROR: 'cannot instantiate page for relation 'auto_create' masterpage" );
+                        $orig_page = $PAGE;
+                        $PAGE = $pg;
+
+                        $parser = new KParser( $html );
+                        $dom = $parser->get_DOM();
+
+                        foreach( $dom->children as $child ){
+                            if( $child->type==K_NODE_TYPE_CODE ){
+                                $child_name = strtolower( $child->name );
+                                if( in_array($child_name, array('editable', 'repeatable', 'config_list_view', 'config_form_view')) ){ //supported tags
+                                    $child->get_HTML();
+                                }
+                            }
+                        }
+
+                        // process deleted fields
+                        $PAGE->is_master = 0;
+                        $FUNCS->post_process_page();
+
+                        // restore original $PAGE
+                        $PAGE = $orig_page;
+                    }
+                }
+            }
+
+            return $rs[0]['id'];
+        }
+
+        function delete_auto_created(){
+            global $DB, $FUNCS;
+
+            $tpl_name = $this->masterpage;
+
+            $rs = $DB->select( K_TBL_TEMPLATES, array('*'), "name='" . $DB->sanitize( $tpl_name ). "' AND hidden='2' LIMIT 1" );
+            if( count($rs) ){
+
+                // mark template as deleted
+                $DB->update( K_TBL_TEMPLATES, array('deleted'=>1), "id='" . $DB->sanitize( $rs[0]['id'] ). "'" );
+
+                // HOOK: auto_created_template_deleted
+                $FUNCS->dispatch_event( 'auto_created_template_deleted', array($tpl_name, $rs[0]) );
+
+                // signal to GC (can piggyback on existing gc logic of mosaic)
+                $FUNCS->set_setting( 'gc_mosaic_is_dirty', 1 );
+            }
+        }
+
         // routes
         static function register_routes(){
             global $FUNCS;
@@ -635,6 +746,8 @@
             $rows = $f->_get_rows();
             if( $FUNCS->is_error($rows) ) return $rows->err_msg;
 
+            $manage = ( $f->show_manage ) ? '<a href="'.K_ADMIN_URL.K_ADMIN_PAGE.'?o='.urlencode($f->masterpage).'&q=list" class="btn manage" target="_blank">'.$FUNCS->t('manage').'</a>' : '';
+
             if( $f->has=='one' ){
                 $selected = ( count($f->items_selected) ) ? $f->items_selected[0] : ''; // can have only one item selected
                 if( $f->simple_mode ){
@@ -653,7 +766,10 @@
                 }
                 $html .= '</select>';
                 if( !$f->simple_mode ){
-                    $html .= '<span class="select-caret">'.$FUNCS->get_icon('caret-bottom').'</span></div>';
+                    $html .= '<span class="select-caret">'.$FUNCS->get_icon('caret-bottom').'</span>'.$manage.'</div>';
+                }
+                else{
+                    $html .= $manage;
                 }
             }
             else{
@@ -683,6 +799,10 @@
                 if( !$f->simple_mode ){
                     $html .= '</div>';
                     $html .= '</div>';
+                    $html .= $manage;
+                }
+                else{
+                    $html .= $manage;
                 }
             }
 
@@ -714,6 +834,9 @@
             //$link = $FUNCS->generate_route( 'relation', 'list_view', array('tpl_id'=>$f->template_id, 'field_name'=>$f->name, 'page_id'=>$f->page->id=='-1'?'':$f->page->id) ); // won't work when rendered outside admin-panel (i.e. on front-end in dbf)
             $link = K_ADMIN_URL . K_ADMIN_PAGE.'?o=relation&q=list/'.$f->template_id.'/'.$f->name.'/'.(($f->page->id=='-1')?'':$f->page->id);
             $CTX->set( 'k_target_link', $link );
+
+            $manage_link = ( $f->show_manage ) ? K_ADMIN_URL.K_ADMIN_PAGE.'?o='.urlencode($f->masterpage).'&q=list' : '';
+            $CTX->set( 'k_manage_link', $manage_link );
 
             if( !$done ){
                 $CTX->set( 'k_add_js', '1' );
@@ -760,6 +883,7 @@
     $FUNCS->register_tag( 'related_pages', array('Relation', 'related_pages_handler'), 1, 1 ); // The helper tag that shows the related pages
     $FUNCS->register_tag( 'reverse_related_pages', array('Relation', 'reverse_related_pages_handler'), 1, 1 ); // -do in reverse-
     $FUNCS->add_event_listener( 'register_renderables',  array('Relation', 'register_renderables') );
+    $FUNCS->add_event_listener( 'page_deleted', array('Relation', 'delete_related_pages') );
 
     // routes
     if( defined('K_ADMIN') ){

@@ -47,7 +47,7 @@
             // handle params
             $arr_known_params = array( '_invalidate_cache'=>'0', '_auto_title'=>'0', '_token'=>'', '_fields'=>'' );
             if( $node->name=='db_persist' ){
-                $arr_known_params = array_merge( $arr_known_params, array('_masterpage'=>'', '_mode'=>'', '_page_id'=>'', '_separator'=>'|', '_set_errors_in_context'=>'0') );
+                $arr_known_params = array_merge( $arr_known_params, array('_masterpage'=>'', '_mode'=>'', '_page_id'=>'', '_separator'=>'|', '_set_errors_in_context'=>'0', '_sub_template'=>'') );
             }
             extract( $FUNCS->get_named_vars(
                         $arr_known_params,
@@ -86,6 +86,7 @@
                     }
                 }
                 else{
+                    $sub_tpl_id = null;
                     $rs = $DB->select( K_TBL_TEMPLATES, array('id', 'clonable'), "name='" . $DB->sanitize( $_masterpage ). "'" );
                     if( !count($rs) ){
                         die( "ERROR: Tag \"".$node->name."\" - _masterpage does not exist" );
@@ -102,11 +103,38 @@
                             die( "ERROR: Tag \"".$node->name."\" - cannot create page of non-clonable template" );
                         }
                         $_page_id = -1;
+
+                        $_sub_template = trim( $_sub_template );
+                        if( $_sub_template ){
+                            if( class_exists('KSubTemplates') ){
+                                $rs2 = $DB->select( K_TBL_PAGES.' p INNER JOIN '.K_TBL_TEMPLATES.' t ON p.template_id = t.id', array('p.id'), "t.name='".$DB->sanitize( KSubTemplates::_get_aux_tpl_name($_masterpage) )."' AND page_name='".$DB->sanitize( $_sub_template )."'" );
+                                if( !count($rs2) ){  die( "ERROR: Tag \"".$node->name."\" - sub_template not found" ); }
+                                $sub_tpl_id = $rs2[0]['id'];
+                            }
+                        }
+                    }
+
+                    if( $sub_tpl_id ){
+                        $listener_get_sub_template = function(&$subtpl_id) use($sub_tpl_id){
+                            $subtpl_id = $sub_tpl_id;
+                        };
+                        $FUNCS->add_event_listener( 'get_sub_template_of_new_page', $listener_get_sub_template );
                     }
 
                     $pg = new KWebpage( $rs[0]['id'], $_page_id );
                     if( $pg->error ){
                         die( "ERROR: Tag \"".$node->name."\" - " . $pg->err_msg );
+                    }
+
+                    if( $sub_tpl_id ){
+                        $f = &$pg->_fields[KSubTemplates::subtpl_selector];
+                        if( $f ){
+                            $f->store_posted_changes( $sub_tpl_id );
+                            $f->not_active = array( 'code'=>array(new KNode(K_NODE_TYPE_TEXT, '', '', '1')), 'params'=>array() );
+                        }
+                        unset( $f );
+
+                        $FUNCS->remove_event_listener( 'get_sub_template_of_new_page', $listener_get_sub_template );
                     }
                 }
 
@@ -129,6 +157,16 @@
             // HOOK: db_xxx_alter_fields
             if( $_token ){
                 $FUNCS->dispatch_event( $node->name.'_alter_fields_'.$_token, array(&$pg, &$fields, $_mode, $params, $node) );
+            }
+
+            if( $node->name=='db_persist' && $pg instanceof KWebpage ){
+                for( $x=0; $x<count($pg->fields); $x++ ){
+                    $f = &$pg->fields[$x];
+                    if( $f->not_active ){
+                        $f->k_inactive = !$FUNCS->resolve_active_without_form( $f, $pg );
+                    }
+                    unset( $f );
+                }
             }
 
             if( count($fields) ){
@@ -441,6 +479,7 @@
                                'skip_deleted'=>'1',
                                'bound'=>'0', /*use bound page*/
                                'render_display'=>'0',
+                               'sub_template'=>'',
                               ),
                         $params)
                    );
@@ -454,6 +493,7 @@
             $skip_deleted = ( $skip_deleted==0 ) ? 0 : 1;
             $bound = ( $bound==1 ) ? 1 : 0;
             $render_display = ( $render_display==1 ) ? 1 : 0;
+            $sub_template = trim( $sub_template );
 
             if( !$bound ){
                 if( !$masterpage ){
@@ -467,8 +507,35 @@
                 else{
                     $rs = $DB->select( K_TBL_TEMPLATES, array('id', 'clonable'), "name='" . $DB->sanitize( $masterpage ). "'" );
                     if( !count($rs) ) return;
+                    $tpl_id = $rs[0]['id'];
 
-                    $pg = new KWebpage( $rs[0]['id'], 0, $page );
+                    $page_id = $sub_tpl_id = null;
+                    if( $page ){
+                        $rs = $DB->select( K_TBL_PAGES, array('id'), "page_name='" . $DB->sanitize( $page ). "' AND template_id='" . $DB->sanitize( $tpl_id ). "'" );
+                        if( !count($rs) ) return;
+                        $page_id = $rs[0]['id'];
+                    }
+                    elseif( $sub_template ){
+                        if( !class_exists('KSubTemplates') ){  return; } // subtemplates addon not active
+
+                        $rs = $DB->select( K_TBL_PAGES.' p INNER JOIN '.K_TBL_TEMPLATES.' t ON p.template_id = t.id', array('p.id'), "t.name='".$DB->sanitize( KSubTemplates::_get_aux_tpl_name($masterpage) )."' AND page_name='".$DB->sanitize( $sub_template )."'" );
+                        if( !count($rs) ){  return; }
+                        $sub_tpl_id = $rs[0]['id'];
+                        $page_id = -1;
+                    }
+
+                    if( $sub_tpl_id ){
+                        $listener_get_sub_template = function(&$subtpl_id) use($sub_tpl_id){
+                            $subtpl_id = $sub_tpl_id;
+                        };
+                        $FUNCS->add_event_listener( 'get_sub_template_of_new_page', $listener_get_sub_template );
+                    }
+
+                    $pg = new KWebpage( $tpl_id, $page_id );
+
+                    if( $sub_tpl_id ){
+                        $FUNCS->remove_event_listener( 'get_sub_template_of_new_page', $listener_get_sub_template );
+                    }
                 }
             }
             else{

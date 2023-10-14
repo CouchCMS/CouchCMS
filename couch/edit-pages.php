@@ -17,7 +17,7 @@
             global $FUNCS, $PAGE, $DB, $CTX;
 
             // check if template's physical file missing
-            if( !file_exists(K_SITE_DIR . $PAGE->tpl_name) ){
+            if( !file_exists(K_SITE_DIR . $PAGE->tpl_name) && ($PAGE->tpl_is_hidden < 2 && !$PAGE->tpl_type) ){
                 $html = $FUNCS->render( 'template_missing' );
 
                 $rs = $DB->select( K_TBL_PAGES, array('id'), "template_id='" . $DB->sanitize( $PAGE->tpl_id ). "' AND is_master<>'1' LIMIT 1" );
@@ -187,7 +187,7 @@
             global $FUNCS, $PAGE, $AUTH;
             $arr_buttons = array();
 
-            if( file_exists(K_SITE_DIR . $PAGE->tpl_name) ){
+            if( file_exists(K_SITE_DIR . $PAGE->tpl_name) || ($PAGE->tpl_is_hidden > 1 || $PAGE->tpl_type) ){
                 if( $AUTH->user->access_level >= $PAGE->tpl_access_level ){
                     $arr_buttons['create_new'] =
                         array(
@@ -488,7 +488,7 @@
             global $PAGE, $FUNCS, $DB;
 
             // If template is non-clonable and physical file missing
-            if( !$PAGE->tpl_is_clonable && !file_exists(K_SITE_DIR . $PAGE->tpl_name) ){
+            if( !$PAGE->tpl_is_clonable && !file_exists(K_SITE_DIR . $PAGE->tpl_name) && ($PAGE->tpl_is_hidden < 2 && !$PAGE->tpl_type) ){
                 $this->define_form_title();
                 return $FUNCS->render( 'template_missing' );
             }
@@ -624,7 +624,7 @@
             global $FUNCS, $PAGE, $AUTH;
             $arr_buttons = array();
 
-            if( $PAGE->id != -1 && $PAGE->tpl_is_clonable && file_exists(K_SITE_DIR . $PAGE->tpl_name) && $AUTH->user->access_level >= $PAGE->tpl_access_level){
+            if( $PAGE->id != -1 && $PAGE->tpl_is_clonable && (file_exists(K_SITE_DIR . $PAGE->tpl_name) || ($PAGE->tpl_is_hidden > 1 || $PAGE->tpl_type)) && $AUTH->user->access_level >= $PAGE->tpl_access_level){
                 $arr_buttons['create_new'] =
                     array(
                         'title'=>$FUNCS->t('add_new'),

@@ -416,16 +416,8 @@
             $this->items_selected = $arr_posted;
         }
 
-        // before save
-        function validate(){ // for now only checking for 'required'
-            global $FUNCS;
-            if( $this->deleted || $this->k_inactive ) return true;
-
-            if( $this->required && !count($this->items_selected) ){
-                $this->err_msg = $FUNCS->t('required_msg');
-                return false;
-            }
-            return true;
+        function is_empty(){
+            return !count($this->items_selected);
         }
 
         // Output to front-end via $CTX

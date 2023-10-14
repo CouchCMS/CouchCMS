@@ -4760,7 +4760,7 @@ OUT;
 
         // fallback for pages saved without using a form
         function resolve_active_fallback( &$fields, &$pg ){
-            if( !count($pg->__args) || $pg->__args[0]=='db_persist' ){
+            if( !count($pg->__args) ){
                 for( $x=0; $x<count($pg->fields); $x++ ){
                     $f = &$pg->fields[$x];
                     if( $f->not_active ){

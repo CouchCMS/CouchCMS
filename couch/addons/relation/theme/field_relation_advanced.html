@@ -7,13 +7,14 @@
     <div class="k-relation-buttons">
         <a class="btn popup-iframe add" href="#" tabindex="1" data-mfp-src="//about:blank" data_relation_src="<cms:show k_target_link />" data_relation_field="<cms:show k_field_input_id />" onclick="this.blur();" <cms:if k_has_one && k_option_ids>style="display:none;"</cms:if>><cms:show_icon 'plus' /><span><cms:localize 'add' /></span></a>
         <a class="btn remove<cms:if k_has_one='0'> disabled</cms:if>" href="#" tabindex="2" onclick="this.blur();" <cms:if k_has_one && k_option_ids=''>style="display:none;"</cms:if>><cms:localize 'remove' /></a>
+        <cms:if k_manage_link><a href="<cms:show k_manage_link />" class="btn" target="_blank"><cms:localize 'manage' /></a></cms:if>
     </div>
     <input type="hidden" class="k-relation-ids" name="<cms:show k_field_input_id />" value="<cms:show k_option_ids />" />
 </div>
 
 <cms:if k_add_js >
     <cms:admin_add_js>
-        $(function(){ 
+        $(function(){
             var iframe_name = 'k-iframe-' + Math.floor(Math.random()*1000001);
             var form = $('<form />', { id: 'k-relation-form', action: '', method: 'POST', style: 'display:none' });
             var input = $('<input />', { id: '__k_relation_ids__', name: '__k_relation_ids__', type: 'hidden' });
@@ -28,7 +29,7 @@
                 var input_ids = field.find('.k-relation-ids');
                 var has_one = field.hasClass( 'has-one' );
 
-                if( has_one ){  
+                if( has_one ){
                     list.mousedown(function(e){
                         e.preventDefault();
                     });
@@ -52,7 +53,7 @@
                         sep = ',';
                     });
                     input_ids.val( str_ids );
-                    
+
                     if( has_one ){
                         if(str_ids.length){
                             btn_remove.css('display', 'inline-block');
@@ -122,7 +123,7 @@
                 };
 
                 COUCH.bindPopupIframe( btn_add, modal_before_open, modal_after_close, "mosaic-iframe", true, iframe_name, modal_open );
-            }); 
+            });
         });
     </cms:admin_add_js>
 </cms:if>

@@ -152,7 +152,7 @@ textarea{height:auto;min-height:38px;line-height:20px;overflow:auto;resize:verti
 select{overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:pointer;font-size:13.33333px;}
 option{padding-right:11px;padding-left:11px;cursor:pointer;}
 .select{display:inline-block;position:relative;max-width:100%;}
-.select>.select-caret{position:absolute;top:1px;right:1px;width:24px;height:36px;border-radius:0 2px 2px 0;background-color:#fcfcfc;pointer-events:none;}
+.select>.select-caret{position:absolute;top:1px;right:1px;width:24px;height:31px;border-radius:0 2px 2px 0;background-color:#fcfcfc;pointer-events:none;}
 .select>.disabled+.select-caret{background-color:#e4e4e4;}
 .select>select:focus+.select-caret{background-color:#fff;}
 .select-caret>.i{position:absolute;top:13px;left:4px;width:10px;height:10px;fill:#222;}
@@ -879,3 +879,4 @@ a.unpublished, a.hidden-template span.nav-title{text-decoration: line-through;}
 .mosaic .act-group .col-up-down{padding: 6px 5px 4px 5px;}
 .mosaic td.col-contents .act-group{position: absolute; top: 0; right: 0; margin: 10px;/*visibility: hidden;*/ opacity: 0;transition: visibility 0s linear 0.5s,opacity 0.5s linear; -webkit-transition: visibility 0s linear 0.5s,opacity 0.5s linear; -moz-transition: visibility 0s linear 0.5s,opacity 0.5s linear;}
 .mosaic td.col-contents:hover .act-group{visibility: visible; opacity: 1; transition-delay: 0s;}
+.btn.manage{margin-top: 2px;}

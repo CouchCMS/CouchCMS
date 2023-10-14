@@ -223,15 +223,22 @@
             for( $x=0; $x<count($fields); $x++ ){
                 switch( $fields[$x]->obj->k_type ){
                     case 'group':
-                        $buf .= self::_render_group( $fields[$x] );
+                        $buf .= static::_render_group( $fields[$x] );
                         break;
                     case 'row':
-                        $buf .= self::_render_row( $fields[$x], $error );
+                        $buf .= static::_render_row( $fields[$x], $error );
                         break;
                     default:
-                        $buf .= self::_render_field( $fields[$x], $error );
+                        $buf .= static::_render_field( $fields[$x], $error );
                 }
             }
+            $html = static::_render_modal( $buf, $form, $arr_errors );
+
+            return $html;
+        }
+
+        static function _render_modal( $content, $form, $arr_errors ){
+            global $PAGE, $CTX, $FUNCS;
 
             $html .= '<div id="k-modal-body">';
             $html .= '<form  enctype="multipart/form-data" method="post" id="'.$form.'" name="'.$form.'" action="'.$CTX->get('k_form_target').'" accept-charset="'.K_CHARSET.'">';
@@ -239,7 +246,7 @@
             if( count($arr_errors) ){
                 $html .= $FUNCS->show_alert( '' /*$heading*/, implode('<br>', $arr_errors), 'error' );
             }
-            $html .= $buf;
+            $html .= $content;
             $html .= '<input type="hidden" name="k_hid_'.$form.'" id="k_hid_'.$form.'" value="'.$form.'" />';
             if( array_key_exists('elements', $PAGE->_fields) ){
                 $html .= '<input type="hidden" id="k_orig_elements" name="k_orig_elements" value="'.$PAGE->_fields['elements']->data.'">';
@@ -410,10 +417,10 @@ EOS;
                 $child_error='';
                 switch( $r->children[$x]->obj->k_type ){
                     case 'row':
-                        $buf .= self::_render_row( $r->children[$x], $child_error );
+                        $buf .= static::_render_row( $r->children[$x], $child_error );
                         break;
                     default:
-                        $buf .= self::_render_field( $r->children[$x], $child_error );
+                        $buf .= static::_render_field( $r->children[$x], $child_error );
                 }
                 if( $child_error ){ $error=1; }
             }
@@ -457,9 +464,12 @@ EOS;
             if( $k_field_is_collapsed ){
                 $panel_style='style="display:none;"';
             }
+            if( $error && !$k_field_hidden ){
+                $k_field_class .= ' k_visible';
+            }
 
             $html=<<<EOS
-                <div id="$k_field_wrapper_id" class="group-wrapper k_group $k_field_class" $k_field_hidden>
+                <div id="$k_field_wrapper_id" class="group-wrapper k_group $k_field_class" $style>
                     <a class="panel-heading panel-toggle $collapsed" href="#">$k_field_label$k_field_desc
                     </a>
                     <div class="panel-body" $panel_style>
@@ -480,7 +490,7 @@ EOS;
             // first get child contents
             $buf = '';
             for( $x=0; $x<count($r->children); $x++ ){
-                $buf .= self::_render_field( $r->children[$x], $error );
+                $buf .= static::_render_field( $r->children[$x], $error );
             }
 
             // now wrap ..

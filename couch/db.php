@@ -50,6 +50,7 @@
     define( 'K_TBL_COMMENTS', K_DB_TABLES_PREFIX . 'couch_comments' );
     define( 'K_TBL_RELATIONS', K_DB_TABLES_PREFIX . 'couch_relations' );
     define( 'K_TBL_ATTACHMENTS', K_DB_TABLES_PREFIX . 'couch_attachments' );
+    define( 'K_TBL_SUB_TEMPLATES', K_DB_TABLES_PREFIX . 'couch_sub_templates' );
 
 
     class KDB{
@@ -148,12 +149,21 @@
             return $rows;
         }
 
-        function raw_select( $sql ){
+        function raw_select( $sql, $key='' ){
+            $key = trim( $key );
+
             $this->_query( $sql );
 
             $rows = array();
-            while( $row = mysql_fetch_assoc($this->result) ) {
-                $rows[] = $row;
+            if( $key ){
+                while( $row = mysql_fetch_assoc($this->result) ) {
+                    $rows[$row[$key]] = $row;
+                }
+            }
+            else{
+                while( $row = mysql_fetch_assoc($this->result) ) {
+                    $rows[] = $row;
+                }
             }
             mysql_free_result( $this->result );
 

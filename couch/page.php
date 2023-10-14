@@ -265,15 +265,23 @@
         function _fill_fields_info(){
             global $DB, $FUNCS;
 
-            if( array_key_exists( $this->tpl_id, $FUNCS->cached_fields ) && $this->id != -1 ){ // skip cache for 'new' page
-                if( defined('K_PHP_4') ){
-                    $this->fields = $FUNCS->cached_fields[$this->tpl_id];
-                }
-                else{
-                    $this->fields = array();
-                    foreach( $FUNCS->cached_fields[$this->tpl_id] as $k=>$v ){
-                        $this->fields[$k]=clone($v);
+            $cached_fields = null;
+            if( $this->id != -1 ){ // skip cache for 'new' page
+                // HOOK: get_cached_fields
+                $FUNCS->dispatch_event( 'get_cached_fields', array(&$cached_fields, &$this) );
+
+                if( !is_array($cached_fields) ){
+                    if( array_key_exists( $this->tpl_id, $FUNCS->cached_fields ) ){
+                        $cached_fields = $FUNCS->cached_fields[$this->tpl_id];
                     }
+                }
+            }
+
+            if( is_array($cached_fields) ){
+
+                $this->fields = array();
+                foreach( $cached_fields as $k=>$v ){
+                    $this->fields[$k]=clone($v);
                 }
 
                 // set the current page and siblings
@@ -301,7 +309,12 @@
             }
             else{
                 // The custom fields -
-                $rs2 = $DB->select( K_TBL_FIELDS, array('*'), "template_id='" . $DB->sanitize( $this->tpl_id ). "' ORDER BY k_group, k_order, id" );
+                $rs2 = null;
+                // HOOK: get_custom_fields_info_db
+                $FUNCS->dispatch_event( 'get_custom_fields_info_db', array(&$rs2, &$this) );
+                if( !is_array($rs2) ){
+                    $rs2 = $DB->select( K_TBL_FIELDS, array('*'), "template_id='" . $DB->sanitize( $this->tpl_id ). "' ORDER BY k_group, k_order, id" );
+                }
 
                 // HOOK: alter_custom_fields_info_db
                 // Array of custom fields info, as fetched from the database, can be manipulated at this point.
@@ -507,8 +520,9 @@
 
                 // HOOK: alter_fields_info
                 // All the field objects (system as well as custom) are ready and accessible by names.
+                // This hook can also be used for custom caching by addons
                 $skip_cache = 0;
-                $FUNCS->dispatch_event( 'alter_fields_info', array(&$this->_fields, &$this, &$skip_cache) );
+                $FUNCS->dispatch_event( 'alter_fields_info', array(&$this->_fields, &$this, &$skip_cache, &$this->fields) );
 
                 if( !$skip_cache ){
                     $FUNCS->cached_fields[$this->tpl_id] = $this->fields;

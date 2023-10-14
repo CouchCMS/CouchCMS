@@ -61,6 +61,7 @@
         K_TBL_FULLTEXT,
         K_TBL_COMMENTS,
         K_TBL_RELATIONS,
+        K_TBL_SUB_TEMPLATES,
     );
     $k_stmts = array();
     $k_stmts[] = "CREATE TABLE ".K_TBL_COMMENTS." (
@@ -278,6 +279,15 @@
     PRIMARY KEY (`attach_id`)
     ) ENGINE = InnoDB CHARACTER SET `utf8` COLLATE `utf8_general_ci`;";
 
+    $k_stmts[] = "CREATE TABLE `".K_TBL_SUB_TEMPLATES."` (
+    `template_id`     int NOT NULL,
+    `sub_template_id` int NOT NULL,
+    `field_id`        int NOT NULL,
+    `is_stub`         int,
+    `filter_type`     decimal(5,2),
+    PRIMARY KEY (`template_id`, `sub_template_id`, `field_id`)
+    ) ENGINE = InnoDB CHARACTER SET utf8 COLLATE utf8_general_ci;";
+
     $k_stmts[] = "CREATE INDEX ".K_TBL_COMMENTS."_Index01
       ON ".K_TBL_COMMENTS."
       (date);";
@@ -321,6 +331,10 @@
     $k_stmts[] = "CREATE INDEX ".K_TBL_FIELDS."_Index02
       ON ".K_TBL_FIELDS."
       (template_id);";
+
+    $k_stmts[] = "CREATE UNIQUE INDEX ".K_TBL_FIELDS."_index03
+      ON ".K_TBL_FIELDS."
+      (template_id, name);";
 
     $k_stmts[] = "CREATE INDEX ".K_TBL_FOLDERS."_Index01
       ON ".K_TBL_FOLDERS."
@@ -480,6 +494,10 @@
     $k_stmts[] = "CREATE INDEX `".K_TBL_ATTACHMENTS."_Index04`
     ON `".K_TBL_ATTACHMENTS."`
     (`creation_ip`, `file_time`);";
+
+    $k_stmts[] = "CREATE INDEX `".K_TBL_SUB_TEMPLATES."_index01`
+    ON `".K_TBL_SUB_TEMPLATES."`
+    (`field_id`);";
 
     $k_stmts[] = "INSERT INTO ".K_TBL_USER_LEVELS." (id, name, title, k_level, disabled) VALUES (1, 'superadmin', 'Super Admin', 10, 0);";
     $k_stmts[] = "INSERT INTO ".K_TBL_USER_LEVELS." (id, name, title, k_level, disabled) VALUES (2, 'admin', 'Administrator', 7, 0);";
