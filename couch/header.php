@@ -61,6 +61,7 @@
     if( function_exists('mb_internal_encoding') ) mb_internal_encoding( K_CHARSET );
     define( 'K_CACHE_OPCODES', '1' );
     define( 'K_CACHE_SETTINGS', '0' );
+    if( !defined('K_CACHE_DIR') ) define( 'K_CACHE_DIR', K_COUCH_DIR . 'cache/' );
 
     // Check license
     // Ultra-simplified now that there is no IonCube involved :)
@@ -92,7 +93,7 @@
         // Authenticated users will always be served dynamically generated pages
         // Same if no_cache explicity asked for.
         if( !$auth && !$no_cache ){
-            $k_cache_dir = K_COUCH_DIR . 'cache/';
+            $k_cache_dir = K_CACHE_DIR;
             if( is_writable($k_cache_dir) ){
 
                 $k_cache_url = 'http' . ((K_HTTPS) ? 's://' : '://') . $_SERVER['HTTP_HOST'] .
