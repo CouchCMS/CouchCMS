@@ -980,7 +980,7 @@
             }
         }
 
-        function alter_page_context( &$vars, &$pg ){
+        static function alter_page_context( &$vars, &$pg ){
             global $FUNCS, $DB;
             static $cache = array();
 
