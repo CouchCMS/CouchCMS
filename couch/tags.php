@@ -118,6 +118,7 @@
                         array( 'var'=>'', /*placeholder*/
                                'scope'=>'',
                                'as_json'=>'0',
+                               'json_pretty'=> '0',
                               ),
                         $params)
                    );
@@ -125,6 +126,7 @@
             $value = $params[0]['rhs'];
             $scope = strtolower( trim($scope) );
             $as_json = ( $as_json==1 ) ? 1 : 0;
+            $json_pretty = ( $json_pretty==1 ) ? 1 : 0;
 
             // If scope set and first param is a variable, return variable only from the specified scope scope.
             if( $scope != '' && $node->attributes[0]['value_type']==K_VAL_TYPE_VARIABLE ){
@@ -136,7 +138,7 @@
                 $value = $CTX->get( $node->attributes[0]['value'], $scope );
             }
 
-            if( $as_json && is_array($value) ){ $value = $FUNCS->json_encode( $value ); }
+            if( $as_json && is_array($value) ){ $value = $FUNCS->json_encode($value, $json_pretty ? JSON_PRETTY_PRINT : 0); }
             return $value;
         }
 

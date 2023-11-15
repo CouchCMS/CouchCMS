@@ -4602,15 +4602,15 @@ OUT;
             return $tmp_dir;
         }
 
-        function json_encode( $value ){
-            if( function_exists('json_encode') ) return json_encode( $value );
+        function json_encode( $value, $options = 0 ){
+            if( function_exists('json_encode') ) return json_encode( $value, $options );
 
             if( !class_exists('Services_JSON') ){
                 require_once( K_COUCH_DIR . 'includes/JSON.php' );
             }
             if( is_null($this->json) ) $this->json = new Services_JSON( SERVICES_JSON_LOOSE_TYPE );
 
-            return $this->json->encode( $value );
+            return $this->json->encode( $value, $options );
         }
 
         function json_decode( $value ){
