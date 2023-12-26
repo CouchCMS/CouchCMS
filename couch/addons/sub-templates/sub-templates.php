@@ -973,7 +973,7 @@
 
             if( $pg->id != -1 ){
                 $f = &$pg->_fields[self::subtpl_selector];
-                if( $f && !count($field->items_selected) ){
+                if( $f && !count($f->items_selected) ){
                     // if at this point page does not have a sub-template, it was saved before the addon took effect
                     $f->k_inactive = 1;
                 }
