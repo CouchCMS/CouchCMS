@@ -384,6 +384,13 @@
 
             $tpl_id = $pg->tpl_id;
             $sub_template_id = null;
+            if( !$pg->id && !is_null($pg->page_name) ){
+                $rs = $DB->select( K_TBL_PAGES, array('id'), "page_name='" . $DB->sanitize( $pg->page_name ). "' AND template_id='" . $DB->sanitize( $pg->tpl_id ). "'" );
+                if( count($rs) ){
+                    $pg->id = $rs[0]['id'];
+                }
+            }
+
             if( $pg->id ){
                 if( $pg->id==-1 ){
                     // try fo figure out the sub-template..
