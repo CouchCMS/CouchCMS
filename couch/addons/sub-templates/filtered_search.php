@@ -189,6 +189,7 @@
         $where .= " AND NOT p.publish_date = '0000-00-00 00:00:00' AND p.parent_id=0";
 
         $selector = KSubTemplates::subtpl_selector;
+        $aux_tpl_name = KSubTemplates::_get_aux_tpl_name( $masterpage );
         $id_selector = null;
         if( $masterpage==$PAGE->tpl_name ){
             if( $PAGE->_fields[$selector] ){
@@ -212,6 +213,13 @@
             ".$where."
             AND rel1.fid='".$DB->sanitize( $id_selector )."'
             GROUP BY rel1.cid
+
+            UNION
+
+            SELECT p.id from ".K_TBL_PAGES." p
+            inner join ".K_TBL_TEMPLATES." t on p.template_id=t.id
+            WHERE t.name='".$DB->sanitize( $aux_tpl_name )."'
+            AND p.page_name='@common'
         )
         AND st.is_stub IS NOT NULL
         AND st.filter_type IS NOT NULL

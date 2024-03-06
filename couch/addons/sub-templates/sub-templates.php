@@ -991,7 +991,7 @@
             global $FUNCS, $DB;
             static $cache = array();
 
-            if( $vars['k_template_has_subtemplates'] && ($vars['k_is_page'] || $vars['k_is_list_page']) && ($id = intval($vars['k_sub_template'])) ){
+            if( $vars['k_template_has_subtemplates'] && ($vars['k_is_page'] || $vars['k_is_list_page']) && ($id = intval($vars['_sub_template'])) ){
                 if( isset($cache[$id]) ){
                     $vars['k_sub_template_name'] = $cache[$id];
                 }
@@ -1001,6 +1001,7 @@
                         $cache[$id] = $vars['k_sub_template_name'] = $rs[0]['page_name'];
                     }
                 }
+                $vars['k_sub_template'] = $id;
             }
         }
 
