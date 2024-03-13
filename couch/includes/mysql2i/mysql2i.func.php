@@ -226,7 +226,7 @@ function mysql_num_fields($result){
 
 function mysql_num_rows($result){
 
-    return mysql2i::mysql_num_rows($r);
+    return mysql2i::mysql_num_rows($result);
 
 }
 
