@@ -46,7 +46,7 @@
         <cms:if k_field_is_deleted>disabled="1"</cms:if>
         <cms:if k_field_use_kcfinder >
             data-kc-finder="<cms:show k_field_input_id />"
-            href="<cms:show k_admin_link />includes/kcfinder/browse.php?nonce=<cms:create_nonce 'kc_finder' />&type=image"
+            href="<cms:show k_admin_link />includes/kcfinder/browse.php?nonce=<cms:create_nonce 'kc_finder' />&type=image<cms:if k_field_kcfinder_dir>&dir=<cms:show k_field_kcfinder_dir /></cms:if>"
         <cms:else />
             href="<cms:show k_admin_link />includes/fileuploader/browser/browser.html?Type=Image&KField=<cms:show k_field_input_id />"
         </cms:if>

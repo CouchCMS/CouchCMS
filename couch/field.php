@@ -882,7 +882,7 @@
 
         // image
         static function _render_image( $f, $input_name, $input_id, $extra, $dynamic_insertion ){
-            global $CTX;
+            global $CTX, $FUNCS;
 
             KField::_set_common_vars( $f->k_type, $input_name, $input_id, $extra, $dynamic_insertion, $f->simple_mode );
             $arr_vars = array();
@@ -893,6 +893,14 @@
             $arr_vars['k_field_input_width'] = $f->input_width; // Set by repeatable tag
             if( K_USE_KC_FINDER ){
                 $arr_vars['k_field_use_kcfinder'] = '1';
+
+                $dirname = '';
+                $data = $f->data;
+                if( $data[0]==':' ){ // if local
+                    $pi = $FUNCS->pathinfo( substr($data, 1) );
+                    $dirname = urlencode( 'image/'.$pi['dirname'] );
+                }
+                $arr_vars['k_field_kcfinder_dir'] = $dirname;
             }
             else{
                 $arr_vars['k_field_use_kcfinder'] = '0';
@@ -929,7 +937,7 @@
 
         // file
         static function _render_file( $f, $input_name, $input_id, $extra, $dynamic_insertion ){
-            global $CTX;
+            global $CTX, $FUNCS;
 
             KField::_set_common_vars( $f->k_type, $input_name, $input_id, $extra, $dynamic_insertion, $f->simple_mode );
             $arr_vars = array();
@@ -937,6 +945,14 @@
             $arr_vars['k_field_input_width'] = $f->input_width; // Set by repeatable tag
             if( K_USE_KC_FINDER ){
                 $arr_vars['k_field_use_kcfinder'] = '1';
+
+                $dirname = '';
+                $data = $f->data;
+                if( $data[0]==':' ){ // if local
+                    $pi = $FUNCS->pathinfo( substr($data, 1) );
+                    $dirname = urlencode( 'file/'.$pi['dirname'] );
+                }
+                $arr_vars['k_field_kcfinder_dir'] = $dirname;
             }
             else{
                 $arr_vars['k_field_use_kcfinder'] = '0';
