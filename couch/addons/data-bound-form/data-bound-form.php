@@ -174,6 +174,11 @@
                     foreach( $fields as $key=>$val ){
                         if( array_key_exists($key, $pg->_fields) ){
                             $f = &$pg->_fields[$key];
+
+                            if( $node->name=='db_persist' && $f->not_active ){
+                                $f->k_inactive = !$FUNCS->resolve_active_without_form( $f, $pg );
+                            }
+
                             if( $f->k_type== 'checkbox' ){
                                 // supplied static checkbox values are supposed to be comma-separated -
                                 // this needs to be changed to match the separator expected by page-field
