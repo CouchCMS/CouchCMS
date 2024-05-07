@@ -977,10 +977,11 @@
             );
 
             // create a group for 'k_pointer_link', 'k_masquerades' and 'k_strict_matching'
+            $is_pointer = isset($_POST['k_hid_'.$this->form_name]) ? $_POST['f_k_is_pointer'] : $PAGE->_fields['k_is_pointer']->get_data();
             $arr_fields[ '_pointer_fields_' ] = array(
                 'no_wrapper'=>'1',
                 'content'=>"<cms:render 'group_pointer_fields' />",
-                'hide'=>( $PAGE->_fields['k_is_pointer']->get_data() ) ? 0 : 1,
+                'hide'=>( $is_pointer ) ? 0 : 1,
                 'order'=>30,
             );
             $arr_fields['k_pointer_link']['group'] = '_pointer_fields_';
@@ -994,7 +995,7 @@
             $arr_fields['k_strict_matching']['order'] = 30;
 
             // set the visibility of custom-fields group depending on pointer status
-            $arr_fields['_custom_fields_']['hide'] = ( $PAGE->_fields['k_is_pointer']->get_data() ) ? 1 : 0;
+            $arr_fields['_custom_fields_']['hide'] = ( $is_pointer ) ? 1 : 0;
 
         }
 
