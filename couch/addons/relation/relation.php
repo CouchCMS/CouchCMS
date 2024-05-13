@@ -833,6 +833,12 @@
             // set link
             //$link = $FUNCS->generate_route( 'relation', 'list_view', array('tpl_id'=>$f->template_id, 'field_name'=>$f->name, 'page_id'=>$f->page->id=='-1'?'':$f->page->id) ); // won't work when rendered outside admin-panel (i.e. on front-end in dbf)
             $link = K_ADMIN_URL . K_ADMIN_PAGE.'?o=relation&q=list/'.$f->template_id.'/'.$f->name.'/'.(($f->page->id=='-1')?'':$f->page->id);
+            if( $f->page->tpl_has_subtemplates && $f->page->id=='-1' ){
+                $sub_tpl_id = $f->page->_fields[KSubTemplates::subtpl_selector]->items_selected[0];
+                if( $sub_tpl_id && $FUNCS->is_non_zero_natural($sub_tpl_id) ){
+                    $link .= '&sub_tpl_id='.$sub_tpl_id;
+                }
+            }
             $CTX->set( 'k_target_link', $link );
 
             $manage_link = ( $f->show_manage ) ? K_ADMIN_URL.K_ADMIN_PAGE.'?o='.urlencode($f->masterpage).'&q=list' : '';

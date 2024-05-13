@@ -207,6 +207,9 @@
         static function resolve_entities( $route ){
             global $FUNCS, $PAGE, $DB, $AUTH, $KSESSION;
 
+            $page_id = $route->values['page_id'];
+            $sub_tpl_id =  ( !$page_id && $_GET['sub_tpl_id'] && $FUNCS->is_non_zero_natural($_GET['sub_tpl_id']) ) ? (int)$_GET['sub_tpl_id'] : null;
+
             if( isset($_POST['__k_relation_ids__']) ){
                 // save ids in session..
                 $sid = md5( $AUTH->hasher->get_random_bytes(16) );
@@ -216,6 +219,9 @@
                 $KSESSION->set_var( $sid, $obj );
 
                 $redirect_dest = K_ADMIN_URL . K_ADMIN_PAGE . '?o=relation&q=' . $route->matched_path . '&sid=' . $sid;
+                if( $sub_tpl_id ){
+                    $redirect_dest .= '&sub_tpl_id='.$sub_tpl_id;
+                }
                 header( "Location: " . $redirect_dest );
                 exit;
             }
@@ -225,15 +231,26 @@
 
             $tpl_id = $route->values['tpl_id'];
             $field_name = $route->values['field_name'];
-            $page_id = $route->values['page_id'];
 
             // set field object
             $field = null;
+            if( $sub_tpl_id ){
+                $listener_get_sub_template = function(&$subtpl_id) use($sub_tpl_id){
+                    $subtpl_id = $sub_tpl_id;
+                };
+                $FUNCS->add_event_listener( 'get_sub_template_of_new_page', $listener_get_sub_template );
+                $page_id = '-1';
+            }
+
             $pg = new KWebpage( $tpl_id, $page_id );
+
             if( !$pg->error ){
                 if( isset($pg->_fields[$field_name]) && $pg->_fields[$field_name]->k_type=='relation'){
                     $field = $pg->_fields[$field_name];
                 }
+            }
+            if( $sub_tpl_id ){
+                $FUNCS->remove_event_listener( 'get_sub_template_of_new_page', $listener_get_sub_template );
             }
 
             // set $PAGE object
