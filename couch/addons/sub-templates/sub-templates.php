@@ -384,6 +384,16 @@
 
             $tpl_id = $pg->tpl_id;
             $sub_template_id = null;
+            $is_nested = null;
+            if( $pg->accessed_via_browser && $pg->tpl_nested_pages ){
+                if( is_null($pg->id) && is_null($pg->page_name) && isset($_GET['fname']) && $FUNCS->is_title_clean($_GET['fname']) ){
+                    $rs = $DB->select( K_TBL_PAGES, array('id'), "page_name='" . $DB->sanitize( trim($_GET['fname']) ). "' AND template_id='" . $DB->sanitize( $pg->tpl_id ). "'" );
+                    if( count($rs) ){
+                        $pg->id = $rs[0]['id'];
+                        $is_nested = 1;
+                    }
+                }
+            }
             if( !$pg->id && !is_null($pg->page_name) ){
                 $rs = $DB->select( K_TBL_PAGES, array('id'), "page_name='" . $DB->sanitize( $pg->page_name ). "' AND template_id='" . $DB->sanitize( $pg->tpl_id ). "'" );
                 if( count($rs) ){
@@ -433,6 +443,9 @@
                     if( count($rs) ){
                         $sub_template_id = $rs[0]['cid'];
                     }
+                }
+                if( $is_nested ){
+                    $pg->id = null;
                 }
             }
 
