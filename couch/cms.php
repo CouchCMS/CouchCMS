@@ -177,15 +177,22 @@
                 $DB->rollback();
 
                 if( $PAGE->err_msg == 'Page not found' ){
-                    header('HTTP/1.1 404 Not Found');
-                    header('Status: 404 Not Found');
-                    header('Content-Type: text/html; charset='.K_CHARSET );
+                    $html=''; $send_header=1;
 
-                    $html='';
-                    if( file_exists(K_SITE_DIR . '404.php') ){
-                        $html = $FUNCS->file_get_contents( K_SITE_URL . '404.php' );
+                    // HOOK: 404_not_found
+                    $FUNCS->dispatch_event( '404_not_found', array(&$html, &$send_header, 0) );
+
+                    if( !strlen(trim($html)) ){
+                        $html='';
+                        if( file_exists(K_SITE_DIR . '404.php') ){
+                            $html = $FUNCS->file_get_contents( K_SITE_URL . '404.php' );
+                        }
+                        if( !$html ) $html = 'Page not found';
                     }
-                    if( !$html ) $html = 'Page not found';
+                    if( $send_header ){
+                        header('HTTP/1.1 404 Not Found');
+                        header('Status: 404 Not Found');
+                    }
                 }
                 else{
                     die( 'ERROR: ' . $PAGE->err_msg );

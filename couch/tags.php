@@ -2876,7 +2876,9 @@
                     else{
                         // return complete query
                         $html = ( $distinct ) ? 'SELECT DISTINCT ' : 'SELECT ';
-                        $html .= $fields . ' FROM ' . $query_table . ' WHERE ' . $sql . ' ORDER BY ' . $order_sql . ' LIMIT ' . $limit_sql;
+                        $html .= $fields . ' FROM ' . $query_table . ' WHERE ' . $sql;
+                        if( strlen($order_sql) ) $html .= ' ORDER BY ' . $order_sql;
+                        $html .= ' LIMIT ' . $limit_sql;
                     }
 
                     return $html;
@@ -6739,14 +6741,21 @@ MAP;
             }
 
             if( $is_404 ){
-                header('HTTP/1.1 404 Not Found');
-                header('Status: 404 Not Found');
+                $send_header=1;
+
+                // HOOK: 404_not_found
+                $FUNCS->dispatch_event( '404_not_found', array(&$html, &$send_header, 1) );
+
                 if( !strlen(trim($html)) ){
                     $html='';
                     if( file_exists(K_SITE_DIR . '404.php') ){
                         $html = $FUNCS->file_get_contents( K_SITE_URL . '404.php' );
                     }
                     if( !$html ) $html = 'Page not found';
+                }
+                if( $send_header ){
+                    header('HTTP/1.1 404 Not Found');
+                    header('Status: 404 Not Found');
                 }
             }
             $content_type = ( $PAGE->content_type ) ? $PAGE->content_type : 'text/html';
