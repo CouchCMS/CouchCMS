@@ -1087,6 +1087,9 @@
             global $FUNCS, $CTX;
 
             $value = $this->get_data();
+            if( $this->required ){ //Output required parameter in html
+                $extra .= ' required="required"';
+            }
             if( $this->k_type=='text' || $this->k_type=='password' || $this->k_type=='submit' || $this->k_type=='hidden' ){
                 $html = '<input type="'.$this->k_type.'" name="'.$input_name.'"  id="'.$input_id.'" value="'.$FUNCS->escape_HTML( $value, ENT_QUOTES, K_CHARSET ).'" '.$extra.'/>';
             }
