@@ -185,7 +185,7 @@
             $s="";
             foreach( $attributes as $attr ){
                 if( isset($attr['name']) ){
-                    $s .= "'" . @addslashes($CTX->get( $attr['name'] )) . "'";
+                    $s .= "'" . $this->_addslashes($CTX->get( $attr['name'] )) . "'";
                 }
                 if( isset($attr['op']) ){
                     $op = $attr['op'];
@@ -198,18 +198,24 @@
                 if( isset($attr['value']) ){
                     switch( $attr['value_type'] ){
                         case K_VAL_TYPE_LITERAL:
-                            $s .= "'" . addslashes( $attr['value'] ) . "'";
+                            $s .= "'" . $this->_addslashes( $attr['value'] ) . "'";
                             break;
                         case K_VAL_TYPE_VARIABLE:
-                            $s .= "'" . @addslashes( $CTX->get($attr['value']) ) . "'";
+                            $s .= "'" . $this->_addslashes( $CTX->get($attr['value']) ) . "'";
                             break;
                         case K_VAL_TYPE_SPECIAL:
-                            $s .= "'" . addslashes( $attr['value']->get_HTML() ) . "'";
+                            $s .= "'" . $this->_addslashes( $attr['value']->get_HTML() ) . "'";
                             break;
                     }
                 }
             }
             return eval("return ".$s.";");
+        }
+
+        function _addslashes( $value ){
+            if( in_array(gettype($value), array('boolean', 'NULL', 'integer', 'double', 'string')) ){
+                return @addslashes( $value );
+            }
         }
 
         static function _handle_extends( $DOM ){
