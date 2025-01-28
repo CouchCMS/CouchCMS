@@ -3,3 +3,13 @@
 .tmask {position:absolute; display:none; top:0px; left:0px; height:100%; width:100%; background:#000; z-index:2147483646}
 .tclose {position:absolute; top:0px; right:0px; width:30px; height:30px; cursor:pointer; background:url(images/close.png) no-repeat}
 .tclose:hover {background-position:0 -30px}
+
+.mfp2-bg{top:0;left:0;width:100%;height:100%;z-index:1042;overflow:hidden;position:fixed;background:#0b0b0b;opacity:.7;display:none}
+.mfp2-wrap{top:0;left:0;width:100%;height:100%;z-index:1043;position:fixed;outline:none!important;-webkit-backface-visibility:hidden;overflow:hidden auto;display:none}
+.mfp2-container{text-align:center;position:absolute;width:100%;height:100%;left:0;top:0;padding-top:40px;padding-bottom:40px;box-sizing:border-box}
+.mfp2-container:before{content:'';display:inline-block;vertical-align:middle}
+.mfp2-content{position:relative;display:inline-block;vertical-align:middle;margin:0 auto;text-align:left;z-index:1045;line-height:0;width:100%;height:100%;cursor:auto;max-width:1400px;background:#fff url(images/preload.gif) no-repeat 50% 50%}
+.mfp2-iframe-scaler{width:100%;height:0;overflow:hidden;padding-top:50%}
+.mfp2-iframe-scaler iframe{position:absolute;display:block;top:0;left:0;width:100%;height:100%;box-shadow:0 0 8px rgb(0 0 0 / 60%);background:#fff}
+.mfp2-close{position:absolute;top:-15px;right:-5px;width:30px;height:30px;cursor:pointer;background:url(images/close.png) no-repeat}
+.mfp2-close:hover{background-position:0 -30px}

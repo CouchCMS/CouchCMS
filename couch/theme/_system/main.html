@@ -32,9 +32,11 @@
 </head>
 <body>
 <cms:if k_show_simple>
-    <div id="content">
-        <cms:admin_html />
-        <cms:show k_main_content />
+    <div id="scroll-content" style="left:0">
+        <div id="content">
+            <cms:admin_html />
+            <cms:show k_main_content />
+        </div>
     </div>
 <cms:else />
     <cms:set is_sidebar_collapsed = '0' />

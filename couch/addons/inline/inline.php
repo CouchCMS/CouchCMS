@@ -1,7 +1,7 @@
 <?php
 
     if ( !defined('K_COUCH_DIR') ) die(); // cannot be loaded directly
-    define( 'K_INLINE_BUILD', '20140106h' );
+    define( 'K_INLINE_BUILD', '20250122i' );
 
     class Inline{
 
@@ -62,6 +62,9 @@
                     'custom_styles'=>'',
                     'class'=>'',
                     'url_only'=>'0', /* for cms:inline_link */
+                    'responsive'=>'0', /* for cms:popup_edit */
+                    'width'=>'0',      /* -do- */
+                    'height'=>'0',     /* -do- */
                 ),
                 $params)
             );
@@ -81,6 +84,9 @@
             $class = trim( $class );
             if( strlen($class) ) $class = ' ' . $class;
             $url_only = ( trim($url_only)==1 ) ? 1 : 0;
+            $responsive = ( $node->name=='popup_edit_ex' ) ? 1 : ( (trim($responsive)==1) ? 1 : 0 );
+            $width = ( $FUNCS->is_non_zero_natural($width) ) ? intval( $width ) : ( ($responsive && (trim($width)=='full') ) ? "'none'" : 795 );
+            $height = ( $FUNCS->is_non_zero_natural($height) ) ? intval( $height ) : ( ($responsive && (trim($height)=='full') ) ? "'none'" : 535 );
 
             // get page_id (return if used in context of list_view)
             if( $CTX->get('k_is_page') ){
@@ -99,9 +105,14 @@
 
             // create link
             $url = K_ADMIN_URL.K_ADMIN_PAGE."?o=inline&q=edit&tpl=".$tpl_id."&p=".$page_id."&nonce=".$nonce."&flist=".$fields;
-            $onclick = "TINY.box.show({iframe:'".$url."',animate:false,width:795,height:535,boxid:'k_inline',modal:1});";
+            if( $responsive ){
+                $onclick = "TINY2.box.show({iframe:'".$url."',width:".$width.",height:".$height.",boxid:'k_inline'});";
+            }
+            else{
+                $onclick = "TINY.box.show({iframe:'".$url."',animate:false,width:795,height:535,boxid:'k_inline',modal:1});";
+            }
             if( !$CTX->get('k_disable_inline_edit') ){
-                $onclick = "if(window.CKEDITOR && window.CKEDITOR.k_regions){for(var i=0;i<window.CKEDITOR.k_regions.length;i++){if(window.CKEDITOR.k_regions[i].checkDirty()){alert( '".$prompt_text."' );window.CKEDITOR.k_regions[i].focus();return false;}}}" . $onclick;
+                $onclick = "TINY.checkDirty('".$prompt_text."');" . $onclick;
             }
 
             if( $node->name=='inline_link' ){
@@ -240,6 +251,7 @@
     $FUNCS->register_tag( 'load_edit', array('Inline', 'load_edit_handler') );
     $FUNCS->register_tag( 'no_edit', array('Inline', 'no_edit_handler') );
     $FUNCS->register_tag( 'popup_edit', array('Inline', 'inline_handler') );
+    $FUNCS->register_tag( 'popup_edit_ex', array('Inline', 'inline_handler') );
     $FUNCS->register_tag( 'inline_edit', array('Inline', 'inline_handler') );
     $FUNCS->register_tag( 'inline_link', array('Inline', 'inline_handler') );
     if( defined('K_ADMIN') ){
