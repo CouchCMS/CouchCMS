@@ -223,7 +223,7 @@
             for( $x=0; $x<count($fields); $x++ ){
                 switch( $fields[$x]->obj->k_type ){
                     case 'group':
-                        $buf .= static::_render_group( $fields[$x] );
+                        $buf .= static::_render_group( $fields[$x], 0 );
                         break;
                     case 'row':
                         $buf .= static::_render_row( $fields[$x], $error );
@@ -403,12 +403,12 @@ EOS;
             return $html;
         }
 
-        static function _render_group( &$r ){
+        static function _render_group( &$r, $skip_inactive=1 ){
             global $FUNCS;
             static $done=0;
 
             $f = $r->obj;
-            if( $f->k_inactive ) return;
+            if( $f->k_inactive && $skip_inactive ) return;
 
             // first get child contents
             $error=$child_error='';
