@@ -223,7 +223,7 @@
             for( $x=0; $x<count($fields); $x++ ){
                 switch( $fields[$x]->obj->k_type ){
                     case 'group':
-                        $buf .= static::_render_group( $fields[$x], 0 );
+                        $buf .= static::_render_group( $fields[$x] );
                         break;
                     case 'row':
                         $buf .= static::_render_row( $fields[$x], $error );
@@ -282,7 +282,7 @@
         static function _resolve_active( $f, $form, $submitted, &$arr_refresh, $force_inactive=0, $skip_post=0 ){
             global $FUNCS, $PAGE, $CTX;
 
-            if( $force_inactive ){
+            if( $force_inactive && static::_is_kaleido($f) ){
                 $f->k_inactive = 1;
                 return;
             }
@@ -403,12 +403,12 @@ EOS;
             return $html;
         }
 
-        static function _render_group( &$r, $skip_inactive=1 ){
+        static function _render_group( &$r ){
             global $FUNCS;
             static $done=0;
 
             $f = $r->obj;
-            if( $f->k_inactive && $skip_inactive ) return;
+            if( $f->k_inactive && static::_is_kaleido($f) ) return;
 
             // first get child contents
             $error=$child_error='';
@@ -695,6 +695,10 @@ EOS;
             $html .= '</div>';
 
             return $html;
+        }
+
+        static function _is_kaleido( $f ){
+            return (array_key_exists('elements', $f->page->_fields) && $f->page->_fields['elements']->k_type=='checkbox' && $f->page->_fields['elements']->k_group=='grp_elements') ? true : false;
         }
 
         // route filters
