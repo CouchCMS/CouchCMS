@@ -96,6 +96,7 @@
                            'order'=>'asc',
                            'tiles'=>'', /*type(s) of tiles to fetch. Can have negation*/
                            'show_overlay'=>'1',
+                           'no_cache'=>'0',
                     ),
                 $params)
             );
@@ -107,6 +108,7 @@
             if( $order!='desc' && $order!='asc' ) $order='asc';
             $types = trim( $tiles );
             $show_overlay = ( $show_overlay==0 ) ? 0 : 1;
+            $no_cache = ( $no_cache==1 ) ? 1 : 0;
 
             if( $var ){
                 // get the data array from CTX
@@ -239,14 +241,14 @@
                                 $CTX->set( 'k_total_rows', $total_rows );
                                 $CTX->set( 'k_first_row', ($x==$offset) ? '1' : '0' );
                                 $CTX->set( 'k_last_row', ($x==$total_rows+$offset-1) ? '1' : '0' );
-                                $CTX->set( 'k_content', self::_get_tile_output( $page_id, $tpl_id ) );
+                                $CTX->set( 'k_content', self::_get_tile_output( $page_id, $tpl_id, $no_cache ) );
 
                                 foreach( $node->children as $child ){
                                     $html .= $child->get_HTML();
                                 }
                             }
                             else{ // self-closing
-                                $html .= self::_get_tile_output( $page_id, $tpl_id );
+                                $html .= self::_get_tile_output( $page_id, $tpl_id, $no_cache );
                             }
                         }
                     }
@@ -256,11 +258,11 @@
             }
         }
 
-        static function _get_tile_output( $page_id, $tpl_id ){
+        static function _get_tile_output( $page_id, $tpl_id, $no_cache ){
             global $FUNCS, $CTX;
             $is_post = ( $_SERVER['REQUEST_METHOD']=='POST' ) ? 1 : 0;
 
-            if( K_CACHE_PB && !$is_post ){
+            if( K_CACHE_PB && !$is_post && !$no_cache ){
                 $html = self::_get_from_cache( $page_id, 0 /*full text*/ );
                 if( $html!==false ){ return $html; }
             }
@@ -269,7 +271,7 @@
             if( $pg->error ){ return; }
             $caching = array_key_exists('section_caching', $pg->_fields) ? $pg->_fields['section_caching']->data : 'always';
 
-            if( K_CACHE_PB && $is_post && $caching=='always' ){
+            if( K_CACHE_PB && $is_post && $caching=='always' && !$no_cache ){
                 $html = self::_get_from_cache( $page_id, 0 /*full text*/ );
                 if( $html!==false ){ return $html; }
             }
@@ -279,7 +281,7 @@
             $CTX->set_object( 'k_bound_page', $pg );
             $html = $FUNCS->render( 'pb_tile' );
 
-            if( K_CACHE_PB && ((!$is_post && $caching!='never') || ($is_post && $caching=='always')) ){
+            if( K_CACHE_PB && ((!$is_post && $caching!='never') || ($is_post && $caching=='always')) && !$no_cache ){
                 $CTX->set( 'pb_tile_content', $html );
                 $html_b = $FUNCS->render( 'pb_wrapper' );
 

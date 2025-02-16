@@ -6,6 +6,7 @@
         static function show_tile( $pid, $tpl_id ){
             global $FUNCS, $CTX, $PAGE;
 
+            $CTX->set( 'k_disable_edit', '1', 'global' );
             $html_b = $FUNCS->render( 'pb_tile' );
             $CTX->set( 'pb_tile_content', $html_b );
             $html = $FUNCS->render( 'pb_wrapper' );

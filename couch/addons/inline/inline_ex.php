@@ -8,6 +8,7 @@
 
         var $is_inline = 0;
         var $arr_fields = array();
+        var $skip_fields = array();
 
         function edit_action(){
             global $FUNCS, $PAGE, $CTX;
@@ -21,8 +22,11 @@
             $FUNCS->validate_nonce( 'edit_page_' . $obj_id );
 
             // get fields to render
-            $this->arr_fields = array_flip( array_filter(array_map("trim", explode('|', $_GET['flist']))) );
+            $this->arr_fields = array_filter( array_map("trim", explode('|', $_GET['flist'])) );
             if( !count($this->arr_fields) ) die( 'No Fields specified' );
+
+            // get fields to skip
+            $this->skip_fields = array_filter( array_map("trim", explode('|', (isset($_GET['skip'])) ? $_GET['skip'] : '')) );
 
             // inline or popup?
             $this->is_inline = ( isset($_GET['ajax']) && $_GET['ajax']=='1' ) ? 1 : 0; // if called from 'cms:inline_link'
@@ -55,19 +59,26 @@
         function _set_default_fields( &$arr_fields ){
             global $FUNCS, $PAGE;
 
+            // expand field list if required
+            if( in_array('*', $this->arr_fields) ){
+                $this->arr_fields = array_filter( $this->arr_fields, function($e){return $e !== '*';} );
+                $expand_list = 1;
+            }
+            $this->arr_fields = array_flip( $this->arr_fields );
+
             for( $x=0; $x<count($PAGE->fields); $x++ ){
                 $f = &$PAGE->fields[$x];
-                if( $f->deleted || $f->k_type=='group' ){
+                if( $f->deleted || in_array($f->name, $this->skip_fields) ){
                     unset( $f );
                     continue;
                 }
-                if( array_key_exists( $f->name, $this->arr_fields ) ){
+                if( array_key_exists( $f->name, $this->arr_fields ) || ($expand_list && !$this->is_inline && !$f->system) ){
                     if( $this->is_inline ){
                         // can have only one field .. complete all processing here
                         $f->store_posted_changes( $_POST['data'] );
                         $errors = $PAGE->save();
                         if( !$errors ){
-                            $FUNCS->invalidate_cache();
+                            $this->invalidate_cache( $PAGE );
                             $html = $f->get_data( 1 );
                         }
                         else{
@@ -86,7 +97,9 @@
 
             foreach( $this->arr_fields as $k=>$f ){
                 if( !is_object($f) ){
-                    die( 'Field not found: ' . $FUNCS->escape_HTML($k) );
+                    if( !in_array($k, $this->skip_fields) ){
+                        die( 'Field not found: ' . $FUNCS->escape_HTML($k) );
+                    }
                 }
                 else{
                     $f->resolve_dynamic_params();
@@ -95,7 +108,7 @@
                         'label'=>$f->label,
                         'desc'=>$f->k_desc,
                         'order'=>$f->k_order,
-                        'group'=>$f->k_group,
+                        'group'=>( array_key_exists($f->k_group, $this->arr_fields) ) ? $f->k_group : '',
                         'class'=>$f->class,
                         'icon'=>'',
                         'no_wrapper'=>0,
@@ -107,7 +120,7 @@
                         'obj'=>&$f,
                     );
                     $f->pre_render( $def ); // allow field to change settings for itself
-                    $def['group'] = '_custom_fields_';
+                    $def['group'] = ( $f->system ) ? '_system_fields_' : ( (trim($def['group'])=='') ? '_custom_fields_' : $def['group'] );
 
                     $arr_fields[$f->name] = $def;
                 }
@@ -117,8 +130,21 @@
             return;
         }
 
+        function invalidate_cache( $pg ){
+            global $FUNCS;
+
+            $FUNCS->invalidate_cache();
+            if( property_exists($pg, 'tpl__pb_height') && defined('PB_CACHE_DIR') ){
+                KPageBuilder::_remove_from_cache( $pg->id );
+            }
+        }
+
         function _setup_form_variables(){
-            global $CTX, $PAGE;
+            global $CTX, $PAGE, $FUNCS;
+
+            $FUNCS->add_event_listener( 'pages_form_post_action', function( &$redirect_dest, &$pg ){
+                $this->invalidate_cache( $pg );
+            });
 
             $CTX->set( 'k_selected_form_mode', 'edit', 'global' );
             $CTX->set( 'k_selected_masterpage', $PAGE->tpl_name, 'global' );

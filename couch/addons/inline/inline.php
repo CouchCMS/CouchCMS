@@ -62,9 +62,10 @@
                     'custom_styles'=>'',
                     'class'=>'',
                     'url_only'=>'0', /* for cms:inline_link */
-                    'responsive'=>'0', /* for cms:popup_edit */
+                    'responsive'=>'1', /* for cms:popup_edit */
                     'width'=>'0',      /* -do- */
                     'height'=>'0',     /* -do- */
+                    'skip'=>'',
                 ),
                 $params)
             );
@@ -84,9 +85,10 @@
             $class = trim( $class );
             if( strlen($class) ) $class = ' ' . $class;
             $url_only = ( trim($url_only)==1 ) ? 1 : 0;
-            $responsive = ( $node->name=='popup_edit_ex' ) ? 1 : ( (trim($responsive)==1) ? 1 : 0 );
+            $responsive = ( $node->name=='popup_edit_ex' ) ? 1 : ( (trim($responsive)==0) ? 0 : 1 );
             $width = ( $FUNCS->is_non_zero_natural($width) ) ? intval( $width ) : ( ($responsive && (trim($width)=='full') ) ? "'none'" : 795 );
             $height = ( $FUNCS->is_non_zero_natural($height) ) ? intval( $height ) : ( ($responsive && (trim($height)=='full') ) ? "'none'" : 535 );
+            $skip = trim( $skip );
 
             // get page_id (return if used in context of list_view)
             if( $CTX->get('k_is_page') ){
@@ -104,7 +106,8 @@
             $nonce = $FUNCS->create_nonce( 'edit_page_' . $obj_id );
 
             // create link
-            $url = K_ADMIN_URL.K_ADMIN_PAGE."?o=inline&q=edit&tpl=".$tpl_id."&p=".$page_id."&nonce=".$nonce."&flist=".$fields;
+            $url = K_ADMIN_URL.K_ADMIN_PAGE."?o=inline&q=edit&tpl=".$tpl_id."&p=".$page_id."&nonce=".$nonce."&flist=".urlencode($fields);
+            if( $node->name!='inline_link' && strlen($skip) ){ $url = $url . '&skip='.urlencode($skip); }
             if( $responsive ){
                 $onclick = "TINY2.box.show({iframe:'".$url."',width:".$width.",height:".$height.",boxid:'k_inline'});";
             }
