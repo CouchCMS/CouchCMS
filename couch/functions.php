@@ -2713,7 +2713,9 @@
             // Invalidate cache
             $file = K_COUCH_DIR . 'cache/' . 'cache_invalidate.dat';
             if( file_exists($file) ) @unlink( $file );
-            @fclose( @fopen($file, 'a') );
+            if($fp = @fopen($file, 'a') ){
+                @fclose( $fp );
+            }
         }
 
         // Changes data types of custom-fields form text to numeric and vice-versa
