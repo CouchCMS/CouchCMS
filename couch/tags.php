@@ -1237,12 +1237,22 @@
             return $p0 / $p1;
         }
 
-        function add( $params, $node ){
-            if( count($params)<2 ) die( "ERROR: Tag \"".$node->name."\": requires two parameters" );
+        function add($params, $node) {
+            if (count($params) < 2) {
+                die("ERROR: Tag \"" . $node->name . "\": requires two parameters");
+            }
+
             $p0 = $params[0]['rhs'];
             $p1 = $params[1]['rhs'];
 
-            if( is_array($p0) || is_array($p1) ) return;
+            if (is_array($p0) || is_array($p1)) {
+                return;
+            }
+
+            // Convert parameters to numeric values
+            $p0 = is_numeric($p0) ? (float) $p0 : 0;
+            $p1 = is_numeric($p1) ? (float) $p1 : 0;
+
             return $p0 + $p1;
         }
 
