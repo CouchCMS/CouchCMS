@@ -1198,7 +1198,7 @@
             $p0 = $params[0]['rhs'];
             if( is_array($p0) ) return;
 
-            $p1 = isset($params[1]['rhs']) ? $params[1]['rhs'] : 1;
+            $p1 = isset($params[1]['rhs']) && is_numeric($params[1]['rhs']) ? (float) $params[1]['rhs'] : 1;
             $CTX->set( $var, $p0+$p1, 'parent' );
 
             return;
@@ -1213,7 +1213,7 @@
             $p0 = $params[0]['rhs'];
             if( is_array($p0) ) return;
 
-            $p1 = isset($params[1]['rhs']) ? $params[1]['rhs'] : 1;
+            $p1 = isset($params[1]['rhs']) && is_numeric($params[1]['rhs']) ? (float) $params[1]['rhs'] : 1;
             $CTX->set( $var, $p0-$p1, 'parent' );
 
             return;
@@ -1225,6 +1225,8 @@
             $p1 = $params[1]['rhs'];
 
             if( is_array($p0) || is_array($p1) ) return;
+            $p0 = is_numeric($p0) ? (float) $p0 : 0;
+            $p1 = is_numeric($p1) ? (float) $p1 : 0;
             return $p0 * $p1;
         }
 
@@ -1234,6 +1236,9 @@
             $p1 = $params[1]['rhs'];
 
             if( is_array($p0) || is_array($p1) ) return;
+            $p0 = is_numeric($p0) ? (float) $p0 : 0;
+            $p1 = is_numeric($p1) ? (float) $p1 : 1;
+            if( $p1==0 ) return;
             return $p0 / $p1;
         }
 
@@ -1243,6 +1248,8 @@
             $p1 = $params[1]['rhs'];
 
             if( is_array($p0) || is_array($p1) ) return;
+            $p0 = is_numeric($p0) ? (float) $p0 : 0;
+            $p1 = is_numeric($p1) ? (float) $p1 : 0;
             return $p0 + $p1;
         }
 
@@ -1252,6 +1259,8 @@
             $p1 = $params[1]['rhs'];
 
             if( is_array($p0) || is_array($p1) ) return;
+            $p0 = is_numeric($p0) ? (float) $p0 : 0;
+            $p1 = is_numeric($p1) ? (float) $p1 : 0;
             return $p0 - $p1;
         }
 
@@ -1261,6 +1270,9 @@
             $p1 = $params[1]['rhs'];
 
             if( is_array($p0) || is_array($p1) ) return;
+            $p0 = is_numeric($p0) ? (float) $p0 : 0;
+            $p1 = is_numeric($p1) ? (float) $p1 : 1;
+            if( $p1==0 ) return;
             return $p0 % $p1;
         }
 
