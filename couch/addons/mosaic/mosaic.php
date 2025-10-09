@@ -66,7 +66,7 @@
                 }
             }
             // preserve the deleted elements in schema (just mark them as deleted)
-            if( count($arr_deleted) ) $mod_schema = array_merge( $mod_schema, $arr_deleted );
+            if( count($arr_deleted) ) $mod_schema = $arr_deleted + $mod_schema;
 
             // create an editable region of type '__mosaic' with schema as its custom_param
             $schema = $FUNCS->serialize( $mod_schema );
