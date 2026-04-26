@@ -77,6 +77,10 @@
     function request_confirmation(){
         global $FUNCS, $DB, $AUTH;
 
+        if( !K_SITE_URL_IS_EXPLICIT ){
+            // refuse to send email if site url is not explicitly configured — reset link could be attacker-controlled
+            return $FUNCS->raise_error( 'This feature is disabled because K_SITE_URL is not defined in config.php.<br> Please contact site admin. ' );
+        }
         $val = $FUNCS->cleanXSS( trim($_POST['k_user_name']) );
         if( $val && is_string( $val ) ){
 

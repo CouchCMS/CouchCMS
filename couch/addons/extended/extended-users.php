@@ -463,6 +463,10 @@
         function _forgot_password( $username, $send_mail ){
             global $DB, $FUNCS, $AUTH, $CTX;
 
+            if( !K_SITE_URL_IS_EXPLICIT ){
+                // refuse to send email if site url is not explicitly configured — reset link could be attacker-controlled
+                return $FUNCS->raise_error( 'This feature is disabled because K_SITE_URL is not defined in config.php.<br> Please contact site admin. ' );
+            }
             $username = strlen( $username ) ? $username : $_POST['k_user_name'];
             $username = $FUNCS->cleanXSS( trim($username) );
             if( empty($username) ){

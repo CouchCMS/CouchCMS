@@ -268,6 +268,10 @@
         $url .= $subdomain;
 
         define( 'K_SITE_URL', $url );
+        define( 'K_SITE_URL_IS_EXPLICIT', false );
+    }
+    else{
+        define( 'K_SITE_URL_IS_EXPLICIT', true );
     }
 
     // Dreamhost PHP-CGI problem

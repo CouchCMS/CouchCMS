@@ -9,12 +9,16 @@
     define( 'K_SITE_OFFLINE', 0 );
 
     // 1.
-    // If necessary, define the full URL of your site including the subdomain, if any.
-    // V.IMP: Don't forget the trailing slash!
+    // M.IMP: For security purposes of your production site, make sure to define its full URL including the subdomain, if any.
+    // NOTE: Don't forget the slash at the end!
     //define( 'K_SITE_URL', 'http://www.test.com/subfolder1/subfolder2/mysite/' );
 
+    // 1.1
+    // Additionally, make sure to uncomment the following setting if the URL above begins with https:// (i.e. there is a 's' after that 'http')
+    //define( 'K_HTTPS', '1' );
+
     // 1b.
-    // For security purpose, the 'index.php' file of Couch can be renamed to anything else.
+    // Not essential but, for additional security, the 'index.php' file of Couch can be renamed to anything else.
     // If you do so, uncomment the following line and enter the new name.
     //define( 'K_ADMIN_PAGE', 'index.php' );
 
