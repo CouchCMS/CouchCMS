@@ -7924,16 +7924,38 @@ MAP;
             $CTX->push( '__call__', 1 /*no_check*/ );
 
             array_shift( $params );
-            $vars = $FUNCS->get_named_vars( $func['params'], $params );
+
+            // Extract _fields parameter (like db_persist does)
+            $arr_known_params = array( '_fields'=>'' );
+            extract( $FUNCS->get_named_vars( $arr_known_params, $params ) );
+            $_fields = ( is_array($_fields) ) ? $_fields : array();
+
+            // Merge _fields with regular parameters (same logic as db_persist)
+            $fields = count( $_fields ) ? $_fields : array();
+            $remaining_params = array();
+            foreach( $params as $param ){
+                $pname = strtolower( trim($param['lhs']) );
+                if( array_key_exists($pname, $arr_known_params) ) continue;
+                $fields[$pname] = $param['rhs'];
+                $remaining_params[] = $param;
+            }
+
+            // Convert fields back to parameter format for cms:call processing
+            $merged_params = array();
+            foreach( $fields as $key => $val ){
+                $merged_params[] = array('lhs' => $key, 'op' => '=', 'rhs' => $val);
+            }
+
+            $vars = $FUNCS->get_named_vars( $func['params'], $merged_params );
             $CTX->set_all( $vars );
 
             $args = $named_args = array();
-            for( $x=0; $x<count($params); $x++ ){
-                if( $params[$x]['op']=='=' ){
-                    if( $params[$x]['lhs'] ){
-                        $named_args[$params[$x]['lhs']] = $params[$x]['rhs'];
+            for( $x=0; $x<count($merged_params); $x++ ){
+                if( $merged_params[$x]['op']=='=' ){
+                    if( $merged_params[$x]['lhs'] ){
+                        $named_args[$merged_params[$x]['lhs']] = $merged_params[$x]['rhs'];
                     }
-                    $args[] = array( 'name'=>($params[$x]['lhs'])?$params[$x]['lhs']:'', 'val'=>$params[$x]['rhs'] );
+                    $args[] = array( 'name'=>($merged_params[$x]['lhs'])?$merged_params[$x]['lhs']:'', 'val'=>$merged_params[$x]['rhs'] );
                 }
             }
             $CTX->set( 'k_func', $name );
